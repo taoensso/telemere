@@ -53,31 +53,6 @@
        :param    'update-map-or-fn
        :expected '#{nil map fn}})))
 
-;;;; Tracing (optional flow tracking)
-
-(enc/def* ^:dynamic *trace-parent* "?TraceParent" nil)
-(defrecord TraceParent [id uid])
-
-#?(:clj
-   (defmacro with-tracing
-     "Wraps `form` with tracing iff const boolean `trace?` is true."
-     [trace? id uid form]
-
-     ;; Not much motivation to support runtime `trace?` form, but easy
-     ;; to add support later if desired
-     (when-not (enc/const-form? trace?)
-       (enc/unexpected-arg!     trace?
-         {:msg     "Expected constant (compile-time) `:trace?` value"
-          :context `with-tracing}))
-
-     (if trace?
-       `(binding [*trace-parent* (TraceParent. ~id ~uid)] ~form)
-       (do                                                 form))))
-
-(comment
-  [(macroexpand '(with-tracing false :id1 :uid1 "form"))
-   (macroexpand '(with-tracing true  :id1 :uid1 "form"))])
-
 ;;;; Unique IDs (UIDs)
 
 (enc/def* nanoid-readable (enc/rand-id-fn {:chars :nanoid-readable, :len 23}))
@@ -154,6 +129,31 @@
            `(delay             ~msg-form)
            (do                  msg-form))))))
 
+;;;; Tracing (optional flow tracking)
+
+(enc/def* ^:dynamic *trace-parent* "?TraceParent" nil)
+(defrecord TraceParent [id uid])
+
+#?(:clj
+   (defmacro with-tracing
+     "Wraps `form` with tracing iff const boolean `trace?` is true."
+     [trace? id uid form]
+
+     ;; Not much motivation to support runtime `trace?` form, but easy
+     ;; to add support later if desired
+     (when-not (enc/const-form? trace?)
+       (enc/unexpected-arg!     trace?
+         {:msg     "Expected constant (compile-time) `:trace?` value"
+          :context `with-tracing}))
+
+     (if trace?
+       `(binding [*trace-parent* (TraceParent. ~id ~uid)] ~form)
+       (do                                                 form))))
+
+(comment
+  [(macroexpand '(with-tracing false :id1 :uid1 "form"))
+   (macroexpand '(with-tracing true  :id1 :uid1 "form"))])
+
 ;;;; Main types
 
 (deftype #_defrecord WrappedSignal [ns kind id level signal-value_]
@@ -163,7 +163,7 @@
 
 (defrecord Signal
   ;; Telemere's main public data type.
-  ;; Note that we avoid nesting and duplication.
+  ;; Wwe avoid nesting and duplication.
   [^long schema-version timestamp uid,
    callsite-id location ns line column file,
    kind id level, ctx parent,
@@ -249,10 +249,14 @@
 
 #?(:clj
    (defmacro ^:public signal!
-     "TODO Low-level
+     "Expands to a low-level signal call.
+
+     TODO
       - Describe
-      - Reference diagram link
-      - Mention option to delay-wrap data"
+      - Reference diagram link [1]
+      - Mention option to delay-wrap data
+
+     [1] Ref. <https://github.com/taoensso/telemere/blob/master/signal-flow.svg>"
      {:arglists
       '([{:keys
           [elidable? location timestamp uid middleware,
@@ -268,7 +272,7 @@
            {run-form :run} opts
 
            {:keys [callsite-id elide? allow?]}
-           (sigs/filterable-expansion ; Filter callsite
+           (sigs/filterable-expansion ; Filter call
              {:location location
               :opts-arg opts ; {:keys [sample ns kind id level filter/when rate-limit]}
               :sf-arity 4
@@ -326,7 +330,7 @@
                          :sample :ns :kind :id :level :filter :when #_:rate-limit,
                          :ctx :parent #_:trace?, :let :data :msg :error :run))]
 
-                 ;; Eval let bindings AFTER callsite filtering but BEFORE data, msg
+                 ;; Eval let bindings AFTER call filtering but BEFORE data, msg
                  `(let ~let-form ; Allow to throw during @signal-value_
                     (new-signal ~'__timestamp ~'__uid
                       ~callsite-id ~location ~ns ~line ~column ~file,
@@ -334,20 +338,20 @@
                       ~user-opts-form ~data-form ~msg-form,
                       '~run-form ~'__run-result ~error-form)))]
 
-           #_ ; Sacrifice some perf to de-dupe possibly large `run-form`
+           #_ ; Sacrifice some perf to de-dupe (possibly large) `run-form`
            (let [~'__run-fn ~run-fn-form]
              (if-not ~allow?
                (when ~'__run-fn (~'__run-fn))
                (let [])))
 
-           `(enc/if-not ~allow? ; Allow to throw at callsite
+           `(enc/if-not ~allow? ; Allow to throw at call
               ~run-form
-              (let [~'__timestamp  ~timestamp-form  ; Allow to throw at callsite
+              (let [~'__timestamp  ~timestamp-form  ; Allow to throw at call
                     ~'__id         ~id-form         ; ''
                     ~'__uid        ~uid-form        ; ''
 
                     ~'__run-result ~run-result-form ; Non-throwing (traps)
-                    ~'__callsite-middleware ~(get opts :middleware `taoensso.telemere/*middleware*)]
+                    ~'__call-middleware ~(get opts :middleware `taoensso.telemere/*middleware*)]
 
                 (dispatch-signal!
                   (WrappedSignal.
@@ -356,9 +360,9 @@
                       ;; Unwrapped signal value given to handler fns, realized only AFTER
                       ;; handler filtering. Can throw on deref (handler will catch).
                       (let [~'signal ~signal-form] ; Can throw (in above delay)
-                        (if ~'__callsite-middleware
-                          ((sigs-api/get-middleware-fn ~'__callsite-middleware) ~'signal) ; Can throw
-                          (do                                                   ~'signal))))))
+                        (if ~'__call-middleware
+                          ((sigs-api/get-middleware-fn ~'__call-middleware) ~'signal) ; Can throw
+                          (do                                               ~'signal))))))
 
                 (when ~'__run-result
                   (~'__run-result)))))))))

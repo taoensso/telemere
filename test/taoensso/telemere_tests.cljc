@@ -184,7 +184,7 @@
             (is (= rv6 13)) (is (= (force (get sig6 dk)) [:n 12, :c6 15]))
             (is (= @c  16)  "6x run + 6x let (0x suppressed) + 4x data (2x suppressed)")]))))
 
-   (testing "Callsite middleware"
+   (testing "Call middleware"
      (let [c         (enc/counter)
            [rv1 sv1] (ws (sig! {:level :info, :run (c), :middleware [#(assoc % :m1 (c)) #(assoc % :m2 (c))]}))
            [rv2 sv2] (ws (sig! {:level :info, :run (c), :middleware [#(assoc % :m1 (c)) #(assoc % :m2 (c))], :allow? false}))
@@ -206,9 +206,9 @@
            wh1    (sigs-api/wrap-handler :hid1 (fn [sv] (reset! sv-h1_ sv)) {:async nil, :middleware [#(assoc % :hm1 (c)) #(assoc % :hm2 (c))]})
            wh2    (sigs-api/wrap-handler :hid2 (fn [sv] (reset! sv-h2_ sv)) {:async nil, :middleware [#(assoc % :hm1 (c)) #(assoc % :hm2 (c))]})]
 
-       ;; Note that callsite middleware output is cached and shared across all handlers
+       ;; Note that call middleware output is cached and shared across all handlers
        (binding [impl/*sig-handlers* {:hid1 wh1, :hid2 wh2}]
-         (let [;; 1x run + 4x handler middleware + 2x callsite middleware = 7x
+         (let [;; 1x run + 4x handler middleware + 2x call middleware = 7x
                rv1    (sig! {:level :info, :run (c), :middleware [#(assoc % :m1 (c)) #(assoc % :m2 (c))]})
                sv1-h1 @sv-h1_
                sv1-h2 @sv-h2_
@@ -220,7 +220,7 @@
                sv2-h2 @sv-h2_
                c2     @c ; 8
 
-               ;; 1x run + 4x handler middleware + 2x callsite middleware = 7x
+               ;; 1x run + 4x handler middleware + 2x call middleware = 7x
                rv3    (sig! {:level :info, :run (c), :middleware [#(assoc % :m1 (c)) #(assoc % :m2 (c))]})
                sv3-h1 @sv-h1_
                sv3-h2 @sv-h2_
@@ -236,10 +236,10 @@
             (is (= rv2 7))   (is (submap? sv2-h1 {:m1 1, :m2 2,      :hm1 3,  :hm2 4}))  (is (submap? sv2-h2 {:m1 1, :m2 2,      :hm1 5,  :hm2 6}))
             (is (= rv3 8))   (is (submap? sv3-h1 {:m1 9, :m2 10,     :hm1 11, :hm2 12})) (is (submap? sv3-h2 {:m1 9, :m2 10,     :hm1 13, :hm2 14}))
             (is (= rv4 nil)) (is (submap? sv4-h1 {:my-sig-val? true, :hm1 15, :hm2 16})) (is (submap? sv4-h2 {:my-sig-val? true, :hm1 17, :hm2 18}))
-            (is (= c1  7)    "1x run +  4x handler middleware + 2x callsite middleware")
-            (is (= c2  8)    "2x run +  4x handler middleware + 2x callsite middleware")
-            (is (= c3  15)   "3x run +  8x handler middleware + 4x callsite middleware")
-            (is (= c4  19)   "3x run + 12x handler middleware + 4x callsite middleware")]))))])
+            (is (= c1  7)    "1x run +  4x handler middleware + 2x call middleware")
+            (is (= c2  8)    "2x run +  4x handler middleware + 2x call middleware")
+            (is (= c3  15)   "3x run +  8x handler middleware + 4x call middleware")
+            (is (= c4  19)   "3x run + 12x handler middleware + 4x call middleware")]))))])
 
 (def ^:private ^:dynamic *throwing-handler-middleware?* false)
 
@@ -257,12 +257,12 @@
       {:async nil, :error-fn (fn [x] (reset! error_ x)), :rl-error nil,
        :middleware [(fn [sv] (if *throwing-handler-middleware?* (throw!) sv))]}
 
-      [(is (->>    (sig! {:level :info, :filter    (throw!)}) (throws? :ex-info "TestEx")) "`~filterable-expansion/allow` throws at callsite")
-       (is (->>    (sig! {:level :info, :timestamp (throw!)}) (throws? :ex-info "TestEx")) "`~timestamp-form`             throws at callsite")
-       (is (->>    (sig! {:level :info, :id        (throw!)}) (throws? :ex-info "TestEx")) "`~id-form`                    throws at callsite")
-       (is (->>    (sig! {:level :info, :uid       (throw!)}) (throws? :ex-info "TestEx")) "`~uid-form`                   throws at callsite")
-       (is (->>    (sig! {:level :info, :run       (throw!)}) (throws? :ex-info "TestEx")) "`~run-form` rethrows at callsite")
-       (is (submap? @sv_ {:level :info, :error (enc/pred enc/error?)})                     "`~run-form` rethrows at callsite *after* dispatch")
+      [(is (->>    (sig! {:level :info, :filter    (throw!)}) (throws? :ex-info "TestEx")) "`~filterable-expansion/allow` throws at call")
+       (is (->>    (sig! {:level :info, :timestamp (throw!)}) (throws? :ex-info "TestEx")) "`~timestamp-form`             throws at call")
+       (is (->>    (sig! {:level :info, :id        (throw!)}) (throws? :ex-info "TestEx")) "`~id-form`                    throws at call")
+       (is (->>    (sig! {:level :info, :uid       (throw!)}) (throws? :ex-info "TestEx")) "`~uid-form`                   throws at call")
+       (is (->>    (sig! {:level :info, :run       (throw!)}) (throws? :ex-info "TestEx")) "`~run-form` rethrows at call")
+       (is (submap? @sv_ {:level :info, :error (enc/pred enc/error?)})                     "`~run-form` rethrows at call *after* dispatch")
 
        (testing "`@signal-value_`: trap with wrapped handler"
          [(testing "Throwing `~let-form`"
@@ -271,7 +271,7 @@
              (is (= @sv_ :nx))
              (is (submap? @error_ {:handler-id :hid1, :error (enc/pred enc/error?)}))])
 
-          (testing "Throwing callsite middleware"
+          (testing "Throwing call middleware"
             (reset-state!)
             [(is (nil? (sig! {:level :info, :middleware [(fn [_] (throw!))]})))
              (is (= @sv_ :nx))
@@ -305,27 +305,27 @@
      (is (= (tel/with-ctx "my-ctx1"       (tel/with-ctx+ (fn [old] [old "my-ctx2"]) tel/*ctx*)) ["my-ctx1" "my-ctx2"])  "fn  update => apply")
      (is (= (tel/with-ctx {:a :A1 :b :B1} (tel/with-ctx+ {:a :A2 :c :C2}            tel/*ctx*)) {:a :A2 :b :B1 :c :C2}) "map update => merge")
 
-     (let [[_ sig] (ws (sig! {:level :info, :ctx "my-ctx"}))] (is (enc/submap? sig {:ctx "my-ctx"}) "Can be set via callsite opt"))]))
+     (let [[_ sig] (ws (sig! {:level :info, :ctx "my-ctx"}))] (is (enc/submap? sig {:ctx "my-ctx"}) "Can be set via call opt"))]))
 
 (deftest _tracing
   (testing "Tracing"
     [(let [[_ sig] (ws (sig! {:level :info                      }))] (is (enc/submap? sig {:parent nil})))
-     (let [[_ sig] (ws (sig! {:level :info, :parent {:id   :id0}}))] (is (enc/submap? sig {:parent {:id :id0       :uid :submap/nx}}) "`:parent/id`  can be set via callsite opt"))
-     (let [[_ sig] (ws (sig! {:level :info, :parent {:uid :uid0}}))] (is (enc/submap? sig {:parent {:id :submap/nx :uid      :uid0}}) "`:parent/uid` can be set via callsite opt"))
+     (let [[_ sig] (ws (sig! {:level :info, :parent {:id   :id0}}))] (is (enc/submap? sig {:parent {:id :id0       :uid :submap/nx}}) "`:parent/id`  can be set via call opt"))
+     (let [[_ sig] (ws (sig! {:level :info, :parent {:uid :uid0}}))] (is (enc/submap? sig {:parent {:id :submap/nx :uid      :uid0}}) "`:parent/uid` can be set via call opt"))
 
-     (testing "Auto callsite id, uid"
+     (testing "Auto call id, uid"
        (let [[_ sig] (ws (sig! {:level :info, :parent {:id :id0, :uid :uid0}, :run impl/*trace-parent*, :data impl/*trace-parent*}))]
          [(is (enc/submap? sig {:parent    {:id :id0, :uid :uid0}}))
-          (is (enc/submap? sig {:run-value {:id nil,  :uid (get sig :uid ::nx)}}) "`*trace-parent*`     visible to run-form, bound to callsite's auto {:keys [id uid]}")
+          (is (enc/submap? sig {:run-value {:id nil,  :uid (get sig :uid ::nx)}}) "`*trace-parent*`     visible to run-form, bound to call's auto {:keys [id uid]}")
           (is (enc/submap? sig {:data      nil})                                  "`*trace-parent*` not visible to data-form ")]))
 
-     (testing "Manual callsite id, uid"
+     (testing "Manual call id, uid"
        (let [[_ sig] (ws (sig! {:level :info, :parent {:id :id0, :uid :uid0}, :id :id1, :uid :uid1, :run impl/*trace-parent*, :data impl/*trace-parent*}))]
          [(is (enc/submap? sig {:parent    {:id :id0, :uid :uid0}}))
-          (is (enc/submap? sig {:run-value {:id :id1, :uid :uid1}}) "`*trace-parent*`     visible to run-form, bound to callsite's auto {:keys [id uid]}")
+          (is (enc/submap? sig {:run-value {:id :id1, :uid :uid1}}) "`*trace-parent*`     visible to run-form, bound to call's auto {:keys [id uid]}")
           (is (enc/submap? sig {:data      nil})                    "`*trace-parent*` not visible to data-form ")]))
 
-     (testing "Tracing can be disabled via callsite opt"
+     (testing "Tracing can be disabled via call opt"
        (let [[_ sig] (ws (sig! {:level :info, :parent {:id :id0, :uid :uid0}, :id :id1, :uid :uid1, :run impl/*trace-parent*, :data impl/*trace-parent*, :trace? false}))]
          [(is (enc/submap? sig {:parent    {:id :id0, :uid :uid0}}))
           (is (enc/submap? sig {:run-value nil}))]))

@@ -2,9 +2,8 @@
   "Structured telemetry for Clojure/Script applications.
 
   See the GitHub page (esp. Wiki) for info on motivation and design:
-    <https://github.com/taoensso/telemere>
+    <https://github.com/taoensso/telemere>"
 
-  TODO"
   {:author "Peter Taoussanis (@ptaoussanis)"}
   (:require
    [taoensso.encore             :as enc :refer [have have?]]
@@ -16,111 +15,47 @@
   (remove-ns 'taoensso.telemere)
   (:api (enc/interns-overview)))
 
-(enc/assert-min-encore-version [3 75 0])
+(enc/assert-min-encore-version [3 75 0]) ; Wip TODO
 
 ;;;; Roadmap
-;; - See also `ensso/telemere-lib.org`, `ensso/draft-telemere` ns
+;; - See `ensso/telemere-lib.org`, `ensso/draft-telemere`
 ;; - [Dec] alpha1: fundamentals
 ;; - [Jan] alpha2: first logging tools (handlers + utils, `tools.logging`, slf4j, etc.)
 ;; - [Feb] alpha3: first OpenTelemetry tools
 
 ;;;; TODO
-;; - Double check reasonable trace interop with runtimes, etc.
-;; - Bring *middleware* into main ns, document
-
-;; - Import/kill final old code?
-;; - Organize new code, polish, document
-
-;; - Recheck notes
+;; - Import/kill final old code (in ensso)
+;;
+;; - Recheck notes, import anything?
 ;; - Finish book + notes
 ;; - Reading plan
-
-;; - Sketch first basic handlers (or examples?)
+;;
+;; - Sketch first basic handlers (and/or examples?)
 ;; - Sketch other basic utils to superset Timbre, etc.
 ;;   - Incl. `tools.logging`, slf4j, etc.
+;;
+;; - Check TODOs, general polish + documentation
+;; - Update Tufte (signal API, config API, signal fields, etc.)
 
-;; x Confirm that no min-level => no filtering
-;; - Ensure that it's clearly documented that *both* callsite and
-;;   handler filters need to pass for a signal to be handled
-;; - Check TODOs
-
-;;;; Low-level primitives
+;;;; Shared signal API
 
 (sigs-api/def-api 4 impl/*rt-sig-filter* impl/*sig-handlers* {:purpose "signal"})
 
-#_[level-aliases]
-#_[handlers-help get-handlers add-handler! remove-handler!]
-#_[filtering-help
+(comment
+  [level-aliases]
+  [handlers-help get-handlers add-handler! remove-handler!]
+  [filtering-help
    set-kind-filter! set-ns-filter! set-id-filter! set-min-level!
-   with-kind-filter with-ns-filter with-id-filter with-min-level]
-
-#_(:doc (meta #'filtering-help))
-#_(:doc (meta #'handlers-help))
-
-;; handlers-help
-;; handlers-get
-;; handler-add
-;; handler-remove
-
-;; filtering-help
-;; filter-set-kind!
-;; filter-set-ns!
-;; filter-set-id!
-;; filter-set-min-level!
-
-;; with-filter-kind
-;; with-filter-ns
-;; with-filter-id
-;; with-filter-min-level
+   with-kind-filter with-ns-filter with-id-filter with-min-level])
 
 ;;;; Aliases
 
 (enc/defaliases
+  enc/chance
   impl/msg-splice
   impl/msg-skip
   #?(:clj impl/with-signal)
-  impl/signal!
-  enc/chance)
-
-;;;; Config
-
-;; - SignalFilter (ns-spec id-spec level-spec)
-;; - Init ctx
-;; - Handler registration (but only via calls)
-;; - xform
-
-#_(sigs/valid-level level-form)
-#_(sigs/filterable-expansion {})
-#_(sigs/call-handlers! impl/*sig-handlers* signal)
-
-;;;; API
-
-;; No varargs!
-
-;; log!   [msg]     or [opts msg]  ; Sig with msg
-;; spy!   [form]    or [opts form] ; Sig with form
-;; info!  [msg]     or [opts msg], etc.
-
-;; event! [id]      or [opts id]    ; Sig with id, return truthy if callsite passed?
-;; trace! [id form] or [opts form]? ; Alias for spy?
-;; span type?
-
-;; - Util to signal + throw error? (Can use instead of `throw!`)
-;;   - e.g. `throw!` [throwable] or [opts throwable]
-;;   - note possible conflict with (logging) `error!`
-
-;; - signal-errors
-;; - signal-and-rethrow-errors
-
-#_
-(defn event
-  "Fn version of `event` macro that does not (cannot) capture callsite info.
-  Prefer `event` macro when possible."
-  ;; TODO Better to not actually offer this?
-  ([id opts] (impl/generic-signal :event {:location nil, :opts opts, :id id}))
-  ([   opts] (impl/generic-signal :event {:location nil, :opts opts, :id id})))
-
-;; - Possible "kind" values: #{<event> <trace> <profiling> <user>}
+  impl/signal!)
 
 ;;;; Context
 
@@ -178,6 +113,40 @@
 
 (comment (with-ctx {:a :A1 :b :B1} (with-ctx+ {:a :A2} *ctx*)))
 
-;;;;
+;;;; Middleware
 
-(enc/defonce ^:dynamic *middleware* nil) ; TODO Yes/no? In config map? Main ns?
+(enc/defonce ^:dynamic *middleware*
+  "Optional vector of unary middleware fns to apply (left-to-right/sequentially)
+  to each signal before passing it to handlers. If any middleware fn returns nil,
+  aborts immediately without calling handlers.
+
+  Useful for transforming each signal before handling."
+  nil)
+
+;;;; WIP ; TODO
+
+;; No varargs
+;; log!   [msg]     or [opts msg]  ; Sig with msg
+;; spy!   [form]    or [opts form] ; Sig with form
+;; info!  [msg]     or [opts msg], etc.
+
+;; event! [id]      or [opts id]    ; Sig with id, return truthy if call passed?
+;; trace! [id form] or [opts form]? ; Alias for spy?
+;; span type?
+
+;; - Util to signal + throw error? (Can use instead of `throw!`)
+;;   - e.g. `throw!` [throwable] or [opts throwable]
+;;   - note possible conflict with (logging) `error!`
+
+;; - signal-errors
+;; - signal-and-rethrow-errors
+
+#_
+(defn event
+  "Fn version of `event` macro that does not (cannot) capture callsite info.
+  Prefer `event` macro when possible."
+  ;; TODO Better to not actually offer this?
+  ([id opts] (impl/generic-signal :event {:location nil, :opts opts, :id id}))
+  ([   opts] (impl/generic-signal :event {:location nil, :opts opts, :id id})))
+
+;; - Possible "kind" values: #{<event> <trace> <profiling> <user>}
