@@ -27,10 +27,12 @@
 #?(:clj (defmacro wsv [form] `(impl/-with-signal (fn [] ~form) {:force-msg? true, :return :signal})))
 
 (do
-  (def ^:private ex1      (ex-info "TestEx" {}))
-  (def ^:private ex1?     #(=         %  ex1))
-  (def ^:private ex1-rv?  #(= (:error %) ex1))
-  (def ^:private ex1-pred (enc/pred ex1?)))
+  (def ex1      (ex-info "TestEx" {}))
+  (def ex1?     #(=         %  ex1))
+  (def ex1-rv?  #(= (:error %) ex1))
+  (def ex1-pred (enc/pred ex1?)))
+
+(def ^:dynamic *dynamic-var* nil)
 
 ;;;;
 
@@ -255,9 +257,18 @@
             (is (= c1  7)     "1x run +  4x handler middleware + 2x call middleware")
             (is (= c2  8)     "2x run +  4x handler middleware + 2x call middleware")
             (is (= c3  15)    "3x run +  8x handler middleware + 4x call middleware")
-            (is (= c4  19)    "3x run + 12x handler middleware + 4x call middleware")]))))])
+            (is (= c4  19)    "3x run + 12x handler middleware + 4x call middleware")]))))
 
-(def ^:private ^:dynamic *throwing-handler-middleware?* false)
+   (testing "Handler binding conveyance"
+     (let [a (atom nil)
+           wh1
+           (sigs/wrap-handler :hid1 (fn [x] (reset! a *dynamic-var*))
+             nil #?(:clj {:async {:mode :dropping}} :cljs nil))]
+
+       (binding [*dynamic-var* "bound", impl/*sig-handlers* [wh1]] (sig! {:level :info}))
+       (is (= (do #?(:clj (Thread/sleep 500)) @a) "bound"))))])
+
+(def ^:dynamic *throwing-handler-middleware?* false)
 
 (deftest _throwing
   (let [sv_    (atom :nx)
@@ -464,6 +475,16 @@
          (is (sm? (wsv (ctl/info "Hello" "x" "y")) {:level :info, :location nil, :ns nil, :kind :log, :id :taoensso.telemere/tools-logging, :msg_ "Hello x y"}))
          (is (sm? (wsv (ctl/warn "Hello" "x" "y")) {:level :warn, :location nil, :ns nil, :kind :log, :id :taoensso.telemere/tools-logging, :msg_ "Hello x y"}))
          (is (sm? (wsv (ctl/error ex1 "An error")) {:level :error, :error ex1}) "Errors")])
+
+      (testing "Standard out/err streams -> Telemere"
+        [(is (sm?   (tel/interop-check) {:streams {:out {:send->telemere? false, :receiving? false}, :err {:send->telemere? false, :receiving? false}}}))
+         (is (true? (tel/streams->telemere!)))
+         (is (sm?   (tel/interop-check) {:streams {:out {:send->telemere? true,  :receiving? true},  :err {:send->telemere? true,  :receiving? true}}}))
+         (is (true? (tel/streams->reset!)))
+         (is (sm?   (tel/interop-check) {:streams {:out {:send->telemere? false, :receiving? false}, :err {:send->telemere? false, :receiving? false}}}))
+         (is
+           (sm? (wsv (tel/with-out->telemere (println "Hello" "x" "y")))
+             {:level :info, :location nil, :ns nil, :kind :system/out, :msg_ "Hello x y"}))])
 
       (testing "SLF4J -> Telemere"
         [(is (sm? (tel/interop-check) {:slf4j {:present? true, :send->telemere? true, :receiving? true}}))

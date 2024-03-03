@@ -1,6 +1,6 @@
 (ns ^:no-doc taoensso.telemere.slf4j
   "Private ns, implementation detail.
-  Interop support: SLF4J API v2 -> Telemere.
+  Interop support: SLF4J -> Telemere.
 
   To use Telemere as your SLF4J backend/provider, just include the
   `com.taoensso/slf4j-telemere` dependency on your classpath.

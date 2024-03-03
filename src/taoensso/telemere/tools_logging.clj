@@ -2,9 +2,9 @@
   "Private ns, implementation detail.
   Interop support: `clojure.tools.logging` -> Telemere."
   (:require
-   [clojure.tools.logging  :as ctl]
    [taoensso.encore        :as enc :refer [have have?]]
-   [taoensso.telemere.impl :as impl]))
+   [taoensso.telemere.impl :as impl]
+   [clojure.tools.logging  :as ctl]))
 
 (defmacro ^:private when-debug [& body] (when #_true false `(do ~@body)))
 

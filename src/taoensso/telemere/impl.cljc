@@ -9,6 +9,11 @@
   (remove-ns 'taoensso.telemere.impl)
   (:api (enc/interns-overview)))
 
+#?(:clj
+   (enc/declare-remote ; For macro expansions
+     ^:dynamic taoensso.telemere/*ctx*
+     ^:dynamic taoensso.telemere/*middleware*))
+
 ;;;; Utils
 
 #?(:clj (defmacro threaded [& body] `(let [t# (Thread. (fn [] ~@body))] (.start t#) t#)))

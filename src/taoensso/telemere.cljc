@@ -10,6 +10,7 @@
    [taoensso.encore         :as enc :refer [have have?]]
    [taoensso.encore.signals :as sigs]
    [taoensso.telemere.impl  :as impl]
+   #?(:clj [taoensso.telemere.streams :as streams])
 
    #?(:clj [clj-commons.format.exceptions :as fmt-ex])
    #?(:clj [clj-commons.ansi              :as fmt-ansi])))
@@ -18,7 +19,7 @@
   (remove-ns 'taoensso.telemere)
   (:api (enc/interns-overview)))
 
-(enc/assert-min-encore-version [3 88 0])
+(enc/assert-min-encore-version [3 89 0])
 
 ;;;; Roadmap
 ;; x Fundamentals
@@ -32,13 +33,12 @@
 ;; - Update Timbre (signal API, config API, signal fields, backport improvements)
 
 ;;;; TODO
-;; - `clojure.tools.logging/log-capture!`, `with-logs`, etc.
 ;; - Via Timbre: core handlers, any last utils?
 ;;   - Cljs (.log js/console <js/Error>) better than string stacktrace (clickable, etc.)
 ;;
 ;; - Tests for utils (hostname, formatters, etc.)?
 ;; - Remaining docstrings and TODOs
-;; - Document kinds: #{:log :spy :trace :event :error <user>}
+;; - Document kinds: #{:log :spy :trace :event :error :system/out :system/err <user>}
 ;; - General polish
 ;;
 ;; - Reading plan
@@ -330,82 +330,106 @@
           (when-let [cause (ex-cause error)] (str nl nl "Caused by:" nl        (format-error cause))))))
 
      :clj
-     ([{:keys [fonts sort]
+     ;; TODO Review API, esp. re: *color-enabled*, etc.
+     ([{:keys [use-fonts? sort-stacktrace-by fonts]
         :or
-        {fonts clj-commons.format.exceptions/default-fonts
-         sort :chronological #_:depth-first}}
+        {use-fonts?         :auto
+         sort-stacktrace-by :chronological #_:depth-first
+         fonts clj-commons.format.exceptions/default-fonts}}
        error]
 
-      (binding [fmt-ansi/*color-enabled* (not (empty? fonts))
-                fmt-ex/*fonts*                        fonts
+      (binding [fmt-ansi/*color-enabled*
+                (if (enc/identical-kw? use-fonts? :auto)
+                  nil ; => Guess based on environment
+                  use-fonts?)
+
+                fmt-ex/*fonts* fonts
                 fmt-ex/*traditional*
-                (case sort
+                (case sort-stacktrace-by
                   :depth-first   true  ; Traditional
                   :chronological false ; Modern (default)
-                  (enc/unexpected-arg! sort
+                  (enc/unexpected-arg! sort-stacktrace-by
                     {:context  `format-error
-                     :param    'sort
+                     :param    'sort-stacktrace-by
                      :expected #{:depth-first :chronological}}))]
 
         (fmt-ex/format-exception error)))))
 
 (comment (println (format-error (ex-info "Ex2" {:k2 :v2} (ex-info "Ex1" {:k1 :v1})))))
 
-;;;; Interop (`clojure.tools.logging`, SLF4J)
+;;;; Interop
 
 #?(:clj
-   (def ^:private have-tools-logging?
-     (enc/compile-if
-       (do (require '[taoensso.telemere.tools-logging :as ttl]) true)
-       true false)))
+   (do
+     (def ^:private have-tools-logging?
+       (enc/compile-if
+         (do (require '[taoensso.telemere.tools-logging :as ttl]) true)
+         true false))
 
-#?(:clj
-   (enc/compile-when have-tools-logging?
-     (enc/defalias ttl/tools-logging->telemere!)
-     (when (enc/get-env {:as :bool} :clojure.tools.logging->telemere?)
-       (ttl/tools-logging->telemere!))))
+     (enc/compile-when have-tools-logging?
+       (enc/defalias ttl/tools-logging->telemere!)
+       (when (enc/get-env {:as :bool} :clojure.tools.logging->telemere?)
+         (ttl/tools-logging->telemere!)))
 
-#?(:clj
-   (defn- interop-test! [msg form-fn]
-     (let [msg (str msg " (" (enc/uuid-str) ")")
-           signal
-           (binding [impl/*rt-sig-filter* nil]
-             (impl/with-signal {:stop-propagation? true, :return :signal}
-               (form-fn msg)))]
+     (enc/defaliases
+       streams/with-out->telemere
+       streams/with-err->telemere
+       streams/with-streams->telemere
+       streams/streams->telemere!
+       streams/streams->reset!)
 
-       (= (force (get signal :msg_)) msg))))
+     (defn- interop-test! [msg form-fn]
+       (let [msg (str "Interop test: " msg " (" (enc/uuid-str) ")")
+             signal
+             (binding [impl/*rt-sig-filter* nil]
+               (impl/with-signal {:stop-propagation? true, :return :signal}
+                 (form-fn msg)))]
 
-#?(:clj
-   (defn interop-check
-     "Tests Telemere's interop with `clojure.tools.logging` and SLF4J.
-     Returns {:keys [tools-logging slf4j]} with sub-maps:
-       {:keys [present? set->telemere? receiving?]}."
-     []
-     (let [base-present {:present? true, :send->telemere? false, :receiving? false}]
-       {:tools-logging
-        (if-not (enc/have-resource? "clojure/tools/logging.clj")
-          {:present? false}
-          (merge base-present
-            (enc/compile-when have-tools-logging?
-              {:send->telemere? (ttl/tools-logging->telemere?)
-               :receiving?
-               (interop-test!
-                 "Interop test: `clojure.tools.logging`->Telemere"
-                 (fn [msg] (clojure.tools.logging/info msg)))})))
+         (= (force (get signal :msg_)) msg)))
 
-        :slf4j
-        (if-not (enc/have-class? "org.slf4j.Logger")
-          {:present? false}
-          (merge base-present
-            (enc/compile-when
-              (and org.slf4j.Logger com.taoensso.telemere.slf4j.TelemereLogger)
-              (let [^org.slf4j.Logger sl
-                    (org.slf4j.LoggerFactory/getLogger "InteropTestTelemereLogger")]
+     (defn interop-check
+       "Tests Telemere's interop with `clojure.tools.logging` and SLF4J, useful
+       for tests/debugging. Returns {:keys [tools-logging slf4j streams]} with
+       {:keys [send->telemere? receiving? ...]} sub-maps."
+       []
+       (let [base-present {:present? true, :send->telemere? false, :receiving? false}]
+         {:tools-logging
+          (if-not (enc/have-resource? "clojure/tools/logging.clj")
+            {:present? false}
+            (merge base-present
+              (enc/compile-when have-tools-logging?
+                (let [sending? (ttl/tools-logging->telemere?)]
+                  {:send->telemere? sending?
+                   :receiving? (and sending?
+                                 (interop-test! "`clojure.tools.logging` -> Telemere"
+                                   #(clojure.tools.logging/info %)))}))))
 
-                {:send->telemere? (instance? com.taoensso.telemere.slf4j.TelemereLogger sl)
-                 :receiving? (interop-test! "Interop test: SLF4J->Telemere" (fn [msg] (.info sl msg)))}))))})))
+          :slf4j
+          (if-not (enc/have-class? "org.slf4j.Logger")
+            {:present? false}
+            (merge base-present
+              (enc/compile-when
+                (and org.slf4j.Logger com.taoensso.telemere.slf4j.TelemereLogger)
+                (let [^org.slf4j.Logger sl
+                      (org.slf4j.LoggerFactory/getLogger "InteropTestTelemereLogger")
 
-(comment (check-interop))
+                      sending? (instance? com.taoensso.telemere.slf4j.TelemereLogger sl)]
+
+                  {:send->telemere? sending?
+                   :receiving? (and sending? (interop-test! "SLF4J -> Telemere" #(.info sl %)))}))))
+
+          :streams
+          {:out
+           (let [sending? (boolean @streams/orig-out_)]
+             {:send->telemere? sending?
+              :receiving? (and sending? (interop-test! "`System/out` -> Telemere" #(.println System/out %)))})
+
+           :err
+           (let [sending? (boolean @streams/orig-err_)]
+            {:send->telemere? sending?
+             :receiving? (and sending? (interop-test! "`System/err` -> Telemere" #(.println System/err %)))})}}))))
+
+(comment (interop-check))
 
 ;;;; Flow benchmarks
 
