@@ -359,77 +359,28 @@
 
 ;;;; Interop
 
+(enc/defaliases impl/check-interop)
 #?(:clj
-   (do
-     (def ^:private have-tools-logging?
-       (enc/compile-if
-         (do (require '[taoensso.telemere.tools-logging :as ttl]) true)
-         true false))
+   (enc/defaliases
+     streams/with-out->telemere
+     streams/with-err->telemere
+     streams/with-streams->telemere
+     streams/streams->telemere!
+     streams/streams->reset!))
 
-     (enc/compile-when have-tools-logging?
-       (enc/defalias ttl/tools-logging->telemere!)
-       (when (enc/get-env {:as :bool} :clojure.tools.logging->telemere?)
-         (ttl/tools-logging->telemere!)))
+#?(:clj
+   (enc/compile-when
+     (do (require '[taoensso.telemere.tools-logging :as ttl]) true)
+     (enc/defaliases ttl/tools-logging->telemere!)
+     (when (enc/get-env {:as :bool} :clojure.tools.logging->telemere?)
+       (ttl/tools-logging->telemere!))))
 
-     (enc/defaliases
-       streams/with-out->telemere
-       streams/with-err->telemere
-       streams/with-streams->telemere
-       streams/streams->telemere!
-       streams/streams->reset!)
+#?(:clj
+   (enc/compile-when
+     (and org.slf4j.Logger com.taoensso.telemere.slf4j.TelemereLogger)
+     (require '[taoensso.telemere.slf4j :as slf4j])))
 
-     (defn- interop-test! [msg form-fn]
-       (let [msg (str "Interop test: " msg " (" (enc/uuid-str) ")")
-             signal
-             (without-filters
-               (impl/with-signal {:stop-propagation? true, :return :signal}
-                 (form-fn msg)))]
-
-         (= (force (get signal :msg_)) msg)))
-
-     (defn interop-check
-       "Tests Telemere's interop with `clojure.tools.logging` and SLF4J, useful
-       for tests/debugging. Returns {:keys [tools-logging slf4j streams]} with
-       {:keys [send->telemere? receiving? ...]} sub-maps."
-       []
-       (let [base-present {:present? true, :send->telemere? false, :receiving? false}]
-         {:tools-logging
-          (if-not (enc/have-resource? "clojure/tools/logging.clj")
-            {:present? false}
-            (merge base-present
-              (enc/compile-when have-tools-logging?
-                (let [sending? (ttl/tools-logging->telemere?)]
-                  {:send->telemere? sending?
-                   :receiving? (and sending?
-                                 (interop-test! "`clojure.tools.logging` -> Telemere"
-                                   #(clojure.tools.logging/info %)))}))))
-
-          :slf4j
-          (if-not (enc/have-class? "org.slf4j.Logger")
-            {:present? false}
-            (merge base-present
-              (enc/compile-when
-                (and org.slf4j.Logger com.taoensso.telemere.slf4j.TelemereLogger)
-                (let [^org.slf4j.Logger sl
-                      (org.slf4j.LoggerFactory/getLogger "InteropTestTelemereLogger")
-
-                      sending? (instance? com.taoensso.telemere.slf4j.TelemereLogger sl)]
-
-                  {:send->telemere? sending?
-                   :receiving? (and sending? (interop-test! "SLF4J -> Telemere" #(.info sl %)))}))))
-
-          :streams
-          {:out
-           (let [sending? (boolean @streams/orig-out_)]
-             {:send->telemere? sending?
-              :receiving? (and sending? (interop-test! "`System/out` -> Telemere" #(.println System/out %)))})
-
-           :err
-           (let [sending? (boolean @streams/orig-err_)]
-            {:send->telemere? sending?
-             :receiving? (and sending? (interop-test! "`System/err` -> Telemere" #(.println System/err %)))})}}))))
-
-(comment (interop-check))
+(comment (check-interop))
 
 ;;;; Flow benchmarks
 

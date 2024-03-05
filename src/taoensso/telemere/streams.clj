@@ -73,17 +73,10 @@
 
 (comment (impl/with-signal (with-out->telemere (println "hello"))))
 
-(enc/defonce orig-out_ "Original `System/out`, or nil" (atom nil))
-(enc/defonce orig-err_ "Original `System/err`, or nil" (atom nil))
+(enc/defonce ^:private orig-out_ "Original `System/out`, or nil" (atom nil))
+(enc/defonce ^:private orig-err_ "Original `System/err`, or nil" (atom nil))
 
 (let [monitor (Object.)]
-
-  #_
-  (defn streams->telemere? []
-    ;; Not easy to actually identify current `System/out`, `System/err` vals
-    (locking monitor
-      {:out (boolean @orig-out_)
-       :err (boolean @orig-err_)}))
 
   (defn ^:public streams->reset!
     "Experimental, subject to change without notice!
@@ -118,13 +111,25 @@
        (let [out (when out (telemere-print-stream out))
              err (when err (telemere-print-stream err))]
 
-       (locking monitor
-         (when out (compare-and-set! orig-out_ nil System/out) (System/setOut out))
-         (when err (compare-and-set! orig-err_ nil System/err) (System/setErr err)))
+         (locking monitor
+           (when out (compare-and-set! orig-out_ nil System/out) (System/setOut out))
+           (when err (compare-and-set! orig-err_ nil System/err) (System/setErr err)))
 
-       true)))))
+         true)))))
 
 (comment
   (streams->telemere?)
   (streams->telemere! {})
   (streams->reset!))
+
+(impl/add-interop-check! :system/out
+  (fn []
+    (let [sending?   (boolean @orig-out_)
+          receiving? (and  sending? (impl/test-interop! "`System/out` -> Telemere" #(.println System/out %)))]
+      {:sending->telemere? sending?, :telemere-receiving? receiving?})))
+
+(impl/add-interop-check! :system/err
+  (fn []
+    (let [sending?   (boolean @orig-err_)
+          receiving? (and  sending? (impl/test-interop! "`System/err` -> Telemere" #(.println System/err %)))]
+      {:sending->telemere? sending?, :telemere-receiving? receiving?})))

@@ -173,3 +173,16 @@
     (org.slf4j.MDC/get "key")
     (org.slf4j.MDC/getCopyOfContextMap)
     (org.slf4j.MDC/clear)))
+
+(impl/add-interop-check! :slf4j
+  (fn []
+    (let [^org.slf4j.Logger sl
+          (org.slf4j.LoggerFactory/getLogger  "InteropTestTelemereLogger")
+          sending? (instance? com.taoensso.telemere.slf4j.TelemereLogger sl)
+          receiving?
+          (and sending?
+            (impl/test-interop! "SLF4J -> Telemere" #(.info sl %)))]
+
+      {:present?            true
+       :sending->telemere?  sending?
+       :telemere-receiving? receiving?})))

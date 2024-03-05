@@ -49,3 +49,15 @@
 (defn tools-logging->telemere? []
   (when-let [lf clojure.tools.logging/*logger-factory*]
     (instance? TelemereLoggerFactory lf)))
+
+(impl/add-interop-check! :tools-logging
+  (fn []
+    (let [sending? (tools-logging->telemere?)
+          receiving?
+          (and sending?
+            (impl/test-interop! "`clojure.tools.logging` -> Telemere"
+              #(clojure.tools.logging/info %)))]
+
+      {:present?            true
+       :sending->telemere?  sending?
+       :telemere-receiving? receiving?})))

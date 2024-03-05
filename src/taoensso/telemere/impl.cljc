@@ -545,3 +545,32 @@
              opts)]
 
        (and (not elide?) allow?))))
+
+;;;; Interop
+
+(enc/defonce ^:private interop-checks_ "{<id> (fn check [])}" (atom nil))
+(defn add-interop-check! [id check-fn] (swap! interop-checks_ assoc id check-fn))
+
+#?(:clj
+   (when (nil? @interop-checks_)
+     (add-interop-check! :tools-logging (fn [] {:present? (enc/have-resource? "clojure/tools/logging.clj")}))
+     (add-interop-check! :slf4j         (fn [] {:present? (enc/compile-when org.slf4j.Logger true false)}))))
+
+(defn ^:public check-interop
+  "Experimental, subject to change.
+  Runs Telemere's registered interop checks and returns
+  {<interop-id> {:keys [sending->telemere? telemere-receiving? ...]}}.
+
+  Useful for tests/debugging."
+  []
+  (enc/map-vals (fn [check-fn] (check-fn))
+    @interop-checks_))
+
+(defn test-interop! [msg test-fn]
+  (let [msg (str "Interop test: " msg " (" (enc/uuid-str) ")")
+        signal
+        (binding [*rt-sig-filter* nil] ; without runtime filters
+          (-with-signal (fn [] (test-fn msg))
+            {:stop-propagation? true, :return :signal}))]
+
+    (= (force (get signal :msg_)) msg)))
