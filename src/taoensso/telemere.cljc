@@ -19,7 +19,7 @@
   (remove-ns 'taoensso.telemere)
   (:api (enc/interns-overview)))
 
-(enc/assert-min-encore-version [3 89 0])
+(enc/assert-min-encore-version [3 90 0])
 
 ;;;; Roadmap
 ;; x Fundamentals
@@ -381,7 +381,7 @@
      (defn- interop-test! [msg form-fn]
        (let [msg (str "Interop test: " msg " (" (enc/uuid-str) ")")
              signal
-             (binding [impl/*rt-sig-filter* nil]
+             (without-filters
                (impl/with-signal {:stop-propagation? true, :return :signal}
                  (form-fn msg)))]
 
@@ -451,5 +451,12 @@
        (signal! {:level :info, :run "run", :elide? true})
        (signal! {:level :info, :run "run", :allow? false})
        (signal! {:level :info, :run "run", :allow? true })
+       (signal! {:level :info, :run "run", :trace? false})
+       (signal! {:level :info, :run "run"}))
+
+     ;; For README "performance" table
+     (enc/qb [8 1e6] ; [9.23 220.27 300.83 726.07]
+       (signal! {:level :info, :elide? true})
+       (signal! {:level :info})
        (signal! {:level :info, :run "run", :trace? false})
        (signal! {:level :info, :run "run"}))]))

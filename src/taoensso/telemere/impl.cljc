@@ -158,13 +158,14 @@
        (do                                                 form))))
 
 (comment
-  [(macroexpand '(with-tracing false :id1 :uid1 "form"))
+  [(enc/qb 1e6   (with-tracing true  :id1 :uid1 "form")) ; 302.2
+   (macroexpand '(with-tracing false :id1 :uid1 "form"))
    (macroexpand '(with-tracing true  :id1 :uid1 "form"))])
 
 ;;;; Main types
 
 (defrecord Signal
-  ;; Telemere's main public data type, we avoid field nesting and duplication
+  ;; Telemere's main public data type, we avoid nesting and duplication
   [^long schema-version instant uid,
    callsite-id location ns line column file,
    sample-rate, kind id level, ctx parent,
@@ -435,7 +436,7 @@
                 level-form   :level} opts
 
                trace?         (get opts :trace? (boolean run-form))
-               uid-form       (get opts :uid    (when trace? :auto/uuid-str))
+               uid-form       (get opts :uid    (when trace? :auto/uuid))
                ctx-form       (get opts :ctx                 `taoensso.telemere/*ctx*)
                parent-form    (get opts :parent (when trace? `taoensso.telemere.impl/*trace-parent*))
                instant-form   (get opts :instant  :auto)
