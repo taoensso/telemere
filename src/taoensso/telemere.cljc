@@ -38,7 +38,7 @@
 ;;
 ;; - Tests for utils (hostname, formatters, etc.)?
 ;; - Remaining docstrings and TODOs
-;; - Document kinds: #{:log :spy :trace :event :error :system/out :system/err <user>}
+;; - Kinds: #{:log :spy :trace :event :error :system/out :system/err <user>}
 ;; - General polish
 ;;
 ;; - Reading plan
@@ -160,20 +160,22 @@
   (enc/set-var-root! sigs/*default-handler-error-fn*
     (fn [{:keys [error] :as m}]
       (impl/signal!
-        {:level    :error
+        {:kind     :error
+         :level    :error
          :error     error
          :location {:ns "taoensso.encore.signals"}
          :id            :taoensso.encore.signals/handler-error
-         :msg      "[encore/signals] Error executing wrapped handler fn"
+         :msg      "Error executing wrapped handler fn"
          :data     (dissoc m :error)})))
 
   (enc/set-var-root! sigs/*default-handler-backp-fn*
     (fn [data]
       (impl/signal!
-        {:level    :warn
+        {:kind     :event
+         :level    :warn
          :location {:ns "taoensso.encore.signals"}
          :id            :taoensso.encore.signals/handler-back-pressure
-         :msg      "[encore/signals] Back pressure on wrapped handler fn"
+         :msg      "Back pressure on wrapped handler fn"
          :data     data}))))
 
 ;;;; Common signals
@@ -378,6 +380,13 @@
 #?(:clj
    (enc/compile-when
      (and org.slf4j.Logger com.taoensso.telemere.slf4j.TelemereLogger)
+
+     (impl/signal!
+       {:kind  :event
+        :level :info
+        :id    :taoensso.telemere/slf4j->telemere!
+        :msg   "Enabling interop: SLF4J -> Telemere"})
+
      (require '[taoensso.telemere.slf4j :as slf4j])))
 
 (comment (check-interop))

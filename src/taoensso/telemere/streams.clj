@@ -1,6 +1,6 @@
 (ns ^:no-doc taoensso.telemere.streams
   "Private ns, implementation detail.
-  Interop support: standard out/err streams -> Telemere."
+  Interop support: standard stream/s -> Telemere."
   (:require
    [taoensso.encore        :as enc :refer [have have?]]
    [taoensso.telemere.impl :as impl]))
@@ -83,10 +83,22 @@
     Resets `System/out` and `System/err` to their original value (prior to any
     `streams->telemere!` call)."
     []
-    (locking monitor
-      (let [reset-out? (when-let [[out] (reset-vals! orig-out_ nil)] (System/setOut out) true)
-            reset-err? (when-let [[err] (reset-vals! orig-err_ nil)] (System/setErr err) true)]
-        (or reset-out? reset-err?))))
+    (let [[orig-out _] (reset-vals! orig-out_ nil)
+          [orig-err _] (reset-vals! orig-err_ nil)]
+
+      (impl/signal!
+        {:kind  :event
+         :level :info
+         :id    :taoensso.telemere/streams->telemere!
+         :msg   "Disabling interop: standard stream/s -> Telemere"
+         :data  {:system/out? (boolean orig-out)
+                 :system/err? (boolean orig-err)}})
+
+      (locking monitor
+        (when orig-out (System/setOut orig-out))
+        (when orig-err (System/setErr orig-err)))
+
+      (boolean (or orig-out orig-err))))
 
   (defn ^:public streams->telemere!
     "Experimental, subject to change without notice!
@@ -110,6 +122,14 @@
      (when (or out err)
        (let [out (when out (telemere-print-stream out))
              err (when err (telemere-print-stream err))]
+
+         (impl/signal!
+           {:kind  :event
+            :level :info
+            :id    :taoensso.telemere/streams->telemere!
+            :msg   "Enabling interop: standard stream/s -> Telemere"
+            :data  {:system/out? (boolean out)
+                    :system/err? (boolean err)}})
 
          (locking monitor
            (when out (compare-and-set! orig-out_ nil System/out) (System/setOut out))

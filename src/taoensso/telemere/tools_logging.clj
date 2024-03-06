@@ -42,6 +42,13 @@
 (defn ^:public tools-logging->telemere!
   "Configures `clojure.tools.logging` to use Telemere as its logging implementation."
   []
+
+  (impl/signal!
+    {:kind  :event
+     :level :info
+     :id    :taoensso.telemere/clojure.tools.logging->telemere!
+     :msg  "Enabling interop: `clojure.tools.logging` -> Telemere"})
+
   (alter-var-root #'clojure.tools.logging/*logger-factory*
     (fn [_] (TelemereLoggerFactory.))))
 
