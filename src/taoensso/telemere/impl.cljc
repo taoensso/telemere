@@ -315,7 +315,7 @@
            [#_defaults #_elide? #_allow? #_callsite-id,
             elidable? location instant uid middleware,
             sample-rate ns kind id level filter when rate-limit,
-            ctx parent trace?, let data msg error run & user-opts]}])
+            ctx parent trace?, do let data msg error run & user-opts]}])
 
        :log! ; [msg] [level-or-opts msg] => <allowed?>
        '([      msg]
@@ -324,7 +324,7 @@
            [#_defaults #_elide? #_allow? #_callsite-id,
             elidable? location instant uid middleware,
             sample-rate ns kind id level filter when rate-limit,
-            ctx parent trace?, let data msg error #_run & user-opts]}
+            ctx parent trace?, do let data msg error #_run & user-opts]}
           msg])
 
        :event! ; [id] [level-or-opts id] => <allowed?>
@@ -334,7 +334,7 @@
            [#_defaults #_elide? #_allow? #_callsite-id,
             elidable? location instant uid middleware,
             sample-rate ns kind id level filter when rate-limit,
-            ctx parent trace?, let data msg error #_run & user-opts]}
+            ctx parent trace?, do let data msg error #_run & user-opts]}
           id])
 
        :error! ; [error] [id-or-opts error] => <error>
@@ -344,7 +344,7 @@
            [#_defaults #_elide? #_allow? #_callsite-id,
             elidable? location instant uid middleware,
             sample-rate ns kind id level filter when rate-limit,
-            ctx parent trace?, let data msg error #_run & user-opts]}
+            ctx parent trace?, do let data msg error #_run & user-opts]}
           error])
 
        (:trace! :spy!) ; [form] [id-or-opts form] => <run result> (value or throw)
@@ -354,7 +354,7 @@
            [#_defaults #_elide? #_allow? #_callsite-id,
             elidable? location instant uid middleware,
             sample-rate ns kind id level filter when rate-limit,
-            ctx parent trace?, let data msg error run & user-opts]}
+            ctx parent trace?, do let data msg error run & user-opts]}
           form])
 
        :catch->error! ; [form] [level-or-opts form] => <run result> (value or throw)
@@ -364,7 +364,7 @@
            [#_defaults #_elide? #_allow? #_callsite-id, rethrow? catch-val,
             elidable? location instant uid middleware,
             sample-rate ns kind id level filter when rate-limit,
-            ctx parent trace?, let data msg error #_run & user-opts]}
+            ctx parent trace?, do let data msg error #_run & user-opts]}
           form])
 
        :uncaught->error! ; [] [id-or-opts] => nil
@@ -374,7 +374,7 @@
            [#_defaults #_elide? #_allow? #_callsite-id,
             elidable? location instant uid middleware,
             sample-rate ns kind id level filter when rate-limit,
-            ctx parent trace?, let data msg error #_run & user-opts]}])
+            ctx parent trace?, do let data msg error #_run & user-opts]}])
 
        (enc/unexpected-arg! macro-id))))
 
@@ -452,38 +452,34 @@
                         (catch :any ~'__t (RunResult. nil       ~'__t (- (enc/now-nano*) ~'__t0)))))))
 
                signal-form
-               (let [{let-form         :let
+               (let [{do-form          :do
+                      let-form         :let
                       data-form        :data
                       msg-form         :msg
                       error-form       :error
                       sample-rate-form :sample-rate}
                      opts
 
-                     let-form  (or let-form '[])
-                     msg-form  (parse-msg-form msg-form)
-
-                     ;; No, better leave it to user re: whether or not to delay-wrap
-                     ;; data-form
-                     ;; (when data-form
-                     ;;   (if (enc/call-in-form? data-form)
-                     ;;     `(delay ~data-form)
-                     ;;     (do      data-form)))
+                     let-form (or let-form '[])
+                     msg-form (parse-msg-form msg-form)
 
                      user-opts-form
                      (not-empty
                        (dissoc opts
                          :elidable? :location :instant :uid :middleware,
                          :sample-rate :ns :kind :id :level :filter :when #_:rate-limit,
-                         :ctx :parent #_:trace?, :let :data :msg :error :run
+                         :ctx :parent #_:trace?, :do :let :data :msg :error :run
                          :elide? :allow? :callsite-id))]
 
                  ;; Eval let bindings AFTER call filtering but BEFORE data, msg
-                 `(let ~let-form ; Allow to throw during `signal-value_` deref
-                    (new-signal ~'__instant ~'__uid
-                      ~callsite-id ~location ~ns ~line ~column ~file,
-                      ~sample-rate-form, ~kind-form ~'__id ~level-form, ~ctx-form ~parent-form,
-                      ~user-opts-form ~data-form ~msg-form,
-                      '~run-form ~'__run-result ~error-form)))]
+                 `(do
+                    ~do-form
+                    (let ~let-form ; Allow to throw during `signal-value_` deref
+                      (new-signal ~'__instant ~'__uid
+                        ~callsite-id ~location ~ns ~line ~column ~file,
+                        ~sample-rate-form, ~kind-form ~'__id ~level-form, ~ctx-form ~parent-form,
+                        ~user-opts-form ~data-form ~msg-form,
+                        '~run-form ~'__run-result ~error-form))))]
 
            #_ ; Sacrifice some perf to de-dupe (possibly large) `run-form`
            (let [~'__run-fn ~run-fn-form]

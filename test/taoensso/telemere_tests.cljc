@@ -163,24 +163,24 @@
         (is (= rv5 9)) (is (=  (:msg_ sv5) nil))
         (is (= @c  12) "5x run + 4x let (1x suppressed) + 3x msg (1x suppressed)")]))
 
-   (testing "`:let` + `:data`"
+   (testing "`:do` + `:let` + `:data`/`:my-opt`"
      (vec
        (for [dk [:data :my-opt]]
          (let [c         (enc/counter)
-               [rv1 sv1] (ws (sig! {:level :info, :run (c), :let [n (c)], dk        {:n n, :c1 (c)}}))
-               [rv2 sv2] (ws (sig! {:level :info, :run (c), :let [n (c)], dk (delay {:n n, :c2 (c)})}))
-               [rv3 sv3] (ws (sig! {:level :info, :run (c), :let [n (c)], dk        {:n n, :c3 (c)},  :allow? false}))
-               [rv4 sv4] (ws (sig! {:level :info, :run (c), :let [n (c)], dk (delay {:n n, :c4 (c)}), :allow? false}))
-               [rv5 sv5] (ws (sig! {:level :info, :run (c), :let [n (c)], dk        [:n n, :c5 (c)]}))
-               [rv6 sv6] (ws (sig! {:level :info, :run (c), :let [n (c)], dk (delay [:n n, :c6 (c)])}))]
+               [rv1 sv1] (ws (sig! {:level :info, :run (c), :do (c), :let [n (c)], dk        {:n n, :c1 (c)}}))
+               [rv2 sv2] (ws (sig! {:level :info, :run (c), :do (c), :let [n (c)], dk (delay {:n n, :c2 (c)})}))
+               [rv3 sv3] (ws (sig! {:level :info, :run (c), :do (c), :let [n (c)], dk        {:n n, :c3 (c)},  :allow? false}))
+               [rv4 sv4] (ws (sig! {:level :info, :run (c), :do (c), :let [n (c)], dk (delay {:n n, :c4 (c)}), :allow? false}))
+               [rv5 sv5] (ws (sig! {:level :info, :run (c), :do (c), :let [n (c)], dk        [:n n, :c5 (c)]}))
+               [rv6 sv6] (ws (sig! {:level :info, :run (c), :do (c), :let [n (c)], dk (delay [:n n, :c6 (c)])}))]
 
-           [(is (= rv1 0))  (is (=        (get sv1 dk)  {:n 1, :c1 2}))
-            (is (= rv2 3))  (is (= (force (get sv2 dk)) {:n 4, :c2 12}))
-            (is (= rv3 5))  (is (=        (get sv3 dk)  nil))
-            (is (= rv4 6))  (is (= (force (get sv4 dk)) nil))
-            (is (= rv5 7))  (is (=        (get sv5 dk)  [:n 8,  :c5 9]))
-            (is (= rv6 10)) (is (= (force (get sv6 dk)) [:n 11, :c6 13]))
-            (is (= @c  14)  "6x run + 4x let (2x suppressed) + 4x data (2x suppressed)")]))))
+           [(is (= rv1 0))  (is (=        (get sv1 dk)  {:n 2, :c1 3}))
+            (is (= rv2 4))  (is (= (force (get sv2 dk)) {:n 6, :c2 16}))
+            (is (= rv3 7))  (is (=        (get sv3 dk)  nil))
+            (is (= rv4 8))  (is (= (force (get sv4 dk)) nil))
+            (is (= rv5 9))  (is (=        (get sv5 dk)  [:n 11, :c5 12]))
+            (is (= rv6 13)) (is (= (force (get sv6 dk)) [:n 15, :c6 17]))
+            (is (= @c  18)  "6x run + 4x do (2x suppressed) + 4x let (2x suppressed) + 4x data (2x suppressed)")]))))
 
    (testing "Manual `let` (unconditional) + `:data`/`:my-opt`"
      (vec
