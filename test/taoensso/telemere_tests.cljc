@@ -283,7 +283,7 @@
       {:async nil, :error-fn (fn [x] (reset! error_ x)), :rl-error nil,
        :middleware [(fn [sv] (if *throwing-handler-middleware?* (throw ex1) sv))]}
 
-      [(is (->> (sig! {:level :info, :filter    (throw ex1)}) (throws? :ex-info "TestEx")) "`~filterable-expansion/allow` throws at call")
+      [(is (->> (sig! {:level :info, :when      (throw ex1)}) (throws? :ex-info "TestEx")) "`~filterable-expansion/allow` throws at call")
        (is (->> (sig! {:level :info, :instant   (throw ex1)}) (throws? :ex-info "TestEx")) "`~instant-form`               throws at call")
        (is (->> (sig! {:level :info, :id        (throw ex1)}) (throws? :ex-info "TestEx")) "`~id-form`                    throws at call")
        (is (->> (sig! {:level :info, :uid       (throw ex1)}) (throws? :ex-info "TestEx")) "`~uid-form`                   throws at call")
