@@ -19,7 +19,7 @@
   (remove-ns 'taoensso.telemere)
   (:api (enc/interns-overview)))
 
-(enc/assert-min-encore-version [3 90 0])
+(enc/assert-min-encore-version [3 91 0])
 
 ;;;; Roadmap
 ;; x Fundamentals

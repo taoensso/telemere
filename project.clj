@@ -8,17 +8,17 @@
    :url  "https://www.eclipse.org/legal/epl-v10.html"}
 
   :dependencies
-  [[com.taoensso/encore    "3.90.0"]
-   [org.clj-commons/pretty "2.2.1"]]
+  [[com.taoensso/encore    "3.91.0"]
+   [org.clj-commons/pretty "2.3.0"]]
 
   :test-paths ["test" #_"src"]
 
   :profiles
   {;; :default [:base :system :user :provided :dev]
    :provided {:dependencies [[org.clojure/clojurescript "1.11.132"]
-                             [org.clojure/clojure       "1.11.1"]]}
-   :c1.12    {:dependencies [[org.clojure/clojure       "1.12.0-alpha8"]]}
-   :c1.11    {:dependencies [[org.clojure/clojure       "1.11.1"]]}
+                             [org.clojure/clojure       "1.11.2"]]}
+   :c1.12    {:dependencies [[org.clojure/clojure       "1.12.0-alpha9"]]}
+   :c1.11    {:dependencies [[org.clojure/clojure       "1.11.2"]]}
    :c1.10    {:dependencies [[org.clojure/clojure       "1.10.1"]]}
    :c1.9     {:dependencies [[org.clojure/clojure       "1.9.0"]]}
 
@@ -28,7 +28,7 @@
     :aot [taoensso.graal-tests]
     :uberjar-name "graal-tests.jar"
     :dependencies
-    [[org.clojure/clojure                  "1.11.1"]
+    [[org.clojure/clojure                  "1.11.2"]
      [com.github.clj-easy/graal-build-time "1.0.5"]]}
 
    :dev
@@ -49,7 +49,7 @@
      [com.taoensso/slf4j-telemere        "1.0.0-SNAPSHOT"]
      ;; [org.slf4j/slf4j-simple          "2.0.12"]
      ;; [org.slf4j/slf4j-nop             "2.0.12"]
-     [io.opentelemetry/opentelemetry-api "1.35.0"]]
+     [io.opentelemetry/opentelemetry-api "1.36.0"]]
 
     :plugins
     [[lein-pprint                     "1.3.2"]

@@ -14,9 +14,14 @@
   :profiles
   {:provided
    {:dependencies
-    [[org.clojure/clojure   "1.11.1"]
+    [[org.clojure/clojure   "1.11.2"]
      [org.slf4j/slf4j-api   "2.0.12"]
-     [com.taoensso/telemere "1.0.0-SNAPSHOT"]]}}
+     [com.taoensso/telemere "1.0.0-SNAPSHOT"]]}
+
+   :dev
+   {:plugins
+    [[lein-pprint  "1.3.2"]
+     [lein-ancient "0.7.0"]]}}
 
   :aliases
   {"deploy-lib" ["do" #_["build-once"] ["deploy" "clojars"] ["install"]]})
