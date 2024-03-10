@@ -10,8 +10,7 @@
    [taoensso.encore         :as enc :refer [have have?]]
    [taoensso.encore.signals :as sigs]
    [taoensso.telemere.impl  :as impl]
-   #?(:clj [taoensso.telemere.streams :as streams])
-
+   #?(:clj [taoensso.telemere.streams     :as streams])
    #?(:clj [clj-commons.format.exceptions :as fmt-ex])
    #?(:clj [clj-commons.ansi              :as fmt-ansi])))
 
@@ -76,7 +75,7 @@
 
   impl/msg-splice
   impl/msg-skip
-  #?(:clj impl/with-signal)
+  #?(:clj impl/with-signals)
   #?(:clj impl/signal!))
 
 ;;;; Context

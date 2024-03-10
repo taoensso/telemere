@@ -76,7 +76,7 @@
          uid-form))))
 
 (comment
-  (enc/qb 1e6 ; [164.72 184.51 301.8 539.49]
+  (enc/qb 1e6 ; [161.36 184.69 274.53 468.67]
     (enc/uuid)
     (enc/uuid-str)
     (enc/nanoid)
@@ -84,11 +84,32 @@
 
 ;;;; Messages
 
-(deftype MsgSplice [args])
 (deftype MsgSkip   [])
+(deftype MsgSplice [args])
 
-(defn ^:public msg-splice "TODO Docstring" [args] (MsgSplice. args))
-(defn ^:public msg-skip   "TODO Docstring" []     (MsgSkip.))
+(def ^:public msg-skip
+  "For use within signal message vectors.
+  Special value that will be ignored (no-op) when creating message.
+  Useful for conditionally skipping parts of message content, etc.:
+
+    (signal! {:msg [\"Hello\" (if <cond> <then> msg-skip) \"world\"] <...>}) or
+    (log!          [\"Hello\" (if <cond> <then> msg-skip) \"world\"]), etc.
+
+      %> {:msg_ \"Hello world\" <...>}"
+
+  (MsgSkip.))
+
+(defn ^:public msg-splice
+  "For use within signal message vectors.
+  Wraps given arguments so that they're spliced when creating message.
+  Useful for conditionally splicing in extra message content, etc.:
+
+    (signal! {:msg [(when <cond> (msg-splice [\"Username:\" \"Steve\"])) <...>]}) or
+    (log!          [(when <cond> (msg-splice [\"Username:\" \"Steve\"]))])
+
+      %> {:msg_ \"Username: Steve\"}"
+
+  [args] (MsgSplice. args))
 
 (let [;; xform (map #(if (nil? %) "nil" %))
       xform
@@ -108,15 +129,21 @@
             ([acc in] (rf* acc in)))))]
 
   (defn signal-msg
-    "Returns string formed by joining all args without separator,
-    rendering nils as \"nil\"."
+    "Returns string formed by joining all args with \" \" separator,
+    rendering nils as \"nil\". Supports `msg-skip`, `msg-splice`.
+
+    API intended to be usefully different to `str`:
+      -        `str`: no   spacers, skip nils, no     splicing
+      - `signal-msg`: auto spacers, show nils, opt-in splicing"
+
     {:tag #?(:clj 'String :cljs 'string)}
-    [args] (enc/str-join nil xform args)))
+    [args] (enc/str-join " " xform args)))
 
 (comment
-  (enc/qb 2e6 ; [280.29 408.3]
-    (str         "a" "b" "c" nil :kw)
-    (signal-msg ["a" "b" "c" nil :kw (msg-splice ["d" "e"])])))
+  (enc/qb 2e6 ; [305.61 625.35]
+    (str         "a" "b" "c" nil :kw)                         ; "abc:kw"
+    (signal-msg ["a" "b" "c" nil :kw (msg-splice ["d" "e"])]) ; "a b c nil :kw d e"
+    ))
 
 #?(:clj
    (defn- parse-msg-form [msg-form]
@@ -195,60 +222,71 @@
 
 ;;;; Handlers
 
-(enc/defonce ^:dynamic *sig-spy*      "To support `with-signal`" nil)
-(enc/defonce ^:dynamic *sig-handlers* "?[<wrapped-handler-fn>]"  nil)
+(enc/defonce ^:dynamic *sig-spy*      "To support `with-signals`" nil)
+(enc/defonce ^:dynamic *sig-handlers* "?[<wrapped-handler-fn>]"   nil)
 
-(defn -with-signal
-  "Private util to support `with-signal` macro."
+(defn- force-msg [sig]
+  (if-not (map? sig)
+    sig
+    (if-let [e (find sig :msg_)]
+      (assoc sig :msg_ (force (val e)))
+      (do    sig))))
+
+(defn -with-signals
+  "Private util to support `with-signals` macro."
   [form-fn
-   {:keys [return trap-errors? stop-propagation? force-msg?]
-    :or   {return :vec}}]
+   {:keys [handle? force-msg? trap-errors?]
+    :or   {handle? true}}]
 
-  (let [sv_ (volatile! nil)]
-    (binding [*sig-spy* [sv_ stop-propagation?]]
+  (let [sigs_ (volatile! nil)]
+    (binding [*sig-spy* [sigs_ (not handle?)]]
       (let [form-result
-            (if trap-errors?
-              (enc/try* {:okay (form-fn)} (catch :any t t {:error t}))
-              (do              (form-fn)))
+            (if-not trap-errors?
+              (form-fn)
+              (enc/try*
+                (do             [(form-fn) nil])
+                (catch :any t t [nil         t])))]
 
-            signal
-            (when-let [sv @sv_]
-              (if-not force-msg?
-                sv
-                (if-let [e (find sv :msg_)]
-                  (assoc sv :msg_ (force (val e)))
-                  (do    sv))))]
-
-        (case return
-          :vec         [form-result signal]
-          :form-result  form-result
-          :signal                   signal
-          (enc/unexpected-arg!
-            {:context  `with-signal
-             :param    'return
-             :expected #{:vec :form-result :signal}}))))))
+        [form-result
+         (when-let [sigs @sigs_]
+           (if force-msg?
+             (mapv force-msg sigs)
+             (do             sigs)))]))))
 
 #?(:clj
-   (defmacro ^:public with-signal
-     "Util for tests/debugging.
-     Executes given form and returns [<form-result> <last-signal-dispatched-by-form>].
-     If `trap-errors?` is true, form result will be wrapped by {:keys [okay error]}."
+   (defmacro ^:public with-signals
+     "Executes given form and records any signals triggered by it.
+     Return value depends on options. Useful for tests/debugging.
+
+     Options:
+
+       `trap-errors?`
+         If  true: returns [[form-value form-error] signals], trapping any form error.
+         If false: returns [ form-value             signals], throwing on  form error.
+         Default: false.
+
+       `handle?`
+         Should registered handlers receive signals triggered by form, as usual?
+         Default: true.
+
+       `force-msg?`
+         Should delayed `:msg_` fields in signals be replaced with realized strings?
+         Default: false."
 
      {:arglists
-      '([form]
-        [{:keys [return trap-errors? stop-propagation? force-msg?]}
-         form])}
+      '([                                          form]
+        [{:keys [handle? force-msg? trap-errors?]} form])}
 
-     ([     form] `(-with-signal (fn [] ~form) nil))
-     ([opts form] `(-with-signal (fn [] ~form) ~opts))))
+     ([     form] `(-with-signals (fn [] ~form) nil))
+     ([opts form] `(-with-signals (fn [] ~form) ~opts))))
 
 (defn dispatch-signal!
-  "Dispatches given signal to registered handlers, supports `with-signal`."
+  "Dispatches given signal to registered handlers, supports `with-signals`."
   [signal]
   (or
-    (when-let [[v stop-propagation?] *sig-spy*]
-      (vreset! v (sigs/signal-value signal nil))
-      stop-propagation?)
+    (when-let [[sigs_ skip-handlers?] *sig-spy*]
+      (vswap! sigs_ #(conj (or % []) (sigs/signal-value signal nil)))
+      skip-handlers?)
 
     (sigs/call-handlers! *sig-handlers* signal)))
 
@@ -407,10 +445,13 @@
       - Mention ability to delay-wrap :data
       - Mention combo `:sample-rate` stuff (call * handler)
 
+     - Document Signal fields
+     - Link to signal-flow diagram
+
      - If :run => returns body run-result (re-throwing)
        Otherwise returns true iff call allowed
 
-     [1] Ref. <https://github.com/taoensso/telemere/blob/master/signal-flow.svg>"
+     [1] Ref. <https://tinyurl.com/telemere-signal-flow>"
      {:arglists (signal-arglists :signal!)}
      [opts]
      (have? map? opts) ; We require const map keys, but vals may require eval
@@ -518,7 +559,7 @@
                   true))))))))
 
 (comment
-  (with-signal  (signal! {:level :warn :let [x :x] :msg ["Test" "message" x] :data {:a :A :x x} :run (+ 1 2)}))
+  (with-signals (signal! {:level :warn :let [x :x] :msg ["Test" "message" x] :data {:a :A :x x} :run (+ 1 2)}))
   (macroexpand '(signal! {:level :warn :let [x :x] :msg ["Test" "message" x] :data {:a :A :x x} :run (+ 1 2)}))
 
   (do
@@ -564,9 +605,9 @@
 
 (defn test-interop! [msg test-fn]
   (let [msg (str "Interop test: " msg " (" (enc/uuid-str) ")")
-        signal
+        [_ [signal]]
         (binding [*rt-sig-filter* nil] ; without runtime filters
-          (-with-signal (fn [] (test-fn msg))
-            {:stop-propagation? true, :return :signal}))]
+          (-with-signals (fn [] (test-fn msg)) 
+            {:handle? false}))]
 
     (= (force (get signal :msg_)) msg)))
