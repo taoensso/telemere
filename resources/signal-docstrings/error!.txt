@@ -1,0 +1,29 @@
+"Error" signal call, focused on error + id.
+
+API: [error] [id-or-opts error] => given error (unconditional)
+Default  kind: `:error`
+Default level: `:error`
+
+Examples:
+
+  (throw (error!         (ex-info "MyEx" {}))) ; %> {:kind :error, :level :error, :error <MyEx> ...}
+  (throw (error! ::my-id (ex-info "MyEx" {}))) ; %> {... :id ::my-id ...}
+  (throw
+    (error!
+      {:let  [x "x"] ; Available to `:data` and `:msg`
+       :data {:x x}
+       :msg  ["My message:" x]}
+
+      (ex-info "MyEx" {}))) ; %> {... :data {x "x"}, :msg_ "My msg: x" ...}
+
+Tips:
+
+  - Test using `with-signals`: (with-signals (error! ...)).
+  - Supports the same options as other signals [3].
+
+  - `error` arg is a platform error (`java.lang.Throwable` or `js/Error`).
+  - Can conveniently be wrapped by `throw`: (throw (error! ...)).
+
+[1] See `help:signal-handling` docstring
+[2] See `help:signal-content`  docstring
+[3] See `help:signal-options`  docstring

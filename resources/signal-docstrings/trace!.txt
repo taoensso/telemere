@@ -1,0 +1,40 @@
+"Trace" signal call, focused on form + id.
+
+API: [form] [id-or-opts form] => form's result (value/throw) (unconditional)
+Default  kind: `:trace`
+Default level: `:info` (intentionally NOT `:trace`!)
+
+When conditions are met [1], creates a Telemere signal [2] and dispatches it to
+registered handlers for processing (writing to console/disk/db, etc.).
+
+Examples:
+
+  (trace! (+ 1 2))         ; %> {:kind :trace, :level :info, :run-form '(+ 1 2),
+                           ;     :run-value 3, :parent {:keys [id uid]} ...
+                           ;     :msg "(+ 1 2) => 3" ...}
+  (trace! ::my-id (+ 1 2)) ; %> {... :id ::my-id ...}
+  (trace!
+    {:let  [x "x"] ; Available to `:data` and `:msg`
+     :data {:x x}}
+
+    (+ 1 2)) ; %> {... :data {x "x"}, :msg_ "My msg: x" ...}
+
+Tips:
+
+  - Test using `with-signals`: (with-signals (trace! ...)).
+  - Supports the same options as other signals [3].
+
+  - Identical to `spy!`, but focused on form + id rather than form + level.
+
+  - Useful for debugging/monitoring forms, and tracing (nested) execution flow.
+  - Execution of `form` arg may trigger additional (nested) signals.
+    Each signal's `:parent` key will indicate its immediate parent.
+
+  - Default level is `:info`, not `:trace`! The name "trace" in "trace signal"
+    refers to the general action of tracing program flow rather than to the
+    common logging level of the same name.
+
+----------------------------------------
+[1] See `help:signal-handling` docstring
+[2] See `help:signal-content`  docstring
+[3] See `help:signal-options`  docstring

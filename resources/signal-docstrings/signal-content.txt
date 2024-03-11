@@ -1,0 +1,36 @@
+Signals are initially maps with {:keys [instant id ns level data msg_ ...]},
+though they can be modified by call and/or handler middleware.
+
+Default keys:
+
+`:schema-version` - Int version of signal schema (current: 1)
+
+`:instant` - Platform instant [1] when signal was created
+`:level`   - Signal level ∈ #{<int> :trace :debug :info :warn :error :fatal :report ...}
+`:kind`    - Signal ?kind ∈ #{nil :event :error :log :trace :spy <user-val> ...}
+`:id`      - ?id of signal call     (common to all signals created by signal call, contrast with `:uid`)
+`:uid`     - ?id of signal instance (unique to each signal created by signal call, contrast with `:id`)
+
+`:data`  - Arb user-level data     ?val (usu. a map) given to signal call
+`:msg`   - Arb user-level message  ?str              given to signal call
+`:error` - Arb user-level platform ?error [2]        given to signal call
+
+`:run-form`     - Unevaluated ?form given to signal macro as `:run`
+`:run-value`    - Successful return ?val of  `:run` ?form
+`:end-instant`  - Platform ?instant [1] when `:run` ?form completed
+`:runtime-nsecs`- ?int nanosecs runtime of   `:run` ?form
+
+`:ctx`      - ?val of `*ctx*` (arb user-level state) when signal was created
+`:parent`   - ?{:keys [id uid]} of parent signal, present in nested signals when tracing
+`:location` - ?{:keys [ns file line column]} signal call location
+`:ns`       - ?str namespace of signal call, same as (:ns     location)
+`:file`     - ?str filename  of signal call, same as (:file   location)
+`:line`     - ?int line      of signal call, same as (:line   location)
+`:column`   - ?int column    of signal call, same as (:column location)
+
+`:sample-rate` - ?rate ∈ℝ[0,1] for combined call AND handler sampling (0.75 => allow 75% of signals, nil => allow all)
+
+If anything is unclear, please ping me (@ptaoussanis) so that I can improve these docs!
+
+[1] Clj: `java.time.Instant`,    Cljs: `js/Date`
+[2] Clj: `java.lang.Throwable`,  Cljs: `js/Error`

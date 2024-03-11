@@ -194,7 +194,7 @@
 (defrecord Signal
   ;; Telemere's main public data type, we avoid nesting and duplication
   [^long schema-version instant uid,
-   callsite-id location ns line column file,
+   location ns line column file,
    sample-rate, kind id level, ctx parent,
    data msg_ error run-form run-value,
    end-instant runtime-nsecs])
@@ -256,7 +256,7 @@
 #?(:clj
    (defmacro ^:public with-signals
      "Executes given form and records any signals triggered by it.
-     Return value depends on options. Useful for tests/debugging.
+     Return value depends on given options. Useful for tests/debugging.
 
      Options:
 
@@ -301,7 +301,7 @@
   ^Signal
   ;; Note all dynamic vals passed as explicit args for better control
   [instant uid,
-   callsite-id location ns line column file,
+   location ns line column file,
    sample-rate, kind id level, ctx parent,
    user-opts data msg_,
    run-form run-result error]
@@ -321,14 +321,14 @@
                    msg_)]
 
             (Signal. 1 instant uid,
-              callsite-id location ns line column file,
+              location ns line column file,
               sample-rate, kind id level, ctx parent,
               data msg_,
               run-error run-form run-value,
               end-instant runtime-nsecs))
 
           (Signal. 1 instant uid,
-            callsite-id location ns line column file,
+            location ns line column file,
             sample-rate, kind id level, ctx parent,
             data msg_, error nil nil instant nil))]
 
@@ -340,66 +340,69 @@
   (enc/qb 1e6 ; 55.67
     (new-signal
       nil nil nil nil nil nil nil nil nil nil
-      nil nil nil nil nil nil nil nil nil nil)))
+      nil nil nil nil nil nil nil nil nil)))
 
 ;;;; Signal API helpers
+
+#?(:clj (defmacro signal-docstring  [rname] (enc/slurp-resource (str "signal-docstrings/" (name rname) ".txt"))))
+#?(:clj (defmacro defhelp       [sym rname] `(enc/def* ~sym {:doc ~(eval `(signal-docstring ~rname))} "See docstring")))
 
 #?(:clj
    (defn signal-arglists [macro-id]
      (case macro-id
 
-       :signal! ; [opts] => <run result> or <allowed?>
+       :signal! ; [opts] => allowed? / run result (value or throw)
        '([{:as opts :keys
-           [#_defaults #_elide? #_allow? #_callsite-id,
+           [#_defaults #_elide? #_allow? #_expansion-id, ; Undocumented
             elidable? location instant uid middleware,
             sample-rate ns kind id level when rate-limit,
             ctx parent trace?, do let data msg error run & user-opts]}])
 
-       :log! ; [msg] [level-or-opts msg] => <allowed?>
+       :event! ; [id] [id level-or-opts] => allowed?
+       '([id      ]
+         [id level]
+         [id
+          {:as opts :keys
+           [#_defaults #_elide? #_allow? #_expansion-id,
+            elidable? location instant uid middleware,
+            sample-rate ns kind id level when rate-limit,
+            ctx parent trace?, do let data msg error #_run & user-opts]}])
+
+       :log! ; [msg] [level-or-opts msg] => allowed?
        '([      msg]
          [level msg]
          [{:as opts :keys
-           [#_defaults #_elide? #_allow? #_callsite-id,
+           [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location instant uid middleware,
             sample-rate ns kind id level when rate-limit,
             ctx parent trace?, do let data msg error #_run & user-opts]}
           msg])
 
-       :event! ; [id] [level-or-opts id] => <allowed?>
-       '([      id]
-         [level id]
-         [{:as opts :keys
-           [#_defaults #_elide? #_allow? #_callsite-id,
-            elidable? location instant uid middleware,
-            sample-rate ns kind id level when rate-limit,
-            ctx parent trace?, do let data msg error #_run & user-opts]}
-          id])
-
-       :error! ; [error] [id-or-opts error] => <error>
+       :error! ; [error] [id-or-opts error] => given error
        '([   error]
          [id error]
          [{:as opts :keys
-           [#_defaults #_elide? #_allow? #_callsite-id,
+           [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location instant uid middleware,
             sample-rate ns kind id level when rate-limit,
             ctx parent trace?, do let data msg error #_run & user-opts]}
           error])
 
-       (:trace! :spy!) ; [form] [id-or-opts form] => <run result> (value or throw)
+       (:trace! :spy!) ; [form] [id-or-opts form] => run result (value or throw)
        '([   form]
          [id form]
          [{:as opts :keys
-           [#_defaults #_elide? #_allow? #_callsite-id,
+           [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location instant uid middleware,
             sample-rate ns kind id level when rate-limit,
             ctx parent trace?, do let data msg error run & user-opts]}
           form])
 
-       :catch->error! ; [form] [level-or-opts form] => <run result> (value or throw)
-       '([      form]
-         [level form]
+       :catch->error! ; [form] [id-or-opts form] => run result (value or throw)
+       '([   form]
+         [id form]
          [{:as opts :keys
-           [#_defaults #_elide? #_allow? #_callsite-id, rethrow? catch-val,
+           [#_defaults #_elide? #_allow? #_expansion-id, rethrow? catch-val,
             elidable? location instant uid middleware,
             sample-rate ns kind id level when rate-limit,
             ctx parent trace?, do let data msg error #_run & user-opts]}
@@ -409,7 +412,7 @@
        '([  ]
          [id]
          [{:as opts :keys
-           [#_defaults #_elide? #_allow? #_callsite-id,
+           [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location instant uid middleware,
             sample-rate ns kind id level when rate-limit,
             ctx parent trace?, do let data msg error #_run & user-opts]}])
@@ -418,48 +421,46 @@
 
 #?(:clj
    (defn signal-opts
-     "Util to help write common signal wrapper macros:
-       [[<config>]               val-y] => signal-opts
-       [[<config>] opts-or-val-x val-y] => signal-opts"
-     ([arg-key or-key defaults             arg-val] {:defaults defaults, arg-key arg-val})
-     ([arg-key or-key defaults opts-or-key arg-val]
-      (if    (map?   opts-or-key)
-        (let [opts   opts-or-key] (conj {:defaults defaults, arg-key arg-val} opts))
-        (let [or-val opts-or-key]       {:defaults defaults, arg-key arg-val, or-key or-val})))))
+     "Util to help write common signal wrapper macros."
+     [context defaults main-key extra-key arg-order args]
 
-(comment
-  [(signal-opts :msg :level {:level :info}                "foo")
-   (signal-opts :msg :level {:level :info} {:level :warn} "foo")
-   (signal-opts :msg :level {:level :info}         :warn  "foo")])
+     (enc/cond
+       :let [num-args (count args)]
+
+       (not (#{1 2} num-args))
+       (throw
+         (ex-info (str "Wrong number of args (" num-args ") passed to: " context)
+           {:context  context
+            :num-args {:actual num-args, :expected #{1 2}}
+            :args                  args}))
+
+       :let [[main-val extra-val-or-opts]
+             (case arg-order
+               :dsc         args,  ; [main ...]
+               :asc (reverse args) ; [... main]
+               (enc/unexpected-arg!
+                 arg-order))]
+
+       (if (or (= num-args 1) (map? extra-val-or-opts))
+         (let [opts      extra-val-or-opts] (conj {:defaults defaults, main-key main-val                     } opts))
+         (let [extra-val extra-val-or-opts]       {:defaults defaults, main-key main-val, extra-key extra-val})))))
+
+(comment (signal-opts `signal! {:level :info} :id :level :dsc [::my-id {:level :warn}]))
 
 ;;;; Signal macro
 
 #?(:clj
    (defmacro ^:public signal!
-     "Expands to a low-level signal call.
-
-     TODO Docstring
-      - How low-level is this? Should location, ctx, etc. be in public arglists?
-      - Describe
-      - Reference diagram link [1]
-      - Mention ability to delay-wrap :data
-      - Mention combo `:sample-rate` stuff (call * handler)
-
-     - Document Signal fields
-     - Link to signal-flow diagram
-
-     - If :run => returns body run-result (re-throwing)
-       Otherwise returns true iff call allowed
-
-     [1] Ref. <https://tinyurl.com/telemere-signal-flow>"
-     {:arglists (signal-arglists :signal!)}
+     "Generic low-level signal call, also aliased in Encore."
+     {:doc      (signal-docstring :signal!)
+      :arglists (signal-arglists  :signal!)}
      [opts]
      (have? map? opts) ; We require const map keys, but vals may require eval
      (let [defaults             (get    opts :defaults)
            opts (merge defaults (dissoc opts :defaults))
            {run-form :run} opts
 
-           {:keys [callsite-id location elide? allow?]}
+           {:keys [#_expansion-id location elide? allow?]}
            (sigs/filterable-expansion
              {:macro-form &form
               :macro-env  &env
@@ -510,14 +511,14 @@
                          :elidable? :location :instant :uid :middleware,
                          :sample-rate :ns :kind :id :level :filter :when #_:rate-limit,
                          :ctx :parent #_:trace?, :do :let :data :msg :error :run
-                         :elide? :allow? :callsite-id))]
+                         :elide? :allow? #_:expansion-id))]
 
                  ;; Eval let bindings AFTER call filtering but BEFORE data, msg
                  `(do
                     ~do-form
                     (let ~let-form ; Allow to throw during `signal-value_` deref
                       (new-signal ~'__instant ~'__uid
-                        ~callsite-id ~location ~ns ~line ~column ~file,
+                        ~location ~ns ~line ~column ~file,
                         ~sample-rate-form, ~kind-form ~'__id ~level-form, ~ctx-form ~parent-form,
                         ~user-opts-form ~data-form ~msg-form,
                         '~run-form ~'__run-result ~error-form))))]
@@ -572,7 +573,7 @@
      "Used only for interop (SLF4J, `clojure.tools.logging`, etc.)."
      {:arglists (signal-arglists :signal!)}
      [opts]
-     (let [{:keys [#_callsite-id #_location elide? allow?]}
+     (let [{:keys [#_expansion-id #_location elide? allow?]}
            (sigs/filterable-expansion
              {:macro-form &form
               :macro-env  &env

@@ -1,0 +1,35 @@
+Low-level generic signal call.
+
+API: [opts] => depends on options [3]
+Default  kind: none (optional)
+Default level: none (must be provided)
+
+When conditions are met [1], creates a Telemere signal [2] and dispatches it to
+registered handlers for processing (writing to console/disk/db, etc.).
+
+If `:run` option is provided: returns value of given run form, or throws.
+                   Otherwise: returns true iff call conditions were met.
+
+Generic signals are fairly low-level and useful mostly for library authors or
+advanced users writing their own wrapper macros. Regular users will typically
+prefer one of the provided wrapper macros optimized for ease-of-use in
+common cases.
+
+These all use `signal!` underneath and offer the same options, but vary in
+their defaults and the focus of their call APIs (args and return values):
+
+  `event!` - (id      + opts/level) => true iff signal call was allowed
+  `log!`   - (message + opts/level) => true iff signal call was allowed
+  `error!` - (error   + opts/id)    => given error (unconditional)
+  `trace!` - (form    + opts/id)    => form's result (value/throw) (unconditional)
+  `spy!`   - (form    + opts/level) => form's result (value/throw) (unconditional)
+
+Tips:
+
+  - Test using `with-signals`: (with-signals (signal! ...)).
+  - Supports the same options as other signals [3].
+
+----------------------------------------
+[1] See `help:signal-handling` docstring
+[2] See `help:signal-content`  docstring
+[3] See `help:signal-options`  docstring

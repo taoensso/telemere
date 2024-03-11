@@ -58,8 +58,8 @@
 
 (comment
   [level-aliases]
-  [handlers-help get-handlers add-handler! remove-handler! with-handler with-handler+]
-  [filtering-help get-filters get-min-level
+  [help:handlers get-handlers add-handler! remove-handler! with-handler with-handler+]
+  [help:filtering get-filters get-min-level
    set-kind-filter! set-ns-filter! set-id-filter! set-min-level!
    with-kind-filter with-ns-filter with-id-filter with-min-level])
 
@@ -78,6 +78,14 @@
   #?(:clj impl/with-signals)
   #?(:clj impl/signal!))
 
+;;;; Signal help
+
+(comment help:filters help:handlers) ; Via Encore
+
+(impl/defhelp help:signal-handling :signal-handling)
+(impl/defhelp help:signal-content  :signal-content)
+(impl/defhelp help:signal-options  :signal-options)
+
 ;;;; Context
 
 (enc/defonce default-ctx
@@ -88,7 +96,7 @@
   (enc/get-env {:as :edn} :taoensso.telemere/default-ctx<.platform><.edn>))
 
 (enc/def* ^:dynamic *ctx*
-  "Dynamic context: arbitrary app-level state attached as `:ctx` to all signals.
+  "Dynamic context: arbitrary user-level state attached as `:ctx` to all signals.
   Value may be any type, but is usually nil or a map.
 
   Re/bind dynamic     value using `with-ctx`, `with-ctx+`, or `binding`.
@@ -179,68 +187,120 @@
          :data     data}))))
 
 ;;;; Common signals
-;; - log!             [msg]   [level-or-opts msg]   ; msg    + ?level => allowed?
-;; - event!           [id]    [level-or-opts id]    ; id     + ?level => allowed?
-;; - error!           [error] [id-or-opts    error] ; error  + ?id    => error
-;; - trace!           [form]  [id-or-opts    form]  ; run    + ?id    => run result (value or throw)
-;; - spy!             [form]  [level-or-opts form]  ; run    + ?level => run result (value or throw)
-;; - catch->error!    [form]  [id-or-opts    form]  ; run    + ?id    => run value or ?return
-;; - uncaught->error! []      [id-or-opts        ]  ;          ?id    => nil
-
-#?(:clj
-   (defmacro log!
-     "TODO Docstring [msg] [level-or-opts msg] => allowed?"
-     {:arglists (impl/signal-arglists :log!)}
-     [& args]
-     (let [opts (apply impl/signal-opts :msg, :level, {:kind :log, :level :info} args)]
-       (enc/keep-callsite `(impl/signal! ~opts)))))
+;; - signal!                  [              opts] ;                 => allowed? / run result (value or throw)
+;; - event!           [id   ] [id   level-or-opts] ; id     + ?level => allowed? ; Sole signal with descending main arg!
+;; - log!             [msg  ] [level-or-opts  msg] ; msg    + ?level => allowed?
+;; - error!           [error] [id-or-opts   error] ; error  + ?id    => given error
+;; - trace!           [form ] [id-or-opts    form] ; run    + ?id    => run result (value or throw)
+;; - spy!             [form ] [level-or-opts form] ; run    + ?level => run result (value or throw)
+;; - catch->error!    [form ] [id-or-opts    form] ; run    + ?id    => run value or ?return
+;; - uncaught->error! [     ] [id-or-opts        ] ;          ?id    => nil
 
 #?(:clj
    (defmacro event!
-     "TODO Docstring [id] [level-or-opts id] => allowed?"
-     {:arglists (impl/signal-arglists :event!)}
+     "[id] [id level-or-opts] => allowed?"
+     {:doc      (impl/signal-docstring :event!)
+      :arglists (impl/signal-arglists  :event!)}
      [& args]
-     (let [opts (apply impl/signal-opts :id, :level, {:kind :event, :level :info} args)]
+     (let [opts (impl/signal-opts `event! {:kind :event, :level :info} :id :level :dsc args)]
        (enc/keep-callsite `(impl/signal! ~opts)))))
+
+(comment
+  (with-signal (event! ::my-id))
+  (with-signal (event! ::my-id :warn))
+  (with-signal
+    (event! ::my-id
+      {:let  [x "x"] ; Available to `:data` and `:msg`
+       :data {:x x}
+       :msg  ["My msg:" x]})))
+
+#?(:clj
+   (defmacro log!
+     "[msg] [level-or-opts msg] => allowed?"
+     {:doc      (impl/signal-docstring :log!)
+      :arglists (impl/signal-arglists  :log!)}
+     [& args]
+     (let [opts (impl/signal-opts `log! {:kind :log, :level :info} :msg :level :asc args)]
+       (enc/keep-callsite `(impl/signal! ~opts)))))
+
+(comment
+  (with-signal (log! "My msg"))
+  (with-signal (log! :warn "My msg"))
+  (with-signal
+    (log!
+      {:let  [x "x"] ; Available to `:data` and `:msg`
+       :data {:x x}}
+      ["My msg:" x])))
 
 #?(:clj
    (defmacro error!
-     "TODO Docstring [error] [id-or-opts error] => error
-     (throw (error! <error>)) example."
-     {:arglists (impl/signal-arglists :error!)}
+     "[error] [error id-or-opts] => error"
+     {:doc      (impl/signal-docstring :error!)
+      :arglists (impl/signal-arglists  :error!)}
      [& args]
-     (let [opts (apply impl/signal-opts :error, :id, {:kind :error, :level :error} args)
+     (let [opts (impl/signal-opts `error! {:kind :error, :level :error} :error :id :asc args)
            error-form (get opts :error)]
-       ;; (enc/keep-callsite `(impl/signal! ~opts)) ; => allowed?
+
        (enc/keep-callsite
          `(let [~'__error ~error-form]
             (impl/signal! ~(assoc opts :error '__error))
-            ~'__error)))))
+            ~'__error ; Unconditional!
+            )))))
 
-(comment (throw (error! (Exception. "hello"))))
+(comment
+  (with-signal (throw (error!         (ex-info "MyEx" {}))))
+  (with-signal (throw (error! ::my-id (ex-info "MyEx" {}))))
+  (with-signal
+    (throw
+      (error!
+        {:let  [x "x"] ; Available to `:data` and `:msg`
+         :data {:x x}
+         :msg  ["My msg:" x]}
+        (ex-info "MyEx" {})))))
 
 #?(:clj
    (defmacro trace!
-     "TODO Docstring [form] [id-or-opts form] => run result (value or throw)"
-     {:arglists (impl/signal-arglists :trace!)}
+     "[form] [id-or-opts form] => run result (value or throw)"
+     {:doc      (impl/signal-docstring :trace!)
+      :arglists (impl/signal-arglists  :trace!)}
      [& args]
-     (let [opts (apply impl/signal-opts :run, :id, {:kind :trace, :level :info} args)]
+     (let [opts (impl/signal-opts `trace! {:kind :trace, :level :info, :msg ::impl/spy} :run :id :asc args)]
        (enc/keep-callsite `(impl/signal! ~opts)))))
+
+(comment
+  (with-signal (trace! (+ 1 2)))
+  (with-signal (trace! ::my-id (+ 1 2)))
+  (with-signal
+    (trace!
+      {:let  [x "x"] ; Available to `:data` and `:msg`
+       :data {:x x}}
+      (+ 1 2))))
 
 #?(:clj
    (defmacro spy!
-     "TODO Docstring [form] [level-or-opts form] => run result (value or throw)"
-     {:arglists (impl/signal-arglists :spy!)}
+     "[form] [level-or-opts form] => run result (value or throw)"
+     {:doc      (impl/signal-docstring :spy!)
+      :arglists (impl/signal-arglists  :spy!)}
      [& args]
-     (let [opts (apply impl/signal-opts :run, :level, {:kind :spy, :level :info, :msg ::impl/spy} args)]
+     (let [opts (impl/signal-opts `spy! {:kind :spy, :level :info, :msg ::impl/spy} :run :level :asc args)]
        (enc/keep-callsite `(impl/signal! ~opts)))))
+
+(comment
+  (with-signal (spy! (+ 1 2)))
+  (with-signal (spy! ::my-id (+ 1 2)))
+  (with-signal
+    (spy!
+      {:let  [x "x"] ; Available to `:data` and `:msg`
+       :data {:x x}}
+      (+ 1 2))))
 
 #?(:clj
    (defmacro catch->error!
-     "TODO Docstring [form] [id-or-opts form] => run value or ?catch-val"
-     {:arglists (impl/signal-arglists :catch->error!)}
+     "[form] [id-or-opts form] => run value or ?catch-val"
+     {:doc      (impl/signal-docstring :catch-to-error!)
+      :arglists (impl/signal-arglists  :catch->error!)}
      [& args]
-     (let [opts     (apply impl/signal-opts ::__form, :id, {:kind :error, :level :error} args)
+     (let [opts     (impl/signal-opts `catch->error! {:kind :error, :level :error} ::__form :id :asc args)
            rethrow? (if (contains? opts :catch-val) false (get opts :rethrow?))
            catch-val    (get       opts :catch-val)
            form         (get       opts ::__form)
@@ -248,26 +308,38 @@
 
        (enc/keep-callsite
          `(enc/try* ~form
-            (catch :any ~'__t
-              (impl/signal! ~(assoc opts :error '__t))
-              (if ~rethrow? (throw ~'__t) ~catch-val)))))))
+            (catch :any ~'__caught-error
+              (impl/signal! ~(assoc opts :error '__caught-error))
+              (if ~rethrow? (throw ~'__caught-error) ~catch-val)))))))
 
-(comment (catch->error! {:id :id1, :catch-val "threw"} (/ 1 0)))
+(comment
+  (with-signal (catch->error! (/ 1 0)))
+  (with-signal (catch->error! {:id ::my-id, :catch-val "threw"} (/ 1 0)))
+  (with-signal
+    (catch->error!
+      {:let  [x "x"] ; Available to `:data` and `:msg`
+       :data {:x x}
+       :msg_ ["My msg:" x __caught-error]}
+     (/ 1 0))))
 
 #?(:clj
    (defmacro uncaught->error!
-     "TODO Docstring
-     See also `uncaught->handler!`."
-     {:arglists (impl/signal-arglists :uncaught->error!)}
-     ([          ] (enc/keep-callsite `(uncaught->error! nil)))
-     ([id-or-opts]
-      (let [msg-form ["Uncaught Throwable on thread: " `(.getName ~(with-meta '__thread {:tag 'java.lang.Thread}))]
-            opts (impl/signal-opts :error, :id, {:kind :error, :level :error, :msg msg-form} id-or-opts '__throwable)]
+     "Uses `uncaught->handler!` so that `error!` will be called for
+     uncaught JVM errors.
 
-        (enc/keep-callsite
-          `(uncaught->handler!
-             (fn [~'__thread ~'__throwable]
-               (impl/signal! ~opts))))))))
+     See `uncaught->handler!` and `error!` for details."
+     {:arglists (impl/signal-arglists :uncaught->error!)}
+     [& args]
+     (let [msg-form ["Uncaught Throwable on thread: " `(.getName ~(with-meta '__thread {:tag 'java.lang.Thread}))]
+           opts
+           (impl/signal-opts `uncaught->error!
+             {:kind :error, :level :error, :msg msg-form}
+             :error :id :dsc (into ['__throwable] args))]
+
+       (enc/keep-callsite
+         `(uncaught->handler!
+            (fn [~'__thread ~'__throwable]
+              (impl/signal! ~opts)))))))
 
 (comment (macroexpand '(uncaught->error! :id1)))
 
@@ -277,12 +349,14 @@
    (defn uncaught->handler!
      "Sets JVM's global `DefaultUncaughtExceptionHandler` to given
        (fn handler [`<java.lang.Thread>` `<java.lang.Throwable>`]).
+
      See also `uncaught->error!`."
      [handler]
      (Thread/setDefaultUncaughtExceptionHandler
        (reify   Thread$UncaughtExceptionHandler
          (uncaughtException [_ thread throwable]
-           (handler            thread throwable))))))
+           (handler            thread throwable))))
+     nil))
 
 #?(:clj
    (defn hostname

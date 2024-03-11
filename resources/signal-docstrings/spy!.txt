@@ -1,0 +1,36 @@
+"Spy" signal call, focused on form + level.
+
+API: [form] [level-or-opts form] => form's result (value/throw) (unconditional)
+Default kind:  `:spy`
+Default level: `:info`
+
+When conditions are met [1], creates a Telemere signal [2] and dispatches it to
+registered handlers for processing (writing to console/disk/db, etc.).
+
+Examples:
+
+  (spy! (+ 1 2))         ; %> {:kind :trace, :level :info, :run-form '(+ 1 2),
+                         ;     :run-value 3, :parent {:keys [id uid]}
+                         ;     :msg "(+ 1 2) => 3" ...}
+  (spy! ::my-id (+ 1 2)) ; %> {... :id ::my-id ...}
+  (spy!
+    {:let  [x "x"] ; Available to `:data` and `:msg`
+     :data {:x x}}
+
+    (+ 1 2)) ; %> {... :data {x "x"}, :msg_ "My msg: x" ...}
+
+Tips:
+
+  - Test using `with-signals`: (with-signals (spy! ...)).
+  - Supports the same options as other signals [3].
+
+  - Identical to `trace!`, but focused on form + level rather than form + id.
+
+  - Useful for debugging/monitoring forms, and tracing (nested) execution flow.
+  - Execution of `form` arg may trigger additional (nested) signals.
+    Each signal's `:parent` key will indicate its immediate parent.
+
+----------------------------------------
+[1] See `help:signal-handling` docstring
+[2] See `help:signal-content`  docstring
+[3] See `help:signal-options`  docstring

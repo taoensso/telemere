@@ -1,0 +1,30 @@
+Unconditionally executes given form and-
+  If form succeeds: return the form's result.
+  If form   throws:
+    Call `error!` with the thrown error and the given signal options [1],
+    then return (:catch-val opts) if it exists, or rethrow the error.
+
+API: [form] [id-or-opts form] => form's result (value/throw) (unconditional), or (:catch-val opts)
+Default  kind: `:error`
+Default level: `:error`
+
+Examples:
+
+  (catch->error! (/ 1 0)) ; %> {:kind :error, :level :error, :error <caught> ...}
+  (catch->error! {:id ::my-id, :catch-val "threw"} (/ 1 0)) ; %> {... :id ::my-id ...}
+  (catch->error!
+    {:let  [x "x"] ; Available to `:data` and `:msg`
+     :data {:x x}
+     :msg_ ["My msg:" x]}
+     (/ 1 0)) ; %> {... :data {x "x"}, :msg_ "My msg: x" ...}
+
+Tips:
+
+  - Test using `with-signals`: (with-signals (catch->error! ...)).
+  - Supports the same options as other signals [1].
+
+  - Useful for recording errors in forms, futures, callbacks, etc.
+
+See also `error!`.
+
+[1] See `help:signal-options` docstring

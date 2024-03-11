@@ -1,0 +1,34 @@
+"Log" signal call, focused on message + level.
+
+API: [msg] [level-or-opts msg] => true iff signal call was allowed.
+Default  kind: `:log`
+Default level: `:info`
+
+When conditions are met [1], creates a Telemere signal [2] and dispatches it to
+registered handlers for processing (writing to console/disk/db, etc.).
+
+Examples:
+
+  (log! "My msg")       ; %> {:kind :log, :level :info, :id ::my-id ...}
+  (log! :warn "My msg") ; %> {...         :level :warn ...}
+  (log!
+    {:let  [x "x"] ; Available to `:data` and `:msg`
+     :data {:x x}}
+
+    ["My msg:" x]) ; %> {... :data {x "x"}, :msg_ "My msg: x" ...}
+
+Tips:
+
+  - Test using `with-signals`: (with-signals (log! ...)).
+  - Supports the same options as other signals [3].
+
+  - Prefer `event!` to `log!` by default, since it better encourages structured
+    data over unstructured messages.
+
+  - `msg` arg may be a string, or vector of strings to join with `\space`.
+  - See also `msg-splice`, `msg-skip` utils.
+
+----------------------------------------
+[1] See `help:signal-handling` docstring
+[2] See `help:signal-content`  docstring
+[3] See `help:signal-options`  docstring

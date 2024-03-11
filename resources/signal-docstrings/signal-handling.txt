@@ -1,0 +1,17 @@
+A signal will be provided to a handler iff ALL of the following are true:
+
+  1. Signal call is allowed by compile-time filters
+  2. Signal call is allowed by runtime      filters
+  3. Handler     is allowed by runtime      filters
+
+  4. Signal call middleware does not suppress the signal (return nil)
+  5. Handler     middleware does not suppress the signal (return nil)
+
+For more info:
+
+  - On call    filters, see: `help:filters`  docstring
+  - On handler filters, see: `help:handlers` docstring
+  - On signal flow,     see: Ref. <https://tinyurl.com/telemere-signal-flowchart>
+
+If anything is unclear, please ping me (@ptaoussanis) so that I can
+improve these docs!
