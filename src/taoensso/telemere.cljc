@@ -20,33 +20,19 @@
 
 (enc/assert-min-encore-version [3 91 0])
 
-;;;; Roadmap
-;; x Fundamentals
-;; x Basic logging utils
-;; x Interop: SLF4J
-;; x Interop: `clojure.tools.logging`
-;; - Core logging handlers
-;; - First docs, intro video
-;; - First OpenTelemetry tools
-;; - Update Tufte  (signal API, config API, signal fields, etc.)
-;; - Update Timbre (signal API, config API, signal fields, backport improvements)
-
 ;;;; TODO
-;; - Via Timbre: core handlers, any last utils?
-;;   - Cljs (.log js/console <js/Error>) better than string stacktrace (clickable, etc.)
-;;
-;; - Tests for utils (hostname, formatters, etc.)?
-;; - Remaining docstrings and TODOs
-;; - Kinds: #{:log :spy :trace :event :error :system/out :system/err <user>}
-;; - General polish
-;;
+;; - Core handlers
+;;   - (.log js/console <js/Error>) better than string stacktrace
+;; - Handler utils: complete, docstrings, tests
 ;; - Reading plan
-;; - Recheck `ensso/telemere-draft.cljc`
-;; - Cleanup `ensso/telemere-drafts.txt`
-;;
-;; - Decide on module/import/alias/project approach
-;; - Initial README, wiki docs, etc.
+;; - Final polish, docstrings
+;; - Initial wiki docs
 ;; - Explainer/demo video
+;; - v1.0.0-beta1
+;;
+;; - First OpenTelemetry tools
+;; - Update Tufte  (signal API, config API, signal keys, etc.)
+;; - Update Timbre (signal API, config API, signal keys, backport improvements)
 
 ;;;; Shared signal API
 
@@ -206,14 +192,7 @@
      (let [opts (impl/signal-opts `event! {:kind :event, :level :info} :id :level :dsc args)]
        (enc/keep-callsite `(impl/signal! ~opts)))))
 
-(comment
-  (with-signal (event! ::my-id))
-  (with-signal (event! ::my-id :warn))
-  (with-signal
-    (event! ::my-id
-      {:let  [x "x"] ; Available to `:data` and `:msg`
-       :data {:x x}
-       :msg  ["My msg:" x]})))
+(comment (with-signal (event! ::my-id :info)))
 
 #?(:clj
    (defmacro log!
@@ -224,14 +203,7 @@
      (let [opts (impl/signal-opts `log! {:kind :log, :level :info} :msg :level :asc args)]
        (enc/keep-callsite `(impl/signal! ~opts)))))
 
-(comment
-  (with-signal (log! "My msg"))
-  (with-signal (log! :warn "My msg"))
-  (with-signal
-    (log!
-      {:let  [x "x"] ; Available to `:data` and `:msg`
-       :data {:x x}}
-      ["My msg:" x])))
+(comment (with-signal (log! :info "My msg")))
 
 #?(:clj
    (defmacro error!
@@ -248,16 +220,7 @@
             ~'__error ; Unconditional!
             )))))
 
-(comment
-  (with-signal (throw (error!         (ex-info "MyEx" {}))))
-  (with-signal (throw (error! ::my-id (ex-info "MyEx" {}))))
-  (with-signal
-    (throw
-      (error!
-        {:let  [x "x"] ; Available to `:data` and `:msg`
-         :data {:x x}
-         :msg  ["My msg:" x]}
-        (ex-info "MyEx" {})))))
+(comment (with-signal (throw (error! ::my-id (ex-info "MyEx" {})))))
 
 #?(:clj
    (defmacro trace!
@@ -268,14 +231,7 @@
      (let [opts (impl/signal-opts `trace! {:kind :trace, :level :info, :msg ::impl/spy} :run :id :asc args)]
        (enc/keep-callsite `(impl/signal! ~opts)))))
 
-(comment
-  (with-signal (trace! (+ 1 2)))
-  (with-signal (trace! ::my-id (+ 1 2)))
-  (with-signal
-    (trace!
-      {:let  [x "x"] ; Available to `:data` and `:msg`
-       :data {:x x}}
-      (+ 1 2))))
+(comment (with-signal (trace! ::my-id (+ 1 2))))
 
 #?(:clj
    (defmacro spy!
@@ -286,14 +242,7 @@
      (let [opts (impl/signal-opts `spy! {:kind :spy, :level :info, :msg ::impl/spy} :run :level :asc args)]
        (enc/keep-callsite `(impl/signal! ~opts)))))
 
-(comment
-  (with-signal (spy! (+ 1 2)))
-  (with-signal (spy! ::my-id (+ 1 2)))
-  (with-signal
-    (spy!
-      {:let  [x "x"] ; Available to `:data` and `:msg`
-       :data {:x x}}
-      (+ 1 2))))
+(comment (with-signal (spy! :info (+ 1 2))))
 
 #?(:clj
    (defmacro catch->error!
@@ -304,24 +253,20 @@
      (let [opts     (impl/signal-opts `catch->error! {:kind :error, :level :error} ::__form :id :asc args)
            rethrow? (if (contains? opts :catch-val) false (get opts :rethrow?))
            catch-val    (get       opts :catch-val)
+           catch-sym    (get       opts :catch-sym '__caught-error) ; Undocumented
            form         (get       opts ::__form)
-           opts         (dissoc    opts ::__form :catch-val :rethrow?)]
+           opts         (dissoc    opts ::__form :catch-val :catch-sym :rethrow?)]
 
        (enc/keep-callsite
          `(enc/try* ~form
-            (catch :any ~'__caught-error
-              (impl/signal! ~(assoc opts :error '__caught-error))
-              (if ~rethrow? (throw ~'__caught-error) ~catch-val)))))))
+            (catch :any ~catch-sym
+              (impl/signal! ~(assoc opts :error catch-sym))
+              (if ~rethrow? (throw ~catch-sym) ~catch-val)))))))
 
 (comment
-  (with-signal (catch->error! (/ 1 0)))
-  (with-signal (catch->error! {:id ::my-id, :catch-val "threw"} (/ 1 0)))
-  (with-signal
-    (catch->error!
-      {:let  [x "x"] ; Available to `:data` and `:msg`
-       :data {:x x}
-       :msg_ ["My msg:" x __caught-error]}
-     (/ 1 0))))
+  (with-signal (catch->error! ::my-id (/ 1 0)))
+  (with-signal (catch->error! {                  :msg_ ["Error:" __caught-error]} (/ 1 0)))
+  (with-signal (catch->error! {:catch-sym my-err :msg_ ["Error:" my-err]}         (/ 1 0))))
 
 #?(:clj
    (defmacro uncaught->error!
@@ -342,7 +287,7 @@
             (fn [~'__thread ~'__throwable]
               (impl/signal! ~opts)))))))
 
-(comment (macroexpand '(uncaught->error! :id1)))
+(comment (macroexpand '(uncaught->error! ::my-id)))
 
 ;;;; Utils
 
@@ -365,10 +310,12 @@
      (^String [                         ] (enc/get-hostname (enc/msecs :mins 1) 5000 "UnknownHost"))
      (        [timeout-msecs timeout-val] (enc/get-hostname (enc/msecs :mins 1) timeout-msecs timeout-val))))
 
-(comment (enc/qb 1e6 (hostname))) ; 76.64
+(comment (enc/qb 1e6 (hostname))) ; 69.13
 
 #?(:clj (defn thread-name ^String [] (.getName (Thread/currentThread))))
 #?(:clj (defn thread-id   ^String [] (.getId   (Thread/currentThread))))
+
+(comment (thread-name) (thread-id))
 
 (defn format-instant
   "TODO Docstring"

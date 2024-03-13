@@ -10,13 +10,17 @@ Default level: `:error`
 
 Examples:
 
-  (catch->error! (/ 1 0)) ; %> {:kind :error, :level :error, :error <caught> ...}
-  (catch->error! {:id ::my-id, :catch-val "threw"} (/ 1 0)) ; %> {... :id ::my-id ...}
+  (catch->error! (/ 1 0))         ; %> {:kind :error, :level :error, :error <caught> ...}
+  (catch->error! ::my-id (/ 1 0)) ; %> {... :id ::my-id ...}
   (catch->error!
     {:let  [x "x"] ; Available to `:data` and `:msg`
      :data {:x x}
-     :msg_ ["My msg:" x]}
-     (/ 1 0)) ; %> {... :data {x "x"}, :msg_ "My msg: x" ...}
+     :msg  ["My msg:" x my-error]
+     :catch-val "Return value when form throws"
+     :catch-sym my-error ; Sym of caught error, available to `:data` and `:msg`
+     }
+
+     (/ 1 0)) ; %> {... :data {x "x"}, :msg_ "My msg: x <caught>" ...}
 
 Tips:
 
