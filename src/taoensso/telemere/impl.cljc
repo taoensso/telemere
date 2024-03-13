@@ -222,8 +222,8 @@
 
 ;;;; Handlers
 
-(enc/defonce ^:dynamic *sig-spy*      "To support `with-signals`" nil)
-(enc/defonce ^:dynamic *sig-handlers* "?[<wrapped-handler-fn>]"   nil)
+(enc/defonce ^:dynamic *sig-spy*      "To support `with-signals`, etc." nil)
+(enc/defonce ^:dynamic *sig-handlers* "?[<wrapped-handler-fn>]"         nil)
 
 (defn- force-msg [sig]
   (if-not (map? sig)
@@ -235,11 +235,11 @@
 (defn -with-signals
   "Private util to support `with-signals` macro."
   [form-fn
-   {:keys [handle? force-msg? trap-errors?]
+   {:keys [handle? trap-errors? force-msg?]
     :or   {handle? true}}]
 
   (let [sigs_ (volatile! nil)]
-    (binding [*sig-spy* [sigs_ (not handle?)]]
+    (binding [*sig-spy* [sigs_ (not :last-only?) handle?]]
       (let [form-result
             (if-not trap-errors?
               (form-fn)
@@ -255,38 +255,62 @@
 
 #?(:clj
    (defmacro ^:public with-signals
-     "Executes given form and records any signals triggered by it.
+     "Experimental.
+     Executes given form and records any signals triggered by it.
      Return value depends on given options. Useful for tests/debugging.
 
      Options:
+
+       `handle?`
+         Should registered handlers receive signals triggered by form, as usual?
+         Default: true.
 
        `trap-errors?`
          If  true: returns [[form-value form-error] signals], trapping any form error.
          If false: returns [ form-value             signals], throwing on  form error.
          Default: false.
 
-       `handle?`
-         Should registered handlers receive signals triggered by form, as usual?
-         Default: true.
-
        `force-msg?`
-         Should delayed `:msg_` fields in signals be replaced with realized strings?
-         Default: false."
+         Should delayed `:msg_` keys in signals be replaced with realized strings?
+         Default: false.
 
+     See also `with-signal` for a simpler API."
      {:arglists
-      '([                                          form]
-        [{:keys [handle? force-msg? trap-errors?]} form])}
+      '([form]
+        [{:keys [handle? trap-errors? force-msg?]
+          :or   {handle? true}} form])}
 
      ([     form] `(-with-signals (fn [] ~form) nil))
      ([opts form] `(-with-signals (fn [] ~form) ~opts))))
+
+#?(:clj
+   (defmacro ^:public with-signal
+     "Experimental
+     Minimal version of `with-signals`.
+     Executes given form and returns the last signal triggered by it.
+     Useful for tests/debugging.
+
+     - Always allows registered handlers to receive signals as usual.
+     - Always traps form errors.
+     - Never forces `:msg_` key.
+
+     See also `with-signals` for more options."
+     [form]
+     `(let [sig_# (volatile! nil)]
+        (binding [*sig-spy* [sig_# :last-only :handle]]
+          (enc/catching ~form))
+        @sig_#)))
 
 (defn dispatch-signal!
   "Dispatches given signal to registered handlers, supports `with-signals`."
   [signal]
   (or
-    (when-let [[sigs_ skip-handlers?] *sig-spy*]
-      (vswap! sigs_ #(conj (or % []) (sigs/signal-value signal nil)))
-      skip-handlers?)
+    (when-let [[v_ last-only? handle?] *sig-spy*]
+      (let [sv (sigs/signal-value signal nil)]
+        (if last-only?
+          (vreset! v_                  sv)
+          (vswap!  v_ #(conj (or % []) sv))))
+      (when-not handle? :stop))
 
     (sigs/call-handlers! *sig-handlers* signal)))
 

@@ -76,6 +76,7 @@
   impl/msg-splice
   impl/msg-skip
   #?(:clj impl/with-signals)
+  #?(:clj impl/with-signal)
   #?(:clj impl/signal!))
 
 ;;;; Signal help
