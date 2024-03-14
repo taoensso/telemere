@@ -215,7 +215,17 @@
         (is (= rv2 3))    (is (nil?    sv2))
         (is (= rv3 4))    (is (sm? sv3 {:m1 5 :m2 6}))
         (is (= rv4 true)) (is (=       sv4 "signal-value"))
-        (is (= @c  7)     "3x run + 4x middleware")]))])
+        (is (= @c  7)     "3x run + 4x middleware")]))
+
+   #?(:clj
+      (testing "Printing"
+        (let [sv1 (tel/with-signal (tel/signal! {:level :info, :run (+ 1 2), :my-k1 :my-v1}))
+              sv1 ; Ensure instants are printable
+              (-> sv1
+                (update :instant     enc/inst->udt)
+                (update :end-instant enc/inst->udt))]
+
+       [(is (= sv1 (read-string (pr-str sv1))))])))])
 
 (deftest _handlers
   ;; Basic handler tests are in Encore
