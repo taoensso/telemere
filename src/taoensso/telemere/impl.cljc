@@ -379,7 +379,7 @@
        '([{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id, ; Undocumented
             elidable? location instant uid middleware,
-            sample-rate ns kind id level when rate-limit,
+            sample-rate kind ns id level when rate-limit,
             ctx parent trace?, do let data msg error run & user-opts]}])
 
        :event! ; [id] [id level-or-opts] => allowed?
@@ -389,7 +389,7 @@
           {:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location instant uid middleware,
-            sample-rate ns kind id level when rate-limit,
+            sample-rate kind ns id level when rate-limit,
             ctx parent trace?, do let data msg error #_run & user-opts]}])
 
        :log! ; [msg] [level-or-opts msg] => allowed?
@@ -398,7 +398,7 @@
          [{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location instant uid middleware,
-            sample-rate ns kind id level when rate-limit,
+            sample-rate kind ns id level when rate-limit,
             ctx parent trace?, do let data msg error #_run & user-opts]}
           msg])
 
@@ -408,7 +408,7 @@
          [{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location instant uid middleware,
-            sample-rate ns kind id level when rate-limit,
+            sample-rate kind ns id level when rate-limit,
             ctx parent trace?, do let data msg error #_run & user-opts]}
           error])
 
@@ -418,7 +418,7 @@
          [{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location instant uid middleware,
-            sample-rate ns kind id level when rate-limit,
+            sample-rate kind ns id level when rate-limit,
             ctx parent trace?, do let data msg error run & user-opts]}
           form])
 
@@ -428,7 +428,7 @@
          [{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id, rethrow? catch-val,
             elidable? location instant uid middleware,
-            sample-rate ns kind id level when rate-limit,
+            sample-rate kind ns id level when rate-limit,
             ctx parent trace?, do let data msg error #_run & user-opts]}
           form])
 
@@ -438,7 +438,7 @@
          [{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location instant uid middleware,
-            sample-rate ns kind id level when rate-limit,
+            sample-rate kind ns id level when rate-limit,
             ctx parent trace?, do let data msg error #_run & user-opts]}])
 
        (enc/unexpected-arg! macro-id))))

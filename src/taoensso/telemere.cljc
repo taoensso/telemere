@@ -21,14 +21,9 @@
 (enc/assert-min-encore-version [3 91 0])
 
 ;;;; TODO
-;; - Core handlers
-;;   - (.log js/console <js/Error>) better than string stacktrace
-;; - Handler utils: complete, docstrings, tests
-;; - Reading plan
-;; - Final polish, docstrings
-;; - Initial wiki docs
-;; - Explainer/demo video
-;; - v1.0.0-beta1
+;; - First handlers ns
+;; - Review, TODOs, missing docstrings
+;; - Reading plan, wiki docs, explainer/demo video
 ;;
 ;; - First OpenTelemetry tools
 ;; - Update Tufte  (signal API, config API, signal keys, etc.)
