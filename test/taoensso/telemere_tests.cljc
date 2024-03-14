@@ -67,14 +67,14 @@
    (let [[rv1 [sv1]] (ws (sig! {:level :info              }))
          [rv2 [sv2]] (ws (sig! {:level :info, :run (+ 1 2)}))]
 
-     [(is (= rv1 true)) (is (sm? sv1 {:ns "taoensso.telemere-tests", :level :info, :run-form nil,      :run-value nil, :run-nsecs nil}))
-      (is (= rv2    3)) (is (sm? sv2 {:ns "taoensso.telemere-tests", :level :info, :run-form '(+ 1 2), :run-value 3,   :run-nsecs (enc/pred nat-int?)}))])
+     [(is (= rv1 true)) (is (sm? sv1 {:ns "taoensso.telemere-tests", :level :info, :run-form nil,      :run-val nil, :run-nsecs nil}))
+      (is (= rv2    3)) (is (sm? sv2 {:ns "taoensso.telemere-tests", :level :info, :run-form '(+ 1 2), :run-val 3,   :run-nsecs (enc/pred nat-int?)}))])
 
    (testing "Nested signals"
      (let [[[inner-rv [inner-sv]] [outer-sv]] (ws (sig! {:level :info, :run (ws (sig! {:level :warn, :run "inner-run"}))}))]
        [(is (= inner-rv "inner-run"))
-        (is (sm? inner-sv {:level :warn, :run-value "inner-run"}))
-        (is (sm? outer-sv {:level :info  :run-value [inner-rv [inner-sv]]}))]))
+        (is (sm? inner-sv {:level :warn, :run-val "inner-run"}))
+        (is (sm? outer-sv {:level :info  :run-val [inner-rv [inner-sv]]}))]))
 
    (testing "Instants"
      (let [[_ [sv1]] (ws (sig! {:level :info                             }))
@@ -343,30 +343,30 @@
 
      (testing "Auto call id, uid"
        (let [[_ [sv]] (ws (sig! {:level :info, :parent {:id :id0, :uid :uid0}, :run impl/*trace-parent*, :data impl/*trace-parent*}))]
-         [(is (sm? sv {:parent    {:id :id0, :uid :uid0}}))
-          (is (sm? sv {:run-value {:id nil,  :uid (get sv :uid ::nx)}}) "`*trace-parent*`     visible to run-form, bound to call's auto {:keys [id uid]}")
-          (is (sm? sv {:data      nil})                                 "`*trace-parent*` not visible to data-form ")]))
+         [(is (sm? sv {:parent  {:id :id0, :uid :uid0}}))
+          (is (sm? sv {:run-val {:id nil,  :uid (get sv :uid ::nx)}}) "`*trace-parent*`     visible to run-form, bound to call's auto {:keys [id uid]}")
+          (is (sm? sv {:data    nil})                                 "`*trace-parent*` not visible to data-form ")]))
 
      (testing "Manual call id, uid"
        (let [[_ [sv]] (ws (sig! {:level :info, :parent {:id :id0, :uid :uid0}, :id :id1, :uid :uid1, :run impl/*trace-parent*, :data impl/*trace-parent*}))]
-         [(is (sm? sv {:parent    {:id :id0, :uid :uid0}}))
-          (is (sm? sv {:run-value {:id :id1, :uid :uid1}}) "`*trace-parent*`     visible to run-form, bound to call's auto {:keys [id uid]}")
-          (is (sm? sv {:data      nil})                    "`*trace-parent*` not visible to data-form ")]))
+         [(is (sm? sv {:parent  {:id :id0, :uid :uid0}}))
+          (is (sm? sv {:run-val {:id :id1, :uid :uid1}}) "`*trace-parent*`     visible to run-form, bound to call's auto {:keys [id uid]}")
+          (is (sm? sv {:data    nil})                    "`*trace-parent*` not visible to data-form ")]))
 
      (testing "Tracing can be disabled via call opt"
        (let [[_ [sv]] (ws (sig! {:level :info, :parent {:id :id0, :uid :uid0}, :id :id1, :uid :uid1, :run impl/*trace-parent*, :data impl/*trace-parent*, :trace? false}))]
-         [(is (sm? sv {:parent    {:id :id0, :uid :uid0}}))
-          (is (sm? sv {:run-value nil}))]))
+         [(is (sm? sv {:parent  {:id :id0, :uid :uid0}}))
+          (is (sm? sv {:run-val nil}))]))
 
      (testing "Signal nesting"
        (let [[[inner-rv [inner-sv]] [outer-sv]]
              (ws (sig! {                :level :info, :id :id1, :uid :uid1,
                         :run (ws (sig! {:level :info, :id :id2, :uid :uid2, :run impl/*trace-parent*}))}))]
 
-         [(is (sm? outer-sv             {:id :id1, :uid :uid1, :parent nil}))
-          (is (sm? inner-rv             {:id :id2, :uid :uid2}))
-          (is (sm? inner-sv {:parent    {:id :id1, :uid :uid1}}))
-          (is (sm? inner-sv {:run-value {:id :id2, :uid :uid2}}))]))]))
+         [(is (sm? outer-sv           {:id :id1, :uid :uid1, :parent nil}))
+          (is (sm? inner-rv           {:id :id2, :uid :uid2}))
+          (is (sm? inner-sv {:parent  {:id :id1, :uid :uid1}}))
+          (is (sm? inner-sv {:run-val {:id :id2, :uid :uid2}}))]))]))
 
 (deftest _sampling
   ;; Capture combined (call * handler) sample rate in Signal when possible

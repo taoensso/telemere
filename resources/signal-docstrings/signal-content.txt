@@ -16,7 +16,7 @@ Default keys:
 `:error` - Arb user-level platform ?error [2]        given to signal call
 
 `:run-form`    - Unevaluated ?form given to signal call as `:run`
-`:run-value`   - Successful return ?val of  `:run` ?form
+`:run-val`     - Successful return ?val of  `:run` ?form
 `:run-nsecs`   - ?int nanosecs runtime of   `:run` ?form
 `:end-instant` - Platform ?instant [1] when `:run` ?form completed
 
