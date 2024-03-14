@@ -67,8 +67,8 @@
    (let [[rv1 [sv1]] (ws (sig! {:level :info              }))
          [rv2 [sv2]] (ws (sig! {:level :info, :run (+ 1 2)}))]
 
-     [(is (= rv1 true)) (is (sm? sv1 {:ns "taoensso.telemere-tests", :level :info, :run-form nil,      :run-value nil, :runtime-nsecs nil}))
-      (is (= rv2    3)) (is (sm? sv2 {:ns "taoensso.telemere-tests", :level :info, :run-form '(+ 1 2), :run-value 3,   :runtime-nsecs (enc/pred nat-int?)}))])
+     [(is (= rv1 true)) (is (sm? sv1 {:ns "taoensso.telemere-tests", :level :info, :run-form nil,      :run-value nil, :run-nsecs nil}))
+      (is (= rv2    3)) (is (sm? sv2 {:ns "taoensso.telemere-tests", :level :info, :run-form '(+ 1 2), :run-value 3,   :run-nsecs (enc/pred nat-int?)}))])
 
    (testing "Nested signals"
      (let [[[inner-rv [inner-sv]] [outer-sv]] (ws (sig! {:level :info, :run (ws (sig! {:level :warn, :run "inner-run"}))}))]
@@ -98,8 +98,8 @@
           [(is (enc/inst?  start))
            (is (enc/inst?  end))
            (is (= (inst-ms start) 0)               "Respect custom instant")
-           (is (> (inst-ms end)   (inst-ms start)) "End instant is start + runtime-nsecs")
-           (is (< (inst-ms end)   1e6)             "End instant is start + runtime-nsecs")])]))
+           (is (> (inst-ms end)   (inst-ms start)) "End instant is start + run-nsecs")
+           (is (< (inst-ms end)   1e6)             "End instant is start + run-nsecs")])]))
 
    (testing "User opts assoced directly to signal"
      (let [[rv [sv]] (ws (sig! {:level :info, :my-opt1 "v1", :my-opt2 "v2"}))]
