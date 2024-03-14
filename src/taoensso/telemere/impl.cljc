@@ -197,7 +197,23 @@
    location ns line column file,
    sample-rate, kind id level, ctx parent,
    data msg_ error run-form run-val,
-   end-instant run-nsecs extra-kvs])
+   end-instant run-nsecs extra-kvs]
+
+  Object (toString [sig] (str "#" `Signal (into {} sig))))
+
+(do     (enc/def-print-impl [sig Signal] (str "#" `Signal (pr-str (into {} sig)))))
+#?(:clj (enc/def-print-dup  [sig Signal] (str "#" `Signal (pr-str (into {} sig))))) ; NB intentionally verbose, to support extra keys
+
+(comment
+  (def s1 (with-signal (signal! {:level :info, :my-k1 :my-v1})))
+  (read-string (str    (assoc s1 :my-k2 :my-v2)))
+  (read-string (pr-str (assoc s1 :my-k2 :my-v2)))
+  (read-string (binding [*print-dup* true] (pr-str (assoc s1 :my-k2 :my-v2))))
+
+  (defrecord MyRec [x])
+  (read-string ; Non-verbose will fail on any extra keys
+    (binding [*print-dup* true, *verbose-defrecords* false]
+      (pr-str (assoc (MyRec. :x) :y :y)))))
 
 (deftype #_defrecord WrappedSignal
   ;; Internal type to implement `sigs/IFilterableSignal`,
