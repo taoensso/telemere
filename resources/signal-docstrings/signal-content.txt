@@ -15,10 +15,10 @@ Default keys:
 `:data`  - Arb user-level data     ?val (usu. a map) given to signal call
 `:error` - Arb user-level platform ?error [2]        given to signal call
 
-`:run-form`     - Unevaluated ?form given to signal call as `:run`
-`:run-value`    - Successful return ?val of  `:run` ?form
-`:end-instant`  - Platform ?instant [1] when `:run` ?form completed
-`:runtime-nsecs`- ?int nanosecs runtime of   `:run` ?form
+`:run-form`    - Unevaluated ?form given to signal call as `:run`
+`:run-value`   - Successful return ?val of  `:run` ?form
+`:run-nsecs`   - ?int nanosecs runtime of   `:run` ?form
+`:end-instant` - Platform ?instant [1] when `:run` ?form completed
 
 `:ctx`      - ?val of `*ctx*` (arb user-level state) when signal was created
 `:parent`   - ?{:keys [id uid]} of parent signal, present in nested signals when tracing

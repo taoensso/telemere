@@ -197,7 +197,7 @@
    location ns line column file,
    sample-rate, kind id level, ctx parent,
    data msg_ error run-form run-value,
-   end-instant runtime-nsecs])
+   end-instant run-nsecs])
 
 (deftype #_defrecord WrappedSignal
   ;; Internal type to implement `sigs/IFilterableSignal`,
@@ -316,7 +316,7 @@
 
 ;;;; Signal constructor
 
-(deftype RunResult [value error ^long runtime-nsecs]
+(deftype RunResult [value error ^long run-nsecs]
   #?(:clj clojure.lang.IFn :cljs IFn)
   (#?(:clj invoke :cljs -invoke) [_] (if error (throw error) value)))
 
@@ -332,10 +332,10 @@
 
   (let [signal
         (if-let [^RunResult run-result run-result]
-          (let  [runtime-nsecs (.-runtime-nsecs run-result)
+          (let  [run-nsecs (.-run-nsecs run-result)
                  end-instant
-                 #?(:clj  (.plusNanos ^java.time.Instant instant runtime-nsecs)
-                    :cljs (js/Date. (+ (.getTime instant) (/ runtime-nsecs 1e6))))
+                 #?(:clj  (.plusNanos ^java.time.Instant instant run-nsecs)
+                    :cljs (js/Date. (+ (.getTime instant) (/ run-nsecs 1e6))))
 
                  run-error (.-error run-result)
                  run-value (.-value run-result)
@@ -349,7 +349,7 @@
               sample-rate, kind id level, ctx parent,
               data msg_,
               run-error run-form run-value,
-              end-instant runtime-nsecs))
+              end-instant run-nsecs))
 
           (Signal. 1 instant uid,
             location ns line column file,
