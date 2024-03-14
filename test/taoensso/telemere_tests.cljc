@@ -101,9 +101,10 @@
            (is (> (inst-ms end)   (inst-ms start)) "End instant is start + run-nsecs")
            (is (< (inst-ms end)   1e6)             "End instant is start + run-nsecs")])]))
 
-   (testing "User opts assoced directly to signal"
-     (let [[rv [sv]] (ws (sig! {:level :info, :my-opt1 "v1", :my-opt2 "v2"}))]
-       (is           (sm? sv   {:level :info, :my-opt1 "v1", :my-opt2 "v2"}))))
+   (testing "Support arb extra user kvs"
+     (let [[rv [sv]] (ws (sig! {:level :info, :my-k1 "v1", :my-k2 "v2"}))]
+       (is           (sm? sv   {:level :info, :my-k1 "v1", :my-k2 "v2"
+                                :extra-kvs   {:my-k1 "v1", :my-k2 "v2"}}))))
 
    (testing "`:msg` basics"
      (let [c           (enc/counter)
@@ -122,7 +123,7 @@
 
    (testing "`:data` basics"
      (vec
-       (for [dk [:data :my-opt]] ; User opts share same behaviour as data
+       (for [dk [:data :my-k1]] ; User kvs share same behaviour as data
          (let [c           (enc/counter)
                [rv1 [sv1]] (ws (sig! {:level :info, :run (c), dk        {:c1 (c)}}))
                [rv2 [sv2]] (ws (sig! {:level :info, :run (c), dk (delay {:c2 (c)})}))
@@ -165,9 +166,9 @@
         (is (= rv5 9)) (is (=  (:msg_ sv5) nil))
         (is (= @c  12) "5x run + 4x let (1x suppressed) + 3x msg (1x suppressed)")]))
 
-   (testing "`:do` + `:let` + `:data`/`:my-opt`"
+   (testing "`:do` + `:let` + `:data`/`:my-k1`"
      (vec
-       (for [dk [:data :my-opt]]
+       (for [dk [:data :my-k1]]
          (let [c           (enc/counter)
                [rv1 [sv1]] (ws (sig! {:level :info, :run (c), :do (c), :let [n (c)], dk        {:n n, :c1 (c)}}))
                [rv2 [sv2]] (ws (sig! {:level :info, :run (c), :do (c), :let [n (c)], dk (delay {:n n, :c2 (c)})}))
@@ -184,9 +185,9 @@
             (is (= rv6 13)) (is (= (force (get sv6 dk)) [:n 15, :c6 17]))
             (is (= @c  18)  "6x run + 4x do (2x suppressed) + 4x let (2x suppressed) + 4x data (2x suppressed)")]))))
 
-   (testing "Manual `let` (unconditional) + `:data`/`:my-opt`"
+   (testing "Manual `let` (unconditional) + `:data`/`:my-k1`"
      (vec
-       (for [dk [:data :my-opt]]
+       (for [dk [:data :my-k1]]
          (let [c           (enc/counter)
                [rv1 [sv1]] (ws (let [n (c)] (sig! {:level :info, :run (c), dk        {:n n, :c1 (c)}})))
                [rv2 [sv2]] (ws (let [n (c)] (sig! {:level :info, :run (c), dk (delay {:n n, :c2 (c)})})))
@@ -318,9 +319,9 @@
              (is (= @sv_ :nx))
              (is (sm? @error_ {:handler-id :hid1, :error ex1-pred}))])
 
-          (testing "Throwing user opt"
+          (testing "Throwing user kv"
             (reset-state!)
-            [(is (true? (sig! {:level :info, :my-opt (ex1!)})))
+            [(is (true? (sig! {:level :info, :my-k1 (ex1!)})))
              (is (= @sv_ :nx))
              (is (sm? @error_ {:handler-id :hid1, :error ex1-pred}))])])])))
 

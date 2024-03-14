@@ -197,7 +197,7 @@
    location ns line column file,
    sample-rate, kind id level, ctx parent,
    data msg_ error run-form run-val,
-   end-instant run-nsecs])
+   end-instant run-nsecs extra-kvs])
 
 (deftype #_defrecord WrappedSignal
   ;; Internal type to implement `sigs/IFilterableSignal`,
@@ -327,7 +327,7 @@
   [instant uid,
    location ns line column file,
    sample-rate, kind id level, ctx parent,
-   user-opts data msg_,
+   extra-kvs data msg_,
    run-form run-result error]
 
   (let [signal
@@ -349,15 +349,15 @@
               sample-rate, kind id level, ctx parent,
               data msg_,
               run-err run-form run-val,
-              end-instant run-nsecs))
+              end-instant run-nsecs extra-kvs))
 
           (Signal. 1 instant uid,
             location ns line column file,
             sample-rate, kind id level, ctx parent,
-            data msg_, error nil nil instant nil))]
+            data msg_, error nil nil instant nil extra-kvs))]
 
-    (if user-opts
-      (reduce-kv assoc signal user-opts)
+    (if extra-kvs
+      (reduce-kv assoc signal extra-kvs)
       (do              signal))))
 
 (comment
@@ -380,7 +380,7 @@
            [#_defaults #_elide? #_allow? #_expansion-id, ; Undocumented
             elidable? location instant uid middleware,
             sample-rate kind ns id level when rate-limit,
-            ctx parent trace?, do let data msg error run & user-opts]}])
+            ctx parent trace?, do let data msg error run & extra-kvs]}])
 
        :event! ; [id] [id level-or-opts] => allowed?
        '([id      ]
@@ -390,7 +390,7 @@
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location instant uid middleware,
             sample-rate kind ns id level when rate-limit,
-            ctx parent trace?, do let data msg error #_run & user-opts]}])
+            ctx parent trace?, do let data msg error #_run & extra-kvs]}])
 
        :log! ; [msg] [level-or-opts msg] => allowed?
        '([      msg]
@@ -399,7 +399,7 @@
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location instant uid middleware,
             sample-rate kind ns id level when rate-limit,
-            ctx parent trace?, do let data msg error #_run & user-opts]}
+            ctx parent trace?, do let data msg error #_run & extra-kvs]}
           msg])
 
        :error! ; [error] [id-or-opts error] => given error
@@ -409,7 +409,7 @@
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location instant uid middleware,
             sample-rate kind ns id level when rate-limit,
-            ctx parent trace?, do let data msg error #_run & user-opts]}
+            ctx parent trace?, do let data msg error #_run & extra-kvs]}
           error])
 
        (:trace! :spy!) ; [form] [id-or-opts form] => run result (value or throw)
@@ -419,7 +419,7 @@
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location instant uid middleware,
             sample-rate kind ns id level when rate-limit,
-            ctx parent trace?, do let data msg error run & user-opts]}
+            ctx parent trace?, do let data msg error run & extra-kvs]}
           form])
 
        :catch->error! ; [form] [id-or-opts form] => run result (value or throw)
@@ -429,7 +429,7 @@
            [#_defaults #_elide? #_allow? #_expansion-id, rethrow? catch-val,
             elidable? location instant uid middleware,
             sample-rate kind ns id level when rate-limit,
-            ctx parent trace?, do let data msg error #_run & user-opts]}
+            ctx parent trace?, do let data msg error #_run & extra-kvs]}
           form])
 
        :uncaught->error! ; [] [id-or-opts] => nil
@@ -439,7 +439,7 @@
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location instant uid middleware,
             sample-rate kind ns id level when rate-limit,
-            ctx parent trace?, do let data msg error #_run & user-opts]}])
+            ctx parent trace?, do let data msg error #_run & extra-kvs]}])
 
        (enc/unexpected-arg! macro-id))))
 
@@ -529,7 +529,7 @@
                      let-form (or let-form '[])
                      msg-form (parse-msg-form msg-form)
 
-                     user-opts-form
+                     extra-kvs-form
                      (not-empty
                        (dissoc opts
                          :elidable? :location :instant :uid :middleware,
@@ -544,7 +544,7 @@
                       (new-signal ~'__instant ~'__uid
                         ~location ~ns ~line ~column ~file,
                         ~sample-rate-form, ~kind-form ~'__id ~level-form, ~ctx-form ~parent-form,
-                        ~user-opts-form ~data-form ~msg-form,
+                        ~extra-kvs-form ~data-form ~msg-form,
                         '~run-form ~'__run-result ~error-form))))]
 
            #_ ; Sacrifice some perf to de-dupe (possibly large) `run-form`
