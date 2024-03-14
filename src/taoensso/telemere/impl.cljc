@@ -196,7 +196,7 @@
   [^long schema-version instant uid,
    location ns line column file,
    sample-rate, kind id level, ctx parent,
-   data msg_ error run-form run-value,
+   data msg_ error run-form run-val,
    end-instant run-nsecs])
 
 (deftype #_defrecord WrappedSignal
@@ -337,18 +337,18 @@
                  #?(:clj  (.plusNanos ^java.time.Instant instant run-nsecs)
                     :cljs (js/Date. (+ (.getTime instant) (/ run-nsecs 1e6))))
 
-                 run-error (.-error run-result)
-                 run-value (.-value run-result)
+                 run-err (.-error run-result)
+                 run-val (.-value run-result)
                  msg_
                  (if (enc/identical-kw? msg_ ::spy)
-                   (delay (str run-form " => " (or run-error run-value)))
+                   (delay (str run-form " => " (or run-err run-val)))
                    msg_)]
 
             (Signal. 1 instant uid,
               location ns line column file,
               sample-rate, kind id level, ctx parent,
               data msg_,
-              run-error run-form run-value,
+              run-err run-form run-val,
               end-instant run-nsecs))
 
           (Signal. 1 instant uid,

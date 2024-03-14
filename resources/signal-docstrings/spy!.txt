@@ -10,7 +10,7 @@ registered handlers for processing (writing to console/disk/db, etc.).
 Examples:
 
   (spy! (+ 1 2))         ; %> {:kind :trace, :level :info, :run-form '(+ 1 2),
-                         ;     :run-value 3, :parent {:keys [id uid]}
+                         ;     :run-val 3, :run-nsecs <int>, :parent {:keys [id uid]}
                          ;     :msg "(+ 1 2) => 3" ...}
   (spy! ::my-id (+ 1 2)) ; %> {... :id ::my-id ...}
   (spy!
