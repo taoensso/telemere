@@ -6,8 +6,8 @@ Signal options (shared by `signal!`, `event!`, ...):
 `:id`      - ?id of signal call     (common to all signals created by signal call, contrast with `:uid`)
 `:uid`     - ?id of signal instance (unique to each signal created by signal call, contrast with `:id`)
 
-`:data`  - Arb user-level ?data    to incl. in signal: usu. a map
 `:msg`   - Arb user-level ?message to incl. in signal: str or vec of strs to join (with `\space`)
+`:data`  - Arb user-level ?data    to incl. in signal: usu. a map
 `:error` - Arb user-level ?error   to incl. in signal: platform error [2]
 
 `:run` - ?form    to execute UNCONDITIONALLY; will incl. `:run-value` in signal
@@ -25,7 +25,7 @@ Signal options (shared by `signal!`, `event!`, ...):
 `:middleware`  - ?[(fn [signal])=>modified-signal ...] call middleware
 `:trace?`      - Should tracing be enabled for `:run` form?
 
-<user-opts>    - Arb user-level ?kvs to incl. in signal
+<user-kvs> - Arb user-level ?kvs to incl. in signal
 
 If anything is unclear, please ping me (@ptaoussanis) so that I can improve these docs!
 

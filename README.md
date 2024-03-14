@@ -68,8 +68,8 @@ Telemere is **highly optimized** and offers terrific performance at any scale:
 Measurements:
 
 - Are **~nanoseconds per signal call** (= milliseconds per 1e6 calls)
-- Taken on a 2020 Macbook Pro M1, running OpenJDK 21
 - Exclude handler runtime (which depends on handler/s, is usually async)
+- Taken on a 2020 Macbook Pro M1, running OpenJDK 21
 
 **Tip**: Telemere offers extensive per-call and per-handler **filtering**, **sampling**, and **rate-limiting**. Use these to ensure that you're not capturing useless/low-value information in production. See [here](/TODO) for more tips!
 
