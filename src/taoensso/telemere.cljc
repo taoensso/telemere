@@ -7,12 +7,11 @@
   {:author "Peter Taoussanis (@ptaoussanis)"}
   (:refer-clojure :exclude [newline])
   (:require
-   [taoensso.encore         :as enc :refer [have have?]]
-   [taoensso.encore.signals :as sigs]
-   [taoensso.telemere.impl  :as impl]
-   #?(:clj [taoensso.telemere.streams     :as streams])
-   #?(:clj [clj-commons.format.exceptions :as fmt-ex])
-   #?(:clj [clj-commons.ansi              :as fmt-ansi])))
+   [taoensso.encore            :as enc :refer [have have?]]
+   [taoensso.encore.signals    :as sigs]
+   [taoensso.telemere.impl     :as impl]
+   [taoensso.telemere.handlers :as handlers]
+   #?(:clj [taoensso.telemere.streams :as streams])))
 
 (comment
   (remove-ns 'taoensso.telemere)
@@ -284,8 +283,6 @@
 
 (comment (macroexpand '(uncaught->error! ::my-id)))
 
-;;;; Utils
-
 #?(:clj
    (defn uncaught->handler!
      "Sets JVM's global `DefaultUncaughtExceptionHandler` to given
@@ -298,83 +295,6 @@
          (uncaughtException [_ thread throwable]
            (handler            thread throwable))))
      nil))
-
-#?(:clj
-   (defn hostname
-     "Returns local cached hostname string, or `timeout-val` (default \"UnknownHost\")."
-     (^String [                         ] (enc/get-hostname (enc/msecs :mins 1) 5000 "UnknownHost"))
-     (        [timeout-msecs timeout-val] (enc/get-hostname (enc/msecs :mins 1) timeout-msecs timeout-val))))
-
-(comment (enc/qb 1e6 (hostname))) ; 69.13
-
-#?(:clj (defn thread-name ^String [] (.getName (Thread/currentThread))))
-#?(:clj (defn thread-id   ^String [] (.getId   (Thread/currentThread))))
-
-(comment (thread-name) (thread-id))
-
-(defn format-instant
-  "TODO Docstring"
-  {:tag #?(:clj 'String :cljs 'string)}
-  ([instant] (format-instant nil instant))
-
-  #?(:cljs
-     ([{:keys [format]} instant]
-      (if format ; `goog.i18n.DateTimeFormat`
-        (.format format instant)
-        (.toISOString   instant)))
-
-     :clj
-     ([{:keys [formatter]
-        :or   {formatter java.time.format.DateTimeFormatter/ISO_INSTANT}}
-       instant]
-      (.format
-        ^java.time.format.DateTimeFormatter formatter
-        ^java.time.Instant                  instant))))
-
-(comment (format-instant (enc/now-inst)))
-
-(defn format-error
-  "TODO Docstring"
-  {:tag #?(:clj 'String :cljs 'string)}
-  ([error] (format-error nil error))
-
-  #?(:cljs
-     ([_ error]
-      (let [nl newline]
-        (str
-          (or
-            (.-stack    error) ; Incl. `ex-message` content
-            (ex-message error))
-          (when-let [data  (ex-data  error)] (str nl    "ex-data:"   nl "    " (pr-str       data)))
-          (when-let [cause (ex-cause error)] (str nl nl "Caused by:" nl        (format-error cause))))))
-
-     :clj
-     ;; TODO Review API, esp. re: *color-enabled*, etc.
-     ([{:keys [use-fonts? sort-stacktrace-by fonts]
-        :or
-        {use-fonts?         :auto
-         sort-stacktrace-by :chronological #_:depth-first
-         fonts clj-commons.format.exceptions/default-fonts}}
-       error]
-
-      (binding [fmt-ansi/*color-enabled*
-                (if (enc/identical-kw? use-fonts? :auto)
-                  nil ; => Guess based on environment
-                  use-fonts?)
-
-                fmt-ex/*fonts* fonts
-                fmt-ex/*traditional*
-                (case sort-stacktrace-by
-                  :depth-first   true  ; Traditional
-                  :chronological false ; Modern (default)
-                  (enc/unexpected-arg! sort-stacktrace-by
-                    {:context  `format-error
-                     :param    'sort-stacktrace-by
-                     :expected #{:depth-first :chronological}}))]
-
-        (fmt-ex/format-exception error)))))
-
-(comment (println (format-error (ex-info "Ex2" {:k2 :v2} (ex-info "Ex1" {:k1 :v1})))))
 
 ;;;; Interop
 
@@ -407,6 +327,19 @@
      (require '[taoensso.telemere.slf4j :as slf4j])))
 
 (comment (check-interop))
+
+;;;; Handler utils
+
+(enc/defaliases
+  #?(:clj impl/thread-name)
+  #?(:clj impl/thread-id)
+  #?(:clj impl/hostname)
+  impl/format-instant
+  impl/format-error)
+
+;;;; Handlers
+
+;; TODO
 
 ;;;; Flow benchmarks
 
