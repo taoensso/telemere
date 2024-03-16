@@ -1,8 +1,10 @@
 (ns ^:no-doc taoensso.telemere.impl
   "Private ns, implementation detail.
   Signal design shared by: Telemere, Tufte, Timbre."
+
+  (:refer-clojure :exclude [binding])
   (:require
-   [taoensso.encore         :as enc :refer [have have?]]
+   [taoensso.encore         :as enc :refer [binding have have?]]
    [taoensso.encore.signals :as sigs]
    #?(:clj [clj-commons.format.exceptions :as fmt-ex])
    #?(:clj [clj-commons.ansi              :as fmt-ansi])))
@@ -187,7 +189,7 @@
        (do                                                 form))))
 
 (comment
-  [(enc/qb 1e6   (with-tracing true  :id1 :uid1 "form")) ; 302.2
+  [(enc/qb 1e6   (with-tracing true  :id1 :uid1 "form")) ; 257.5
    (macroexpand '(with-tracing false :id1 :uid1 "form"))
    (macroexpand '(with-tracing true  :id1 :uid1 "form"))])
 
@@ -657,7 +659,7 @@
 (defn test-interop! [msg test-fn]
   (let [msg (str "Interop test: " msg " (" (enc/uuid-str) ")")
         [_ [signal]]
-        (binding [*rt-sig-filter* nil] ; without runtime filters
+        (binding [*rt-sig-filter* nil] ; Without runtime filters
           (-with-signals (fn [] (test-fn msg)) 
             {:handle? false}))]
 

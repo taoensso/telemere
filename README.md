@@ -61,9 +61,9 @@ Telemere is **highly optimized** and offers terrific performance at any scale:
 | Compile-time filtering? | Runtime filtering? | Time? | Trace? | nsecs
 | :-:       | :-: | :-: | :-: | --:
 | ✓ (elide) | -   | -   | -   | 0
-| -         | ✓   | -   | -   | 220
-| -         | ✓   | ✓   | -   | 300
-| -         | ✓   | ✓   | ✓   | 730
+| -         | ✓   | -   | -   | 200
+| -         | ✓   | ✓   | -   | 280
+| -         | ✓   | ✓   | ✓   | 650
 
 Measurements:
 
