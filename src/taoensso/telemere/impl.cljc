@@ -370,7 +370,7 @@
           (Signal. 1 instant uid,
             location ns line column file,
             sample-rate, kind id level, ctx parent,
-            data msg_, error nil nil instant nil extra-kvs))]
+            data msg_, error nil nil nil nil extra-kvs))]
 
     (if extra-kvs
       (reduce-kv assoc signal extra-kvs)

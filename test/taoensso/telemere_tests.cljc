@@ -86,8 +86,7 @@
 
        [(let [{start :instant, end :end-instant} sv1]
           [(is (enc/inst? start))
-           (is (enc/inst? end))
-           (is   (= start end))])
+           (is (nil?      end))])
 
         (let [{start :instant, end :end-instant} sv2]
           [(is (enc/inst?  start))
