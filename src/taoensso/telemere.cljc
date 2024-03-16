@@ -5,9 +5,9 @@
     <https://www.taoensso.com/telemere>"
 
   {:author "Peter Taoussanis (@ptaoussanis)"}
-  (:refer-clojure :exclude [newline])
+  (:refer-clojure :exclude [binding newline])
   (:require
-   [taoensso.encore            :as enc :refer [have have?]]
+   [taoensso.encore            :as enc :refer [binding have have?]]
    [taoensso.encore.signals    :as sigs]
    [taoensso.telemere.impl     :as impl]
    [taoensso.telemere.handlers :as handlers]
@@ -351,13 +351,13 @@
 
   (binding [impl/*sig-handlers* nil]
 
-    [(enc/qb 1e6 ; [9.26 16.85 187.3 202.7]
+    [(enc/qb 1e6 ; [10.4 17.06 195.42 200.34]
        (signal! {:level :info, :run nil, :elide? true})
        (signal! {:level :info, :run nil, :allow? false})
        (signal! {:level :info, :run nil, :allow? true })
        (signal! {:level :info, :run nil}))
 
-     (enc/qb 1e6 ; [8.09 15.29 677.91 278.57 688.89]
+     (enc/qb 1e6 ; [8.1 15.35 647.82 279.67 682.1]
        (signal! {:level :info, :run "run", :elide? true})
        (signal! {:level :info, :run "run", :allow? false})
        (signal! {:level :info, :run "run", :allow? true })
@@ -365,7 +365,7 @@
        (signal! {:level :info, :run "run"}))
 
      ;; For README "performance" table
-     (enc/qb [8 1e6] ; [9.23 220.27 300.83 726.07]
+     (enc/qb [8 1e6] ; [9.23 197.2 277.55 649.32]
        (signal! {:level :info, :elide? true})
        (signal! {:level :info})
        (signal! {:level :info, :run "run", :trace? false})
