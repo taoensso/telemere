@@ -18,7 +18,7 @@
   (remove-ns 'taoensso.telemere)
   (:api (enc/interns-overview)))
 
-(enc/assert-min-encore-version [3 91 0])
+(enc/assert-min-encore-version [3 98 0])
 
 ;;;; TODO
 ;; - Core handlers
