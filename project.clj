@@ -8,8 +8,7 @@
    :url  "https://www.eclipse.org/legal/epl-v10.html"}
 
   :dependencies
-  [[com.taoensso/encore    "3.91.0"]
-   [org.clj-commons/pretty "2.3.0"]]
+  [[com.taoensso/encore "3.98.0-RC8"]]
 
   :test-paths ["test" #_"src"]
 
@@ -46,10 +45,11 @@
     [[org.clojure/test.check              "1.1.1"]
      [org.clojure/tools.logging           "1.3.0"]
      [org.slf4j/slf4j-api                "2.0.12"]
-     [com.taoensso/slf4j-telemere        "1.0.0-alpha1"]
+     [com.taoensso/slf4j-telemere  "1.0.0-alpha1"]
      ;; [org.slf4j/slf4j-simple          "2.0.12"]
      ;; [org.slf4j/slf4j-nop             "2.0.12"]
-     [io.opentelemetry/opentelemetry-api "1.36.0"]]
+     [io.opentelemetry/opentelemetry-api "1.36.0"]
+     [metosin/jsonista                    "0.3.8"]]
 
     :plugins
     [[lein-pprint                     "1.3.2"]
