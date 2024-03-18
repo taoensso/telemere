@@ -11,7 +11,20 @@
    [taoensso.encore.signals    :as sigs]
    [taoensso.telemere.impl     :as impl]
    [taoensso.telemere.handlers :as handlers]
-   #?(:clj [taoensso.telemere.streams :as streams])))
+   #?(:clj [taoensso.telemere.streams :as streams]))
+
+  #?(:cljs
+     (:require-macros
+      [taoensso.telemere :refer
+       [set-ctx! with-ctx with-ctx+
+        set-middleware! with-middleware
+
+        with-signals with-signal
+        signal! event! log! trace! spy! catch->error!
+
+        ;; Via `sigs/def-api`
+        without-filters with-kind-filter with-ns-filter with-id-filter
+        with-min-level with-handler with-handler+]])))
 
 (comment
   (remove-ns 'taoensso.telemere)
