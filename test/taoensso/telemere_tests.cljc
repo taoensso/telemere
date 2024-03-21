@@ -5,8 +5,10 @@
    [taoensso.encore.signals :as sigs]
    [taoensso.telemere       :as tel]
    [taoensso.telemere.impl  :as impl]
+   [taoensso.telemere.utils :as utils]
    #?(:clj [taoensso.telemere.slf4j :as slf4j])
-   #?(:clj [clojure.tools.logging   :as ctl]))
+   #?(:clj [clojure.tools.logging   :as ctl])
+   #?(:clj [jsonista.core           :as jsonista]))
 
   #?(:cljs
      (:require-macros
@@ -29,12 +31,28 @@
      (defmacro wst [form]                  `(impl/-with-signals (fn [] ~form) {:trap-errors? true}))
      (defmacro ws1 [form] `(let [[_# [s1#]] (impl/-with-signals (fn [] ~form) {:force-msg?   true})] s1#))))
 
-(do
-  (def ex1 (ex-info "TestEx" {}))
-  (def ex1-pred (enc/pred #(= % ex1)))
-  (defn ex1! [] (throw ex1)))
-
 (def ^:dynamic *dynamic-var* nil)
+
+(def  ex1 (ex-info "Ex1" {}))
+(def  ex2 (ex-info "Ex2" {:k2 "v2"} (ex-info "Ex1" {:k1 "v1"})))
+
+(def  ex1-pred (enc/pred #(= % ex1)))
+(def  ex2-type (#'enc/ex-type ex2))
+(defn ex1! [] (throw ex1))
+
+(def   t0s "2024-06-09T21:15:20.17Z")
+(def   t0  (enc/as-inst t0s))
+(def udt0  (enc/as-udt t0))
+
+;; (tel/remove-handler! :default-console-handler)
+(let [sig-handlers_ (atom nil)]
+  (test/use-fixtures :once
+    (enc/test-fixtures
+      {:after (fn [] (enc/set-var-root! impl/*sig-handlers* @sig-handlers_))
+       :before
+       (fn []
+         (reset! sig-handlers_ impl/*sig-handlers*)
+         (enc/set-var-root!    impl/*sig-handlers* nil))})))
 
 ;;;;
 
@@ -61,8 +79,8 @@
    (is (=   (ws (sig! {:level :info, :allow? false              })) [nil nil]) "With runtime suppression")
    (is (=   (ws (sig! {:level :info, :allow? false, :run (+ 1 2)})) [3   nil]) "With runtime suppression, run-form")
 
-   (is (->>     (sig! {:level :info, :elide? true,  :run (ex1!)}) (throws? :ex-info "TestEx")) "With compile-time elision, throwing run-form")
-   (is (->>     (sig! {:level :info, :allow? false, :run (ex1!)}) (throws? :ex-info "TestEx")) "With runtime suppression,  throwing run-form")
+   (is (->>     (sig! {:level :info, :elide? true,  :run (ex1!)}) (throws? :ex-info "Ex1")) "With compile-time elision, throwing run-form")
+   (is (->>     (sig! {:level :info, :allow? false, :run (ex1!)}) (throws? :ex-info "Ex1")) "With runtime suppression,  throwing run-form")
 
    (let [[rv1 [sv1]] (ws (sig! {:level :info              }))
          [rv2 [sv2]] (ws (sig! {:level :info, :run (+ 1 2)}))]
@@ -295,12 +313,12 @@
       {:async nil, :error-fn (fn [x] (reset! error_ x)), :rl-error nil,
        :middleware [(fn [sv] (if *throwing-handler-middleware?* (ex1!) sv))]}
 
-      [(is (->> (sig! {:level :info, :when      (ex1!)}) (throws? :ex-info "TestEx")) "`~filterable-expansion/allow` throws at call")
-       (is (->> (sig! {:level :info, :instant   (ex1!)}) (throws? :ex-info "TestEx")) "`~instant-form`               throws at call")
-       (is (->> (sig! {:level :info, :id        (ex1!)}) (throws? :ex-info "TestEx")) "`~id-form`                    throws at call")
-       (is (->> (sig! {:level :info, :uid       (ex1!)}) (throws? :ex-info "TestEx")) "`~uid-form`                   throws at call")
-       (is (->> (sig! {:level :info, :run       (ex1!)}) (throws? :ex-info "TestEx")) "`~run-form` rethrows at call")
-       (is (sm? @sv_  {:level :info, :error ex1-pred})                                     "`~run-form` rethrows at call *after* dispatch")
+      [(is (->> (sig! {:level :info, :when      (ex1!)}) (throws? :ex-info "Ex1")) "`~filterable-expansion/allow` throws at call")
+       (is (->> (sig! {:level :info, :instant   (ex1!)}) (throws? :ex-info "Ex1")) "`~instant-form`               throws at call")
+       (is (->> (sig! {:level :info, :id        (ex1!)}) (throws? :ex-info "Ex1")) "`~id-form`                    throws at call")
+       (is (->> (sig! {:level :info, :uid       (ex1!)}) (throws? :ex-info "Ex1")) "`~uid-form`                   throws at call")
+       (is (->> (sig! {:level :info, :run       (ex1!)}) (throws? :ex-info "Ex1")) "`~run-form` rethrows at call")
+       (is (sm? @sv_  {:level :info, :error ex1-pred})                             "`~run-form` rethrows at call *after* dispatch")
 
        (testing "`@signal-value_`: trap with wrapped handler"
          [(testing "Throwing `~let-form`"
@@ -547,6 +565,89 @@
                 (with-open [_ (org.slf4j.MDC/putCloseable "k2" "v2")]
                   [(is (sm? (ws1 (->          sl  (.info "Hello"))) {:level :info, :ctx {"k1" "v1", "k2" "v2"}}) "Legacy API: MDC")
                    (is (sm? (ws1 (-> (.atInfo sl) (.log  "Hello"))) {:level :info, :ctx {"k1" "v1", "k2" "v2"}}) "Fluent API: MDC")])))])])]))
+
+;;;; Utils
+
+(deftest _utils
+  [(testing "Basic utils"
+     [(is (= (utils/upper-qn :foo/bar) "FOO/BAR"))
+
+      (is (= (utils/format-level :info) "INFO"))
+      (is (= (utils/format-level     8) "LEVEL:8"))
+
+      (is (= (utils/format-id "foo.bar" :foo.bar/qux) "::qux"))
+      (is (= (utils/format-id "foo.baz" :foo.bar/qux) ":foo.bar/qux"))])
+
+   (testing "error-signal?"
+     [(is (= (utils/error-signal? {:error    nil}) false))
+      (is (= (utils/error-signal? {:error    ex1}) true))
+      (is (= (utils/error-signal? {:kind  :error}) true))
+      (is (= (utils/error-signal? {:level :error}) true))
+      (is (= (utils/error-signal? {:level :fatal}) true))
+      (is (= (utils/error-signal? {:error?  true}) true))])
+
+   (testing "Formatters, etc."
+     [(is (= (utils/error-in-signal->chain {:level :info, :error ex2})
+            {:level :info, :error [{:type ex2-type, :msg "Ex2", :data {:k2 "v2"}}
+                                   {:type ex2-type, :msg "Ex1", :data {:k1 "v1"}}]}))
+
+      (is (= (utils/minify-signal {:level :info, :location {:ns "ns"}, :file "file"}) {:level :info}))
+      (is (= ((utils/format-nsecs-fn) 1.5e9) "1.50s")) ; More tests in Encore
+      (is (= ((utils/format-instant-fn)  t0) "2024-06-09T21:15:20.170Z"))
+
+      (is (enc/str-starts-with? ((utils/format-error-fn) ex2)
+            #?(:clj  "  Root: clojure.lang.ExceptionInfo - Ex1\n  data: {:k1 \"v1\"}\n\nCaused: clojure.lang.ExceptionInfo - Ex2\n  data: {:k2 \"v2\"}\n\nRoot stack trace:\n"
+               :cljs "  Root: cljs.core/ExceptionInfo - Ex1\n  data: {:k1 \"v1\"}\n\nCaused: cljs.core/ExceptionInfo - Ex2\n  data: {:k2 \"v2\"}\n\nRoot stack trace:\n")))
+
+      (let [sig     (tel/with-signal (tel/event! ::ev-id {:instant t0}))
+            prelude ((utils/format-signal-prelude-fn) sig)] ; "2024-06-09T21:15:20.170Z INFO EVENT taoensso.telemere-tests(592,35) ::ev-id"
+        [(is (enc/str-starts-with? prelude "2024-06-09T21:15:20.170Z INFO EVENT"))
+         (is (enc/str-ends-with?   prelude "::ev-id"))
+         (is (string? (re-find #"taoensso.telemere-tests\(\d+,\d+\)" prelude)))])
+
+      (testing "format-signal->edn-fn"
+        (let [sig  (update (tel/with-signal (tel/event! ::ev-id {:instant t0})) :instant enc/inst->udt)
+              sig* (enc/read-edn ((utils/format-signal->edn-fn) sig))]
+          (is
+            (enc/submap? sig*
+              {:schema 1, :kind :event, :id ::ev-id, :level :info,
+               :ns      "taoensso.telemere-tests"
+               :instant udt0
+               :line    (enc/pred enc/int?)
+               :column  (enc/pred enc/int?)}))))
+
+      (testing "format-signal->json-fn"
+        (let [sig (update (tel/with-signal (tel/event! ::ev-id {:instant t0})) :instant enc/inst->udt)
+              pr-json-fn
+              #?(:clj  jsonista.core/write-value-as-string
+                 :cljs (fn [x] (.stringify js/JSON (clj->js x))))
+
+              read-json-fn
+              #?(:clj  jsonista.core/read-value
+                 :cljs (fn [x] (js->clj (js/JSON.parse x))))
+
+              sig*
+              (read-json-fn
+                ((utils/format-signal->json-fn
+                   {:pr-json-fn pr-json-fn}) sig))]
+
+          ;; TODO why is Cljs id coming back as "ev-id"?
+          (is
+            (enc/submap? sig*
+              {"schema" 1, "kind" "event", "id" "taoensso.telemere-tests/ev-id",
+               "level" "info", "ns" "taoensso.telemere-tests",
+               "instant" udt0
+               "line"    (enc/pred enc/int?)
+               "column"  (enc/pred enc/int?)}))))
+
+      (testing "format-signal->str-fn"
+        (let [sig (tel/with-signal (tel/event! ::ev-id {:instant t0}))]
+          (is (enc/str-starts-with? ((utils/format-signal->str-fn) sig)
+                "2024-06-09T21:15:20.170Z INFO EVENT"))))])])
+
+;;;; Handlers
+
+;; TODO
 
 ;;;;
 
