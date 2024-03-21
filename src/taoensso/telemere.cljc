@@ -10,6 +10,7 @@
    [taoensso.encore            :as enc :refer [binding have have?]]
    [taoensso.encore.signals    :as sigs]
    [taoensso.telemere.impl     :as impl]
+   [taoensso.telemere.utils    :as utils]
    [taoensso.telemere.handlers :as handlers]
    #?(:clj [taoensso.telemere.streams :as streams]))
 
@@ -33,7 +34,10 @@
 (enc/assert-min-encore-version [3 91 0])
 
 ;;;; TODO
-;; - First handlers ns
+;; - File   handler (with rotating, rolling, etc.)
+;; - Postal handler (or example)?
+;; - Template / example handler?
+;;
 ;; - Review, TODOs, missing docstrings
 ;; - Reading plan, wiki docs, explainer/demo video
 ;;
@@ -341,18 +345,13 @@
 
 (comment (check-interop))
 
-;;;; Handler utils
-
-(enc/defaliases
-  #?(:clj impl/thread-name)
-  #?(:clj impl/thread-id)
-  #?(:clj impl/hostname)
-  impl/format-instant
-  impl/format-error)
-
 ;;;; Handlers
 
-;; TODO
+(enc/defaliases handlers/console-handler-fn
+  #?(:cljs  handlers/raw-console-handler-fn))
+
+(add-handler! :default-console-handler
+  (console-handler-fn))
 
 ;;;; Flow benchmarks
 
@@ -362,24 +361,43 @@
    :clojure-version "1.11.1"
    :java-version    "OpenJDK 21"}
 
-  (binding [impl/*sig-handlers* nil]
-
-    [(enc/qb 1e6 ; [10.4 17.06 195.42 200.34]
+  [(binding [impl/*sig-handlers* nil]
+     (enc/qb 1e6 ; [10.4 17.06 195.42 200.34]
        (signal! {:level :info, :run nil, :elide? true})
        (signal! {:level :info, :run nil, :allow? false})
        (signal! {:level :info, :run nil, :allow? true })
-       (signal! {:level :info, :run nil}))
+       (signal! {:level :info, :run nil})))
 
+   (binding [impl/*sig-handlers* nil]
      (enc/qb 1e6 ; [8.1 15.35 647.82 279.67 682.1]
        (signal! {:level :info, :run "run", :elide? true})
        (signal! {:level :info, :run "run", :allow? false})
        (signal! {:level :info, :run "run", :allow? true })
        (signal! {:level :info, :run "run", :trace? false})
-       (signal! {:level :info, :run "run"}))
+       (signal! {:level :info, :run "run"})))
 
-     ;; For README "performance" table
+   ;; For README "performance" table
+   (binding [impl/*sig-handlers* nil]
      (enc/qb [8 1e6] ; [9.23 197.2 277.55 649.32]
        (signal! {:level :info, :elide? true})
        (signal! {:level :info})
        (signal! {:level :info, :run "run", :trace? false})
-       (signal! {:level :info, :run "run"}))]))
+       (signal! {:level :info, :run "run"})))])
+
+;;;;
+
+(comment
+  (with-handler :hid1 (handlers/console-handler-fn) {} (log! "Message"))
+
+  (let [sig
+        (with-signal
+          (event! ::ev-id
+            {:data  {:a :A :b :b}
+             :error
+             (ex-info "Ex2" {:b :B}
+               (ex-info "Ex1" {:a :A}))}))]
+
+    (do      ((handlers/console-handler-fn)     sig))
+    #?(:cljs ((handlers/raw-console-handler-fn) sig))))
+
+;;;;
