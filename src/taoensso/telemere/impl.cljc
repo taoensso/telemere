@@ -553,6 +553,14 @@
                          :ctx :parent #_:trace?, :do :let :data :msg :error :run
                          :elide? :allow? #_:expansion-id))]
 
+                 (when (and run-form error-form)
+                   (throw ; Prevent ambiguity re: source of error
+                     (ex-info "Signals cannot have both `:run` and `:error` opts at the same time"
+                       {:run-form   run-form
+                        :error-form error-form
+                        :location   location
+                        :other-opts (dissoc opts :run :error)})))
+
                  ;; Eval let bindings AFTER call filtering but BEFORE data, msg
                  `(do
                     ~do-form
