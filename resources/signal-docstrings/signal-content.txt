@@ -3,8 +3,7 @@ though they can be modified by call and/or handler middleware.
 
 Default keys:
 
-`:schema-version` - Int version of signal schema (current: 1)
-
+`:schema`  - Int version of signal schema (current: 1)
 `:instant` - Platform instant [1] when signal was created
 `:level`   - Signal level ∈ #{<int> :trace :debug :info :warn :error :fatal :report ...}
 `:kind`    - Signal ?kind ∈ #{nil :event :error :log :trace :spy <user-val> ...}
