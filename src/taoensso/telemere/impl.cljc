@@ -193,7 +193,7 @@
 
 (defrecord Signal
   ;; Telemere's main public data type, we avoid nesting and duplication
-  [^long schema-version instant uid,
+  [^long schema instant uid,
    location ns line column file,
    sample-rate, kind id level, ctx parent,
    data msg_ error run-form run-val,
