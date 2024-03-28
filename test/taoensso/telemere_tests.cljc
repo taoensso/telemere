@@ -9,6 +9,7 @@
     :rename {signal! sig!, with-signal with-sig, with-signals with-sigs}]
 
    [taoensso.telemere.utils :as utils]
+   [taoensso.telemere.timbre-shim   :as timbre]
    #?(:clj [taoensso.telemere.slf4j :as slf4j])
    #?(:clj [clojure.tools.logging   :as ctl])
    #?(:clj [jsonista.core           :as jsonista])))
@@ -579,6 +580,26 @@
                 (with-open [_ (org.slf4j.MDC/putCloseable "k2" "v2")]
                   [(is (sm? (with-sig (->          sl  (.info "Hello"))) {:level :info, :ctx {"k1" "v1", "k2" "v2"}}) "Legacy API: MDC")
                    (is (sm? (with-sig (-> (.atInfo sl) (.log  "Hello"))) {:level :info, :ctx {"k1" "v1", "k2" "v2"}}) "Fluent API: MDC")])))])])]))
+
+;;;; Timbre shim
+
+(deftest _timbre-shim
+  [(is (sm? (with-sig (timbre/log :debug             "x1" nil "x2")) {:kind :log, :level :debug, :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns pstr?}))
+   (is (sm? (with-sig (timbre/info                   "x1" nil "x2")) {:kind :log, :level :info,  :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns pstr?}))
+   (is (sm? (with-sig (timbre/error                  "x1" nil "x2")) {:kind :log, :level :error, :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns pstr?}))
+
+   (is (sm? (with-sig (timbre/logf :debug "%s %s %s" "x1" nil "x2")) {:kind :log, :level :debug, :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns pstr?}))
+   (is (sm? (with-sig (timbre/infof       "%s %s %s" "x1" nil "x2")) {:kind :log, :level :info,  :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns pstr?}))
+   (is (sm? (with-sig (timbre/errorf      "%s %s %s" "x1" nil "x2")) {:kind :log, :level :error, :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns pstr?}))
+
+   (is (sm? (with-sig (timbre/info ex1 "x1" "x2")) {:kind :log, :level :info, :error pex1?, :msg_ "x1 x2", :data {:vargs ["x1" "x2"]}}) "First-arg error")
+
+   (is (sm? (with-sig (timbre/spy! :info "my-name" (+ 1 2))) {:kind :spy,   :level :info,  :id timbre/shim-id, :msg_ "my-name => 3",    :ns pstr?}))
+   (is (sm? (with-sig (timbre/spy!                 (+ 1 2))) {:kind :spy,   :level :debug, :id timbre/shim-id, :msg_ "(+ 1 2) => 3",    :ns pstr?}))
+   (is (sm? (with-sig (timbre/spy!                  (ex1!))) {:kind :error, :level :error, :id timbre/shim-id, :msg_ nil, :error pex1?, :ns pstr?}))
+
+   (let [[[rv re] [sv]] (with-sigs (timbre/log-errors             (ex1!)))] [(is (nil? re)) (is (sm? sv {:kind :error, :level :error, :error pex1?, :id timbre/shim-id}))])
+   (let [[[rv re] [sv]] (with-sigs (timbre/log-and-rethrow-errors (ex1!)))] [(is (ex1? re)) (is (sm? sv {:kind :error, :level :error, :error pex1?, :id timbre/shim-id}))])])
 
 ;;;; Utils
 
