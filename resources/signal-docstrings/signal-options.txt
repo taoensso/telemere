@@ -1,10 +1,10 @@
 Signal options (shared by `signal!`, `event!`, ...):
 
-`:instant` - Platform instant [1] when signal was created, ∈ #{nil :auto <user-val>}
-`:level`   - Signal level ∈ #{<int> :trace :debug :info :warn :error :fatal :report ...}
-`:kind`    - Signal ?kind ∈ #{nil :event :error :log :trace :spy <user-val> ...}
-`:id`      - ?id of signal call     (common to all signals created by signal call, contrast with `:uid`)
-`:uid`     - ?id of signal instance (unique to each signal created by signal call, contrast with `:id`)
+`:inst`  - Platform instant [1] when signal was created, ∈ #{nil :auto <user-val>}
+`:level` - Signal level ∈ #{<int> :trace :debug :info :warn :error :fatal :report ...}
+`:kind`  - Signal ?kind ∈ #{nil :event :error :log :trace :spy <user-val> ...}
+`:id`    - ?id of signal call     (common to all signals created by signal call, contrast with `:uid`)
+`:uid`   - ?id of signal instance (unique to each signal created by signal call, contrast with `:id`)
 
 `:msg`   - Arb user-level ?message to incl. in signal: str or vec of strs to join (with `\space`)
 `:data`  - Arb user-level ?data    to incl. in signal: usu. a map
@@ -29,5 +29,5 @@ Signal options (shared by `signal!`, `event!`, ...):
 
 If anything is unclear, please ping me (@ptaoussanis) so that I can improve these docs!
 
-[1] Clj: `java.time.Instant`,    Cljs: `js/Date`
-[2] Clj: `java.lang.Throwable`,  Cljs: `js/Error`
+[1] `java.time.Instant`   or `js/Date`
+[2] `java.lang.Throwable` or `js/Error`

@@ -193,11 +193,11 @@
 
 (defrecord Signal
   ;; Telemere's main public data type, we avoid nesting and duplication
-  [^long schema instant uid,
+  [^long schema inst uid,
    location ns line column file,
    sample-rate, kind id level, ctx parent,
    data msg_ error run-form run-val,
-   end-instant run-nsecs extra-kvs]
+   end-inst run-nsecs extra-kvs]
 
   Object (toString [sig] (str "#" `Signal (into {} sig))))
 
@@ -340,7 +340,7 @@
   "Returns a new `Signal` with given opts."
   ^Signal
   ;; Note all dynamic vals passed as explicit args for better control
-  [instant uid,
+  [inst uid,
    location ns line column file,
    sample-rate, kind id level, ctx parent,
    extra-kvs data msg_,
@@ -349,9 +349,9 @@
   (let [signal
         (if-let [^RunResult run-result run-result]
           (let  [run-nsecs (.-run-nsecs run-result)
-                 end-instant
-                 #?(:clj  (.plusNanos ^java.time.Instant instant run-nsecs)
-                    :cljs (js/Date. (+ (.getTime instant) (/ run-nsecs 1e6))))
+                 end-inst
+                 #?(:clj  (.plusNanos ^java.time.Instant inst run-nsecs)
+                    :cljs (js/Date. (+ (.getTime inst) (/ run-nsecs 1e6))))
 
                  run-err (.-error run-result)
                  run-val (.-value run-result)
@@ -360,14 +360,14 @@
                    (delay (str run-form " => " (or run-err run-val)))
                    msg_)]
 
-            (Signal. 1 instant uid,
+            (Signal. 1 inst uid,
               location ns line column file,
               sample-rate, kind id level, ctx parent,
               data msg_,
               run-err run-form run-val,
-              end-instant run-nsecs extra-kvs))
+              end-inst run-nsecs extra-kvs))
 
-          (Signal. 1 instant uid,
+          (Signal. 1 inst uid,
             location ns line column file,
             sample-rate, kind id level, ctx parent,
             data msg_, error nil nil nil nil extra-kvs))]
@@ -394,7 +394,7 @@
        :signal! ; [opts] => allowed? / run result (value or throw)
        '([{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id, ; Undocumented
-            elidable? location instant uid middleware,
+            elidable? location inst uid middleware,
             sample-rate kind ns id level when rate-limit,
             ctx parent trace?, do let data msg error run & extra-kvs]}])
 
@@ -404,7 +404,7 @@
          [id
           {:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
-            elidable? location instant uid middleware,
+            elidable? location inst uid middleware,
             sample-rate kind ns id level when rate-limit,
             ctx parent trace?, do let data msg error #_run & extra-kvs]}])
 
@@ -413,7 +413,7 @@
          [level msg]
          [{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
-            elidable? location instant uid middleware,
+            elidable? location inst uid middleware,
             sample-rate kind ns id level when rate-limit,
             ctx parent trace?, do let data msg error #_run & extra-kvs]}
           msg])
@@ -423,7 +423,7 @@
          [id error]
          [{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
-            elidable? location instant uid middleware,
+            elidable? location inst uid middleware,
             sample-rate kind ns id level when rate-limit,
             ctx parent trace?, do let data msg error #_run & extra-kvs]}
           error])
@@ -433,7 +433,7 @@
          [id form]
          [{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
-            elidable? location instant uid middleware,
+            elidable? location inst uid middleware,
             sample-rate kind ns id level when rate-limit,
             ctx parent trace?, do let data msg error run & extra-kvs]}
           form])
@@ -443,7 +443,7 @@
          [id form]
          [{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id, rethrow? catch-val,
-            elidable? location instant uid middleware,
+            elidable? location inst uid middleware,
             sample-rate kind ns id level when rate-limit,
             ctx parent trace?, do let data msg error #_run & extra-kvs]}
           form])
@@ -453,7 +453,7 @@
          [id]
          [{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
-            elidable? location instant uid middleware,
+            elidable? location inst uid middleware,
             sample-rate kind ns id level when rate-limit,
             ctx parent trace?, do let data msg error #_run & extra-kvs]}])
 
@@ -512,18 +512,18 @@
        (if elide?
          run-form
          (let [{:keys [ns line column file]} location
-               {instant-form :instant
-                kind-form    :kind
-                id-form      :id
-                level-form   :level} opts
+               {inst-form  :inst
+                kind-form  :kind
+                id-form    :id
+                level-form :level} opts
 
-               trace?         (get opts :trace? (boolean run-form))
-               uid-form       (get opts :uid    (when trace? :auto/uuid))
-               ctx-form       (get opts :ctx                 `taoensso.telemere/*ctx*)
-               parent-form    (get opts :parent (when trace? `taoensso.telemere.impl/*trace-parent*))
-               instant-form   (get opts :instant  :auto)
-               instant-form   (if (= instant-form :auto) `(enc/now-inst*) instant-form)
-               uid-form       (parse-uid-form uid-form)
+               trace?      (get opts :trace? (boolean run-form))
+               uid-form    (get opts :uid    (when trace? :auto/uuid))
+               ctx-form    (get opts :ctx                 `taoensso.telemere/*ctx*)
+               parent-form (get opts :parent (when trace? `taoensso.telemere.impl/*trace-parent*))
+               inst-form   (get opts :inst  :auto)
+               inst-form   (if (= inst-form :auto) `(enc/now-inst*) inst-form)
+               uid-form    (parse-uid-form uid-form)
                ;; run-fn-form (when run-form `(fn [] ~run-form))
                run-result-form
                (when run-form
@@ -548,7 +548,7 @@
                      extra-kvs-form
                      (not-empty
                        (dissoc opts
-                         :elidable? :location :instant :uid :middleware,
+                         :elidable? :location :inst :uid :middleware,
                          :sample-rate :ns :kind :id :level :filter :when #_:rate-limit,
                          :ctx :parent #_:trace?, :do :let :data :msg :error :run
                          :elide? :allow? #_:expansion-id))]
@@ -557,7 +557,7 @@
                  `(do
                     ~do-form
                     (let ~let-form ; Allow to throw during `signal-value_` deref
-                      (new-signal ~'__instant ~'__uid
+                      (new-signal ~'__inst ~'__uid
                         ~location ~ns ~line ~column ~file,
                         ~sample-rate-form, ~kind-form ~'__id ~level-form, ~ctx-form ~parent-form,
                         ~extra-kvs-form ~data-form ~msg-form,
@@ -571,7 +571,7 @@
 
            `(enc/if-not ~allow? ; Allow to throw at call
               ~run-form
-              (let [~'__instant    ~instant-form    ; Allow to throw at call
+              (let [~'__inst       ~inst-form       ; Allow to throw at call
                     ~'__id         ~id-form         ; ''
                     ~'__uid        ~uid-form        ; ''
                     ~'__run-result ~run-result-form ; Non-throwing (traps)

@@ -108,7 +108,7 @@
      :level    (sig-level level)}))
 
 (defn- normalized-log!
-  [instant level error msg-pattern args marker-names kvs]
+  [inst level error msg-pattern args marker-names kvs]
   (when-debug (println [:slf4j/normalized-log! (sig-level level)]))
   (impl/signal!
     {:allow?   true ; Pre-filtered by `allowed?` call
@@ -117,7 +117,7 @@
      :kind     :log
      :id       :taoensso.telemere/slf4j
      :level    (sig-level level)
-     :instant  instant
+     :inst     inst
      :error    error
 
      :ctx
@@ -142,7 +142,7 @@
 
   ;; Modern "fluent" API calls
   ([^org.slf4j.event.LoggingEvent event]
-   (let [instant     (when-let [ts (.getTimeStamp event)] (when-not (zero? ts) (java.time.Instant/ofEpochMilli ts)))
+   (let [inst        (when-let [ts (.getTimeStamp event)] (when-not (zero? ts) (java.time.Instant/ofEpochMilli ts)))
          level       (.getLevel     event)
          error       (.getThrowable event)
          msg-pattern (.getMessage   event)
@@ -155,7 +155,7 @@
                          nil kvps))]
 
      (when-debug (println [:slf4j/fluent-log-call (sig-level level)]))
-     (normalized-log! instant level error msg-pattern args markers kvs)))
+     (normalized-log! inst level error msg-pattern args markers kvs)))
 
   ;; Legacy API calls
   ([^org.slf4j.event.Level level error msg-pattern args marker]

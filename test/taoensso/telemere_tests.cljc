@@ -80,20 +80,20 @@
      (let [[_ [sv1]] (ws (sig! {:level :info                             }))
            [_ [sv2]] (ws (sig! {:level :info, :run (reduce + (range 1e6))}))
            [_ [sv3]] (ws (sig! {:level :info, :run (reduce + (range 1e6))
-                                :instant ; Allow custom instant
+                                :inst ; Allow custom instant
                                 #?(:clj  java.time.Instant/EPOCH
                                    :cljs (js/Date. 0))}))]
 
-       [(let [{start :instant, end :end-instant} sv1]
+       [(let [{start :inst, end :end-inst} sv1]
           [(is (enc/inst? start))
            (is (nil?      end))])
 
-        (let [{start :instant, end :end-instant} sv2]
+        (let [{start :inst, end :end-inst} sv2]
           [(is (enc/inst?  start))
            (is (enc/inst?  end))
            (is (> (inst-ms end) (inst-ms start)))])
 
-        (let [{start :instant, end :end-instant} sv3]
+        (let [{start :inst, end :end-inst} sv3]
           [(is (enc/inst?  start))
            (is (enc/inst?  end))
            (is (= (inst-ms start) 0)               "Respect custom instant")
@@ -221,8 +221,8 @@
         (let [sv1 (tel/with-signal (tel/signal! {:level :info, :run (+ 1 2), :my-k1 :my-v1}))
               sv1 ; Ensure instants are printable
               (-> sv1
-                (update :instant     enc/inst->udt)
-                (update :end-instant enc/inst->udt))]
+                (update :inst     enc/inst->udt)
+                (update :end-inst enc/inst->udt))]
 
        [(is (= sv1 (read-string (pr-str sv1))))])))])
 
@@ -295,12 +295,12 @@
       {:async nil, :error-fn (fn [x] (reset! error_ x)), :rl-error nil,
        :middleware [(fn [sv] (if *throwing-handler-middleware?* (ex1!) sv))]}
 
-      [(is (->> (sig! {:level :info, :when      (ex1!)}) (throws? :ex-info "TestEx")) "`~filterable-expansion/allow` throws at call")
-       (is (->> (sig! {:level :info, :instant   (ex1!)}) (throws? :ex-info "TestEx")) "`~instant-form`               throws at call")
-       (is (->> (sig! {:level :info, :id        (ex1!)}) (throws? :ex-info "TestEx")) "`~id-form`                    throws at call")
-       (is (->> (sig! {:level :info, :uid       (ex1!)}) (throws? :ex-info "TestEx")) "`~uid-form`                   throws at call")
-       (is (->> (sig! {:level :info, :run       (ex1!)}) (throws? :ex-info "TestEx")) "`~run-form` rethrows at call")
-       (is (sm? @sv_  {:level :info, :error ex1-pred})                                     "`~run-form` rethrows at call *after* dispatch")
+      [(is (->> (sig! {:level :info, :when  (ex1!)}) (throws? :ex-info "Ex1")) "`~filterable-expansion/allow` throws at call")
+       (is (->> (sig! {:level :info, :inst  (ex1!)}) (throws? :ex-info "Ex1")) "`~inst-form`                  throws at call")
+       (is (->> (sig! {:level :info, :id    (ex1!)}) (throws? :ex-info "Ex1")) "`~id-form`                    throws at call")
+       (is (->> (sig! {:level :info, :uid   (ex1!)}) (throws? :ex-info "Ex1")) "`~uid-form`                   throws at call")
+       (is (->> (sig! {:level :info, :run   (ex1!)}) (throws? :ex-info "Ex1")) "`~run-form` rethrows at call")
+       (is (sm? @sv_  {:level :info, :error ex1-pred})                         "`~run-form` rethrows at call *after* dispatch")
 
        (testing "`@signal-value_`: trap with wrapped handler"
          [(testing "Throwing `~let-form`"

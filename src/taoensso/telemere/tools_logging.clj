@@ -29,7 +29,7 @@
        :kind     :log
        :id       :taoensso.telemere/tools-logging
        :level    level
-       :instant  :auto
+       :inst     :auto
        :error    throwable
        :msg      message})
     nil))

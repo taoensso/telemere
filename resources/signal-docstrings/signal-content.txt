@@ -1,23 +1,23 @@
-Signals are initially maps with {:keys [instant id ns level data msg_ ...]},
+Signals are initially maps with {:keys [inst id ns level data msg_ ...]},
 though they can be modified by call and/or handler middleware.
 
 Default keys:
 
-`:schema`  - Int version of signal schema (current: 1)
-`:instant` - Platform instant [1] when signal was created
-`:level`   - Signal level ∈ #{<int> :trace :debug :info :warn :error :fatal :report ...}
-`:kind`    - Signal ?kind ∈ #{nil :event :error :log :trace :spy <user-val> ...}
-`:id`      - ?id of signal call     (common to all signals created by signal call, contrast with `:uid`)
-`:uid`     - ?id of signal instance (unique to each signal created by signal call, contrast with `:id`)
+`:schema` - Int version of signal schema (current: 1)
+`:inst`   - Platform instant [1] when signal was created
+`:level`  - Signal level ∈ #{<int> :trace :debug :info :warn :error :fatal :report ...}
+`:kind`   - Signal ?kind ∈ #{nil :event :error :log :trace :spy <user-val> ...}
+`:id`     - ?id of signal call     (common to all signals created by signal call, contrast with `:uid`)
+`:uid`    - ?id of signal instance (unique to each signal created by signal call, contrast with `:id`)
 
 `:msg`   - Arb user-level message  ?str              given to signal call
 `:data`  - Arb user-level data     ?val (usu. a map) given to signal call
 `:error` - Arb user-level platform ?error [2]        given to signal call
 
-`:run-form`    - Unevaluated ?form given to signal call as `:run`
-`:run-val`     - Successful return ?val of  `:run` ?form
-`:run-nsecs`   - ?int nanosecs runtime of   `:run` ?form
-`:end-instant` - Platform ?instant [1] when `:run` ?form completed
+`:run-form` - Unevaluated ?form given to signal call as `:run`
+`:run-val`  - Successful return ?val of  `:run` ?form
+`:run-nsecs`- ?int nanosecs runtime of   `:run` ?form
+`:end-inst` - Platform ?instant [1] when `:run` ?form completed
 
 `:ctx`      - ?val of `*ctx*` (arb user-level state) when signal was created
 `:parent`   - ?{:keys [id uid]} of parent signal, present in nested signals when tracing
@@ -33,5 +33,5 @@ Default keys:
 
 If anything is unclear, please ping me (@ptaoussanis) so that I can improve these docs!
 
-[1] Clj: `java.time.Instant`,    Cljs: `js/Date`
-[2] Clj: `java.lang.Throwable`,  Cljs: `js/Error`
+[1] `java.time.Instant`   or `js/Date`
+[2] `java.lang.Throwable` or `js/Error`
