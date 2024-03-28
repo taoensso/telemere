@@ -102,7 +102,6 @@
   (when-debug (println [:slf4j/allowed? (sig-level level)]))
   (impl/signal-allowed?
     {:location nil
-     :ns       nil
      :kind     :log
      :id       :taoensso.telemere/slf4j
      :level    (sig-level level)}))
@@ -113,7 +112,6 @@
   (impl/signal!
     {:allow?   true ; Pre-filtered by `allowed?` call
      :location nil
-     :ns       nil
      :kind     :log
      :id       :taoensso.telemere/slf4j
      :level    (sig-level level)

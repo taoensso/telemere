@@ -1,7 +1,6 @@
 (ns ^:no-doc taoensso.telemere.streams
   "Private ns, implementation detail.
   Interop support: standard stream/s -> Telemere."
-
   (:refer-clojure :exclude [binding])
   (:require
    [taoensso.encore        :as enc :refer [binding have have?]]

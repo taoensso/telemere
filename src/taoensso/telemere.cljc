@@ -350,8 +350,11 @@
 (enc/defaliases handlers/console-handler-fn
   #?(:cljs  handlers/raw-console-handler-fn))
 
-(add-handler! :default-console-handler
-  (console-handler-fn))
+(defonce ^:no-doc __add-default-handlers
+  (do
+    (add-handler! :default-console-handler
+      (console-handler-fn))
+    nil))
 
 ;;;; Flow benchmarks
 

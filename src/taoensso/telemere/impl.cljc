@@ -263,7 +263,7 @@
               (form-fn)
               (enc/try*
                 (do             [(form-fn) nil])
-                (catch :any t t [nil         t])))]
+                (catch :all t t [nil         t])))]
 
         [form-result
          (when-let [sigs @sigs_]
@@ -513,39 +513,37 @@
 
        (if elide?
          run-form
-         (let [{:keys [ns line column file]} location
-               {inst-form  :inst
-                kind-form  :kind
-                id-form    :id
-                level-form :level} opts
+         (let [{ns-form     :ns
+                line-form   :line
+                column-form :column
+                file-form   :file} location
 
-               trace?      (get opts :trace? (boolean run-form))
-               uid-form    (get opts :uid    (when trace? :auto/uuid))
-               ctx-form    (get opts :ctx                 `taoensso.telemere/*ctx*)
-               parent-form (get opts :parent (when trace? `taoensso.telemere.impl/*trace-parent*))
-               inst-form   (get opts :inst  :auto)
-               inst-form   (if (= inst-form :auto) `(enc/now-inst*) inst-form)
-               uid-form    (parse-uid-form uid-form)
-               ;; run-fn-form (when run-form `(fn [] ~run-form))
-               run-result-form
-               (when run-form
-                 `(let [~'__t0 (enc/now-nano*)]
-                    (with-tracing ~trace? ~'__id ~'__uid
-                      (enc/try*
-                        (do               (RunResult. ~run-form nil   (- (enc/now-nano*) ~'__t0)))
-                        (catch :any ~'__t (RunResult. nil       ~'__t (- (enc/now-nano*) ~'__t0)))))))
+               {inst-form  :inst
+                level-form :level
+                kind-form  :kind
+                id-form    :id} opts
+
+               trace?    (get opts :trace? (boolean run-form))
+
+               inst-form (get opts :inst  :auto)
+               inst-form (if (= inst-form :auto) `(enc/now-inst*) inst-form)
+
+               uid-form  (get opts :uid (when trace? :auto/uuid))
+               uid-form  (parse-uid-form uid-form)
 
                signal-form
                (let [{do-form          :do
                       let-form         :let
-                      data-form        :data
                       msg-form         :msg
+                      data-form        :data
                       error-form       :error
-                      sample-rate-form :sample-rate}
-                     opts
+                      sample-rate-form :sample-rate} opts
 
                      let-form (or let-form '[])
                      msg-form (parse-msg-form msg-form)
+
+                     ctx-form    (get opts :ctx                 `taoensso.telemere/*ctx*)
+                     parent-form (get opts :parent (when trace? `taoensso.telemere.impl/*trace-parent*))
 
                      extra-kvs-form
                      (not-empty
@@ -568,42 +566,52 @@
                     ~do-form
                     (let ~let-form ; Allow to throw during `signal-value_` deref
                       (new-signal ~'__inst ~'__uid
-                        ~location ~ns ~line ~column ~file,
-                        ~sample-rate-form, ~kind-form ~'__id ~level-form, ~ctx-form ~parent-form,
+                        ~location ~'__ns ~line-form ~column-form ~file-form,
+                        ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form,
                         ~extra-kvs-form ~data-form ~msg-form,
-                        '~run-form ~'__run-result ~error-form))))]
+                        '~run-form ~'__run-result ~error-form))))
 
-           #_ ; Sacrifice some perf to de-dupe (possibly large) `run-form`
-           (let [~'__run-fn ~run-fn-form]
-             (if-not ~allow?
-               (when ~'__run-fn (~'__run-fn))
-               (let [])))
+               run-fn-form (when run-form `(fn [] (~run-form)))]
+
+           ;; Could avoid double `run-form` expansion with a fn wrap (>0 cost)
+           ;; `(let [~'run-fn-form ~run-fn-form]
+           ;;    (if-not ~allow?
+           ;;      (run-fn-form)
+           ;;      (let [...])))
 
            `(enc/if-not ~allow? ; Allow to throw at call
               ~run-form
-              (let [~'__inst       ~inst-form       ; Allow to throw at call
-                    ~'__id         ~id-form         ; ''
-                    ~'__uid        ~uid-form        ; ''
-                    ~'__run-result ~run-result-form ; Non-throwing (traps)
+              (let [~'__inst  ~inst-form  ; Allow to throw at call
+                    ~'__level ~level-form ; ''
+                    ~'__kind  ~kind-form  ; ''
+                    ~'__id    ~id-form    ; ''
+                    ~'__uid   ~uid-form   ; ''
+                    ~'__ns    ~ns-form    ; ''
 
-                    ~'__call-middleware
-                    ~(get opts :middleware
-                       `taoensso.telemere/*middleware*)]
+                    ~'__call-middleware ~(get opts :middleware `taoensso.telemere/*middleware*)
+                    ~'__run-result ; Non-throwing (traps)
+                    ~(when run-form
+                       `(let [~'__t0 (enc/now-nano*)]
+                          (with-tracing ~trace? ~'__id ~'__uid
+                            (enc/try*
+                              (do               (RunResult. ~run-form nil   (- (enc/now-nano*) ~'__t0)))
+                              (catch :all ~'__t (RunResult. nil       ~'__t (- (enc/now-nano*) ~'__t0)))))))
 
-                (dispatch-signal!
-                  (WrappedSignal. ; Same internal value sent (conditionally) to all handlers
-                    ~ns ~kind-form ~'__id ~level-form
-
-                    ;; Cache shared by all handlers. Covers signal `:let` eval, signal construction,
-                    ;; middleware (possibly expensive), etc.
+                    ~'__signal_
                     (delay
+                      ;; Cache shared by all handlers. Covers signal `:let` eval, signal construction,
+                      ;; middleware (possibly expensive), etc.
 
                       ;; The unwrapped signal value actually visible to users/handler-fns, realized only
                       ;; AFTER handler filtering. Allowed to throw on deref (handler will catch).
                       (let [~'__signal ~signal-form] ; Can throw
                         (if ~'__call-middleware
                           ((sigs/get-middleware-fn ~'__call-middleware) ~'__signal) ; Can throw
-                          (do                                           ~'__signal))))))
+                          (do                                           ~'__signal))))]
+
+                ;; Unconditionally send same wrapped signal to all handlers.
+                ;; Each handler will then use wrapper for filtering, unwrapping allowed signals.
+                (dispatch-signal! (WrappedSignal. ~'__ns ~'__kind ~'__id ~'__level ~'__signal_))
 
                 (if    ~'__run-result
                   (do (~'__run-result))

@@ -15,7 +15,6 @@
     (when-debug (println [:tools.logger/enabled? logger-ns level]))
     (impl/signal-allowed?
       {:location nil
-       :ns       nil
        :kind     :log
        :id       :taoensso.telemere/tools-logging
        :level    level}))
@@ -25,11 +24,9 @@
     (impl/signal!
       {:allow?   true ; Pre-filtered by `enabled?` call
        :location nil
-       :ns       nil
        :kind     :log
        :id       :taoensso.telemere/tools-logging
        :level    level
-       :inst     :auto
        :error    throwable
        :msg      message})
     nil))
@@ -42,7 +39,6 @@
 (defn ^:public tools-logging->telemere!
   "Configures `clojure.tools.logging` to use Telemere as its logging implementation."
   []
-
   (impl/signal!
     {:kind  :event
      :level :info

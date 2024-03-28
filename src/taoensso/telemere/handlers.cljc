@@ -1,4 +1,4 @@
-(ns ^:no-doc taoensso.telemere.handlers
+(ns taoensso.telemere.handlers
   "Built-in Telemere handlers."
   (:require
    [clojure.string          :as str]
@@ -22,9 +22,9 @@
        Defaults to `*err*` if `utils/error-signal?` is true, and `*out*` otherwise.
 
      Common formatting alternatives:
-       (utils/format-signal-str->fn)  ; For human-readable string output (default)
-       (utils/format-signal->edn-fn)  ; For edn  output
-       (utils/format-signal->json-fn) ; For JSON output
+       (utils/format-signal-str->fn) {<opts>}) ; For human-readable string output (default)
+       (utils/format-signal->edn-fn) {<opts>}) ; For edn  output
+       (utils/format-signal->json-fn {<opts>}) ; For JSON output
        etc.
 
        See each format builder for options, etc."
@@ -53,9 +53,9 @@
        - Writes a formatted signal string to JavaScript console.
 
      Common formatting alternatives:
-       (utils/format-signal-str->fn)  ; For human-readable string output (default)
-       (utils/format-signal->edn-fn)  ; For edn  output
-       (utils/format-signal->json-fn) ; For JSON output
+       (utils/format-signal-str->fn) {<opts>}) ; For human-readable string output (default)
+       (utils/format-signal->edn-fn) {<opts>}) ; For edn  output
+       (utils/format-signal->json-fn {<opts>}) ; For JSON output
        etc.
 
        See each format builder for options, etc."

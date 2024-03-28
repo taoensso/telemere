@@ -1,4 +1,4 @@
-(ns ^:no-doc taoensso.telemere.utils
+(ns taoensso.telemere.utils
   "Misc utils useful for Telemere handlers, middleware, etc."
   (:refer-clojure :exclude [newline])
   (:require
@@ -77,7 +77,7 @@
        `:error` -> `js/console.error`, etc.
 
      Defaults to `js.console.log` for unmatched signal levels.
-     NB: assumes that `js/console` exists, handler builders should check first!"
+     NB: assumes that `js/console` exists, handler constructors should check first!"
      [level]
      (case level
        :trace  js/console.trace
