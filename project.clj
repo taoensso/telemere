@@ -1,4 +1,4 @@
-(defproject com.taoensso/telemere "1.0.0-alpha1"
+(defproject com.taoensso/telemere "1.0.0-SNAPSHOT"
   :author "Peter Taoussanis <https://www.taoensso.com>"
   :description "Structured telemetry library for Clojure/Script"
   :url "https://www.taoensso.com/telemere"
