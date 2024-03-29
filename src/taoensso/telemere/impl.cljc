@@ -169,6 +169,16 @@
          ;; Leave user to delay-wrap when appropriate (document)
          :else msg-form))))
 
+(defn default-trace-msg
+  [form value error nsecs]
+  (if error
+    (str form " !> " (enc/ex-type error))
+    (str form " => " value)))
+
+(comment
+  (default-trace-msg "(+ 1 2)" 3   nil               12345)
+  (default-trace-msg "(+ 1 2)" nil (Exception. "Ex") 12345))
+
 ;;;; Tracing (optional flow tracking)
 
 (enc/def* ^:dynamic *trace-parent* "?TraceParent" nil)
@@ -342,8 +352,8 @@
                  run-err (.-error run-result)
                  run-val (.-value run-result)
                  msg_
-                 (if (enc/identical-kw? msg_ ::spy)
-                   (delay (str run-form " => " (or run-err run-val)))
+                 (if (fn?  msg_) ; Undocumented, handy for `trace!`/`spy!`, etc.
+                   (delay (msg_ run-form run-val run-err run-nsecs))
                    msg_)]
 
             (Signal. 1 inst uid,
@@ -468,10 +478,34 @@
                  arg-order))]
 
        (if (or (= num-args 1) (map? extra-val-or-opts))
-         (let [opts      extra-val-or-opts] (conj {:defaults defaults, main-key main-val                     } opts))
-         (let [extra-val extra-val-or-opts]       {:defaults defaults, main-key main-val, extra-key extra-val})))))
+         (let [opts      extra-val-or-opts] (merge defaults {main-key main-val} opts))
+         (let [extra-val extra-val-or-opts] (merge defaults {main-key main-val, extra-key extra-val}))))))
 
 (comment (signal-opts `signal! {:level :info} :id :level :dsc [::my-id {:level :warn}]))
+
+#?(:clj
+   (defn signal-catch-opts
+     "For use within `trace!` and `spy!`, etc."
+     [main-opts]
+     (let [catch-id-or-opts (get    main-opts :catch->error)
+           main-opts        (dissoc main-opts :catch->error)
+           catch-opts
+           (when catch-id-or-opts
+             (let [base ; Inherit some opts from main
+                   (enc/assoc-some {}
+                     :location (get main-opts :location)
+                     :id       (get main-opts :id))]
+               (cond
+                 (true? catch-id-or-opts) (do   base)
+                 (map?  catch-id-or-opts) (conj base catch-id-or-opts)
+                 :else                    (conj base {:id catch-id-or-opts}))))]
+
+       [main-opts catch-opts])))
+
+(comment
+  (signal-catch-opts {:id :main-id, :catch->error           true})
+  (signal-catch-opts {:id :main-id, :catch->error      :error-id})
+  (signal-catch-opts {:id :main-id, :catch->error {:id :error-id}}))
 
 ;;;; Signal macro
 

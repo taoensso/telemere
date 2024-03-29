@@ -234,35 +234,13 @@
 (comment (with-signal (throw (error! ::my-id (ex-info "MyEx" {})))))
 
 #?(:clj
-   (defmacro trace!
-     "[form] [id-or-opts form] => run result (value or throw)"
-     {:doc      (impl/signal-docstring :trace!)
-      :arglists (impl/signal-arglists  :trace!)}
-     [& args]
-     (let [opts (impl/signal-opts `trace! {:kind :trace, :level :info, :msg ::impl/spy} :run :id :asc args)]
-       (enc/keep-callsite `(impl/signal! ~opts)))))
-
-(comment (with-signal (trace! ::my-id (+ 1 2))))
-
-#?(:clj
-   (defmacro spy!
-     "[form] [level-or-opts form] => run result (value or throw)"
-     {:doc      (impl/signal-docstring :spy!)
-      :arglists (impl/signal-arglists  :spy!)}
-     [& args]
-     (let [opts (impl/signal-opts `spy! {:kind :spy, :level :info, :msg ::impl/spy} :run :level :asc args)]
-       (enc/keep-callsite `(impl/signal! ~opts)))))
-
-(comment (with-signal (spy! :info (+ 1 2))))
-
-#?(:clj
    (defmacro catch->error!
      "[form] [id-or-opts form] => run value or ?catch-val"
      {:doc      (impl/signal-docstring :catch-to-error!)
       :arglists (impl/signal-arglists  :catch->error!)}
      [& args]
      (let [opts     (impl/signal-opts `catch->error! {:kind :error, :level :error} ::__form :id :asc args)
-           rethrow? (if (contains? opts :catch-val) false (get opts :rethrow?))
+           rethrow? (if (contains? opts :catch-val) false (get opts :rethrow? true))
            catch-val    (get       opts :catch-val)
            catch-sym    (get       opts :catch-sym '__caught-error) ; Undocumented
            form         (get       opts ::__form)
@@ -270,7 +248,7 @@
 
        (enc/keep-callsite
          `(enc/try* ~form
-            (catch :any ~catch-sym
+            (catch :all ~catch-sym
               (impl/signal! ~(assoc opts :error catch-sym))
               (if ~rethrow? (throw ~catch-sym) ~catch-val)))))))
 
@@ -278,6 +256,54 @@
   (with-signal (catch->error! ::my-id (/ 1 0)))
   (with-signal (catch->error! {                  :msg_ ["Error:" __caught-error]} (/ 1 0)))
   (with-signal (catch->error! {:catch-sym my-err :msg_ ["Error:" my-err]}         (/ 1 0))))
+
+#?(:clj
+   (defmacro trace!
+     "[form] [id-or-opts form] => run result (value or throw)"
+     {:doc      (impl/signal-docstring :trace!)
+      :arglists (impl/signal-arglists  :trace!)}
+     [& args]
+     (let [opts
+           (impl/signal-opts `trace!
+             {:location (enc/get-source &form &env) ; For catch-opts
+              :kind :trace, :level :info, :msg `impl/default-trace-msg}
+             :run :id :asc args)
+
+           ;; :catch->error <id-or-opts> currently undocumented
+           [opts catch-opts] (impl/signal-catch-opts opts)]
+
+       (if catch-opts
+         (enc/keep-callsite `(catch->error! ~catch-opts (impl/signal! ~opts)))
+         (enc/keep-callsite                            `(impl/signal! ~opts))))))
+
+(comment
+  (with-signal (trace! ::my-id (+ 1 2)))
+  (let [[_ [s1 s2]]
+        (with-signals
+          (trace! {:id :id1, :catch->error :id2}
+            (throw (ex-info "Ex1" {}))))]
+    [s2]))
+
+#?(:clj
+   (defmacro spy!
+     "[form] [level-or-opts form] => run result (value or throw)"
+     {:doc      (impl/signal-docstring :spy!)
+      :arglists (impl/signal-arglists  :spy!)}
+     [& args]
+     (let [opts
+           (impl/signal-opts `spy!
+             {:location (enc/get-source &form &env) ; For catch-opts
+              :kind :spy, :level :info, :msg `impl/default-trace-msg}
+             :run :level :asc args)
+
+           ;; :catch->error <id-or-opts> currently undocumented
+           [opts catch-opts] (impl/signal-catch-opts opts)]
+
+       (if catch-opts
+         (enc/keep-callsite `(catch->error! ~catch-opts (impl/signal! ~opts)))
+         (enc/keep-callsite                            `(impl/signal! ~opts))))))
+
+(comment (with-signal :force (spy! :info (+ 1 2))))
 
 #?(:clj
    (defmacro uncaught->error!

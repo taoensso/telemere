@@ -30,6 +30,9 @@ Tips:
   - Execution of `form` arg may trigger additional (nested) signals.
     Each signal's `:parent` key will indicate its immediate parent.
 
+  - Can be useful to wrap with `catch->error!`:
+      (catch->error! ::error-id (spy! ...)).
+
 ----------------------------------------
 [1] See `help:signal-handling` docstring
 [2] See `help:signal-content`  docstring

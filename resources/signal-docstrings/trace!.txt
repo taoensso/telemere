@@ -30,6 +30,9 @@ Tips:
   - Execution of `form` arg may trigger additional (nested) signals.
     Each signal's `:parent` key will indicate its immediate parent.
 
+  - Can be useful to wrap with `catch->error!`:
+      (catch->error! ::error-id (trace! ...)).
+
   - Default level is `:info`, not `:trace`! The name "trace" in "trace signal"
     refers to the general action of tracing program flow rather than to the
     common logging level of the same name.
