@@ -24,7 +24,7 @@ Examples:
 
 Tips:
 
-  - Test using `with-signals`: (with-signals (catch->error! ...)).
+  - Test using `with-signal`: (with-signal (catch->error! ...)).
   - Supports the same options as other signals [1].
 
   - Useful for recording errors in forms, futures, callbacks, etc.

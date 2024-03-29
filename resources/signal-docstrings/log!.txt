@@ -19,7 +19,7 @@ Examples:
 
 Tips:
 
-  - Test using `with-signals`: (with-signals (log! ...)).
+  - Test using `with-signal`: (with-signal (log! ...)).
   - Supports the same options as other signals [3].
 
   - Prefer `event!` to `log!` by default, since it better encourages structured

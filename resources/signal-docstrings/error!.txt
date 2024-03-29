@@ -18,7 +18,7 @@ Examples:
 
 Tips:
 
-  - Test using `with-signals`: (with-signals (error! ...)).
+  - Test using `with-signal`: (with-signal (error! ...)).
   - Supports the same options as other signals [3].
 
   - `error` arg is a platform error (`java.lang.Throwable` or `js/Error`).

@@ -72,7 +72,7 @@
               *err* (if-let [err# ~err] (osw (telemere-print-stream err#)) *err*)]
       ~form)))
 
-(comment (impl/with-signals (with-out->telemere (println "hello"))))
+(comment (impl/with-signal (with-out->telemere (println "hello"))))
 
 (enc/defonce ^:private orig-out_ "Original `System/out`, or nil" (atom nil))
 (enc/defonce ^:private orig-err_ "Original `System/err`, or nil" (atom nil))

@@ -20,7 +20,7 @@
        [set-ctx! with-ctx with-ctx+
         set-middleware! with-middleware
 
-        with-signals with-signal
+        with-signal with-signals
         signal! event! log! trace! spy! catch->error!
 
         ;; Via `sigs/def-api`
@@ -72,8 +72,8 @@
 
   impl/msg-splice
   impl/msg-skip
-  #?(:clj impl/with-signals)
   #?(:clj impl/with-signal)
+  #?(:clj impl/with-signals)
   #?(:clj impl/signal!))
 
 ;;;; Signal help

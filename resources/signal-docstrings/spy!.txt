@@ -21,7 +21,7 @@ Examples:
 
 Tips:
 
-  - Test using `with-signals`: (with-signals (spy! ...)).
+  - Test using `with-signal`: (with-signal (spy! ...)).
   - Supports the same options as other signals [3].
 
   - Identical to `trace!`, but focused on form + level rather than form + id.

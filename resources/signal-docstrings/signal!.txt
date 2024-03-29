@@ -26,7 +26,7 @@ their defaults and the focus of their call APIs (args and return values):
 
 Tips:
 
-  - Test using `with-signals`: (with-signals (signal! ...)).
+  - Test using `with-signal`: (with-signal (signal! ...)).
   - Supports the same options as other signals [3].
 
 ----------------------------------------
