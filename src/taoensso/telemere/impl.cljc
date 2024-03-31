@@ -330,7 +330,16 @@
 
 (deftype RunResult [value error ^long run-nsecs]
   #?(:clj clojure.lang.IFn :cljs IFn)
-  (#?(:clj invoke :cljs -invoke) [_] (if error (throw error) value)))
+  (#?(:clj invoke :cljs -invoke) [_] (if error (throw error) value))
+  (#?(:clj invoke :cljs -invoke) [_ signal_]
+    (if error
+      (throw
+        (ex-info "Signal `:run` form error"
+          (enc/try*
+            (do           {:taoensso.telemere/signal (force signal_)})
+            (catch :all t {:taoensso.telemere/signal-error t}))
+          error))
+      value)))
 
 (defn new-signal
   "Returns a new `Signal` with given opts."
@@ -632,7 +641,7 @@
                 (dispatch-signal! (WrappedSignal. ~'__ns ~'__kind ~'__id ~'__level ~'__signal_))
 
                 (if    ~'__run-result
-                  (do (~'__run-result))
+                  (do (~'__run-result ~'__signal_))
                   true))))))))
 
 (comment
