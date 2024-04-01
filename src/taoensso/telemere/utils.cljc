@@ -2,8 +2,9 @@
   "Misc utils useful for Telemere handlers, middleware, etc."
   (:refer-clojure :exclude [newline])
   (:require
-   [clojure.string  :as str]
-   [taoensso.encore :as enc :refer [have have?]]))
+   [clojure.string          :as str]
+   #?(:clj [clojure.java.io :as jio])
+   [taoensso.encore         :as enc :refer [have have?]]))
 
 (comment
   (require  '[taoensso.telemere :as tel])
@@ -144,6 +145,100 @@
   (let [s        (tel/with-signal (tel/event! ::ev-id1))]
     (enc/qb 1e6 ; 683
       (minify-signal s))))
+
+;;;; Files
+
+#?(:clj (defn ^:no-doc as-file ^java.io.File [file] (jio/as-file file)))
+#?(:clj
+   (defn ^:no-doc writeable-file!
+     "Private, don't use.
+     Returns writable `java.io.File`, or throws."
+     ^java.io.File [file]
+     (let [file (as-file  file)]
+       (when-not (.exists file)
+         (when-let [parent (.getParentFile file)] (.mkdirs parent))
+         (.createNewFile file))
+
+       (if (.canWrite file)
+         file
+         (throw
+           (ex-info "Unable to prepare writable `java.io.File`"
+             {:path (.getAbsolutePath file)}))))))
+
+#?(:clj
+   (defn ^:no-doc file-stream
+     "Private, don't use.
+     Returns a new `java.io.FileOutputStream` for given `java.io.File`, etc."
+     ^java.io.FileOutputStream [file append?]
+     (java.io.FileOutputStream. (as-file file) (boolean append?))))
+
+#?(:clj
+   (defn file-writer
+     "Experimental, subject to change!!
+
+     Opens the specified file and returns a stateful fn of 2 arities:
+       [content] => Writes given content to file, or no-ops if closed.
+       []        => Closes the writer.
+
+     Thread safe. Automatically creates file and parent dirs as necessary.
+     Writers MUST ALWAYS be manually closed after use!
+
+     Useful for handlers that write to files, etc."
+     [file append?]
+     (let [file    (writeable-file! file)
+           stream_ (volatile! (file-stream file append?))
+           open?_  (enc/latom true)
+
+           close!
+           (fn []
+             (when (compare-and-set! open?_ true false)
+               (when-let [^java.io.FileOutputStream stream (.deref stream_)]
+                 (.close  stream)
+                 (vreset! stream_ nil)
+                 true)))
+
+           reset!
+           (fn []
+             (close!)
+             (vreset! stream_ (file-stream file append?))
+             (reset!  open?_  true)
+             true)
+
+           write-ba!
+           (fn [^bytes ba-content retrying?]
+             (when-let [^java.io.FileOutputStream stream (.deref stream_)]
+               (.write stream ba-content)
+               (.flush stream)
+               true))
+
+           file-exists!
+           (let [rl (enc/rate-limiter-once-per 250)]
+             (fn []
+               (or (rl) (.exists file)
+                 (throw (java.io.IOException. "File doesn't exist")))))
+
+           lock (Object.)]
+
+       (fn file-writer
+         ([] (when (open?_) (locking lock (close!))))
+         ([content-or-action]
+          (case content-or-action ; Undocumented
+            :writer/open?  (open?_)
+            :writer/file   file
+            :writer/stream (.deref stream_)
+            :writer/reset! (locking lock (reset!))
+            (when (open?_)
+              (let [content content-or-action
+                    ba (.getBytes (str content) java.nio.charset.StandardCharsets/UTF_8)]
+                (locking lock
+                  (try
+                    (file-exists!)
+                    (write-ba! ba false)
+                    (catch java.io.IOException _
+                      (reset!)
+                      (write-ba! ba true))))))))))))
+
+(comment (def fw1 (file-writer "test.txt" true)) (fw1 "x") (fw1))
 
 ;;;; Formatters
 

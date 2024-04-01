@@ -8,8 +8,10 @@
     :refer  [signal!       with-signal           with-signals]
     :rename {signal! sig!, with-signal with-sig, with-signals with-sigs}]
 
-   [taoensso.telemere.utils :as utils]
-   [taoensso.telemere.timbre-shim   :as timbre]
+   [taoensso.telemere.utils       :as utils]
+   [taoensso.telemere.timbre-shim :as timbre]
+   [taoensso.telemere.handlers    :as handlers]
+   #?(:clj [taoensso.telemere.handlers.file-handler :as fh])
    #?(:clj [taoensso.telemere.slf4j :as slf4j])
    #?(:clj [clojure.tools.logging   :as ctl])
    #?(:clj [jsonista.core           :as jsonista])))
@@ -621,6 +623,26 @@
       (is (= (utils/error-signal? {:level :fatal}) true))
       (is (= (utils/error-signal? {:error?  true}) true))])
 
+   #?(:clj
+      (testing "File writer"
+        (let [f  (java.io.File/createTempFile "file-writer-test" ".txt")
+              fw (utils/file-writer f false)]
+
+          [(is (true? (fw "1")))
+           (is (true? (.delete f)))
+           (do (Thread/sleep 500) :sleep) ; Wait for `exists` cache to clear
+           (is (true? (fw "2")))
+           (is (= (slurp f) "2"))
+
+           (is (true? (.delete        f)))
+           (is (true? (.createNewFile f))) ; Can break stream without triggering auto reset
+
+           (is (fw :writer/reset!))
+           (is (true? (fw "3")))
+           (is (= (slurp f) "3"))
+           (is (true? (fw "3")))
+           (is (true? (.delete f)))])))
+
    (testing "Formatters, etc."
      [(is (= (utils/error-in-signal->maps {:level :info, :error ex2})
             {:level :info, :error [{:type ex-info-type, :msg "Ex2", :data {:k2 "v2"}}
@@ -667,9 +689,110 @@
           (is (enc/str-starts-with? ((utils/format-signal->str-fn) sig)
                 "2024-06-09T21:15:20.170Z INFO EVENT"))))])])
 
-;;;; Handlers
+;;;; File handler
 
-;; TODO
+#?(:clj
+   (deftest _file-names
+     [(is (= (fh/get-file-name "/logs/app.log" nil  nil false) "/logs/app.log"))
+      (is (= (fh/get-file-name "/logs/app.log" nil  nil true)  "/logs/app.log"))
+      (is (= (fh/get-file-name "/logs/app.log" "ts" nil true)  "/logs/app.log-ts"))
+      (is (= (fh/get-file-name "/logs/app.log" "ts" 1   false) "/logs/app.log-ts.1"))
+      (is (= (fh/get-file-name "/logs/app.log" "ts" 1   true)  "/logs/app.log-ts.1.gz"))
+      (is (= (fh/get-file-name "/logs/app.log" nil  1   false) "/logs/app.log.1"))
+      (is (= (fh/get-file-name "/logs/app.log" nil  1   true)  "/logs/app.log.1.gz"))]))
+
+#?(:clj
+   (deftest _file-timestamps
+     [(is (= (fh/format-file-timestamp :daily   (fh/udt->edy udt0)) "2024-06-09d"))
+      (is (= (fh/format-file-timestamp :weekly  (fh/udt->edy udt0)) "2024-06-03w"))
+      (is (= (fh/format-file-timestamp :monthly (fh/udt->edy udt0)) "2024-06-01m"))]))
+
+(comment (fh/manage-test-files! :create))
+
+#?(:clj
+   (deftest _file-handling
+     [(is (boolean (fh/manage-test-files! :create)))
+
+      (testing "`scan-files`"
+        ;; Just checking basic counts here, should be sufficient
+        [(is (= (count (fh/scan-files "test/logs/app1.log" nil     nil :sort))  1) "1 main, 0 parts")
+         (is (= (count (fh/scan-files "test/logs/app1.log" :daily  nil :sort))  0) "0 stamped")
+         (is (= (count (fh/scan-files "test/logs/app2.log" nil     nil :sort))  6) "1 main, 5 parts (+gz)")
+         (is (= (count (fh/scan-files "test/logs/app3.log" nil     nil :sort))  6) "1 main, 5 parts (-gz")
+         (is (= (count (fh/scan-files "test/logs/app4.log" nil     nil :sort)) 11) "1 main, 5 parts (+gz) + 5 parts (-gz)")
+         (is (= (count (fh/scan-files "test/logs/app5.log" nil     nil :sort))  1) "1 main, 0 unstamped")
+         (is (= (count (fh/scan-files "test/logs/app5.log" :daily  nil :sort))  5) "5 stamped")
+         (is (= (count (fh/scan-files "test/logs/app6.log" nil     nil :sort))  1) "1 main, 0 unstamped")
+         (is (= (count (fh/scan-files "test/logs/app6.log" :daily  nil :sort)) 25) "5 stamped * 5 parts")
+         (is (= (count (fh/scan-files "test/logs/app6.log" :weekly nil :sort))  5) "5 stamped")])
+
+      (testing "`archive-main-file!`"
+        [(is (= (let [df (fh/debugger)] (fh/archive-main-file! "test/logs/app1.log" nil nil 2 :gz df) (df))
+               [[:rename "test/logs/app1.log" "test/logs/app1.log.1.gz"]]))
+
+         (is (= (let [df (fh/debugger)] (fh/archive-main-file! "test/logs/app2.log" nil nil 2 :gz df) (df))
+               [[:delete "test/logs/app2.log.5.gz"]
+                [:delete "test/logs/app2.log.4.gz"]
+                [:delete "test/logs/app2.log.3.gz"]
+                [:delete "test/logs/app2.log.2.gz"]
+                [:rename "test/logs/app2.log.1.gz" "test/logs/app2.log.2.gz"]
+                [:rename "test/logs/app2.log"      "test/logs/app2.log.1.gz"]]))
+
+         (is (= (let [df (fh/debugger)] (fh/archive-main-file! "test/logs/app3.log" nil nil 2 :gz df) (df))
+               [[:delete "test/logs/app3.log.5"]
+                [:delete "test/logs/app3.log.4"]
+                [:delete "test/logs/app3.log.3"]
+                [:delete "test/logs/app3.log.2"]
+                [:rename "test/logs/app3.log.1" "test/logs/app3.log.2"]
+                [:rename "test/logs/app3.log"   "test/logs/app3.log.1.gz"]]))
+
+         (is (= (let [df (fh/debugger)] (fh/archive-main-file! "test/logs/app6.log" :daily "2021-01-01d" 2 :gz df) (df))
+               [[:delete "test/logs/app6.log-2021-01-01d.5.gz"]
+                [:delete "test/logs/app6.log-2021-01-01d.4.gz"]
+                [:delete "test/logs/app6.log-2021-01-01d.3.gz"]
+                [:delete "test/logs/app6.log-2021-01-01d.2.gz"]
+                [:rename "test/logs/app6.log-2021-01-01d.1.gz" "test/logs/app6.log-2021-01-01d.2.gz"]
+                [:rename "test/logs/app6.log"                  "test/logs/app6.log-2021-01-01d.1.gz"]]))])
+
+      (testing "`prune-archive-files!`"
+        [(is (= (let [df (fh/debugger)] (fh/prune-archive-files! "test/logs/app1.log" nil    2 df) (df)) []))
+         (is (= (let [df (fh/debugger)] (fh/prune-archive-files! "test/logs/app2.log" nil    2 df) (df)) []))
+         (is (= (let [df (fh/debugger)] (fh/prune-archive-files! "test/logs/app5.log" nil    2 df) (df)) []))
+         (is (= (let [df (fh/debugger)] (fh/prune-archive-files! "test/logs/app5.log" :daily 2 df) (df))
+               [[:delete "test/logs/app5.log-2020-01-01d"]
+                [:delete "test/logs/app5.log-2020-01-02d"]
+                [:delete "test/logs/app5.log-2020-02-01d"]]))
+
+         (is (= (let [df (fh/debugger)] (fh/prune-archive-files! "test/logs/app6.log" :daily 2 df) (df))
+               [[:delete "test/logs/app6.log-2020-01-01d.5.gz"]
+                [:delete "test/logs/app6.log-2020-01-01d.4.gz"]
+                [:delete "test/logs/app6.log-2020-01-01d.3.gz"]
+                [:delete "test/logs/app6.log-2020-01-01d.2.gz"]
+                [:delete "test/logs/app6.log-2020-01-01d.1.gz"]
+
+                [:delete "test/logs/app6.log-2020-01-02d.5.gz"]
+                [:delete "test/logs/app6.log-2020-01-02d.4.gz"]
+                [:delete "test/logs/app6.log-2020-01-02d.3.gz"]
+                [:delete "test/logs/app6.log-2020-01-02d.2.gz"]
+                [:delete "test/logs/app6.log-2020-01-02d.1.gz"]
+
+                [:delete "test/logs/app6.log-2020-02-01d.5.gz"]
+                [:delete "test/logs/app6.log-2020-02-01d.4.gz"]
+                [:delete "test/logs/app6.log-2020-02-01d.3.gz"]
+                [:delete "test/logs/app6.log-2020-02-01d.2.gz"]
+                [:delete "test/logs/app6.log-2020-02-01d.1.gz"]])
+
+           "Prune oldest 3 intervals, with 5 parts each")])
+
+      (is (boolean (fh/manage-test-files! :delete)))]))
+
+;;;; Other handlers
+
+(deftest _other-handlers
+  ;; For now just testing that basic construction succeeds
+  [#?(:default (is (fn? (handlers/console-handler))))
+   #?(:cljs    (is (fn? (handlers/raw-console-handler))))
+   #?(:clj     (is (fn? (handlers/file-handler))))])
 
 ;;;;
 

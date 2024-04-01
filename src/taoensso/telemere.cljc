@@ -34,10 +34,6 @@
 (enc/assert-min-encore-version [3 98 0])
 
 ;;;; TODO
-;; - File   handler (with rotating, rolling, etc.)
-;; - Postal handler (or example)?
-;; - Template / example handler?
-;;
 ;; - Review, TODOs, missing docstrings
 ;; - Reading plan, wiki docs, explainer/demo video
 ;;
@@ -373,8 +369,10 @@
 
 ;;;; Handlers
 
-(enc/defaliases handlers/console-handler
-  #?(:cljs  handlers/raw-console-handler))
+(enc/defaliases
+  #?(:default handlers/console-handler)
+  #?(:cljs    handlers/raw-console-handler)
+  #?(:clj     handlers/file-handler))
 
 (defonce ^:no-doc __add-default-handlers
   (do
@@ -426,7 +424,8 @@
              (ex-info "Ex2" {:b :B}
                (ex-info "Ex1" {:a :A}))}))]
 
-    #?(:cljs (let [hf (handlers/raw-console-handler)] (hf sig) (hf)))
-    (do      (let [hf (handlers/console-handler)]     (hf sig) (hf)))))
+    (do      (let [hf (handlers/file-handler)]        (hf sig) (hf)))
+    (do      (let [hf (handlers/console-handler)]     (hf sig) (hf)))
+    #?(:cljs (let [hf (handlers/raw-console-handler)] (hf sig) (hf)))))
 
 ;;;;

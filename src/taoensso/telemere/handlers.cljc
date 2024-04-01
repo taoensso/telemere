@@ -1,14 +1,25 @@
 (ns taoensso.telemere.handlers
   "Built-in Telemere handlers."
   (:require
-   [clojure.string          :as str]
    [taoensso.encore         :as enc :refer [have have?]]
-   [taoensso.telemere.utils :as utils]))
+   [taoensso.telemere.utils :as utils]
+   #?(:clj [taoensso.telemere.handlers.file-handler :as file-handler])))
 
 (comment
   (require  '[taoensso.telemere :as tel])
   (remove-ns 'taoensso.telemere.handlers)
   (:api (enc/interns-overview)))
+
+;;;; Console handlers
+
+(enc/def* help:signal-formatters
+  "Common signal formatters include:
+    (utils/format-signal-str->fn) {<opts>}) ; For human-readable string output (default)
+    (utils/format-signal->edn-fn) {<opts>}) ; For edn  output
+    (utils/format-signal->json-fn {<opts>}) ; For JSON output
+
+  See relevant docstrings for details."
+  "See docstring")
 
 #?(:clj
    (defn console-handler
@@ -18,16 +29,11 @@
        - Takes a Telemere signal.
        - Writes a formatted signal string to stream.
 
-     Stream (`java.io.Writer`):
-       Defaults to `*err*` if `utils/error-signal?` is true, and `*out*` otherwise.
+     Options:
+       `:format-signal-fn` - (fn [signal]) => output, see `help:signal-formatters`
 
-     Common formatting alternatives:
-       (utils/format-signal-str->fn) {<opts>}) ; For human-readable string output (default)
-       (utils/format-signal->edn-fn) {<opts>}) ; For edn  output
-       (utils/format-signal->json-fn {<opts>}) ; For JSON output
-       etc.
-
-       See each format builder for options, etc."
+       `:stream` - `java.io.writer`
+         Defaults to `*err*` if `utils/error-signal?` is true, and `*out*` otherwise."
 
      ([] (console-handler nil))
      ([{:keys [format-signal-fn stream]
@@ -54,13 +60,8 @@
        - Takes a Telemere signal.
        - Writes a formatted signal string to JavaScript console.
 
-     Common formatting alternatives:
-       (utils/format-signal-str->fn) {<opts>}) ; For human-readable string output (default)
-       (utils/format-signal->edn-fn) {<opts>}) ; For edn  output
-       (utils/format-signal->json-fn {<opts>}) ; For JSON output
-       etc.
-
-       See each format builder for options, etc."
+     Options:
+       `:format-signal-fn` - (fn [signal]) => output, see `help:signal-formatters`"
 
      ([] (console-handler nil))
      ([{:keys [format-signal-fn]
@@ -126,3 +127,7 @@
                  (.call logger logger stack))
 
                (.groupEnd js/console)))))))))
+
+;;;; File handler
+
+#?(:clj (enc/defalias file-handler/file-handler))
