@@ -373,13 +373,13 @@
 
 ;;;; Handlers
 
-(enc/defaliases handlers/console-handler-fn
-  #?(:cljs  handlers/raw-console-handler-fn))
+(enc/defaliases handlers/console-handler
+  #?(:cljs  handlers/raw-console-handler))
 
 (defonce ^:no-doc __add-default-handlers
   (do
     (add-handler! :default-console-handler
-      (console-handler-fn))
+      (console-handler))
     nil))
 
 ;;;; Flow benchmarks
@@ -416,7 +416,7 @@
 ;;;;
 
 (comment
-  (with-handler :hid1 (handlers/console-handler-fn) {} (log! "Message"))
+  (with-handler :hid1 (handlers/console-handler) {} (log! "Message"))
 
   (let [sig
         (with-signal
@@ -426,7 +426,7 @@
              (ex-info "Ex2" {:b :B}
                (ex-info "Ex1" {:a :A}))}))]
 
-    (do      ((handlers/console-handler-fn)     sig))
-    #?(:cljs ((handlers/raw-console-handler-fn) sig))))
+    #?(:cljs (let [hf (handlers/raw-console-handler)] (hf sig) (hf)))
+    (do      (let [hf (handlers/console-handler)]     (hf sig) (hf)))))
 
 ;;;;

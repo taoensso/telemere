@@ -11,7 +11,7 @@
   (:api (enc/interns-overview)))
 
 #?(:clj
-   (defn console-handler-fn
+   (defn console-handler
      "Experimental, subject to change.
 
      Returns a (fn handler [signal]) that:
@@ -29,7 +29,7 @@
 
        See each format builder for options, etc."
 
-     ([] (console-handler-fn nil))
+     ([] (console-handler nil))
      ([{:keys [format-signal-fn stream]
         :or   {format-signal-fn (utils/format-signal->str-fn)}}]
 
@@ -37,15 +37,17 @@
             error-signal? utils/error-signal?
             nl            utils/newline]
 
-        (fn console-handler [signal]
-          (let [^java.io.Writer stream
-                (or stream (if (error-signal? signal) *err* *out*))]
-            (when-let [output (format-signal-fn signal)]
-              (.write stream (str output nl))
-              (.flush stream)))))))
+        (fn a-console-handler
+          ([]) ; Shut down (no-op)
+          ([signal]
+           (let [^java.io.Writer stream
+                 (or stream (if (error-signal? signal) *err* *out*))]
+             (when-let [output (format-signal-fn signal)]
+               (.write stream (str output nl))
+               (.flush stream))))))))
 
    :cljs
-   (defn console-handler-fn
+   (defn console-handler
      "Experimental, subject to change.
 
      If `js/console` exists, returns a (fn handler [signal]) that:
@@ -60,7 +62,7 @@
 
        See each format builder for options, etc."
 
-     ([] (console-handler-fn nil))
+     ([] (console-handler nil))
      ([{:keys [format-signal-fn]
         :or   {format-signal-fn (utils/format-signal->str-fn)}}]
 
@@ -68,10 +70,12 @@
         (let [js-console-logger utils/js-console-logger
               nl utils/newline]
 
-          (fn console-handler [signal]
-            (when-let [output (format-signal-fn signal)]
-              (let [logger (js-console-logger (get signal :level))]
-                (.call logger logger (str output nl))))))))))
+          (fn a-console-handler
+            ([]) ; Shut down (no-op)
+            ([signal]
+             (when-let [output (format-signal-fn signal)]
+               (let [logger (js-console-logger (get signal :level))]
+                 (.call logger logger (str output nl)))))))))))
 
 #?(:cljs
    (defn- logger-fn [logger]
@@ -83,7 +87,7 @@
        ([x1 x2 x3 & more] (apply        logger x1 x2 x3 more)))))
 
 #?(:cljs
-   (defn raw-console-handler-fn
+   (defn raw-console-handler
      "Experimental, subject to change.
 
      If `js/console` exists, returns a (fn handler [signal]) that:
@@ -93,7 +97,7 @@
      Intended for use with browser formatting tools like `binaryage/devtools`,
      Ref. <https://github.com/binaryage/cljs-devtools>."
 
-     ([] (raw-console-handler-fn nil))
+     ([] (raw-console-handler nil))
      ([{:keys [format-signal-prelude-fn format-nsecs-fn] :as opts
         :or
         {format-signal-prelude-fn (utils/format-signal-prelude-fn) ; (fn [signal])
@@ -102,21 +106,23 @@
 
       (when (and (exists? js/console) (exists? js/console.group))
         (let [js-console-logger utils/js-console-logger
-              handle-signal-content-fn ; (fn [signal hf vf]
-              (utils/handle-signal-content-fn
+              signal-content-handler ; (fn [signal hf vf]
+              (utils/signal-content-handler
                 {:format-nsecs-fn format-nsecs-fn
                  :format-error-fn nil
                  :raw-error?      true})]
 
-          (fn raw-console-handler [signal]
-            (let [{:keys [level error]} signal
-                  logger (js-console-logger level)]
+          (fn a-raw-console-handler
+            ([]) ; Shut down (no-op)
+            ([signal]
+             (let [{:keys [level error]} signal
+                   logger (js-console-logger level)]
 
-              ;; Unfortunately groups have no level
-              (.group js/console (format-signal-prelude-fn signal))
-              (handle-signal-content-fn signal (logger-fn logger) identity)
+               ;; Unfortunately groups have no level
+               (.group js/console (format-signal-prelude-fn signal))
+               (signal-content-handler signal (logger-fn logger) identity)
 
-              (when-let [stack (and error (.-stack (enc/ex-root error)))]
-                (.call logger logger stack))
+               (when-let [stack (and error (.-stack (enc/ex-root error)))]
+                 (.call logger logger stack))
 
-              (.groupEnd js/console))))))))
+               (.groupEnd js/console)))))))))

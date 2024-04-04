@@ -236,11 +236,11 @@
 
 (comment ((format-signal-prelude-fn) (tel/with-signal (tel/event! ::ev-id))))
 
-(defn ^:no-doc handle-signal-content-fn
+(defn ^:no-doc signal-content-handler
   "Private, don't use.
   Returns a (fn handle [signal handle-fn value-fn]) for internal use.
   Content equivalent to `format-signal-prelude-fn`."
-  ([] (handle-signal-content-fn nil))
+  ([] (signal-content-handler nil))
   ([{:keys [format-nsecs-fn format-error-fn raw-error?]
      :or
      {format-nsecs-fn (format-nsecs-fn) ; (fn [nanosecs])
@@ -250,7 +250,7 @@
    (let [err-start (str newline "<<< error <<<" newline)
          err-stop  (str newline ">>> error >>>")]
 
-     (fn handle-signal-content [signal hf vf]
+     (fn a-signal-content-handler [signal hf vf]
        (let [{:keys [uid parent data extra-kvs ctx sample-rate]} signal]
          (when sample-rate (hf "sample: " (vf sample-rate)))
          (when uid         (hf "   uid: " (vf uid)))
@@ -338,8 +338,8 @@
       format-error-fn          (format-error-fn)          ; (fn [error])
       }}]
 
-   (let [handle-signal-content-fn ; (fn [signal hf vf]
-         (handle-signal-content-fn
+   (let [signal-content-handler ; (fn [signal hf vf]
+         (signal-content-handler
            {:format-nsecs-fn format-nsecs-fn
             :format-error-fn format-error-fn})]
 
@@ -349,7 +349,7 @@
              s++ (partial enc/sb-append sb (str newline " "))]
 
          (when-let [ff format-signal-prelude-fn] (s+ (ff signal))) ; Prelude
-         (handle-signal-content-fn signal s++ enc/pr-edn) ; Content
+         (signal-content-handler signal s++ enc/pr-edn) ; Content
          (str sb))))))
 
 (comment
