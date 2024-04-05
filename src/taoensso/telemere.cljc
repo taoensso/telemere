@@ -7,12 +7,13 @@
   {:author "Peter Taoussanis (@ptaoussanis)"}
   (:refer-clojure :exclude [binding newline])
   (:require
-   [taoensso.encore            :as enc :refer [binding have have?]]
-   [taoensso.encore.signals    :as sigs]
-   [taoensso.telemere.impl     :as impl]
-   [taoensso.telemere.utils    :as utils]
-   [taoensso.telemere.handlers :as handlers]
-   #?(:clj [taoensso.telemere.streams :as streams]))
+   [taoensso.encore         :as enc :refer [binding have have?]]
+   [taoensso.encore.signals :as sigs]
+   [taoensso.telemere.impl  :as impl]
+   [taoensso.telemere.utils :as utils]
+   [taoensso.telemere.console-handlers     :as console-handlers]
+   #?(:clj [taoensso.telemere.file-handler :as file-handler])
+   #?(:clj [taoensso.telemere.streams      :as streams]))
 
   #?(:cljs
      (:require-macros
@@ -369,15 +370,23 @@
 
 ;;;; Handlers
 
+(enc/def* help:signal-formatters
+  "Common signal formatters include:
+    (utils/format-signal-str->fn) {<opts>}) ; For human-readable string output (default)
+    (utils/format-signal->edn-fn) {<opts>}) ; For edn  output
+    (utils/format-signal->json-fn {<opts>}) ; For JSON output
+
+  See relevant docstrings for details."
+  "See docstring")
+
 (enc/defaliases
-  #?(:default handlers/console-handler)
-  #?(:cljs    handlers/raw-console-handler)
-  #?(:clj     handlers/file-handler))
+  #?(:default console-handlers/handler:console)
+  #?(:cljs    console-handlers/handler:console-raw)
+  #?(:clj         file-handler/handler:file))
 
 (defonce ^:no-doc __add-default-handlers
   (do
-    (add-handler! :default-console-handler
-      (console-handler))
+    (add-handler! :default/console (handler:console))
     nil))
 
 ;;;; Flow benchmarks

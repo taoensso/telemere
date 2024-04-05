@@ -8,12 +8,13 @@
     :refer  [signal!       with-signal           with-signals]
     :rename {signal! sig!, with-signal with-sig, with-signals with-sigs}]
 
-   [taoensso.telemere.utils       :as utils]
-   [taoensso.telemere.timbre-shim :as timbre]
-   [taoensso.telemere.handlers    :as handlers]
-   #?(:clj [taoensso.telemere.handlers.file-handler :as fh])
+   [taoensso.telemere.utils         :as utils]
+   [taoensso.telemere.timbre-shim   :as timbre]
    #?(:clj [taoensso.telemere.slf4j :as slf4j])
-   #?(:clj [clojure.tools.logging   :as ctl])))
+   #?(:clj [clojure.tools.logging   :as ctl])
+
+   #?(:default [taoensso.telemere.console-handlers :as ch])
+   #?(:clj     [taoensso.telemere.file-handler     :as fh])))
 
 (comment
   (remove-ns      'taoensso.telemere-tests)
@@ -38,7 +39,7 @@
   (def pstr?     (enc/pred string?))
   (def pnat-int? (enc/pred enc/nat-int?)))
 
-;; (tel/remove-handler! :default-console-handler)
+;; (tel/remove-handler! :default/console)
 (let [sig-handlers_ (atom nil)]
   (test/use-fixtures :once
     (enc/test-fixtures
@@ -790,9 +791,9 @@
 
 (deftest _other-handlers
   ;; For now just testing that basic construction succeeds
-  [#?(:default (is (fn? (handlers/console-handler))))
-   #?(:cljs    (is (fn? (handlers/raw-console-handler))))
-   #?(:clj     (is (fn? (handlers/file-handler))))])
+  [#?(:default (is (fn? (ch/handler:console))))
+   #?(:cljs    (is (fn? (ch/handler:console-raw))))
+   #?(:clj     (is (fn? (fh/handler:file))))])
 
 ;;;;
 

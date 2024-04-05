@@ -1,28 +1,15 @@
-(ns taoensso.telemere.handlers
-  "Built-in Telemere handlers."
+(ns ^:no-doc taoensso.telemere.console-handlers
+  "Private ns, implementation detail."
   (:require
    [taoensso.encore         :as enc :refer [have have?]]
-   [taoensso.telemere.utils :as utils]
-   #?(:clj [taoensso.telemere.handlers.file-handler :as file-handler])))
+   [taoensso.telemere.utils :as utils]))
 
 (comment
-  (require  '[taoensso.telemere :as tel])
-  (remove-ns 'taoensso.telemere.handlers)
+  (remove-ns 'taoensso.telemere.console-handlers)
   (:api (enc/interns-overview)))
 
-;;;; Console handlers
-
-(enc/def* help:signal-formatters
-  "Common signal formatters include:
-    (utils/format-signal-str->fn) {<opts>}) ; For human-readable string output (default)
-    (utils/format-signal->edn-fn) {<opts>}) ; For edn  output
-    (utils/format-signal->json-fn {<opts>}) ; For JSON output
-
-  See relevant docstrings for details."
-  "See docstring")
-
 #?(:clj
-   (defn console-handler
+   (defn ^:public handler:console
      "Experimental, subject to change.
 
      Returns a (fn handler [signal]) that:
@@ -35,7 +22,7 @@
        `:stream` - `java.io.writer`
          Defaults to `*err*` if `utils/error-signal?` is true, and `*out*` otherwise."
 
-     ([] (console-handler nil))
+     ([] (handler:console nil))
      ([{:keys [format-signal-fn stream]
         :or   {format-signal-fn (utils/format-signal->str-fn)}}]
 
@@ -43,7 +30,7 @@
             error-signal? utils/error-signal?
             nl            utils/newline]
 
-        (fn a-console-handler
+        (fn a-handler:console
           ([]) ; Shut down (no-op)
           ([signal]
            (let [^java.io.Writer stream
@@ -53,7 +40,7 @@
                (.flush stream))))))))
 
    :cljs
-   (defn console-handler
+   (defn ^:public handler:console
      "Experimental, subject to change.
 
      If `js/console` exists, returns a (fn handler [signal]) that:
@@ -63,7 +50,7 @@
      Options:
        `:format-signal-fn` - (fn [signal]) => output, see `help:signal-formatters`"
 
-     ([] (console-handler nil))
+     ([] (handler:console nil))
      ([{:keys [format-signal-fn]
         :or   {format-signal-fn (utils/format-signal->str-fn)}}]
 
@@ -71,7 +58,7 @@
         (let [js-console-logger utils/js-console-logger
               nl utils/newline]
 
-          (fn a-console-handler
+          (fn a-handler:console
             ([]) ; Shut down (no-op)
             ([signal]
              (when-let [output (format-signal-fn signal)]
@@ -88,7 +75,7 @@
        ([x1 x2 x3 & more] (apply        logger x1 x2 x3 more)))))
 
 #?(:cljs
-   (defn raw-console-handler
+   (defn ^:public handler:console-raw
      "Experimental, subject to change.
 
      If `js/console` exists, returns a (fn handler [signal]) that:
@@ -98,7 +85,7 @@
      Intended for use with browser formatting tools like `binaryage/devtools`,
      Ref. <https://github.com/binaryage/cljs-devtools>."
 
-     ([] (raw-console-handler nil))
+     ([] (handler:console-raw nil))
      ([{:keys [format-signal-prelude-fn format-nsecs-fn] :as opts
         :or
         {format-signal-prelude-fn (utils/format-signal-prelude-fn) ; (fn [signal])
@@ -113,7 +100,7 @@
                  :format-error-fn nil
                  :raw-error?      true})]
 
-          (fn a-raw-console-handler
+          (fn a-handler:console-raw
             ([]) ; Shut down (no-op)
             ([signal]
              (let [{:keys [level error]} signal
@@ -127,7 +114,3 @@
                  (.call logger logger stack))
 
                (.groupEnd js/console)))))))))
-
-;;;; File handler
-
-#?(:clj (enc/defalias file-handler/file-handler))

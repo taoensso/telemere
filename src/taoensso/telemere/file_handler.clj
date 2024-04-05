@@ -1,11 +1,11 @@
-(ns ^:no-doc taoensso.telemere.handlers.file-handler
+(ns ^:no-doc taoensso.telemere.file-handler
   "Private ns, implementation detail."
   (:require
    [taoensso.encore :as enc :refer [have have?]]
    [taoensso.telemere.utils :as utils]))
 
 (comment
-  (remove-ns 'taoensso.telemere.handlers.file-handler)
+  (remove-ns 'taoensso.telemere.file-handler)
   (:api (enc/interns-overview)))
 
 ;;;; Implementation
@@ -263,7 +263,7 @@
 
 ;;;; Handler
 
-(defn ^:public file-handler
+(defn ^:public handler:file
   "Experimental, subject to change.
 
      Returns a (fn handler [signal]) that:
@@ -296,7 +296,7 @@
     `:max-num-intervals` ∈ #{nil <pos-int>} (default 6)
       Maximum number of intervals (days/weeks/months) to retain."
 
-  ([] (file-handler nil))
+  ([] (handler:file nil))
   ([{:keys
      [format-signal-fn
       path interval
@@ -357,7 +357,7 @@
 
          lock (Object.)]
 
-     (fn a-file-handler
+     (fn a-handler:file
        ([] (locking lock (fw))) ; Close writer
        ([signal]
         (when-let [output (format-signal-fn signal)]
@@ -392,10 +392,10 @@
   (.setLastModified (utils/as-file "test/logs/app6.log")
     (enc/as-udt "1999-01-01T01:00:00.00Z"))
 
-  (let [hf
-        (file-handler
+  (let [hfn
+        (handler:file
           {:path "test/logs/app6.log"
            :max-num-intervals 2
            :max-num-parts     2})]
 
-    (hf {:info :level :msg_ "hello"}) (hf)))
+    (hfn {:info :level :msg_ "hello"}) (hfn)))
