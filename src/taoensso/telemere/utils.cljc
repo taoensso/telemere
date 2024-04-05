@@ -50,7 +50,7 @@
 
 ;;;; Public misc
 
-(enc/defaliases enc/newline enc/pr-edn enc/pr-json)
+(enc/defaliases enc/newline enc/pr-edn #?(:cljs enc/pr-json))
 
 #?(:clj (defn thread-name "Returns string name of current thread." ^String [] (.getName (Thread/currentThread))))
 #?(:clj (defn thread-id   "Returns long id of current thread."       ^long [] (.getId   (Thread/currentThread))))
@@ -401,17 +401,18 @@
   "Experimental, subject to change.
   Returns a (fn format->json [signal]) that:
     - Takes a Telemere signal.
-    - Returns JSON string of the (minified) signal."
+    - Returns JSON string of the (minified) signal.
+
+  (Clj only): An appropriate `:pr-json-fn` MUST be provided."
   ([] (format-signal->json-fn nil))
   ([{:keys [pr-json-fn prep-fn]
      :or
-     {pr-json-fn pr-json
+     {#?@(:cljs [pr-json-fn pr-json])
       prep-fn (comp error-in-signal->maps minify-signal)}}]
 
-   (enc/try*
-     (pr-json-fn "telemere/auto-test")
-     (catch :all t
-       (throw (ex-info (str "`" `format-signal->json-fn "` `:pr-json` test failed") {} t))))
+   (when-not pr-json-fn
+     (throw
+       (ex-info (str "No `" `format-signal->json-fn "` `:pr-json-fn` was provided") {})))
 
    (fn format-signal->json [signal]
      (let [signal* (if prep-fn (prep-fn signal) signal)]

@@ -48,8 +48,7 @@
      [com.taoensso/slf4j-telemere  "1.0.0-alpha2"]
      ;; [org.slf4j/slf4j-simple          "2.0.12"]
      ;; [org.slf4j/slf4j-nop             "2.0.12"]
-     [io.opentelemetry/opentelemetry-api "1.36.0"]
-     [metosin/jsonista                    "0.3.8"]]
+     [io.opentelemetry/opentelemetry-api "1.36.0"]]
 
     :plugins
     [[lein-pprint                     "1.3.2"]

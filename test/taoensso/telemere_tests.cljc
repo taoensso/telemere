@@ -13,8 +13,7 @@
    [taoensso.telemere.handlers    :as handlers]
    #?(:clj [taoensso.telemere.handlers.file-handler :as fh])
    #?(:clj [taoensso.telemere.slf4j :as slf4j])
-   #?(:clj [clojure.tools.logging   :as ctl])
-   #?(:clj [jsonista.core           :as jsonista])))
+   #?(:clj [clojure.tools.logging   :as ctl])))
 
 (comment
   (remove-ns      'taoensso.telemere-tests)
@@ -673,16 +672,17 @@
                :line    pnat-int?
                :column  pnat-int?}))))
 
-      (testing "format-signal->json-fn"
-        (let [sig  (with-sig (tel/event! ::ev-id {:inst t0}))
-              sig* (enc/read-json ((utils/format-signal->json-fn) sig))]
-          (is
-            (enc/submap? sig*
-              {"schema" 1, "kind" "event", "id" "taoensso.telemere-tests/ev-id",
-               "level" "info", "ns" "taoensso.telemere-tests",
-               "inst"    t0s
-               "line"    pnat-int?
-               "column"  pnat-int?}))))
+      #?(:cljs
+         (testing "format-signal->json-fn"
+           (let [sig  (with-sig (tel/event! ::ev-id {:inst t0}))
+                 sig* (enc/read-json ((utils/format-signal->json-fn) sig))]
+             (is
+               (enc/submap? sig*
+                 {"schema" 1, "kind" "event", "id" "taoensso.telemere-tests/ev-id",
+                  "level" "info", "ns" "taoensso.telemere-tests",
+                  "inst"    t0s
+                  "line"    pnat-int?
+                  "column"  pnat-int?})))))
 
       (testing "format-signal->str-fn"
         (let [sig (with-sig (tel/event! ::ev-id {:inst t0}))]
