@@ -5,18 +5,15 @@
 
 ### Structured telemetry library for Clojure/Script
 
-> This library is **still under development**!!
+> This library is still under development, ETA: [April 2024](https://www.taoensso.com/roadmap).
 
-**Telemere** is an [**upcoming**](https://www.taoensso.com/roadmap) next-generation observability toolkit for **capturing all kinds of un/structured information** in your running Clojure and ClojureScript programs.
+**Telemere** handles **traditional and structured logging**, **tracing**, and **performance measurement** with one clean, simple, unified API.
 
-It offers a **simple, clean, unified API** that covers: **logging**, **events**, **performance measurement**, **tracing**, etc.
-
-Taking full advantage of Clojure's unique **macro and interop** capabilities, Telemere represents the **refinement and culmination** of ideas brewing for 10+ years in [Timbre](https://www.taoensso.com/timbre), [Tufte](https://www.taoensso.com/tufte), [Truss](https://www.taoensso.com/truss), etc.
+It's a next-generation **observability toolkit** and modern replacement for [Timbre](https://www.taoensso.com/timbre), representing the refinement and culmination of ideas brewing over Timbre's 12+ years in a wide variety of real-world Clojure/Script environments.
 
 ## Latest release/s
 
-- Stable release: coming [~Apr 2024](https://www.taoensso.com/roadmap)
-- `v1.0.0-SNAPSHOT` (dev): [release info](https://clojars.org/com.taoensso/telemere) (for early adopters)
+- `v1.0.0-alpha3` (dev): [release info](https://clojars.org/com.taoensso/telemere/versions/1.0.0-alpha3) (for early adopters)
 
 [![Main tests][Main tests SVG]][Main tests URL]
 [![Graal tests][Graal tests SVG]][Graal tests URL]
@@ -25,16 +22,30 @@ See [here][GitHub releases] for earlier releases.
 
 ## Why Telemere?
 
+#### Usability
+
 - Simple, lightweight API that's **easy to use**, **easy to configure**, and **deeply flexible**.
-- An **unmatched logging experience** designed to **scale comfortably** from the smallest disposable code, to the most massive production applications.
-- **Easy integration** with the **tooling of your choice**, including first-class **out-the-box interop** with [OpenTelemetry](https://opentelemetry.io/), [SLF4J v2](https://www.slf4j.org/), [clojure.tools.logging](https://github.com/clojure/tools.logging), and [Tufte](https://www.taoensso.com/tufte).
-- Hyper-optimized and **blazing fast**, see [performance](#performance).
+- **Sensible defaults** to make getting started **fast and easy**.
+- Extensive **beginner-oriented** [documentation][GitHub wiki] and [docstrings][clj-doc docs].
+
+#### Interop
+
+- First-class **out-the-box interop** with [OpenTelemetry](https://opentelemetry.io/), [SLF4J v2](https://www.slf4j.org/), [clojure.tools.logging](https://github.com/clojure/tools.logging), and [Tufte](https://www.taoensso.com/tufte).
+- Included shim for easy/gradual [migration from Timbre](/TODO).
+
+#### Performance
+
+- Hyper-optimized and **blazing fast**, see [benchmarks](#performance).
+- **Scales comfortably** from the smallest disposable code, to the most massive and complex production environments.
+
+#### Flexibility
+
+- Config via plain **Clojure vals and fns** for easy customization, composition, and REPL debug.
+- Top-notch support for **environmental config** (JVM props, ENV vars, edn resources, etc.).
 - Expressive **per-call** and **per-handler** filtering at both **runtime** and **compile-time**.
 - Easily filter by namespace and id pattern, level, **level by namespace pattern**, etc.
 - Support for auto **sampling**, **rate-limiting**, and **back-pressure monitoring**.
 - Support for **fully configurable a/sync dispatch** (blocking, dropping, sliding, etc.).
-- **Sensible defaults** to make getting started **fast and easy**.
-- Extensive **beginner-oriented** [documentation](#documentation), docstrings, examples, etc.
 
 ## Video demo
 
@@ -54,7 +65,7 @@ See for intro and usage: (**TODO**: coming later)
 
 See [here](/TODO) for general advice re: building and maintaining **highly observable** Clojure/Script systems.
 
-## Performance
+## Benchmarks
 
 Telemere is **highly optimized** and offers terrific performance at any scale:
 
