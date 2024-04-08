@@ -13,8 +13,8 @@
    #?(:clj [taoensso.telemere.slf4j :as slf4j])
    #?(:clj [clojure.tools.logging   :as ctl])
 
-   #?(:default [taoensso.telemere.console-handlers :as ch])
-   #?(:clj     [taoensso.telemere.file-handler     :as fh])))
+   #?(:default [taoensso.telemere.handlers.console :as handlers:console])
+   #?(:clj     [taoensso.telemere.handlers.file    :as handlers:file])))
 
 (comment
   (remove-ns      'taoensso.telemere-tests)
@@ -691,6 +691,8 @@
 
 ;;;; File handler
 
+#?(:clj (alias 'fh 'taoensso.telemere.handlers.file))
+
 #?(:clj
    (deftest _file-names
      [(is (= (fh/get-file-name "/logs/app.log" nil  nil false) "/logs/app.log"))
@@ -790,9 +792,9 @@
 
 (deftest _other-handlers
   ;; For now just testing that basic construction succeeds
-  [#?(:default (is (fn? (ch/handler:console))))
-   #?(:cljs    (is (fn? (ch/handler:console-raw))))
-   #?(:clj     (is (fn? (fh/handler:file))))])
+  [#?(:default (is (fn? (handlers:console/handler:console))))
+   #?(:cljs    (is (fn? (handlers:console/handler:console-raw))))
+   #?(:clj     (is (fn? (handlers:file/handler:file))))])
 
 ;;;;
 

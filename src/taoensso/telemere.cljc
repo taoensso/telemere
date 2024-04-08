@@ -11,9 +11,10 @@
    [taoensso.encore.signals :as sigs]
    [taoensso.telemere.impl  :as impl]
    [taoensso.telemere.utils :as utils]
-   [taoensso.telemere.console-handlers     :as console-handlers]
-   #?(:clj [taoensso.telemere.file-handler :as file-handler])
-   #?(:clj [taoensso.telemere.streams      :as streams]))
+   #?(:clj [taoensso.telemere.streams :as streams])
+
+   #?(:default [taoensso.telemere.handlers.console :as handlers:console])
+   #?(:clj     [taoensso.telemere.handlers.file    :as handlers:file]))
 
   #?(:cljs
      (:require-macros
@@ -383,9 +384,9 @@
   "See docstring")
 
 (enc/defaliases
-  #?(:default console-handlers/handler:console)
-  #?(:cljs    console-handlers/handler:console-raw)
-  #?(:clj         file-handler/handler:file))
+  #?(:default handlers:console/handler:console)
+  #?(:cljs    handlers:console/handler:console-raw)
+  #?(:clj        handlers:file/handler:file))
 
 (defonce ^:no-doc __add-default-handlers
   (do
