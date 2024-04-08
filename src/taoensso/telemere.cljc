@@ -388,9 +388,17 @@
   #?(:cljs    handlers:console/handler:console-raw)
   #?(:clj        handlers:file/handler:file))
 
+#?(:clj
+   (enc/compile-when
+     (do (require '[taoensso.telemere.handlers.open-telemetry :as handlers:open-tel]))
+     (enc/defalias handlers:open-tel/handler:open-telemetry-logger)))
+
 (defonce ^:no-doc __add-default-handlers
   (do
     (add-handler! :default/console (handler:console))
+    #?(:clj
+       (enc/compile-when handler:open-telemetry-logger
+         (add-handler!  :default/open-telemetry-logger handler:open-telemetry-logger)))
     nil))
 
 ;;;; Flow benchmarks

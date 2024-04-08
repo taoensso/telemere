@@ -257,6 +257,18 @@
 
 (comment ((format-inst-fn) (enc/now-inst)))
 
+#?(:clj
+   (defn- format-clj-stacktrace
+     [trace]
+     (let [sb   (enc/str-builder)
+           s+nl (enc/sb-appender sb enc/newline)]
+       (doseq [st-el (force trace)]
+         (let [{:keys [class method file line]} st-el]
+           (s+nl class "/" method " at " file ":" line)))
+       (str sb))))
+
+(comment (println (format-clj-stacktrace (:trace (enc/ex-map (ex-info "Ex2" {:k2 "v2"} (ex-info "Ex1" {:k1 "v1"})))))))
+
 (defn format-error-fn
   "Experimental, subject to change.
   Returns a (fn format [error]) that:
@@ -281,12 +293,9 @@
                  (s+ nl "  data: " (enc/pr-edn* data)))))
 
            (when trace
-             (s+ nl nl "Root stack trace:")
-             #?(:cljs (s+ nl trace)
-                :clj
-                (doseq [st-el (force trace)]
-                  (let [{:keys [class method file line]} st-el]
-                    (s+ nl "" class "/" method " at " file ":" line)))))
+             (s+ nl nl "Root stack trace:" nl)
+             #?(:cljs (s+                    trace)
+                :clj  (format-clj-stacktrace trace)))
 
            (str sb)))))))
 
