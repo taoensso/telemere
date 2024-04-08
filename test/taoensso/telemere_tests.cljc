@@ -9,7 +9,7 @@
     :rename {signal! sig!, with-signal with-sig, with-signals with-sigs}]
 
    [taoensso.telemere.utils         :as utils]
-   [taoensso.telemere.timbre-shim   :as timbre]
+   [taoensso.telemere.timbre        :as timbre]
    #?(:clj [taoensso.telemere.slf4j :as slf4j])
    #?(:clj [clojure.tools.logging   :as ctl])
 

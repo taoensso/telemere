@@ -1,4 +1,4 @@
-(ns taoensso.telemere.timbre-shim
+(ns taoensso.telemere.timbre
   "Main Timbre macros, reimplemented on top of Telemere.
   Intended to help ease migration from Timbre to Telemere."
   (:require
@@ -8,7 +8,7 @@
    [taoensso.telemere      :as tel]))
 
 (comment
-  (remove-ns 'taoensso.telemere.timbre-shim)
+  (remove-ns 'taoensso.telemere.timbre)
   (:api (enc/interns-overview)))
 
 (let [arg-str
@@ -54,7 +54,7 @@
   (parse-vargs true [                   "hello %s" "stu"])
   (parse-vargs true [(Exception. "Ex1") "hello %s" "stu"]))
 
-(def ^:no-doc ^:const shim-id :taoensso.telemere/timbre-shim)
+(def ^:no-doc ^:const shim-id :taoensso.telemere/timbre)
 
 #?(:clj
    (defmacro ^:no-doc log!
@@ -129,13 +129,13 @@
 #?(:clj
    (defmacro refer-timbre
      "(require
-        '[taoensso.telemere.timbre-shim :as timbre :refer
+        '[taoensso.telemere.timbre :as timbre :refer
           [log  trace  debug  info  warn  error  fatal  report
            logf tracef debugf infof warnf errorf fatalf reportf
            spy]])"
      []
      `(require
-        '~'[taoensso.telemere.timbre-shim :as timbre :refer
+        '~'[taoensso.telemere.timbre :as timbre :refer
             [log  trace  debug  info  warn  error  fatal  report
              logf tracef debugf infof warnf errorf fatalf reportf
              spy]])))
