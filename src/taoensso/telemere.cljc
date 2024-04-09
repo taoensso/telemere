@@ -38,7 +38,7 @@
 ;; - Review, TODOs, missing docstrings
 ;; - Reading plan, wiki docs, explainer/demo video
 ;;
-;; - First OpenTelemetry tools
+;; - Next OpenTelemetry tools (traces, etc.)
 ;; - Update Tufte  (signal API, config API, signal keys, etc.)
 ;; - Update Timbre (signal API, config API, signal keys, backport improvements)
 
@@ -51,9 +51,12 @@
    :*rt-sig-filter* impl/*rt-sig-filter*})
 
 (comment
-  [level-aliases]
-  [help:handlers get-handlers add-handler! remove-handler! with-handler with-handler+]
-  [help:filtering get-filters get-min-level
+  [level-aliases
+
+   help:handlers get-handlers add-handler! remove-handler!
+   with-handler with-handler+ shut-down-handlers!
+
+   help:filtering get-filters get-min-level
    set-kind-filter! set-ns-filter! set-id-filter! set-min-level!
    with-kind-filter with-ns-filter with-id-filter with-min-level])
 
@@ -350,7 +353,7 @@
 #?(:clj
    (enc/compile-when
      (do (require '[taoensso.telemere.tools-logging :as ttl]) true)
-     (enc/defaliases ttl/tools-logging->telemere!)
+     (enc/defalias ttl/tools-logging->telemere!)
      (when (enc/get-env {:as :bool} :clojure.tools.logging->telemere?)
        (ttl/tools-logging->telemere!))))
 

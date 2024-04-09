@@ -96,7 +96,7 @@
   "Experimental, subject to change.
   Returns true iff given signal has an `:error` value, or a `:kind` or `:level`
   that indicates that it's an error."
-  #?(:cljs {:tag 'string})
+  #?(:cljs {:tag 'boolean})
   [signal]
   (and signal
     (boolean
@@ -273,10 +273,10 @@
                s+ (partial enc/sb-append sb)
                {:keys [chain trace]} em]
 
-           (let [s++ (enc/sb-appender sb (str nls "Caused: "))]
+           (let [s+cause (enc/sb-appender sb (str nls "Caused: "))]
              (s+ "  Root: ")
              (doseq [{:keys [type msg data]} (rseq chain)]
-               (s++ type " - " msg)
+               (s+cause type " - " msg)
                (when data
                  (s+ nl "  data: " (enc/pr-edn* data)))))
 
@@ -307,14 +307,14 @@
 
    (fn format-signal-prelude [signal]
      (let [{:keys [inst level kind ns id msg_]} signal
-           sb (enc/str-builder)
-           s+ (enc/sb-appender sb " ")]
+           sb    (enc/str-builder)
+           s+spc (enc/sb-appender sb " ")]
 
-       (when inst  (when-let [ff format-inst-fn] (s+ (ff inst))))
-       (when level (s+ (format-level level)))
+       (when inst  (when-let [ff format-inst-fn] (s+spc (ff inst))))
+       (when level (s+spc (format-level level)))
 
-       (if kind (s+ (upper-qn kind)) (s+ "DEFAULT"))
-       #?(:clj  (s+ (hostname)))
+       (if kind (s+spc (upper-qn kind)) (s+spc "DEFAULT"))
+       #?(:clj  (s+spc (hostname)))
 
        ;; "<ns>:(<line>,<column>)"
        (when-let [base (or ns (get signal :file))]
@@ -325,8 +325,8 @@
              (when-let [c (get signal :column)] (s+ "," c))
              (s+ ")"))))
 
-       (when id (s+ (format-id ns id)))
-       (when-let [msg (force msg_)] (s+ "- " msg))
+       (when id (s+spc (format-id ns id)))
+       (when-let [msg (force msg_)] (s+spc "- " msg))
        (str sb)))))
 
 (comment ((format-signal-prelude-fn) (tel/with-signal (tel/event! ::ev-id))))
@@ -445,7 +445,7 @@
              s++ (partial enc/sb-append sb (str newline " "))]
 
          (when-let [ff format-signal-prelude-fn] (s+ (ff signal))) ; Prelude
-         (signal-content-handler signal s++ enc/pr-edn) ; Content
+         (signal-content-handler signal s++ enc/pr-edn*) ; Content
          (str sb))))))
 
 (comment

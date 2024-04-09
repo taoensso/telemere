@@ -39,7 +39,6 @@
   (def pstr?     (enc/pred string?))
   (def pnat-int? (enc/pred enc/nat-int?)))
 
-;; (tel/remove-handler! :default/console)
 (let [sig-handlers_ (atom nil)]
   (test/use-fixtures :once
     (enc/test-fixtures
