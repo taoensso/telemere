@@ -8,7 +8,7 @@
    :url  "https://www.eclipse.org/legal/epl-v10.html"}
 
   :dependencies
-  [[com.taoensso/encore "3.98.0-RC10"]]
+  [[com.taoensso/encore "3.99.0"]]
 
   :test-paths ["test" #_"src"]
 
@@ -47,7 +47,9 @@
      [com.taoensso/slf4j-telemere  "1.0.0-alpha2"]
      ;; [org.slf4j/slf4j-simple          "2.0.12"]
      ;; [org.slf4j/slf4j-nop             "2.0.12"]
-     [io.opentelemetry/opentelemetry-api "1.36.0"]]
+     [io.opentelemetry/opentelemetry-api                         "1.37.0"]
+     [io.opentelemetry/opentelemetry-sdk-extension-autoconfigure "1.37.0"]
+     [io.opentelemetry/opentelemetry-exporter-otlp               "1.37.0"]]
 
     :plugins
     [[lein-pprint                     "1.3.2"]
