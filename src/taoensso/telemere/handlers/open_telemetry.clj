@@ -143,22 +143,22 @@
               "exception.stacktrace" (when trace (#'utils/format-clj-stacktrace trace)))
             "exception.data" data))
 
-        extra-kvs (get signal :extra-kvs)
+        kvs (get signal :kvs)
         attr-kvs
         (when extra-attrs-key
           (when-let [kvs (get signal extra-attrs-key)]
             (not-empty kvs)))
 
-        extra-kvs
+        kvs
         (if attr-kvs
-          (dissoc extra-kvs extra-attrs-key)
-          (do     extra-kvs))
+          (dissoc kvs extra-attrs-key)
+          (do     kvs))
 
         attrs-map
         (-> attrs-map
           (merge-prefix-map "ctx"  (get signal :ctx))
           (merge-prefix-map "data" (get signal :data))
-          (merge-prefix-map "kvs"  (get signal :extra-kvs))
+          (merge-prefix-map "kvs"  (get signal :kvs))
           (enc/fast-merge attr-kvs) ; Unprefixed, undocumented
           )]
 

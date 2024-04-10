@@ -29,7 +29,7 @@ Default keys:
 
 `:sample-rate` - ?rate ∈ℝ[0,1] for combined call AND handler sampling (0.75 => allow 75% of signals, nil => allow all)
 
-<extra-kvs> - Arb user-level ?kvs given to signal call
+<kvs>       - Arb other user-level ?kvs given to signal call
 
 If anything is unclear, please ping me (@ptaoussanis) so that I can improve these docs!
 

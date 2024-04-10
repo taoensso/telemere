@@ -118,7 +118,7 @@
    (testing "Support arb extra user kvs"
      (let [sv (with-sig (sig! {:level :info, :my-k1 "v1", :my-k2 "v2"}))]
        (is          (sm? sv   {:level :info, :my-k1 "v1", :my-k2 "v2"
-                               :extra-kvs   {:my-k1 "v1", :my-k2 "v2"}}))))
+                               :kvs         {:my-k1 "v1", :my-k2 "v2"}}))))
 
    (testing "`:msg` basics"
      (let [c               (enc/counter)

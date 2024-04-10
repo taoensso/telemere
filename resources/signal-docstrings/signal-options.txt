@@ -25,7 +25,7 @@ Signal options (shared by `signal!`, `event!`, ...):
 `:middleware`  - ?[(fn [signal])=>modified-signal ...] call middleware
 `:trace?`      - Should tracing be enabled for `:run` form?
 
-<extra-kvs> - Arb user-level ?kvs to incl. in signal
+<kvs>          - Arb other user-level ?kvs to incl. in signal
 
 If anything is unclear, please ping me (@ptaoussanis) so that I can improve these docs!
 

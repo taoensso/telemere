@@ -213,7 +213,7 @@
    location ns line column file,
    sample-rate, kind id level, ctx parent,
    data msg_ error run-form run-val,
-   end-inst run-nsecs extra-kvs]
+   end-inst run-nsecs kvs]
 
   Object (toString [sig] (str "#" `Signal (into {} sig))))
 
@@ -348,7 +348,7 @@
   [inst uid,
    location ns line column file,
    sample-rate, kind id level, ctx parent,
-   extra-kvs data msg_,
+   kvs data msg_,
    run-form run-result error]
 
   (let [signal
@@ -370,15 +370,15 @@
               sample-rate, kind id level, ctx parent,
               data msg_,
               run-err run-form run-val,
-              end-inst run-nsecs extra-kvs))
+              end-inst run-nsecs kvs))
 
           (Signal. 1 inst uid,
             location ns line column file,
             sample-rate, kind id level, ctx parent,
-            data msg_, error nil nil nil nil extra-kvs))]
+            data msg_, error nil nil nil nil kvs))]
 
-    (if extra-kvs
-      (reduce-kv assoc signal extra-kvs)
+    (if kvs
+      (reduce-kv assoc signal kvs)
       (do              signal))))
 
 (comment
@@ -401,7 +401,7 @@
            [#_defaults #_elide? #_allow? #_expansion-id, ; Undocumented
             elidable? location inst uid middleware,
             sample-rate kind ns id level when rate-limit,
-            ctx parent trace?, do let data msg error run & extra-kvs]}])
+            ctx parent trace?, do let data msg error run & kvs]}])
 
        :event! ; [id] [id level-or-opts] => allowed?
        '([id      ]
@@ -411,7 +411,7 @@
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location inst uid middleware,
             sample-rate kind ns id level when rate-limit,
-            ctx parent trace?, do let data msg error #_run & extra-kvs]}])
+            ctx parent trace?, do let data msg error #_run & kvs]}])
 
        :log! ; [msg] [level-or-opts msg] => allowed?
        '([      msg]
@@ -420,7 +420,7 @@
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location inst uid middleware,
             sample-rate kind ns id level when rate-limit,
-            ctx parent trace?, do let data msg error #_run & extra-kvs]}
+            ctx parent trace?, do let data msg error #_run & kvs]}
           msg])
 
        :error! ; [error] [id-or-opts error] => given error
@@ -430,7 +430,7 @@
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location inst uid middleware,
             sample-rate kind ns id level when rate-limit,
-            ctx parent trace?, do let data msg error #_run & extra-kvs]}
+            ctx parent trace?, do let data msg error #_run & kvs]}
           error])
 
        (:trace! :spy!) ; [form] [id-or-opts form] => run result (value or throw)
@@ -440,7 +440,7 @@
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location inst uid middleware,
             sample-rate kind ns id level when rate-limit,
-            ctx parent trace?, do let data msg error run & extra-kvs]}
+            ctx parent trace?, do let data msg error run & kvs]}
           form])
 
        :catch->error! ; [form] [id-or-opts form] => run result (value or throw)
@@ -450,7 +450,7 @@
            [#_defaults #_elide? #_allow? #_expansion-id, rethrow? catch-val,
             elidable? location inst uid middleware,
             sample-rate kind ns id level when rate-limit,
-            ctx parent trace?, do let data msg error #_run & extra-kvs]}
+            ctx parent trace?, do let data msg error #_run & kvs]}
           form])
 
        :uncaught->error! ; [] [id-or-opts] => nil
@@ -460,7 +460,7 @@
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location inst uid middleware,
             sample-rate kind ns id level when rate-limit,
-            ctx parent trace?, do let data msg error #_run & extra-kvs]}])
+            ctx parent trace?, do let data msg error #_run & kvs]}])
 
        (enc/unexpected-arg! macro-id))))
 
@@ -572,7 +572,7 @@
                      ctx-form    (get opts :ctx                 `taoensso.telemere/*ctx*)
                      parent-form (get opts :parent (when trace? `taoensso.telemere.impl/*trace-parent*))
 
-                     extra-kvs-form
+                     kvs-form
                      (not-empty
                        (dissoc opts
                          :elidable? :location :inst :uid :middleware,
@@ -595,7 +595,7 @@
                       (new-signal ~'__inst ~'__uid
                         ~location ~'__ns ~line-form ~column-form ~file-form,
                         ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form,
-                        ~extra-kvs-form ~data-form ~msg-form,
+                        ~kvs-form ~data-form ~msg-form,
                         '~run-form ~'__run-result ~error-form))))
 
                run-fn-form (when run-form `(fn [] (~run-form)))]

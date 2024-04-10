@@ -127,7 +127,7 @@
   "Experimental, subject to change.
   Returns minimal signal map, removing:
     - Keys with nil values, and
-    - Keys with redundant values (`:extra-kvs`, `:location`, `:file`).
+    - Keys with redundant values (`:kvs`, `:location`, `:file`).
 
   Useful when serializing signals to edn/JSON/etc."
   [signal]
@@ -136,7 +136,7 @@
       (if (nil? v)
         m
         (case k
-          (:extra-kvs :location :file) m
+          (:kvs :location :file) m
           (assoc m k v))))
     nil signal))
 
@@ -355,12 +355,12 @@
          err-stop  (str newline ">>> error >>>")]
 
      (fn a-signal-content-handler [signal hf vf]
-       (let [{:keys [uid parent data extra-kvs ctx sample-rate]} signal]
+       (let [{:keys [uid parent data kvs ctx sample-rate]} signal]
          (when sample-rate (hf "sample: " (vf sample-rate)))
          (when uid         (hf "   uid: " (vf uid)))
          (when parent      (hf "parent: " (vf parent)))
          (when data        (hf "  data: " (vf data)))
-         (when extra-kvs   (hf "   kvs: " (vf extra-kvs)))
+         (when kvs         (hf "   kvs: " (vf kvs)))
          (when ctx         (hf "   ctx: " (vf ctx))))
 
        (let [{:keys [run-form error]} signal]
