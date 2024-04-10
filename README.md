@@ -13,7 +13,7 @@ It's a next-generation **observability toolkit** and modern replacement for [Tim
 
 ## Latest release/s
 
-- `v1.0.0-alpha3` (dev): [release info](https://clojars.org/com.taoensso/telemere/versions/1.0.0-alpha3) (for early adopters)
+- `v1.0.0-alpha4` (dev): [release info](https://clojars.org/com.taoensso/telemere/versions/1.0.0-alpha4) (for early adopters)
 
 [![Main tests][Main tests SVG]][Main tests URL]
 [![Graal tests][Graal tests SVG]][Graal tests URL]
