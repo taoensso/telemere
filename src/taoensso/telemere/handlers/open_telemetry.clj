@@ -106,7 +106,7 @@
 (defn signal->attrs-map
   "Returns attributes map for given signal,
   Ref. <https://opentelemetry.io/docs/specs/otel/logs/data-model/>."
-  [extra-attrs-key signal]
+  [attrs-key signal]
   (let [attrs-map
         (let [{:keys [ns line file, kind level id uid parent,
                       run-form run-val run-nsecs, sample-rate]}
@@ -145,13 +145,13 @@
 
         kvs (get signal :kvs)
         attr-kvs
-        (when extra-attrs-key
-          (when-let [kvs (get signal extra-attrs-key)]
+        (when attrs-key
+          (when-let [kvs (get signal attrs-key)]
             (not-empty kvs)))
 
         kvs
         (if attr-kvs
-          (dissoc kvs extra-attrs-key)
+          (dissoc kvs attrs-key)
           (do     kvs))
 
         attrs-map
@@ -190,12 +190,14 @@
       returned by given `io.opentelemetry.api.logs.LoggerProvider`."
 
   ([] (handler:open-telemetry-logger nil))
-  ([{:keys [^LoggerProvider logger-provider
-            extra-attrs-key ; Undocumented
-            ]
+  ([{:keys
+     [^LoggerProvider logger-provider
+      attrs-key ; Advanced, undocumented
+      ]
+
      :or
      {logger-provider (get-default-logger-provider)
-      extra-attrs-key :open-telemetry-attrs}}]
+      attrs-key :open-telemetry-attrs}}]
 
    (let []
      (fn a-handler:open-telemetry-logger
@@ -205,7 +207,7 @@
               logger    (.get logger-provider (or ns "default"))
               severity  (level->severity level)
               msg       (force msg_)
-              attrs-map (signal->attrs-map extra-attrs-key signal)
+              attrs-map (signal->attrs-map attrs-key signal)
               attrs     (as-attrs attrs-map)]
 
           (.emit
