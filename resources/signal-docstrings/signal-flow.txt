@@ -11,7 +11,7 @@ For more info:
 
   - On call    filters, see: `help:filters`  docstring
   - On handler filters, see: `help:handlers` docstring
-  - On signal flow,     see: Ref. <https://tinyurl.com/telemere-signal-flowchart>
+  - On signal  flow,    see: Ref. <https://www.taoensso.com/telemere/flowchart>
 
 If anything is unclear, please ping me (@ptaoussanis) so that I can
 improve these docs!

@@ -8,7 +8,7 @@
    :url  "https://www.eclipse.org/legal/epl-v10.html"}
 
   :dependencies
-  [[com.taoensso/encore "3.99.0"]]
+  [[com.taoensso/encore "3.100.0"]]
 
   :test-paths ["test" #_"src"]
 
@@ -44,7 +44,7 @@
     [[org.clojure/test.check              "1.1.1"]
      [org.clojure/tools.logging           "1.3.0"]
      [org.slf4j/slf4j-api                "2.0.12"]
-     [com.taoensso/slf4j-telemere  "1.0.0-alpha2"]
+     [com.taoensso/slf4j-telemere  "1.0.0-alpha4"]
      ;; [org.slf4j/slf4j-simple          "2.0.12"]
      ;; [org.slf4j/slf4j-nop             "2.0.12"]
      [io.opentelemetry/opentelemetry-api                         "1.37.0"]

@@ -21,7 +21,7 @@ Signal options (shared by `signal!`, `event!`, ...):
 `:elidable?`   - Should signal call be subject to compile-time elision? (Default: true)
 `:sample-rate` - ?rate ∈ℝ[0,1] for call sampling (0.75 => allow 75% of signals, nil => allow all)
 `:when`        - Arb ?form; when present, form must return truthy to allow signal
-`:rate-limit`  - ?spec as given to `telemere/rate-limiter`, see its docstring for details
+`:rate-limit`  - ?spec as given to `taoensso.telemere/rate-limiter`, see its docstring for details
 `:middleware`  - ?[(fn [signal])=>modified-signal ...] call middleware
 `:trace?`      - Should tracing be enabled for `:run` form?
 

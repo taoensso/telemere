@@ -534,8 +534,8 @@
              {:macro-form &form
               :macro-env  &env
               :sf-arity   4
-              :ct-sig-filter   ct-sig-filter
-              :rt-sig-filter `*rt-sig-filter*}
+              :ct-sig-filter     ct-sig-filter
+              :*rt-sig-filter* `*rt-sig-filter*}
              opts)]
 
        (if elide?
@@ -663,8 +663,8 @@
              {:macro-form &form
               :macro-env  &env
               :sf-arity   4
-              :ct-sig-filter   ct-sig-filter
-              :rt-sig-filter `*rt-sig-filter*}
+              :ct-sig-filter     ct-sig-filter
+              :*rt-sig-filter* `*rt-sig-filter*}
              opts)]
 
        (and (not elide?) allow?))))

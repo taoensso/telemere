@@ -38,6 +38,6 @@ Tips:
     common logging level of the same name.
 
 ----------------------------------------
-[1] See `help:signal-handling` docstring
+[1] See `help:signal-flow`     docstring
 [2] See `help:signal-content`  docstring
 [3] See `help:signal-options`  docstring

@@ -35,7 +35,7 @@
 
 (def ^String attr-name
   "Returns cached OpenTelemetry-style name: `:foo/bar-baz` -> \"foo_bar_baz\", etc.
-  Ref. <https://opentelemetry.io/docs/specs/semconv/general/attribute-naming/>"
+  Ref. <https://opentelemetry.io/docs/specs/semconv/general/attribute-naming/>."
   (enc/fmemoize
     (fn
       ([prefix x] (str (attr-name prefix) "." (attr-name x))) ; For `merge-prefix-map`, etc.
@@ -104,7 +104,7 @@
 (comment (merge-prefix-map {} "data" {:a/b1 "v1" :a/b2 "v2" :nil nil}))
 
 (defn signal->attrs-map
-  "Returns attributes map for given signal.
+  "Returns attributes map for given signal,
   Ref. <https://opentelemetry.io/docs/specs/otel/logs/data-model/>."
   [extra-attrs-key signal]
   (let [attrs-map

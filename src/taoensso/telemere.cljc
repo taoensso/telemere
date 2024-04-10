@@ -33,7 +33,7 @@
   (remove-ns 'taoensso.telemere)
   (:api (enc/interns-overview)))
 
-(enc/assert-min-encore-version [3 99 0])
+(enc/assert-min-encore-version [3 100 0])
 
 ;;;; TODO
 ;; - Review, TODOs, missing docstrings
@@ -48,8 +48,9 @@
 (sigs/def-api
   {:purpose  "signal"
    :sf-arity 4
-   :*sig-handlers*  impl/*sig-handlers*
-   :*rt-sig-filter* impl/*rt-sig-filter*})
+   :ct-sig-filter   impl/ct-sig-filter
+   :*rt-sig-filter* impl/*rt-sig-filter*
+   :*sig-handlers*  impl/*sig-handlers*})
 
 (comment
   [level-aliases
@@ -81,9 +82,12 @@
 
 (comment help:filters help:handlers) ; Via Encore
 
-(impl/defhelp help:signal-handling :signal-handling)
-(impl/defhelp help:signal-content  :signal-content)
-(impl/defhelp help:signal-options  :signal-options)
+(impl/defhelp help:signal-options    :signal-options)
+(impl/defhelp help:signal-content    :signal-content)
+(impl/defhelp help:signal-flow       :signal-flow)
+(impl/defhelp help:signal-formatters :signal-formatters)
+(enc/defalias help:signal-filters    help:filters)
+(enc/defalias help:signal-handlers   help:handlers)
 
 ;;;; Context
 
@@ -373,15 +377,6 @@
 (comment (check-interop))
 
 ;;;; Handlers
-
-(enc/def* help:signal-formatters
-  "Common signal formatters include:
-    (utils/format-signal-str->fn) {<opts>}) ; For human-readable string output (default)
-    (utils/format-signal->edn-fn) {<opts>}) ; For edn  output
-    (utils/format-signal->json-fn {<opts>}) ; For JSON output
-
-  See relevant docstrings for details."
-  "See docstring")
 
 (enc/defaliases
   #?(:default handlers:console/handler:console)

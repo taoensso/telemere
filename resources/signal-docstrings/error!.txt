@@ -24,6 +24,7 @@ Tips:
   - `error` arg is a platform error (`java.lang.Throwable` or `js/Error`).
   - Can conveniently be wrapped by `throw`: (throw (error! ...)).
 
-[1] See `help:signal-handling` docstring
+----------------------------------------
+[1] See `help:signal-flow`     docstring
 [2] See `help:signal-content`  docstring
 [3] See `help:signal-options`  docstring
