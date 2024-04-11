@@ -39,10 +39,10 @@
           :id-filter (or id-filter (get base :id-filter))
           :min-level (or min-level (get base :min-level))}))))
 
-(let [base      (enc/get-env {:as :edn} :taoensso.telemere/rt-filters<.platform><.edn>)
-      ns-filter (enc/get-env {:as :edn} :taoensso.telemere/rt-ns-filter<.platform><.edn>)
-      id-filter (enc/get-env {:as :edn} :taoensso.telemere/rt-id-filter<.platform><.edn>)
-      min-level (enc/get-env {:as :edn} :taoensso.telemere/rt-min-level<.platform><.edn>)]
+(let [base      (enc/get-env {:as :edn}                 :taoensso.telemere/rt-filters<.platform><.edn>)
+      ns-filter (enc/get-env {:as :edn}                 :taoensso.telemere/rt-ns-filter<.platform><.edn>)
+      id-filter (enc/get-env {:as :edn}                 :taoensso.telemere/rt-id-filter<.platform><.edn>)
+      min-level (enc/get-env {:as :edn, :default :info} :taoensso.telemere/rt-min-level<.platform><.edn>)]
 
   (enc/defonce ^:dynamic *rt-sig-filter*
     "`SigFilter` used for runtime filtering, or nil."

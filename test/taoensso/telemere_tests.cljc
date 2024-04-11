@@ -40,14 +40,22 @@
   (def pstr?     (enc/pred string?))
   (def pnat-int? (enc/pred enc/nat-int?)))
 
-(let [sig-handlers_ (atom nil)]
+(let [rt-sig-filter_ (atom nil)
+      sig-handlers_  (atom nil)]
+
   (test/use-fixtures :once
     (enc/test-fixtures
-      {:after (fn [] (enc/set-var-root! impl/*sig-handlers* @sig-handlers_))
-       :before
+      {:before
        (fn []
-         (reset! sig-handlers_ impl/*sig-handlers*)
-         (enc/set-var-root!    impl/*sig-handlers* nil))})))
+         (reset! rt-sig-filter_ impl/*rt-sig-filter*)
+         (reset! sig-handlers_  impl/*sig-handlers*)
+         (enc/set-var-root!     impl/*sig-handlers*  nil)
+         (enc/set-var-root!     impl/*rt-sig-filter* nil))
+
+       :after
+       (fn []
+         (enc/set-var-root! impl/*rt-sig-filter* @rt-sig-filter_)
+         (enc/set-var-root! impl/*sig-handlers*  @sig-handlers_))})))
 
 ;;;;
 
@@ -586,11 +594,11 @@
 ;;;; Timbre shim
 
 (deftest _timbre-shim
-  [(is (sm? (with-sig (timbre/log :debug             "x1" nil "x2")) {:kind :log, :level :debug, :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns pstr?}))
+  [(is (sm? (with-sig (timbre/log :warn              "x1" nil "x2")) {:kind :log, :level :warn,  :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns pstr?}))
    (is (sm? (with-sig (timbre/info                   "x1" nil "x2")) {:kind :log, :level :info,  :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns pstr?}))
    (is (sm? (with-sig (timbre/error                  "x1" nil "x2")) {:kind :log, :level :error, :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns pstr?}))
 
-   (is (sm? (with-sig (timbre/logf :debug "%s %s %s" "x1" nil "x2")) {:kind :log, :level :debug, :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns pstr?}))
+   (is (sm? (with-sig (timbre/logf :warn  "%s %s %s" "x1" nil "x2")) {:kind :log, :level :warn,  :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns pstr?}))
    (is (sm? (with-sig (timbre/infof       "%s %s %s" "x1" nil "x2")) {:kind :log, :level :info,  :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns pstr?}))
    (is (sm? (with-sig (timbre/errorf      "%s %s %s" "x1" nil "x2")) {:kind :log, :level :error, :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns pstr?}))
 
