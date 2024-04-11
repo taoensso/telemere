@@ -5,13 +5,15 @@
 
 ### Structured telemetry library for Clojure/Script
 
-> This library is still under development, ETA: [April 2024](https://www.taoensso.com/roadmap).
+**Telemere** is a next-generation replacement for [Timbre](https://www.taoensso.com/timbre). It handles **structured and traditional logging**, **tracing**, and **basic performance monitoring** with a simple unified API.
 
-**Telemere** handles **traditional and structured logging**, **tracing**, and **performance measurement** with one clean, simple, unified API.
+It helps enable the creation of Clojure/Script systems that are highly **observable**, **robust**, and **debuggable** - and it represents the refinement and culmination of ideas brewing over 12+ years in [Timbre](https://github.com/taoensso/timbre), [Tufte](https://github.com/taoensso/tufte), [Truss](https://github.com/taoensso/truss), etc.
 
-It's a next-generation **observability toolkit** and modern replacement for [Timbre](https://www.taoensso.com/timbre), representing the refinement and culmination of ideas brewing over Timbre's 12+ years in a wide variety of real-world Clojure/Script environments.
+> [Terminology] *Telemetry* is derived from the Greek roots *tele* (remote) and *metron* (measure). It refers to the collection of *in situ* (in position) information, for transmission to other systems for monitoring/analysis. *Logs* are the most common form of software telemetry. So think of telemetry as the *superset of logging-like activities* that help monitor and understand (software) systems.
 
 ## Latest release/s
+
+> This library is still under development, ETA: [end April 2024](https://www.taoensso.com/roadmap).
 
 - `v1.0.0-alpha4` (dev): [release info](https://clojars.org/com.taoensso/telemere/versions/1.0.0-alpha4) (for early adopters)
 
@@ -22,59 +24,172 @@ See [here][GitHub releases] for earlier releases.
 
 ## Why Telemere?
 
-#### Usability
+#### Ergonomics
 
-- Simple, lightweight API that's **easy to use**, **easy to configure**, and **deeply flexible**.
+- Elegant, lightweight API that's **easy to use**, **easy to configure**, and **deeply flexible**.
 - **Sensible defaults** to make getting started **fast and easy**.
-- Extensive **beginner-oriented** [documentation][GitHub wiki] and [docstrings][clj-doc docs].
+- Extensive **beginner-oriented** [documentation][GitHub wiki], [docstrings](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso), and error messages.
 
 #### Interop
 
-- First-class **out-the-box interop** with [OpenTelemetry](https://opentelemetry.io/), [SLF4J v2](https://www.slf4j.org/), [clojure.tools.logging](https://github.com/clojure/tools.logging), and [Tufte](https://www.taoensso.com/tufte).
-- Included shim for easy/gradual [migration from Timbre](/TODO).
+- 1st-class **out-the-box interop** with [SLF4J v2](https://www.slf4j.org/), [clojure.tools.logging](https://github.com/clojure/tools.logging), [OpenTelemetry](https://opentelemetry.io/), and [Tufte](https://www.taoensso.com/tufte) (soon).
+- Included shim for easy/gradual [migration from Timbre](../../wiki/7-Migrating).
 
-#### Performance
+#### Scaling
 
 - Hyper-optimized and **blazing fast**, see [benchmarks](#performance).
-- **Scales comfortably** from the smallest disposable code, to the most massive and complex production environments.
+- An API that **scales comfortably** from the smallest disposable code, to the most massive and complex real-world production environments.
 
 #### Flexibility
 
-- Config via plain **Clojure vals and fns** for easy customization, composition, and REPL debug.
-- Top-notch support for **environmental config** (JVM props, ENV vars, edn resources, etc.).
+- Config via plain **Clojure vals and fns** for easy customization, composition, and REPL debugging.
+- Unmatched support for **environmental config** (JVM props, ENV vars, edn resources, etc.).
 - Expressive **per-call** and **per-handler** filtering at both **runtime** and **compile-time**.
-- Easily filter by namespace and id pattern, level, **level by namespace pattern**, etc.
-- Support for auto **sampling**, **rate-limiting**, and **back-pressure monitoring**.
-- Support for **fully configurable a/sync dispatch** (blocking, dropping, sliding, etc.).
+- Filter by namespace and id pattern, level, **level by namespace pattern**, etc.
+- **Sampling**, **rate-limiting**, and **back-pressure monitoring**.
+- **Fully configurable a/sync dispatch** (blocking, dropping, sliding, etc.).
 
 ## Video demo
 
-See for intro and usage: (**TODO**: coming later)
+See for intro and usage:
 
+**TODO**: soon
+
+<!--
 <a href="https://www.youtube.com/watch?v=TODO" target="_blank">
  <img src="https://img.youtube.com/vi/TODO/maxresdefault.jpg" alt="Telemere demo video" width="480" border="0" />
-</a>
+</a> -->
 
-## Quick example
+## Quick examples
 
 ```clojure
-;; TODO: coming later
+(require '[taoensso.telemere :as t])
+
+;; Start simple
+(t/log! "This will send a `:log` signal to the Clj/s console")
+(t/log! :info "This will do the same, but only when the current level is >= `:info`")
+
+;; Easily construct messages
+(let [x "constructed"] (t/log! :info ["Here's a" x "message!"]))
+
+;; Attach an id
+(t/log! {:level :info, :id ::my-id} "This signal has an id")
+
+;; Attach arb user data
+(t/log! {:level :info, :data {:x :y}} "This signal has structured data")
+
+;; Capture for debug/testing
+(t/with-signal (t/log! "This will be captured"))
+;; => {:keys [location level id data msg_ ...]}
+
+;; `:let` bindings available to `:data` and message, only paid for
+;; when allowed by minimum level and other filtering criteria
+(t/log!
+  {:level :info
+   :let [expensive-metric1 (last (for [x (range 100), y (range 100)] (* x y)))]
+   :data {:metric1 expensive-metric1}}
+  ["Message with metric value:" expensive-metric1])
+
+;; With sampling 50% and 1/sec rate limiting
+(t/log!
+  {:sample-rate 0.5
+   :rate-limit  {"1 per sec" [1 1000]}}
+  "This signal will be sampled and rate limited")
+
+;;; A quick taste of filtering...
+
+(t/set-ns-filter! {:deny "taoensso.*" :allow "taoensso.sente.*"}) ; Set namespace filter
+(t/set-id-filter! {:allow #{::my-particular-id "my-app/*"}})      ; Set id        filter
+
+(t/set-min-level!       :warn) ; Set minimum level
+(t/set-min-level! :log :debug) ; Set minimul level for `:log` signals
+
+;; Set minimum level for `:event` signals originating in the "taoensso.sente.*" ns
+(t/set-min-level! :event "taoensso.sente.*" :warn)
 ```
+
+## API overview
+
+See links below for docstrings/usage, and [documentation](#documentation) for lots more info.
+
+### Signal creators
+
+| Name | Signal kind | Main arg | Optional arg | Returns
+:-- | :-- | :-- | :-- | :--
+| [`signal!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#signal!) | `<arb>` | `opts` | - | Signal allowed? / form result (value or throw)
+| [`log!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#log!) | `:log` | `msg` | `opts`/`level` | Signal allowed?
+| [`event!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#event!) | `:event` | `id` | `opts`/`level` | Signal allowed?
+| [`error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#error!) | `:error` | `error` | `opts`/`id` | Given error
+| [`trace!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#trace!) | `:trace` | `form` | `opts`/`id` | Form result
+| [`spy!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#spy!) | `:spy` | `form` | `opts`/`level` | Form result
+| [`catch->error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#catch-%3Eerror!) | `:error` | `form` | `opts`/`id` | Form value or given fallback
+
+### Signal filters
+
+| Global | Dynamic | Filters by
+| :-- | :-- | :--
+| [`set-kind-filter!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#set-kind-filter!) | [`with-kind-filter`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#with-kind-filter) | Signal kind (`:log`, `:event`, etc.)
+| [`set-ns-filter!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#set-ns-filter!) | [`with-ns-filter`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#with-ns-filter) | Signal namespace
+| [`set-id-filter!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#set-id-filter!) | [`with-id-filter`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#with-id-filter) | Signal id
+| [`set-min-level`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#set-min-level) | [`with-min-level`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#with-min-level) | Signal level (minimum can be specified by kind and/or ns)
+
+### Internal help
+
+Telemere includes extensive internal help docstrings:
+
+| Var | Help with
+| :-- | :--
+| [`help:signal-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options) | Options for standard signal creators
+| [`help:signal-content`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content) | Content of signal maps
+| [`help:signal-flow`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-flow) | Ordered flow from signal creation to handling
+| [`help:signal-filters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-filters) | API for configuring signal filters
+| [`help:signal-handlers`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-handlers) | API for configuring signal handlers
+| [`help:signal-formatters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-formatters) | Signal formatters for use by handlers
+
+### Example handler output
+
+```clojure
+(t/log! {:id ::my-id, :data {:x1 :x2}} "My message") =>
+```
+
+##### Default Clojure console handler:
+
+```
+2024-04-11T10:54:57.202869Z INFO LOG Schrebermann.local examples(56,1) ::my-id - My message
+    data: {:x1 :x2}
+```
+
+##### Default ClojureScript console handler in Chrome:
+
+<img src="/imgs/handler-output-cljs-console.png" alt="Default ClojureScript console handler output" width="640"/>
+
+##### Raw ClojureScript console handler in Chrome, with [cljs-devtools](https://github.com/binaryage/cljs-devtools):
+
+<img src="/imgs/handler-output-cljs-console-raw.png" alt="Raw ClojureScript console handler output" width="640"/>
+
+##### Default Clojure file handler in MacOS terminal:
+
+<img src="/imgs/handler-output-clj-file.png" alt="Default Clojure file handler output" width="640"/>
+
+## Documentation
+
+- [Wiki][GitHub wiki] (getting started, usage, etc.) (**TODO:** soon)
+- API reference: [cljdoc][cljdoc docs], [Codox][Codox docs]
 
 ## Observability tips
 
-See [here](/TODO) for general advice re: building and maintaining **highly observable** Clojure/Script systems.
+See [here](/../../wiki/8-Tips) for general advice re: building and maintaining observable Clojure/Script systems.
 
 ## Benchmarks
 
 Telemere is **highly optimized** and offers terrific performance at any scale:
 
 | Compile-time filtering? | Runtime filtering? | Time? | Trace? | nsecs
-| :-:       | :-: | :-: | :-: | --:
-| ✓ (elide) | -   | -   | -   | 0
-| -         | ✓   | -   | -   | 200
-| -         | ✓   | ✓   | -   | 280
-| -         | ✓   | ✓   | ✓   | 650
+| :-: | :-: | :-: | :-: | --:
+| ✓ (elide) | - | - | - | 0
+| - | ✓ | - | - | 200
+| - | ✓ | ✓ | - | 280
+| - | ✓ | ✓ | ✓ | 650
 
 Measurements:
 
@@ -83,11 +198,6 @@ Measurements:
 - Taken on a 2020 Macbook Pro M1, running OpenJDK 21
 
 **Tip**: Telemere offers extensive per-call and per-handler **filtering**, **sampling**, and **rate-limiting**. Use these to ensure that you're not capturing useless/low-value information in production. See [here](/TODO) for more tips!
-
-## Documentation
-
-- [Wiki][GitHub wiki] (getting started, usage, etc.) (**TODO:** coming later)
-- API reference: [Codox][Codox docs], [clj-doc][clj-doc docs]
 
 ## Funding
 
@@ -110,7 +220,7 @@ Licensed under [EPL 1.0](LICENSE.txt) (same as Clojure).
 <!-- Project -->
 
 [Codox docs]:   https://taoensso.github.io/telemere/
-[clj-doc docs]: https://cljdoc.org/d/com.taoensso/telemere/
+[cljdoc docs]: https://cljdoc.org/d/com.taoensso/telemere/
 
 [Clojars SVG]: https://img.shields.io/clojars/v/com.taoensso/telemere.svg
 [Clojars URL]: https://clojars.org/com.taoensso/telemere
