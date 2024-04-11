@@ -1,9 +1,60 @@
 (ns examples
-  "Some basic Telemere usage examples."
-  (:require
-   [taoensso.telemere :as t]))
+  "Basic Telemere usage examples that appear in the Wiki or docstrings."
+  (:require [taoensso.telemere :as t]))
 
-;; TODO Still be to completed
+;;;; README "Quick example"
+
+(require '[taoensso.telemere :as t])
+
+;; Start simple
+(t/log! "This will send a `:log` signal to the Clj/s console")
+(t/log! :info "This will do the same, but only when the current level is >= `:info`")
+
+;; Easily construct messages
+(let [x "constructed"] (t/log! :info ["Here's a" x "message!"]))
+
+;; Attach an id
+(t/log! {:level :info, :id ::my-id} "This signal has an id")
+
+;; Attach arb user data
+(t/log! {:level :info, :data {:x :y}} "This signal has structured data")
+
+;; Capture for debug/testing
+(t/with-signal (t/log! "This will be captured"))
+;; => {:keys [location level id data msg_ ...]}
+
+;; `:let` bindings available to `:data` and message, only paid for
+;; when allowed by minimum level and other filtering criteria
+(t/log!
+  {:level :info
+   :let [expensive-metric1 (last (for [x (range 100), y (range 100)] (* x y)))]
+   :data {:metric1 expensive-metric1}}
+  ["Message with metric value:" expensive-metric1])
+
+;; With sampling 50% and 1/sec rate limiting
+(t/log!
+  {:sample-rate 0.5
+   :rate-limit  {"1 per sec" [1 1000]}}
+  "This signal will be sampled and rate limited")
+
+;;; A quick taste of filtering...
+
+(t/set-ns-filter! {:deny "taoensso.*" :allow "taoensso.sente.*"}) ; Set namespace filter
+(t/set-id-filter! {:allow #{::my-particular-id "my-app/*"}})      ; Set id        filter
+
+(t/set-min-level!       :warn) ; Set minimum level
+(t/set-min-level! :log :debug) ; Set minimul level for `log!` signals
+
+;; Set minimum level for `event!` signals originating in the "taoensso.sente.*" ns
+(t/set-min-level! :event "taoensso.sente.*" :warn)
+
+;;; Example handler output
+
+(t/log! {:id ::my-id, :data {:x1 :x2}} "My message") ; =>
+;; 2024-04-11T10:54:57.202869Z INFO LOG Schrebermann.local examples(56,1) ::my-id - My message
+;;    data: {:x1 :x2}
+
+;;;; Docstring snippets
 
 (t/with-signal (t/event! ::my-id))
 (t/with-signal (t/event! ::my-id :warn))
@@ -57,3 +108,17 @@
      :catch-val "Return value when form throws"
      :catch-sym my-error}
     (/ 1 0)))
+
+;;;; Wiki examples
+
+;;; Filter signals
+
+(t/set-min-level! :info) ; Set global minimum level
+(t/with-signal (t/event! ::my-id1 :info))  ; => {:keys [inst id ...]}
+(t/with-signal (t/event! ::my-id1 :debug)) ; => nil (signal not allowed)
+
+(t/with-min-level :trace ; Override global minimum level
+  (t/with-signal (t/event! ::my-id1 :debug))) ; => {:keys [inst id ...]}
+
+;; Deny all signals in matching namespaces
+(t/set-ns-filter! {:deny "some.nosy.namespace.*"})
