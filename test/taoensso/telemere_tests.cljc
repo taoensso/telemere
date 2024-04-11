@@ -438,17 +438,20 @@
 (deftest _common-signals
   [#?(:clj
       (testing "signal-opts"
-        [(is (= (impl/signal-opts `signal! {:level :info} :id :level :dsc  [::my-id               ]) {:level :info, :id ::my-id}))
-         (is (= (impl/signal-opts `signal! {:level :info} :id :level :dsc  [::my-id         :warn ]) {:level :warn, :id ::my-id}))
-         (is (= (impl/signal-opts `signal! {:level :info} :id :level :dsc  [::my-id {:level :warn}]) {:level :warn, :id ::my-id}))
+        [(is (= (impl/signal-opts `foo! {:level :info} :id :level :dsc  [::my-id               ]) {:level :info, :id ::my-id}))
+         (is (= (impl/signal-opts `foo! {:level :info} :id :level :dsc  [::my-id         :warn ]) {:level :warn, :id ::my-id}))
+         (is (= (impl/signal-opts `foo! {:level :info} :id :level :dsc  [::my-id {:level :warn}]) {:level :warn, :id ::my-id}))
 
-         (is (= (impl/signal-opts `signal! {:level :info} :id :level :asc [               ::my-id]) {:level :info, :id ::my-id}))
-         (is (= (impl/signal-opts `signal! {:level :info} :id :level :asc [:warn          ::my-id]) {:level :warn, :id ::my-id}))
-         (is (= (impl/signal-opts `signal! {:level :info} :id :level :asc [{:level :warn} ::my-id]) {:level :warn, :id ::my-id}))
+         (is (= (impl/signal-opts `foo! {:level :info} :id :level :asc [               ::my-id]) {:level :info, :id ::my-id}))
+         (is (= (impl/signal-opts `foo! {:level :info} :id :level :asc [:warn          ::my-id]) {:level :warn, :id ::my-id}))
+         (is (= (impl/signal-opts `foo! {:level :info} :id :level :asc [{:level :warn} ::my-id]) {:level :warn, :id ::my-id}))
 
          (is (= (impl/signal-catch-opts {:id :main-id, :location {:ns "ns"}, :catch->error           true})  [{:id :main-id, :location {:ns "ns"}} {:location {:ns "ns"}, :id :main-id}]))
          (is (= (impl/signal-catch-opts {:id :main-id, :location {:ns "ns"}, :catch->error      :error-id})  [{:id :main-id, :location {:ns "ns"}} {:location {:ns "ns"}, :id :error-id}]))
-         (is (= (impl/signal-catch-opts {:id :main-id, :location {:ns "ns"}, :catch->error {:id :error-id}}) [{:id :main-id, :location {:ns "ns"}} {:location {:ns "ns"}, :id :error-id}]))]))
+         (is (= (impl/signal-catch-opts {:id :main-id, :location {:ns "ns"}, :catch->error {:id :error-id}}) [{:id :main-id, :location {:ns "ns"}} {:location {:ns "ns"}, :id :error-id}]))
+
+         (is (throws? :ex-info "Invalid `foo!` args: single map arg is USUALLY a mistake" (impl/signal-opts `foo! {:level :info} :id :level :dsc [{:msg "msg"}])))
+         (is (throws? :ex-info "Invalid `foo!` args: given opts should not contain `:id`" (impl/signal-opts `foo! {:level :info} :id :level :dsc [:my-id1 {:id ::my-id2}])))]))
 
    (testing "event!" ; id + ?level => allowed?
      [(let [[[rv] [sv]] (with-sigs (tel/event! :id1                ))] [(is (= rv true)) (is (sm?  sv {:kind :event, :line :submap/ex, :level :info, :id :id1}))])

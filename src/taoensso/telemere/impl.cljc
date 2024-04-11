@@ -470,27 +470,44 @@
      [context defaults main-key extra-key arg-order args]
 
      (enc/cond
-       :let [num-args (count args)]
+       :let [context-name (str "`" (name context) "`")
+             num-args (count args)
+             bad-args!
+             (fn [msg data]
+               (throw
+                 (ex-info (str "Invalid " context-name " args: " msg)
+                   (conj
+                     {:context context
+                      :args    args}
+                     data))))]
 
        (not (#{1 2} num-args))
-       (throw
-         (ex-info (str "Wrong number of args (" num-args ") passed to: " context)
-           {:context  context
-            :num-args {:actual num-args, :expected #{1 2}}
-            :args                  args}))
+       (bad-args! (str "wrong number of args (" num-args ")")
+         {:actual num-args, :expected #{1 2}})
 
-       :let [[main-val extra-val-or-opts]
+       :let [[main-arg extra-arg]
              (case arg-order
-               :dsc         args,  ; [main ...]
+               :dsc          args  ; [main ...]
                :asc (reverse args) ; [... main]
                (enc/unexpected-arg!
-                 arg-order))]
+                 arg-order))
 
-       (if (or (= num-args 1) (map? extra-val-or-opts))
-         (let [opts      extra-val-or-opts] (merge defaults {main-key main-val} opts))
-         (let [extra-val extra-val-or-opts] (merge defaults {main-key main-val, extra-key extra-val}))))))
+             extra-arg?  (= num-args 2)
+             extra-opts? (and extra-arg? (map? extra-arg))]
 
-(comment (signal-opts `signal! {:level :info} :id :level :dsc [::my-id {:level :warn}]))
+       :do
+       (cond
+         (map? main-arg)
+         (bad-args! "single map arg is USUALLY a mistake, so isn't allowed. Please use 2 arg call if this is intentional." {})
+
+         (and extra-opts? (contains? extra-arg main-key))
+         (bad-args! (str "given opts should not contain `" main-key "`.") {}))
+
+       extra-opts? (merge defaults {main-key main-arg}           extra-arg)
+       extra-arg?  (merge defaults {main-key main-arg, extra-key extra-arg})
+       :else       (merge defaults {main-key main-arg}))))
+
+(comment (signal-opts `foo! {:level :info} :id :level :dsc [::my-id {:level :warn}]))
 
 #?(:clj
    (defn signal-catch-opts
