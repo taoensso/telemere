@@ -37,7 +37,13 @@
   (get-logger [_ logger-ns] (TelemereLogger. (str logger-ns))))
 
 (defn ^:public tools-logging->telemere!
-  "Configures `clojure.tools.logging` to use Telemere as its logging implementation."
+  "Configures `clojure.tools.logging` to use Telemere as its logging implementation.
+
+  Will be AUTOMATICALLY called if `clojure.tools.logging` is present and any of the
+  following are \"true\":
+    - `clojure.tools.logging->telemere?` JVM propety value
+    - `CLOJURE_TOOLS_LOGGING_>TELEMERE?` Environment variable
+    - `clojure.tools.logging->telemere?` Classpath   resource content"
   []
   (impl/signal!
     {:kind  :event
