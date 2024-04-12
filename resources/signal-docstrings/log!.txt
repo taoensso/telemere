@@ -1,11 +1,12 @@
-"Log" signal call, focused on message + level.
+"Log" signal creator, focused on message + level.
 
-API: [msg] [level-or-opts msg] => true iff signal call was allowed.
+API: [msg] [level-or-opts msg] => true iff signal was allowed.
 Default  kind: `:log`
 Default level: `:info`
 
-When conditions are met [1], creates a Telemere signal [2] and dispatches it to
-registered handlers for processing (writing to console/disk/db, etc.).
+When filtering conditions are met [1], creates a Telemere signal [2] and
+dispatches it to registered handlers for processing (e.g. writing to
+console/file/queue/db, etc.).
 
 Examples:
 
@@ -29,6 +30,6 @@ Tips:
   - See also `msg-splice`, `msg-skip` utils.
 
 ----------------------------------------
-[1] See `help:signal-flow`     docstring
-[2] See `help:signal-content`  docstring
-[3] See `help:signal-options`  docstring
+[1] See `help:signal-flow`    docstring
+[2] See `help:signal-content` docstring
+[3] See `help:signal-options` docstring

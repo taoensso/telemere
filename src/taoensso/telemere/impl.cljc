@@ -267,12 +267,12 @@
 #?(:clj
    (defmacro ^:public with-signal
      "Experimental.
-     Executes given form, trapping errors. Returns the LAST signal triggered by form.
+     Executes given form, trapping errors. Returns the LAST signal created by form.
      Useful for tests/debugging.
 
      Options:
        `trap-signals?` (default: false)
-         Should ALL signals triggered by form be trapped to prevent normal dispatch
+         Should ALL signals created by form be trapped to prevent normal dispatch
          to registered handlers?
 
        `raw-msg?` (default: false)

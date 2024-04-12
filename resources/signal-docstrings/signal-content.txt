@@ -1,35 +1,34 @@
-Signals are initially maps with {:keys [inst id ns level data msg_ ...]},
-though they can be modified by call and/or handler middleware.
+Signals are maps with {:keys [inst id ns level data msg_ ...]},
+though they can be modified by signal and/or handler middleware.
 
-Default keys:
+Default signal keys:
 
-`:schema` - Int version of signal schema (current: 1)
-`:inst`   - Platform instant [1] when signal was created
-`:level`  - Signal level ∈ #{<int> :trace :debug :info :warn :error :fatal :report ...}
-`:kind`   - Signal ?kind ∈ #{nil :event :error :log :trace :spy <user-val> ...}
-`:id`     - ?id of signal call     (common to all signals created by signal call, contrast with `:uid`)
-`:uid`    - ?id of signal instance (unique to each signal created by signal call, contrast with `:id`)
+`:schema` ------ Int version of signal schema (current: 1)
+`:inst` -------- Platform instant [1] when signal was created
+`:level` ------- Signal level ∈ #{<int> :trace :debug :info :warn :error :fatal :report ...}
+`:kind` -------- Signal ?kind ∈ #{nil :event :error :log :trace :spy <user-val> ...}
+`:id` ---------- ?id of signal          (common to all  signals created at callsite, contrast with `:uid`)
+`:uid` --------- ?id of signal instance (unique to each signal  created at callsite, contrast with  `:id`)
 
-`:msg`   - Arb user-level message  ?str              given to signal call
-`:data`  - Arb user-level data     ?val (usu. a map) given to signal call
-`:error` - Arb user-level platform ?error [2]        given to signal call
+`:msg` --------- Arb user-level message  ?str              given to signal creator
+`:data` -------- Arb user-level data     ?val (usu. a map) given to signal creator
+`:error` ------- Arb user-level platform ?error [2]        given to signal creator
 
-`:run-form` - Unevaluated ?form given to signal call as `:run`
-`:run-val`  - Successful return ?val of  `:run` ?form
-`:run-nsecs`- ?int nanosecs runtime of   `:run` ?form
-`:end-inst` - Platform ?instant [1] when `:run` ?form completed
+`:run-form` ---- Unevaluated ?form given to signal creator as `:run`
+`:run-val` ----- Successful return ?val of  `:run` ?form
+`:run-nsecs` --- ?int nanosecs runtime of   `:run` ?form
+`:end-inst` ---- Platform ?instant [1] when `:run` ?form completed
 
-`:ctx`      - ?val of `*ctx*` (arb user-level state) when signal was created
-`:parent`   - ?{:keys [id uid]} of parent signal, present in nested signals when tracing
-`:location` - ?{:keys [ns file line column]} signal call location
-`:ns`       - ?str namespace of signal call, same as (:ns     location)
-`:line`     - ?int line      of signal call, same as (:line   location)
-`:column`   - ?int column    of signal call, same as (:column location)
-`:file`     - ?str filename  of signal call, same as (:file   location)
+`:ctx` --------- ?val of `*ctx*` (arb user-level state) when signal was created
+`:parent` ------ ?{:keys [id uid]} of parent signal, present in nested signals when tracing
+`:location` ---- ?{:keys [ns file line column]} signal creator callsite
+`:ns` ---------- ?str namespace of signal creator callsite, same as (:ns     location)
+`:line` -------- ?int line      of signal creator callsite, same as (:line   location)
+`:column` ------ ?int column    of signal creator callsite, same as (:column location)
+`:file` -------- ?str filename  of signal creator callsite, same as (:file   location)
+`:sample-rate` - ?rate ∈ℝ[0,1] for combined signal AND handler sampling (0.75 => allow 75% of signals, nil => allow all)
 
-`:sample-rate` - ?rate ∈ℝ[0,1] for combined call AND handler sampling (0.75 => allow 75% of signals, nil => allow all)
-
-<kvs>       - Arb other user-level ?kvs given to signal call
+<kvs> ---------- Arb other user-level ?kvs given to signal creator
 
 If anything is unclear, please ping me (@ptaoussanis) so that I can improve these docs!
 

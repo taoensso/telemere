@@ -1,31 +1,31 @@
-Signal options (shared by `signal!`, `event!`, ...):
+Signal options (shared by all signal creators):
 
-`:inst`  - Platform instant [1] when signal was created, ∈ #{nil :auto <user-val>}
-`:level` - Signal level ∈ #{<int> :trace :debug :info :warn :error :fatal :report ...}
-`:kind`  - Signal ?kind ∈ #{nil :event :error :log :trace :spy <user-val> ...}
-`:id`    - ?id of signal call     (common to all signals created by signal call, contrast with `:uid`)
-`:uid`   - ?id of signal instance (unique to each signal created by signal call, contrast with `:id`)
+`:inst` -------- Platform instant [1] when signal was created, ∈ #{nil :auto <user-val>}
+`:level` ------- Signal level ∈ #{<int> :trace :debug :info :warn :error :fatal :report ...}
+`:kind` -------- Signal ?kind ∈ #{nil :event :error :log :trace :spy <user-val> ...}
+`:id` ---------- ?id of signal          (common to all  signals created at callsite, contrast with `:uid`)
+`:uid` --------- ?id of signal instance (unique to each signal  created at callsite, contrast with  `:id`)
 
-`:msg`   - Arb user-level ?message to incl. in signal: str or vec of strs to join (with `\space`)
-`:data`  - Arb user-level ?data    to incl. in signal: usu. a map
-`:error` - Arb user-level ?error   to incl. in signal: platform error [2]
+`:msg` --------- Arb user-level ?message to incl. in signal: str or vec of strs to join (with `\space`)
+`:data` -------- Arb user-level ?data    to incl. in signal: usu. a map
+`:error` ------- Arb user-level ?error   to incl. in signal: platform error [2]
 
-`:run` - ?form    to execute UNCONDITIONALLY; will incl. `:run-value` in signal
-`:do`  - ?form    to execute   conditionally (iff signal allowed), before establishing `:let` ?binding
-`:let` - ?binding to establish conditionally (iff signal allowed), BEFORE evaluating `:data` and `:msg` (useful!)
+`:run` --------- ?form     to execute UNCONDITIONALLY; will incl. `:run-value` in signal
+`:do` ---------- ?form     to execute   conditionally (iff signal allowed), before establishing `:let` ?binding
+`:let` --------- ?bindings to establish conditionally (iff signal allowed), BEFORE evaluating `:data` and `:msg` (useful!)
 
-`:ctx`      - Custom ?val to override auto (dynamic `*ctx*`) in signal
-`:parent`   - Custom ?{:keys [id uid]} to override auto (dynamic) parent signal info in signal
-`:location` - Custom ?{:keys [ns line column file]} to override auto signal call location
+`:ctx` --------- Custom ?val to override auto (dynamic `*ctx*`) in signal
+`:parent` ------ Custom ?{:keys [id uid]} to override auto (dynamic) parent signal info in signal
+`:location` ---- Custom ?{:keys [ns line column file]} to override auto signal call location
 
-`:elidable?`   - Should signal call be subject to compile-time elision? (Default: true)
+`:elidable?` --- Should signal be subject to compile-time elision? (Default: true).
 `:sample-rate` - ?rate ∈ℝ[0,1] for call sampling (0.75 => allow 75% of signals, nil => allow all)
-`:when`        - Arb ?form; when present, form must return truthy to allow signal
-`:rate-limit`  - ?spec as given to `taoensso.telemere/rate-limiter`, see its docstring for details
-`:middleware`  - ?[(fn [signal])=>modified-signal ...] call middleware
-`:trace?`      - Should tracing be enabled for `:run` form?
+`:when` -------- Arb ?form; when present, form must return truthy to allow signal
+`:rate-limit` -- ?spec as given to `taoensso.telemere/rate-limiter`, see its docstring for details
+`:middleware` -- ?[(fn [signal])=>modified-signal ...] signal middleware
+`:trace?` ------ Should tracing be enabled for `:run` form?
 
-<kvs>          - Arb other user-level ?kvs to incl. in signal
+<kvs> ---------- Arb other user-level ?kvs to incl. in signal
 
 If anything is unclear, please ping me (@ptaoussanis) so that I can improve these docs!
 

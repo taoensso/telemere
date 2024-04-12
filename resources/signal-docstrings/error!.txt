@@ -1,4 +1,4 @@
-"Error" signal call, focused on error + id.
+"Error" signal creator, focused on error + id.
 
 API: [error] [id-or-opts error] => given error (unconditional)
 Default  kind: `:error`
@@ -25,6 +25,6 @@ Tips:
   - Can conveniently be wrapped by `throw`: (throw (error! ...)).
 
 ----------------------------------------
-[1] See `help:signal-flow`     docstring
-[2] See `help:signal-content`  docstring
-[3] See `help:signal-options`  docstring
+[1] See `help:signal-flow`    docstring
+[2] See `help:signal-content` docstring
+[3] See `help:signal-options` docstring

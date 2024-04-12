@@ -31,4 +31,5 @@ Tips:
 
 See also `error!`.
 
+---------------------------------------
 [1] See `help:signal-options` docstring

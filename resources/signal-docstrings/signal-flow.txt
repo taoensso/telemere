@@ -1,17 +1,26 @@
 A signal will be provided to a handler iff ALL of the following are true:
+  1. Signal (creation) is allowed by compile-time filters
+  2. Signal (creation) is allowed by runtime      filters
+  3. Signal (handling) is allowed by handler      filters
 
-  1. Signal call is allowed by compile-time filters
-  2. Signal call is allowed by runtime      filters
-  3. Handler     is allowed by runtime      filters
+  4. Signal  middleware does not suppress the signal (return nil)
+  5. Handler middleware does not suppress the signal (return nil)
 
-  4. Signal call middleware does not suppress the signal (return nil)
-  5. Handler     middleware does not suppress the signal (return nil)
+For 1-3, filtering may depend on (in order):
+  Sample rate → namespace → kind → id → level → when form/fn → rate limit
+
+Note that sample rates are multiplicative:
+  If a signal is created with 20% sampling and a handler handles 50%
+  of given signals, then 10% of possible signals will be handled.
+
+  This multiplicative rate is helpfully reflected in the signal's final
+  `:sample-rate` value.
+
+For a visual flowchart, see: Ref. <https://www.taoensso.com/telemere/flow>
 
 For more info:
-
-  - On call    filters, see: `help:filters`  docstring
+  - On signal  filters, see: `help:filters`  docstring
   - On handler filters, see: `help:handlers` docstring
-  - On signal  flow,    see: Ref. <https://www.taoensso.com/telemere/flowchart>
 
 If anything is unclear, please ping me (@ptaoussanis) so that I can
 improve these docs!

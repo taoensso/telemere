@@ -1,11 +1,12 @@
-"Event" signal call, focused on id + level.
+"Event" signal creator, focused on id + level.
 
-API: [id] [id level-or-opts] => true iff signal call was allowed
+API: [id] [id level-or-opts] => true iff signal was allowed
 Default  kind: `:event`
 Default level: `:info`
 
-When conditions are met [1], creates a Telemere signal [2] and dispatches it to
-registered handlers for processing (writing to console/disk/db, etc.).
+When filtering conditions are met [1], creates a Telemere signal [2] and
+dispatches it to registered handlers for processing (e.g. writing to
+console/file/queue/db, etc.).
 
 Examples:
 
@@ -29,6 +30,6 @@ Tips:
     position, and for `event!` that's the `level-or-opts` arg.
 
 ----------------------------------------
-[1] See `help:signal-flow`     docstring
-[2] See `help:signal-content`  docstring
-[3] See `help:signal-options`  docstring
+[1] See `help:signal-flow`    docstring
+[2] See `help:signal-content` docstring
+[3] See `help:signal-options` docstring
