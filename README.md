@@ -15,7 +15,7 @@ It helps enable the creation of Clojure/Script systems that are highly **observa
 
 > This library is still under development, ETA: [end April 2024](https://www.taoensso.com/roadmap).
 
-- `v1.0.0-alpha4` (dev): [release info](https://clojars.org/com.taoensso/telemere/versions/1.0.0-alpha4) (for early adopters)
+- `v1.0.0-alpha5` (dev): [release info](https://clojars.org/com.taoensso/telemere/versions/1.0.0-alpha5) (for early adopters)
 
 [![Main tests][Main tests SVG]][Main tests URL]
 [![Graal tests][Graal tests SVG]][Graal tests URL]
