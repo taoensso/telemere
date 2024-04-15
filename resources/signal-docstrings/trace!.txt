@@ -1,10 +1,10 @@
-"Trace" signal creator, focused on form + id.
+"Trace" signal creator, emphasizing form + id.
 
 API: [form] [id-or-opts form] => form's result (value/throw) (unconditional)
 Default  kind: `:trace`
 Default level: `:info` (intentionally NOT `:trace`!)
 
-When filtering conditions are met [1], creates a Telemere signal [2] and
+When filtering conditions are met [4], creates a Telemere signal [3] and
 dispatches it to registered handlers for processing (e.g. writing to
 console/file/queue/db, etc.).
 
@@ -23,9 +23,9 @@ Examples:
 Tips:
 
   - Test using `with-signal`: (with-signal (trace! ...)).
-  - Supports the same options as other signals [3].
+  - Supports the same options [2] as other signals [1].
 
-  - Identical to `spy!`, but focused on form + id rather than form + level.
+  - Identical to `spy!`, but emphasizing form + id rather than form + level.
 
   - Useful for debugging/monitoring forms, and tracing (nested) execution flow.
   - Execution of `form` arg may create additional (nested) signals.
@@ -38,7 +38,8 @@ Tips:
     refers to the general action of tracing program flow rather than to the
     common logging level of the same name.
 
----------------------------------------
-[1] See `help:signal-flow`    docstring
-[2] See `help:signal-content` docstring
-[3] See `help:signal-options` docstring
+-------------------------------------------------------------------
+[1] See `help:signal-creators` - (`signal!`, `log!`, `event!`, ...)
+[2] See `help:signal-options`  - {:keys [kind level id data ...]}
+[3] See `help:signal-content`  - {:keys [kind level id data ...]}
+[4] See `help:signal-flow`     - (filters, handling, etc.)

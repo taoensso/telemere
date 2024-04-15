@@ -1,10 +1,10 @@
-"Spy" signal creator, focused on form + level.
+"Spy" signal creator, emphasizing form + level.
 
 API: [form] [level-or-opts form] => form's result (value/throw) (unconditional)
 Default kind:  `:spy`
 Default level: `:info`
 
-When filtering conditions are met [1], creates a Telemere signal [2] and
+When filtering conditions are met [4], creates a Telemere signal [3] and
 dispatches it to registered handlers for processing (e.g. writing to
 console/file/queue/db, etc.).
 
@@ -23,9 +23,9 @@ Examples:
 Tips:
 
   - Test using `with-signal`: (with-signal (spy! ...)).
-  - Supports the same options as other signals [3].
+  - Supports the same options [2] as other signals [1].
 
-  - Identical to `trace!`, but focused on form + level rather than form + id.
+  - Identical to `trace!`, but emphasizing form + level rather than form + id.
 
   - Useful for debugging/monitoring forms, and tracing (nested) execution flow.
   - Execution of `form` arg may create additional (nested) signals.
@@ -34,7 +34,8 @@ Tips:
   - Can be useful to wrap with `catch->error!`:
       (catch->error! ::error-id (spy! ...)).
 
----------------------------------------
-[1] See `help:signal-flow`    docstring
-[2] See `help:signal-content` docstring
-[3] See `help:signal-options` docstring
+-------------------------------------------------------------------
+[1] See `help:signal-creators` - (`signal!`, `log!`, `event!`, ...)
+[2] See `help:signal-options`  - {:keys [kind level id data ...]}
+[3] See `help:signal-content`  - {:keys [kind level id data ...]}
+[4] See `help:signal-flow`     - (filters, handling, etc.)

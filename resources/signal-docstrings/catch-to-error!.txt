@@ -1,7 +1,7 @@
 Unconditionally executes given form and-
   If form succeeds: return the form's result.
   If form   throws:
-    Call `error!` with the thrown error and the given signal options [1],
+    Call `error!` with the thrown error and the given signal options [2],
     then return (:catch-val opts) if it exists, or rethrow the error.
 
 API: [form] [id-or-opts form] => form's result (value/throw) (unconditional), or (:catch-val opts)
@@ -25,11 +25,14 @@ Examples:
 Tips:
 
   - Test using `with-signal`: (with-signal (catch->error! ...)).
-  - Supports the same options as other signals [1].
+  - Supports the same options [2] as other signals [1].
 
   - Useful for recording errors in forms, futures, callbacks, etc.
 
 See also `error!`.
 
----------------------------------------
-[1] See `help:signal-options` docstring
+-------------------------------------------------------------------
+[1] See `help:signal-creators` - (`signal!`, `log!`, `event!`, ...)
+[2] See `help:signal-options`  - {:keys [kind level id data ...]}
+[3] See `help:signal-content`  - {:keys [kind level id data ...]}
+[4] See `help:signal-flow`     - (filters, handling, etc.)

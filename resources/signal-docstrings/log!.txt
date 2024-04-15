@@ -1,10 +1,10 @@
-"Log" signal creator, focused on message + level.
+"Log" signal creator, emphasizing message + level.
 
 API: [msg] [level-or-opts msg] => true iff signal was allowed.
 Default  kind: `:log`
 Default level: `:info`
 
-When filtering conditions are met [1], creates a Telemere signal [2] and
+When filtering conditions are met [4], creates a Telemere signal [3] and
 dispatches it to registered handlers for processing (e.g. writing to
 console/file/queue/db, etc.).
 
@@ -21,15 +21,16 @@ Examples:
 Tips:
 
   - Test using `with-signal`: (with-signal (log! ...)).
-  - Supports the same options as other signals [3].
+  - Supports the same options [2] as other signals [1].
 
-  - Prefer `event!` to `log!` by default, since it better encourages structured
-    data over unstructured messages.
+  - `log!` and `event!` are both good default/general-purpose signal creators.
+  - `log!` emphasizes messages, while `event!` emphasizes ids.
 
   - `msg` arg may be a string, or vector of strings to join with `\space`.
   - See also `msg-splice`, `msg-skip` utils.
 
-----------------------------------------
-[1] See `help:signal-flow`    docstring
-[2] See `help:signal-content` docstring
-[3] See `help:signal-options` docstring
+-------------------------------------------------------------------
+[1] See `help:signal-creators` - (`signal!`, `log!`, `event!`, ...)
+[2] See `help:signal-options`  - {:keys [kind level id data ...]}
+[3] See `help:signal-content`  - {:keys [kind level id data ...]}
+[4] See `help:signal-flow`     - (filters, handling, etc.)

@@ -122,3 +122,65 @@
 
 ;; Deny all signals in matching namespaces
 (t/set-ns-filter! {:deny "some.nosy.namespace.*"})
+
+;;; Configuring handlers
+
+;; Create a test signal
+(def my-signal
+  (t/with-signal
+    (t/log! {:id ::my-id, :data {:x1 :x2}} "My message")))
+
+;; Create console handler with default opts (writes formatted string)
+(def my-handler (t/handler:console))
+
+;; Test handler, remember it's just a (fn [signal])
+(my-handler my-signal) ; =>
+;; 2024-04-11T10:54:57.202869Z INFO LOG Schrebermann.local examples(56,1) ::my-id - My message
+;;     data: {:x1 :x2}
+
+;; Create console which writes signals as edn
+(def my-handler
+  (t/handler:console
+    {:format-signal-fn (taoensso.telemere.utils/format-signal->edn-fn)}))
+
+(my-handler my-signal) ; =>
+;; {:inst #inst "2024-04-11T10:54:57.202869Z", :msg_ "My message", :ns "examples", ...}
+
+;; Create console which writes signals as JSON
+(def my-handler
+  (t/handler:console
+    {:format-signal-fn
+     (taoensso.telemere.utils/format-signal->json-fn
+       {:pr-json-fn jsonista.core/write-value-as-string})}))
+
+(my-handler my-signal) ; =>
+;; {"inst":"2024-04-11T10:54:57.202869Z","msg_":"My message","ns":"examples", ...}
+
+;;; Writing handlers
+
+(defn handler:my-handler ; Note naming convention
+  "Returns a (fn handler [signal] that:
+    - Does something.
+
+  Options:
+    `:option1` - Description
+    `:option2` - Description"
+
+  ([] (handler:my-handler nil)) ; Use default opts
+  ([{:as constructor-opts}]
+
+   ;; Do expensive prep outside returned handler fn whenever possible -
+   ;; i.e. at (one-off) construction time rather than handling time.
+   (let []
+
+     (fn a-handler:my-handler ; Note naming convention
+
+       ;; Shutdown arity - called by Telemere exactly once when the handler is
+       ;; to be shut down. This is your opportunity to finalize/free resources, etc.
+       ([])
+
+       ;; Main arity - called by Telemere whenever the handler should handle the
+       ;; given signal. Never called after shutdown.
+       ([signal]
+        ;; TODO Do something with given signal
+        )))))

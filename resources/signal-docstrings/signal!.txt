@@ -1,10 +1,10 @@
 Low-level generic signal creator.
 
-API: [opts] => depends on options [3]
+API: [opts] => depends on options [2]
 Default  kind: none (optional)
 Default level: none (must be provided)
 
-When filtering conditions are met [1], creates a Telemere signal [2] and
+When filtering conditions are met [4], creates a Telemere signal [3] and
 dispatches it to registered handlers for processing (e.g. writing to
 console/file/queue/db, etc.).
 
@@ -14,23 +14,15 @@ If `:run` option is provided: returns value of given run form, or throws.
 Generic signals are fairly low-level and useful mostly for library authors or
 advanced users writing their own wrapper macros. Regular users will typically
 prefer one of the higher-level signal creators optimized for ease-of-use in
-common cases.
-
-These all use `signal!` underneath and offer the same options, but vary in
-their defaults and the focus of their call APIs (args and return values):
-
-  `event!` - (id      + opts/level) => true iff signal was created (allowed)
-  `log!`   - (message + opts/level) => true iff signal was created (allowed)
-  `error!` - (error   + opts/id)    => given error (unconditional)
-  `trace!` - (form    + opts/id)    => form's result (value/throw) (unconditional)
-  `spy!`   - (form    + opts/level) => form's result (value/throw) (unconditional)
+common cases [1].
 
 Tips:
 
   - Test using `with-signal`: (with-signal (signal! ...)).
-  - Supports the same options as other signals [3].
+  - Supports the same options [2] as other signals [1].
 
----------------------------------------
-[1] See `help:signal-flow`    docstring
-[2] See `help:signal-content` docstring
-[3] See `help:signal-options` docstring
+-------------------------------------------------------------------
+[1] See `help:signal-creators` - (`signal!`, `log!`, `event!`, ...)
+[2] See `help:signal-options`  - {:keys [kind level id data ...]}
+[3] See `help:signal-content`  - {:keys [kind level id data ...]}
+[4] See `help:signal-flow`     - (filters, handling, etc.)

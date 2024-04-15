@@ -13,14 +13,14 @@ Note that sample rates are multiplicative:
   If a signal is created with 20% sampling and a handler handles 50%
   of given signals, then 10% of possible signals will be handled.
 
-  This multiplicative rate is helpfully reflected in the signal's final
+  This multiplicative rate is helpfully reflected in each signal's final
   `:sample-rate` value.
 
 For a visual flowchart, see: Ref. <https://www.taoensso.com/telemere/flow>
 
 For more info:
-  - On signal  filters, see: `help:filters`  docstring
-  - On handler filters, see: `help:handlers` docstring
+  - On signal  filters, see: `help:signal-filters`  docstring
+  - On handler filters, see: `help:signal-handlers` docstring
 
 If anything is unclear, please ping me (@ptaoussanis) so that I can
 improve these docs!

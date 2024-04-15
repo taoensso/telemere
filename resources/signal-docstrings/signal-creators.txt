@@ -1,0 +1,32 @@
+Call a Telemere signal creator to conditionally create a signal at that callsite.
+
+When filtering conditions are met [4], the call creates a Telemere signal [3]
+and dispatches it to registered handlers for processing (e.g. writing to
+console/file/queue/db, etc.).
+
+Telemere doesn't make a hard distinction between different kinds of signals
+(log, event, error, etc.) - they're all just plain Clojure/Script maps with
+various keys:
+
+  - All signal creators offer the same options [2], and
+  - All signal kinds can contain the same content [3]
+
+Creators vary only in in their default options and call APIs (expected args
+and return values), making them more/less convenient for certain use cases:
+
+  `log!` ---------- [message + opts/level] => true iff signal was created (allowed)
+  `event!` -------- [id      + opts/level] => true iff signal was created (allowed)
+  `error!` -------- [error   + opts/id   ] => given error (unconditional)
+  `trace!` -------- [form    + opts/id   ] => form result (value/throw) (unconditional)
+  `spy!` ---------- [form    + opts/level] => form result (value/throw) (unconditional)
+  `catch->error!` - [error   + opts/id   ] => form value, or given fallback
+  `signal!` ------- [          opts      ] => depends on options
+
+- `log!` and `event!` are both good default/general-purpose signal creators.
+- `log!` emphasizes messages, while `event!` emphasizes ids.
+- `signal!` is the generic creator, and is used by all the others.
+
+-------------------------------------------------------------------
+[2] See `help:signal-options`  - {:keys [kind level id data ...]}
+[3] See `help:signal-content`  - {:keys [kind level id data ...]}
+[4] See `help:signal-flow`     - (filters, handling, etc.)

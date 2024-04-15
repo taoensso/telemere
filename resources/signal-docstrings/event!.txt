@@ -1,10 +1,10 @@
-"Event" signal creator, focused on id + level.
+"Event" signal creator, emphasizing id + level.
 
 API: [id] [id level-or-opts] => true iff signal was allowed
 Default  kind: `:event`
 Default level: `:info`
 
-When filtering conditions are met [1], creates a Telemere signal [2] and
+When filtering conditions are met [4], creates a Telemere signal [3] and
 dispatches it to registered handlers for processing (e.g. writing to
 console/file/queue/db, etc.).
 
@@ -20,16 +20,17 @@ Examples:
 Tips:
 
   - Test using `with-signal`: (with-signal (event! ...)).
-  - Supports the same options as other signals [3].
+  - Supports the same options [2] as other signals [1].
 
-  - A good general-purpose signal, prefer to `log!` by default, since it
-    better encourages structured data over unstructured messages.
+  - `log!` and `event!` are both good default/general-purpose signal creators.
+  - `log!` emphasizes messages, while `event!` emphasizes ids.
 
   - Has a different 2-arity arg order to all other signals!
     Mnemonic: the arg that's typically larger is *always* in the rightmost
     position, and for `event!` that's the `level-or-opts` arg.
 
-----------------------------------------
-[1] See `help:signal-flow`    docstring
-[2] See `help:signal-content` docstring
-[3] See `help:signal-options` docstring
+-------------------------------------------------------------------
+[1] See `help:signal-creators` - (`signal!`, `log!`, `event!`, ...)
+[2] See `help:signal-options`  - {:keys [kind level id data ...]}
+[3] See `help:signal-content`  - {:keys [kind level id data ...]}
+[4] See `help:signal-flow`     - (filters, handling, etc.)

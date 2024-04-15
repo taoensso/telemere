@@ -39,11 +39,10 @@
 (defn ^:public tools-logging->telemere!
   "Configures `clojure.tools.logging` to use Telemere as its logging implementation.
 
-  Will be AUTOMATICALLY called if `clojure.tools.logging` is present and any of the
-  following are \"true\":
-    - `clojure.tools.logging->telemere?` JVM propety value
-    - `CLOJURE_TOOLS_LOGGING_>TELEMERE?` Environment variable
-    - `clojure.tools.logging->telemere?` Classpath   resource content"
+  Called automatically if the following is true:
+    (get-env {:as :bool} :clojure.tools.logging->telemere?)
+
+  See `get-env` for details."
   []
   (impl/signal!
     {:kind  :event

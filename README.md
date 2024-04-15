@@ -1,15 +1,15 @@
 <a href="https://www.taoensso.com/clojure" title="More stuff by @ptaoussanis at www.taoensso.com"><img src="https://www.taoensso.com/open-source.png" alt="Taoensso open source" width="340"/></a>  
-[**Documentation**](#documentation) | [Latest releases](#latest-releases) | [Get support][GitHub issues]
+[**Documentation**](#documentation) | [Latest releases](#latest-releases) | [Slack channel][]
 
-# Telemere
+# <img src="https://raw.githubusercontent.com/taoensso/telemere/master/imgs/telemere-logo.svg" alt="Telemere logo" width="360"/>
 
 ### Structured telemetry library for Clojure/Script
 
 **Telemere** is a next-generation replacement for [Timbre](https://www.taoensso.com/timbre). It handles **structured and traditional logging**, **tracing**, and **basic performance monitoring** with a simple unified API.
 
-It helps enable the creation of Clojure/Script systems that are highly **observable**, **robust**, and **debuggable** - and it represents the refinement and culmination of ideas brewing over 12+ years in [Timbre](https://github.com/taoensso/timbre), [Tufte](https://github.com/taoensso/tufte), [Truss](https://github.com/taoensso/truss), etc.
+It helps enable Clojure/Script systems that are **observable**, **robust**, and **debuggable** - and it represents the refinement and culmination of ideas brewing over 12+ years in [Timbre](https://www.taoensso.com/timbre), [Tufte](https://www.taoensso.com/tufte), [Truss](https://www.taoensso.com/truss), etc.
 
-> [Terminology] *Telemetry* is derived from the Greek roots *tele* (remote) and *metron* (measure). It refers to the collection of *in situ* (in position) information, for transmission to other systems for monitoring/analysis. *Logs* are the most common form of software telemetry. So think of telemetry as the *superset of logging-like activities* that help monitor and understand (software) systems.
+> [Terminology] *Telemetry* derives from the Greek *tele* (remote) and *metron* (measure). It refers to the collection of *in situ* (in position) data, for transmission to other systems for monitoring/analysis. *Logs* are the most common form of software telemetry. So think of telemetry as the *superset of logging-like activities* that help monitor and understand (software) systems.
 
 ## Latest release/s
 
@@ -32,8 +32,8 @@ See [here][GitHub releases] for earlier releases.
 
 #### Interop
 
-- 1st-class **out-the-box interop** with [SLF4J v2](https://www.slf4j.org/), [clojure.tools.logging](https://github.com/clojure/tools.logging), [OpenTelemetry](https://opentelemetry.io/), and [Tufte](https://www.taoensso.com/tufte) (soon).
-- Included shim for easy/gradual [migration from Timbre](../../wiki/7-Migrating).
+- 1st-class **out-the-box interop** with [SLF4J v2](https://www.slf4j.org/), [clojure.tools.logging](https://github.com/clojure/tools.logging), [OpenTelemetry](https://opentelemetry.io/), and [Tufte](https://www.taoensso.com/tufte).
+- Included [shim](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.timbre) for easy/gradual [migration from Timbre](../../wiki/5-Migrating).
 
 #### Scaling
 
@@ -43,7 +43,7 @@ See [here][GitHub releases] for earlier releases.
 #### Flexibility
 
 - Config via plain **Clojure vals and fns** for easy customization, composition, and REPL debugging.
-- Unmatched support for **environmental config** (JVM props, ENV vars, edn resources, etc.).
+- Unmatched support for **system-level config** (JVM props, ENV vars, classpath resources).
 - Expressive **per-call** and **per-handler** filtering at both **runtime** and **compile-time**.
 - Filter by namespace and id pattern, level, **level by namespace pattern**, etc.
 - **Sampling**, **rate-limiting**, and **back-pressure monitoring**.
@@ -53,7 +53,7 @@ See [here][GitHub releases] for earlier releases.
 
 See for intro and usage:
 
-**TODO**: soon
+**TODO**: coming soon
 
 <!--
 <a href="https://www.youtube.com/watch?v=TODO" target="_blank">
@@ -108,21 +108,23 @@ See for intro and usage:
 (t/set-min-level! :event "taoensso.sente.*" :warn)
 ```
 
+See [examples.cljc](https://github.com/taoensso/telemere/blob/master/examples.cljc) for more REPL-ready snippets.
+
 ## API overview
 
-See links below for docstrings/usage, and [documentation](#documentation) for lots more info.
+See relevant docstrings (links below) for usage info-
 
 ### Signal creators
 
 | Name | Signal kind | Main arg | Optional arg | Returns
 :-- | :-- | :-- | :-- | :--
-| [`signal!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#signal!) | `<arb>` | `opts` | - | Signal allowed? / form result (value or throw)
 | [`log!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#log!) | `:log` | `msg` | `opts`/`level` | Signal allowed?
 | [`event!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#event!) | `:event` | `id` | `opts`/`level` | Signal allowed?
 | [`error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#error!) | `:error` | `error` | `opts`/`id` | Given error
 | [`trace!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#trace!) | `:trace` | `form` | `opts`/`id` | Form result
 | [`spy!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#spy!) | `:spy` | `form` | `opts`/`level` | Form result
 | [`catch->error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#catch-%3Eerror!) | `:error` | `form` | `opts`/`id` | Form value or given fallback
+| [`signal!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#signal!) | `<arb>` | `opts` | - | Depends on opts
 
 ### Signal filters
 
@@ -135,12 +137,11 @@ See links below for docstrings/usage, and [documentation](#documentation) for lo
 
 ### Internal help
 
-Telemere includes extensive internal help docstrings:
-
 | Var | Help with
 | :-- | :--
-| [`help:signal-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options) | Options for standard signal creators
-| [`help:signal-content`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content) | Content of signal maps
+| [`help:signal-creators`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-creators) | List of signal creators
+| [`help:signal-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options) | Options for signal creators
+| [`help:signal-content`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content) | Signal map content
 | [`help:signal-flow`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-flow) | Ordered flow from signal creation to handling
 | [`help:signal-filters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-filters) | API for configuring signal filters
 | [`help:signal-handlers`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-handlers) | API for configuring signal handlers
@@ -152,33 +153,42 @@ Telemere includes extensive internal help docstrings:
 (t/log! {:id ::my-id, :data {:x1 :x2}} "My message") =>
 ```
 
-##### Default Clojure console handler:
+#### Clj console handler
+
+String output:
 
 ```
 2024-04-11T10:54:57.202869Z INFO LOG Schrebermann.local examples(56,1) ::my-id - My message
     data: {:x1 :x2}
 ```
 
-##### Default ClojureScript console handler in Chrome:
+#### Cljs console handler
 
-<img src="/imgs/handler-output-cljs-console.png" alt="Default ClojureScript console handler output" width="640"/>
+Chrome console:
 
-##### Raw ClojureScript console handler in Chrome, with [cljs-devtools](https://github.com/binaryage/cljs-devtools):
+<img src="https://raw.githubusercontent.com/taoensso/telemere/master/imgs/handler-output-cljs-console.png" alt="Default ClojureScript console handler output" width="640"/>
 
-<img src="/imgs/handler-output-cljs-console-raw.png" alt="Raw ClojureScript console handler output" width="640"/>
+#### Cljs raw console handler
 
-##### Default Clojure file handler in MacOS terminal:
+Chrome console, with [cljs-devtools](https://github.com/binaryage/cljs-devtools):
 
-<img src="/imgs/handler-output-clj-file.png" alt="Default Clojure file handler output" width="640"/>
+<img src="https://raw.githubusercontent.com/taoensso/telemere/master/imgs/handler-output-cljs-console-raw.png" alt="Raw ClojureScript console handler output" width="640"/>
+
+#### Clj file handler
+
+MacOS terminal:
+
+<img src="https://raw.githubusercontent.com/taoensso/telemere/master/imgs/handler-output-clj-file.png" alt="Default Clojure file handler output" width="640"/>
 
 ## Documentation
 
-- [Wiki][GitHub wiki] (getting started, usage, etc.) (**TODO:** soon)
-- API reference: [cljdoc][cljdoc docs], [Codox][Codox docs]
+- [Wiki][GitHub wiki] (getting started, usage, etc.)
+- API reference: [cljdoc][cljdoc docs] or [Codox][Codox docs]
+- Support: [Slack channel][] or [GitHub issues][]
 
 ## Observability tips
 
-See [here](/../../wiki/8-Tips) for general advice re: building and maintaining observable Clojure/Script systems.
+See [here](../../wiki/7-Tips) for general advice re: building and maintaining observable Clojure/Script systems.
 
 ## Benchmarks
 
@@ -197,7 +207,7 @@ Measurements:
 - Exclude handler runtime (which depends on handler/s, is usually async)
 - Taken on a 2020 Macbook Pro M1, running OpenJDK 21
 
-**Tip**: Telemere offers extensive per-call and per-handler **filtering**, **sampling**, and **rate-limiting**. Use these to ensure that you're not capturing useless/low-value information in production. See [here](/TODO) for more tips!
+**Tip**: Telemere offers extensive per-call and per-handler **filtering**, **sampling**, and **rate-limiting**. Use these to ensure that you're not capturing useless/low-value information in production. See [here](../../wiki/7-Tips) for more tips!
 
 ## Funding
 
@@ -213,6 +223,7 @@ Licensed under [EPL 1.0](LICENSE.txt) (same as Clojure).
 [GitHub releases]: ../../releases
 [GitHub issues]:   ../../issues
 [GitHub wiki]:     ../../wiki
+[Slack channel]: https://www.taoensso.com/telemere/slack
 
 [Peter Taoussanis]: https://www.taoensso.com
 [sponsor]:          https://www.taoensso.com/sponsor

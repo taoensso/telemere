@@ -100,7 +100,9 @@
 
 ;;;; Help
 
+(impl/defhelp help:signal-creators   :signal-creators)
 (impl/defhelp help:signal-options    :signal-options)
+(impl/defhelp help:signal-flow       :signal-flow)
 (impl/defhelp help:signal-content    :signal-content)
 (enc/defalias help:signal-filters    help:filters)  ; Via Encore
 (enc/defalias help:signal-handlers   help:handlers) ; Via Encore
@@ -109,7 +111,8 @@
 ;;;; Context
 
 (enc/defonce default-ctx
-  "Advanced feature. Default root (base) value of `*ctx*` var, controlled by:
+  "Default root (base) value of `*ctx*` var.
+  Defaults to `nil`, controlled by:
     (get-env {:as :edn} :taoensso.telemere/default-ctx<.platform><.edn>)
 
   See `get-env` for details."
@@ -375,7 +378,7 @@
 #?(:clj
    (enc/compile-when
      (do (require '[taoensso.telemere.tools-logging :as ttl]) true)
-     (enc/defalias ttl/tools-logging->telemere!)
+     (enc/defalias ttl/tools-logging->telemere!) ; Incl. `get-env` docs
      (when (enc/get-env {:as :bool} :clojure.tools.logging->telemere?)
        (ttl/tools-logging->telemere!))))
 
