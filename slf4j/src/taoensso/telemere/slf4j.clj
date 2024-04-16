@@ -1,6 +1,6 @@
 (ns ^:no-doc taoensso.telemere.slf4j
   "Private ns, implementation detail.
-  Interop support: SLF4J -> Telemere.
+  Intake support: SLF4J -> Telemere.
 
   To use Telemere as your SLF4J backend/provider, just include the
   `com.taoensso/slf4j-telemere` dependency on your classpath.
@@ -93,7 +93,7 @@
       (marker-names cm)
       (marker-names ms))))
 
-;;;; Interop fns (called by `TelemereLogger`)
+;;;; Intake fns (called by `TelemereLogger`)
 
 (defn allowed?
   "Private, don't use.
@@ -172,14 +172,14 @@
     (org.slf4j.MDC/getCopyOfContextMap)
     (org.slf4j.MDC/clear)))
 
-(impl/add-interop-check! :slf4j
+(impl/add-intake-check! :slf4j
   (fn []
     (let [^org.slf4j.Logger sl
-          (org.slf4j.LoggerFactory/getLogger  "InteropTestTelemereLogger")
+          (org.slf4j.LoggerFactory/getLogger  "IntakeTestTelemereLogger")
           sending? (instance? com.taoensso.telemere.slf4j.TelemereLogger sl)
           receiving?
           (and sending?
-            (impl/test-interop! "SLF4J -> Telemere" #(.info sl %)))]
+            (impl/test-intake! "SLF4J -> Telemere" #(.info sl %)))]
 
       {:present?            true
        :sending->telemere?  sending?

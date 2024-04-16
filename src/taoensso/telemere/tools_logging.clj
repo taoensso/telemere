@@ -1,6 +1,6 @@
 (ns ^:no-doc taoensso.telemere.tools-logging
   "Private ns, implementation detail.
-  Interop support: `clojure.tools.logging` -> Telemere."
+  Intake support: `clojure.tools.logging` -> Telemere."
   (:require
    [taoensso.encore        :as enc :refer [have have?]]
    [taoensso.telemere.impl :as impl]
@@ -49,7 +49,7 @@
     {:kind  :event
      :level :info
      :id    :taoensso.telemere/clojure.tools.logging->telemere!
-     :msg  "Enabling interop: `clojure.tools.logging` -> Telemere"})
+     :msg   "Enabling intake: `clojure.tools.logging` -> Telemere"})
 
   (alter-var-root #'clojure.tools.logging/*logger-factory*
     (fn [_] (TelemereLoggerFactory.))))
@@ -59,12 +59,12 @@
   (when-let [lf clojure.tools.logging/*logger-factory*]
     (instance? TelemereLoggerFactory lf)))
 
-(impl/add-interop-check! :tools-logging
+(impl/add-intake-check! :tools-logging
   (fn []
     (let [sending? (tools-logging->telemere?)
           receiving?
           (and sending?
-            (impl/test-interop! "`clojure.tools.logging` -> Telemere"
+            (impl/test-intake! "`clojure.tools.logging` -> Telemere"
               #(clojure.tools.logging/info %)))]
 
       {:present?            true

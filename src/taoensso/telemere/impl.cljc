@@ -671,7 +671,7 @@
 
 #?(:clj
    (defmacro signal-allowed?
-     "Used only for interop (SLF4J, `clojure.tools.logging`, etc.)."
+     "Used only for intake (SLF4J, `clojure.tools.logging`, etc.)."
      {:arglists (signal-arglists :signal!)}
      [opts]
      (let [{:keys [#_expansion-id #_location elide? allow?]}
@@ -685,30 +685,35 @@
 
        (and (not elide?) allow?))))
 
-;;;; Interop
-
-(enc/defonce ^:private interop-checks_ "{<id> (fn check [])}" (atom nil))
-(defn add-interop-check! [id check-fn] (swap! interop-checks_ assoc id check-fn))
+;;;; Intake
 
 #?(:clj
-   (when (nil? @interop-checks_)
-     (add-interop-check! :tools-logging (fn [] {:present? (enc/have-resource? "clojure/tools/logging.clj")}))
-     (add-interop-check! :slf4j         (fn [] {:present? (enc/compile-when org.slf4j.Logger true false)}))))
+   (do
+     (enc/defonce ^:private intake-checks_
+       "{<source-id> (fn check [])}"
+       (atom
+         {:tools-logging (fn [] {:present? (enc/have-resource? "clojure/tools/logging.clj")})
+          :slf4j         (fn [] {:present? (enc/compile-when org.slf4j.Logger true false)})}))
 
-(defn ^:public check-interop
-  "Experimental, subject to change.
-  Runs Telemere's registered interop checks and returns
-  {<interop-id> {:keys [sending->telemere? telemere-receiving? ...]}}.
+     (defn add-intake-check! [source-id check-fn] (swap! intake-checks_ assoc source-id check-fn))
 
-  Useful for tests/debugging."
-  []
-  (enc/map-vals (fn [check-fn] (check-fn))
-    @interop-checks_))
+     (defn ^:public check-intakes
+       "Experimental, subject to change.
+       Runs Telemere's registered intake checks and returns
+       {<source-id> {:keys [sending->telemere? telemere-receiving? ...]}}.
 
-(defn test-interop! [msg test-fn]
-  (let [msg (str "Interop test: " msg " (" (enc/uuid-str) ")")
-        signal
-        (binding [*rt-sig-filter* nil] ; Without runtime filters
-          (with-signal :raw :trap (test-fn msg)))]
+       Useful for tests/debugging."
+       []
+       (enc/map-vals (fn [check-fn] (check-fn))
+         @intake-checks_))
 
-    (= (force (get signal :msg_)) msg)))
+     (defn test-intake! [msg test-fn]
+       (let [msg (str "Intake test: " msg " (" (enc/uuid-str) ")")
+             signal
+             (binding [*rt-sig-filter* nil] ; Without runtime filters
+               (with-signal :raw :trap (test-fn msg)))]
+
+         (= (force (get signal :msg_)) msg)))))
+
+
+

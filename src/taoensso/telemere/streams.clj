@@ -1,6 +1,6 @@
 (ns ^:no-doc taoensso.telemere.streams
   "Private ns, implementation detail.
-  Interop support: standard stream/s -> Telemere."
+  Intake support: standard stream/s -> Telemere."
   (:refer-clojure :exclude [binding])
   (:require
    [taoensso.encore        :as enc :refer [binding have have?]]
@@ -91,7 +91,7 @@
         {:kind  :event
          :level :info
          :id    :taoensso.telemere/streams->telemere!
-         :msg   "Disabling interop: standard stream/s -> Telemere"
+         :msg   "Disabling intake: standard stream/s -> Telemere"
          :data  {:system/out? (boolean orig-out)
                  :system/err? (boolean orig-err)}})
 
@@ -128,7 +128,7 @@
            {:kind  :event
             :level :info
             :id    :taoensso.telemere/streams->telemere!
-            :msg   "Enabling interop: standard stream/s -> Telemere"
+            :msg   "Enabling intake: standard stream/s -> Telemere"
             :data  {:system/out? (boolean out)
                     :system/err? (boolean err)}})
 
@@ -143,14 +143,14 @@
   (streams->telemere! {})
   (streams->reset!))
 
-(impl/add-interop-check! :system/out
+(impl/add-intake-check! :system/out
   (fn []
     (let [sending?   (boolean @orig-out_)
-          receiving? (and  sending? (impl/test-interop! "`System/out` -> Telemere" #(.println System/out %)))]
+          receiving? (and  sending? (impl/test-intake! "`System/out` -> Telemere" #(.println System/out %)))]
       {:sending->telemere? sending?, :telemere-receiving? receiving?})))
 
-(impl/add-interop-check! :system/err
+(impl/add-intake-check! :system/err
   (fn []
     (let [sending?   (boolean @orig-err_)
-          receiving? (and  sending? (impl/test-interop! "`System/err` -> Telemere" #(.println System/err %)))]
+          receiving? (and  sending? (impl/test-intake! "`System/err` -> Telemere" #(.println System/err %)))]
       {:sending->telemere? sending?, :telemere-receiving? receiving?})))

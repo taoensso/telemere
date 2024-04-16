@@ -345,11 +345,11 @@
            (handler            thread throwable))))
      nil))
 
-;;;; Interop
+;;;; Intake
 
-(enc/defaliases impl/check-interop)
 #?(:clj
    (enc/defaliases
+     impl/check-intakes
      streams/with-out->telemere
      streams/with-err->telemere
      streams/with-streams->telemere
@@ -371,11 +371,11 @@
        {:kind  :event
         :level :info
         :id    :taoensso.telemere/slf4j->telemere!
-        :msg   "Enabling interop: SLF4J -> Telemere"})
+        :msg   "Enabling intake: SLF4J -> Telemere"})
 
      (require '[taoensso.telemere.slf4j :as slf4j])))
 
-(comment (check-interop))
+(comment (check-intakes))
 
 ;;;; Handlers
 
