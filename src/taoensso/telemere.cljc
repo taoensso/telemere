@@ -51,7 +51,25 @@
    :sf-arity 4
    :ct-sig-filter   impl/ct-sig-filter
    :*rt-sig-filter* impl/*rt-sig-filter*
-   :*sig-handlers*  impl/*sig-handlers*})
+   :*sig-handlers*  impl/*sig-handlers*
+   :sig-filter-system-vals-info
+   "These include:
+
+    Compile-time:
+
+      ns-filter: (get-env {:as :edn} :taoensso.telemere/ct-ns-filter<.platform><.edn>)
+      id-filter: (get-env {:as :edn} :taoensso.telemere/ct-id-filter<.platform><.edn>)
+      min-level: (get-env {:as :edn} :taoensso.telemere/ct-min-level<.platform><.edn>)
+
+    Runtime:
+
+      ns-filter: (get-env {:as :edn}                 :taoensso.telemere/rt-ns-filter<.platform><.edn>)
+      id-filter: (get-env {:as :edn}                 :taoensso.telemere/rt-id-filter<.platform><.edn>)
+      min-level: (get-env {:as :edn, :default :info} :taoensso.telemere/rt-min-level<.platform><.edn>)
+
+    See `get-env` for details."})
+
+(comment help:filters)
 
 (comment
   [level-aliases
@@ -79,16 +97,13 @@
   #?(:clj impl/with-signals)
   #?(:clj impl/signal!))
 
-;;;; Signal help
-
-(comment help:filters help:handlers) ; Via Encore
+;;;; Help
 
 (impl/defhelp help:signal-options    :signal-options)
 (impl/defhelp help:signal-content    :signal-content)
-(impl/defhelp help:signal-flow       :signal-flow)
+(enc/defalias help:signal-filters    help:filters)  ; Via Encore
+(enc/defalias help:signal-handlers   help:handlers) ; Via Encore
 (impl/defhelp help:signal-formatters :signal-formatters)
-(enc/defalias help:signal-filters    help:filters)
-(enc/defalias help:signal-handlers   help:handlers)
 
 ;;;; Context
 
