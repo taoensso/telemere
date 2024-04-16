@@ -1,7 +1,6 @@
 (ns ^:no-doc taoensso.telemere.impl
   "Private ns, implementation detail.
   Signal design shared by: Telemere, Tufte, Timbre."
-
   (:refer-clojure :exclude [binding])
   (:require
    [taoensso.encore         :as enc :refer [binding have have?]]

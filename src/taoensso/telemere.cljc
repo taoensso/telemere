@@ -33,11 +33,12 @@
   (remove-ns 'taoensso.telemere)
   (:api (enc/interns-overview)))
 
-(enc/assert-min-encore-version [3 100 0])
+(enc/assert-min-encore-version [3 101 0])
 
 ;;;; TODO
 ;; - Review, TODOs, missing docstrings
 ;; - Reading plan, wiki docs, explainer/demo video
+;; - Add email handler
 ;;
 ;; - Next OpenTelemetry tools (traces, etc.)
 ;; - Update Tufte  (signal API, config API, signal keys, etc.)
@@ -189,7 +190,7 @@
          :msg      "Back pressure on wrapped handler fn"
          :data     data}))))
 
-;;;; Common signals
+;;;; Signal creators
 ;; - signal!                  [              opts] ;                 => allowed? / run result (value or throw)
 ;; - event!           [id   ] [id   level-or-opts] ; id     + ?level => allowed? ; Sole signal with descending main arg!
 ;; - log!             [msg  ] [level-or-opts  msg] ; msg    + ?level => allowed?
@@ -385,7 +386,7 @@
 
 #?(:clj
    (enc/compile-when
-     (do (require '[taoensso.telemere.handlers.open-telemetry :as handlers:open-tel]))
+     (do (require '[taoensso.telemere.handlers.open-telemetry :as handlers:open-tel]) true)
      (enc/defalias handlers:open-tel/handler:open-telemetry-logger)))
 
 (defonce ^:no-doc __add-default-handlers
