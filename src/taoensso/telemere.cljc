@@ -95,7 +95,8 @@
   impl/msg-skip
   #?(:clj impl/with-signal)
   #?(:clj impl/with-signals)
-  #?(:clj impl/signal!))
+  #?(:clj impl/signal!)
+  utils/error-signal?)
 
 ;;;; Help
 
