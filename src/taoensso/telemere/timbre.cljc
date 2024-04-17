@@ -139,3 +139,25 @@
             [log  trace  debug  info  warn  error  fatal  report
              logf tracef debugf infof warnf errorf fatalf reportf
              spy]])))
+
+;;;;
+
+(defn set-min-level! "Prefer `telemere/set-min-level!`." [min-level] (tel/set-min-level! min-level))
+#?(:clj
+   (defmacro with-min-level
+     "Prefer `telemere/with-min-level`."
+     [min-level & body]
+     `(tel/with-min-level ~min-level (do ~@body))))
+
+#?(:clj
+   (defmacro set-ns-min-level!
+     "Prefer `telemere/set-min-level!`."
+     ([   ?min-level] `(set-ns-min-level! ~(str *ns*) ~?min-level))
+     ([ns ?min-level] `(tel/set-min-level! nil ~(str ns) ~?min-level))))
+
+#?(:clj (defmacro with-context  "Prefer `telemere/with-ctx`."  [context & body] `(tel/with-ctx  ~context (do ~@body))))
+#?(:clj (defmacro with-context+ "Prefer `telemere/with-ctx+`." [context & body] `(tel/with-ctx+ ~context (do ~@body))))
+
+(defn shutdown-appenders!
+  "Prefer `telemere/shut-down-handlers!`."
+  [] (tel/shut-down-handlers!))
