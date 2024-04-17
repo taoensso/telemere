@@ -20,8 +20,8 @@ This flow is described by [`help:signal-flow`](https://cljdoc.org/d/com.taoensso
 
 For more info see:
 
-| Var | Help with
-| :-- | :--
+| Var | Help with |
+| :-- | :-- |
 | [`help:signal-creators`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-creators) | List of signal creators
 | [`help:signal-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options) | Options for signal creators
 | [`help:signal-content`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content) | Signal map content

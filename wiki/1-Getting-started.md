@@ -95,21 +95,21 @@ See section [3-Config](./3-Config) for customization.
 
 > Signal handlers process created signals to *do something with them* (analyse them, write them to console/file/queue/db, etc.)
 
-| Platform | Condition | Handler
-| --- | --- | ---
-| Clj | Always | [Console handler](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console) that prints signals to `*out*` or `*err*`.
-| Cljs | Always | [Console handler](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console) that prints signals to the **browser console**.
-| Clj | [OpenTelemetry API](https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-api) present | [OpenTelemetry handler](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:open-telemetry-logger) that emits signals as log records to a configured [`LoggerProvider`](https://opentelemetry.io/docs/specs/otel/logs/sdk/#loggerprovider).
+| Platform | Condition                                                                                          | Handler                                                                                                                                                                                                                                                                  |
+| -------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Clj      | Always                                                                                             | [Console handler](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console) that prints signals to `*out*` or `*err*`.                                                                                                                   |
+| Cljs     | Always                                                                                             | [Console handler](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console) that prints signals to the **browser console**.                                                                                                              |
+| Clj      | [OpenTelemetry API](https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-api) present | [OpenTelemetry handler](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:open-telemetry-logger) that emits signals as log records to a configured [`LoggerProvider`](https://opentelemetry.io/docs/specs/otel/logs/sdk/#loggerprovider). |
 
 **Default signal intakes**:
 
 > Telemere can create signals from relevant **external API calls**, etc.
 
-| Platform | Condition | Signals from
-| --- | --- | ---
-| Clj | [SLF4J API](https://mvnrepository.com/artifact/org.slf4j/slf4j-api) and [Telemere SLF4J backend](https://clojars.org/com.taoensso/slf4j-telemere) present | [SLF4J](https://www.slf4j.org/) logging calls.
-| Clj | [clojure.tools.logging](https://mvnrepository.com/artifact/org.clojure/tools.logging) present and [`tools-logging->telemere!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#tools-logging-%3Etelemere!) called | [clojure.tools.logging](https://github.com/clojure/tools.logging) logging calls.
-| Clj | [`streams->telemere!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#streams-%3Etelemere!) called | Output to `System/out` and `System/err` streams.
+| Platform | Condition                                                                                                                                                                                                                                  | Signals from                                                                     |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| Clj      | [SLF4J API](https://mvnrepository.com/artifact/org.slf4j/slf4j-api) and [Telemere SLF4J backend](https://clojars.org/com.taoensso/slf4j-telemere) present                                                                                  | [SLF4J](https://www.slf4j.org/) logging calls.                                   |
+| Clj      | [clojure.tools.logging](https://mvnrepository.com/artifact/org.clojure/tools.logging) present and [`tools-logging->telemere!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#tools-logging-%3Etelemere!) called | [clojure.tools.logging](https://github.com/clojure/tools.logging) logging calls. |
+| Clj      | [`streams->telemere!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#streams-%3Etelemere!) called                                                                                                               | Output to `System/out` and `System/err` streams.                                 |
 
 Run [`check-intakes`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#check-intakes) to help verify/debug:
 
@@ -127,8 +127,8 @@ Run [`check-intakes`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/tao
 
 Use whichever signal creator is most convenient for your needs:
 
-| Name | Signal kind | Main arg | Optional arg | Returns
-:-- | :-- | :-- | :-- | :--
+| Name | Signal kind | Main arg | Optional arg | Returns |
+|:-- | :-- | :-- | :-- | :-- |
 | [`log!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#log!) | `:log` | `msg` | `opts`/`level` | Signal allowed?
 | [`event!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#event!) | `:event` | `id` | `opts`/`level` | Signal allowed?
 | [`error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#error!) | `:error` | `error` | `opts`/`id` | Given error
@@ -136,7 +136,7 @@ Use whichever signal creator is most convenient for your needs:
 | [`spy!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#spy!) | `:spy` | `form` | `opts`/`level` | Form result
 | [`catch->error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#catch-%3Eerror!) | `:error` | `form` | `opts`/`id` | Form value or given fallback
 | [`signal!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#signal!) | `<arb>` | `opts` | - | Depends on opts
-
+ 
 - See [`help:signal-creators`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-creators) for more info on signal creators.
 - See [`help:signal-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options) for signal options (shared by all creators).
 - See relevant docstrings (links above) for usage info.
@@ -195,12 +195,12 @@ Quick examples of some basic filtering:
 
 Runtime signal  filters can be configured with:
 
-| Global | Dynamic | Filters by
-| :-- | :-- | :--
-| [`set-kind-filter!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#set-kind-filter!) | [`with-kind-filter`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#with-kind-filter) | Signal kind (`:log`, `:event`, etc.)
-| [`set-ns-filter!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#set-ns-filter!) | [`with-ns-filter`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#with-ns-filter) | Signal namespace
-| [`set-id-filter!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#set-id-filter!) | [`with-id-filter`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#with-id-filter) | Signal id
-| [`set-min-level`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#set-min-level) | [`with-min-level`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#with-min-level) | Signal level (minimum can be specified by kind and/or ns)
+| Global                                                                                                          | Dynamic                                                                                                         | Filters by                                                |
+| :-------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------- |
+| [`set-kind-filter!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#set-kind-filter!) | [`with-kind-filter`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#with-kind-filter) | Signal kind (`:log`, `:event`, etc.)                      |
+| [`set-ns-filter!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#set-ns-filter!)     | [`with-ns-filter`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#with-ns-filter)     | Signal namespace                                          |
+| [`set-id-filter!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#set-id-filter!)     | [`with-id-filter`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#with-id-filter)     | Signal id                                                 |
+| [`set-min-level`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#set-min-level)       | [`with-min-level`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#with-min-level)     | Signal level (minimum can be specified by kind and/or ns) |
 
 - See relevant docstrings (links above) for usage info.
 - Compile-time filters are controlled by system-level config, see section [3-Config](./3-Config).
@@ -209,12 +209,12 @@ Runtime signal  filters can be configured with:
 
 Telemere includes extensive internal help docstrings:
 
-| Var | Help with
-| :-- | :--
-| [`help:signal-creators`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-creators) | List of signal creators
-| [`help:signal-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options) | Options for signal creators
-| [`help:signal-content`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content) | Signal map content
-| [`help:signal-flow`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-flow) | Ordered flow from signal creation to handling
-| [`help:signal-filters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-filters) | API for configuring signal filters
-| [`help:signal-handlers`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-handlers) | API for configuring signal handlers
-| [`help:signal-formatters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-formatters) | Signal formatters for use by handlers
+| Var                                                                                                                         | Help with                                     |
+| :-------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------- |
+| [`help:signal-creators`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-creators)     | List of signal creators                       |
+| [`help:signal-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options)       | Options for signal creators                   |
+| [`help:signal-content`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content)       | Signal map content                            |
+| [`help:signal-flow`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-flow)             | Ordered flow from signal creation to handling |
+| [`help:signal-filters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-filters)       | API for configuring signal filters            |
+| [`help:signal-handlers`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-handlers)     | API for configuring signal handlers           |
+| [`help:signal-formatters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-formatters) | Signal formatters for use by handlers         |
