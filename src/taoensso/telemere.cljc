@@ -379,7 +379,7 @@
    (enc/compile-when
      (do (require '[taoensso.telemere.tools-logging :as ttl]) true)
      (enc/defalias ttl/tools-logging->telemere!) ; Incl. `get-env` docs
-     (when (enc/get-env {:as :bool} :clojure.tools.logging->telemere?)
+     (when (enc/get-env {:as :bool} :clojure.tools.logging-to-telemere?)
        (ttl/tools-logging->telemere!))))
 
 #?(:clj

@@ -33,7 +33,7 @@
    {:jvm-opts
     ["-server"
      "-Dtaoensso.elide-deprecated=true"
-     "-Dclojure.tools.logging->telemere?=true"]
+     "-Dclojure.tools.logging-to-telemere?=true"]
 
     :global-vars
     {*warn-on-reflection* true
