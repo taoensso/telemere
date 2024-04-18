@@ -184,3 +184,36 @@
        ([signal]
         ;; TODO Do something with given signal
         )))))
+
+;;; Message building
+
+;; A fixed message (string arg)
+(t/log! "A fixed message") ; %> {:msg "A fixed message"}
+
+;; A joined message (vector arg)
+(let [user-arg "Bob"]
+  (t/log! ["User" (str "`" user-arg "`") "just logged in!"]))
+;; %> {:msg_ "User `Bob` just logged in!` ...}
+
+;; With arg prep
+(let [user-arg "Bob"
+      usd-balance-str "22.4821"]
+
+  (t/log!
+    {:let
+     [username (clojure.string/upper-case user-arg)
+      usd-balance (parse-double usd-balance-str)]
+
+     :data
+     {:username    username
+      :usd-balance usd-balance}}
+
+    ["User" username "has balance:" (str "$" (Math/round usd-balance))]))
+
+;; %> {:msg "User BOB has balance: $22" ...}
+
+(t/log! (str "This message " "was built " "by `str`"))
+;; %> {:msg "This message was built by `str`"}
+
+(t/log! (format "This message was built by `%s`" "format"))
+;; %> {:msg "This message was built by `format`"}

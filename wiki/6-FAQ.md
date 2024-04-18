@@ -50,6 +50,53 @@ They're focused on complementary things. When both are in use:
 - Tufte can be used for detailed performance measurement, and
 - Telemere can be used for conveying (aggregate) performance information as part of your system's general observability signals.
 
+# Why no format-style messages?
+
+Telemere's message API can do everything that traditional print *or* format style message builders can do but **much more flexibly** - and with pure Clojure/Script (so no arcane pattern syntax).
+
+To coerce/format/prepare args, just use the relevant Clojure/Script utils.
+
+ **Signal messages are always lazy** (as are a signal's `:let` and `:data` [options](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options)), so you only pay the cost of arg prep and message building *if/when a signal is actually created* (i.e. after filtering, sampling, rate limiting, etc.).
+
+Examples:
+
+```clojure
+;; A fixed message (string arg)
+(t/log! "A fixed message") ; %> {:msg "A fixed message"}
+
+;; A joined message (vector arg)
+(let [user-arg "Bob"]
+  (t/log! ["User" (str "`" user-arg "`") "just logged in!"]))
+;; %> {:msg_ "User `Bob` just logged in!` ...}
+
+;; With arg prep
+(let [user-arg "Bob"
+      usd-balance-str "22.4821"]
+
+  (t/log!
+    {:let
+     [username (clojure.string/upper-case user-arg)
+      usd-balance (parse-double usd-balance-str)]
+
+     :data
+     {:username    username
+      :usd-balance usd-balance}}
+
+    ["User" username "has balance:" (str "$" (Math/round usd-balance))]))
+
+;; %> {:msg "User BOB has balance: $22" ...}
+
+(t/log! (str "This message " "was built " "by `str`"))
+;; %> {:msg "This message was built by `str`"}
+
+(t/log! (format "This message was built by `%s`" "format"))
+;; %> {:msg "This message was built by `format`"}
+```
+
+Note that you can even use `format` or any other formatter/s of your choice. Your signal message is the result of executing code, so build it however you want.
+
+See also [`msg-skip`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#msg-skip) and [`msg-splice`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#msg-splice) for some handy utils.
+
 # Other questions?
 
 Please [open a Github issue](https://github.com/taoensso/telemere/issues). I'll regularly update the FAQ to add common questions.

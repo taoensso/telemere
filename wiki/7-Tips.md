@@ -102,6 +102,19 @@ Consider the [differences](https://www.youtube.com/watch?v=oyLBGkS5ICk) between 
   
   Telemere doesn't couple the presence of an error value to signal level. This can be handy, but means that you need to be clear on what constitutes an "error signal" for your use case. See also the [`error-signal?`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#error-signal) util.
   
+- Signals may contain arbitrary user-level keys.
+  
+  Any non-standard [options](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options) you give to a signal creator call will be added to the signal it creates:
+  
+  ```clojure
+  (t/with-signal (t/log! {:my-key "foo"} "My message")))
+  ;; => {:my-key "foo", :kvs {:my-key "foo", ...}, ...}
+  ```
+  
+  Note that all user kvs will *also* be available *together* under the signal's `:kvs` key.
+  
+  User kvs are a great way of controlling the per-signal behaviour of custom/advanced handlers.
+  
 - Signal `kind` can be useful in advanced cases.
   
   Every signal has a `kind` key set by default by each signal creator- `log!` calls produce signals with a `:log` kind, etc.

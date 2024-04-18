@@ -53,12 +53,9 @@ See [here][GitHub releases] for earlier releases.
 
 See for intro and usage:
 
-**TODO**: coming soon
-
-<!--
-<a href="https://www.youtube.com/watch?v=TODO" target="_blank">
- <img src="https://img.youtube.com/vi/TODO/maxresdefault.jpg" alt="Telemere demo video" width="480" border="0" />
-</a> -->
+<a href="https://www.youtube.com/watch?v=-L9irDG8ysM" target="_blank">
+ <img src="https://img.youtube.com/vi/-L9irDG8ysM/maxresdefault.jpg" alt="Telemere demo video" width="480" border="0" />
+</a>
 
 ## Quick examples
 
