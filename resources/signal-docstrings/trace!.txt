@@ -25,7 +25,7 @@ Tips:
   - Test using `with-signal`: (with-signal (trace! ...)).
   - Supports the same options [2] as other signals [1].
 
-  - Identical to `spy!`, but emphasizing form + id rather than form + level.
+  - Identical to `spy!`, but emphasizes form + id rather than form + level.
 
   - Useful for debugging/monitoring forms, and tracing (nested) execution flow.
   - Execution of `form` arg may create additional (nested) signals.

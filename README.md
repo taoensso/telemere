@@ -13,7 +13,7 @@ It helps enable Clojure/Script systems that are **observable**, **robust**, and 
 
 ## Latest release/s
 
-- `v1.0.0-beta1`: [release info](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta1)
+- `v1.0.0-beta1`: [release info](../../releases/tag/v1.0.0-beta1)
 
 [![Main tests][Main tests SVG]][Main tests URL]
 [![Graal tests][Graal tests SVG]][Graal tests URL]
@@ -35,7 +35,7 @@ See [here][GitHub releases] for earlier releases.
 
 #### Scaling
 
-- Hyper-optimized and **blazing fast**, see [benchmarks](#performance).
+- Hyper-optimized and **blazing fast**, see [benchmarks](#benchmarks).
 - An API that **scales comfortably** from the smallest disposable code, to the most massive and complex real-world production environments.
 
 #### Flexibility
