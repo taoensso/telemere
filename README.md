@@ -13,9 +13,7 @@ It helps enable Clojure/Script systems that are **observable**, **robust**, and 
 
 ## Latest release/s
 
-> This library is still under development, ETA: [end April 2024](https://www.taoensso.com/roadmap).
-
-- `v1.0.0-alpha6` (dev): [release info](https://clojars.org/com.taoensso/telemere/versions/1.0.0-alpha6) (for early adopters)
+- `v1.0.0-beta1`: [release info](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta1)
 
 [![Main tests][Main tests SVG]][Main tests URL]
 [![Graal tests][Graal tests SVG]][Graal tests URL]
