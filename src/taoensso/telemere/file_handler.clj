@@ -1,4 +1,4 @@
-(ns ^:no-doc taoensso.telemere.handlers.file
+(ns ^:no-doc taoensso.telemere.file-handler
   "Private ns, implementation detail.
   Core archiving file handler."
   (:require
@@ -6,7 +6,7 @@
    [taoensso.telemere.utils :as utils]))
 
 (comment
-  (remove-ns 'taoensso.telemere.handlers.file)
+  (remove-ns 'taoensso.telemere.file-handler)
   (:api (enc/interns-overview)))
 
 ;;;; Implementation

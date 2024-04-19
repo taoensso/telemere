@@ -1,4 +1,4 @@
-(ns ^:no-doc taoensso.telemere.handlers.console
+(ns ^:no-doc taoensso.telemere.console-handlers
   "Private ns, implementation detail.
   Core console handlers."
   (:require
@@ -6,7 +6,7 @@
    [taoensso.telemere.utils :as utils]))
 
 (comment
-  (remove-ns 'taoensso.telemere.handlers.console)
+  (remove-ns 'taoensso.telemere.console-handlers)
   (:api (enc/interns-overview)))
 
 #?(:clj

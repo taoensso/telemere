@@ -1,6 +1,5 @@
 (ns taoensso.telemere.open-telemetry
   "Core OpenTelemetry handler and utils.
-  Telemere will attempt to load this ns automatically when possible.
 
   Needs `OpenTelemetry Java`,
     Ref. <https://github.com/open-telemetry/opentelemetry-java>."

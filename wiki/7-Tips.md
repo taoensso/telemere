@@ -86,7 +86,11 @@ Consider the [differences](https://www.youtube.com/watch?v=oyLBGkS5ICk) between 
   
 - **Signal sampling** and **handler sampling**  are **multiplicative**.
   
-  If a signal is created with *20%* sampling and a handler handles *50%* of given signals, then *10%* of possible signals will be handled. This multiplicative rate is helpfully reflected in each signal's final `:sample-rate` value.
+  If a signal is created with *20%* sampling and a handler handles *50%* of given signals, then *10%* of possible signals will be handled.
+  
+  This multiplicative rate is helpfully reflected in each signal's final `:sample-rate` value, making it possible to estimate unsampled cardinalities in relevant cases.
+  
+  So for `n` randomly sampled signals matching some criteria, you'd have seen an estimated `Σ(1.0/sample-rate_i)` such signals _without_ sampling, etc.
   
 - Middleware can return any type, but it's best to return only `nil` or a map.
 - Middleware can be used to **filter signals** by returning `nil`.

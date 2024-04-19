@@ -16,10 +16,10 @@ Signal options (shared by all signal creators):
 
 `:ctx` --------- Custom ?val to override auto (dynamic `*ctx*`) in signal
 `:parent` ------ Custom ?{:keys [id uid]} to override auto (dynamic) parent signal info in signal
-`:location` ---- Custom ?{:keys [ns line column file]} to override auto signal call location
+`:location` ---- Custom ?{:keys [ns line column file]} to override auto signal creator callsite location
 
 `:elidable?` --- Should signal be subject to compile-time elision? (Default: true).
-`:sample-rate` - ?rate ∈ℝ[0,1] for call sampling (0.75 => allow 75% of signals, nil => allow all)
+`:sample-rate` - ?rate ∈ℝ[0,1] for signal sampling (0.75 => allow 75% of signals, nil => allow all)
 `:when` -------- Arb ?form; when present, form must return truthy to allow signal
 `:rate-limit` -- ?spec as given to `taoensso.telemere/rate-limiter`, see its docstring for details
 `:middleware` -- ?[(fn [signal])=>modified-signal ...] signal middleware

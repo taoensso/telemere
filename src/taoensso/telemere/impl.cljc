@@ -21,8 +21,6 @@
 
 ;;;; Utils
 
-(def auto-handlers? (enc/get-env {:as :bool, :default true} :taoensso.telemere/auto-handlers))
-
 #?(:clj (defmacro threaded [& body] `(let [t# (Thread. (fn [] ~@body))] (.start t#) t#)))
 
 #?(:clj

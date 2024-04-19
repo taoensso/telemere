@@ -11,10 +11,9 @@
    [taoensso.encore.signals :as sigs]
    [taoensso.telemere.impl  :as impl]
    [taoensso.telemere.utils :as utils]
-   #?(:clj [taoensso.telemere.streams :as streams])
-
-   #?(:default [taoensso.telemere.handlers.console :as handlers:console])
-   #?(:clj     [taoensso.telemere.handlers.file    :as handlers:file]))
+   #?(:clj     [taoensso.telemere.streams          :as streams])
+   #?(:default [taoensso.telemere.console-handlers :as ch])
+   #?(:clj     [taoensso.telemere.file-handler     :as fh]))
 
   #?(:cljs
      (:require-macros
@@ -36,11 +35,8 @@
 (enc/assert-min-encore-version [3 104 1])
 
 ;;;; TODO
-;; - Review, TODOs, missing docstrings
-;; - Reading plan, wiki docs, explainer/demo video
 ;; - Add email handler
-;;
-;; - Next OpenTelemetry tools (traces, etc.)
+;; - Native OpenTelemetry traces and spans
 ;; - Update Tufte  (signal API, config API, signal keys, etc.)
 ;; - Update Timbre (signal API, config API, signal keys, backport improvements)
 
@@ -380,9 +376,9 @@
 ;;;; Handlers
 
 (enc/defaliases
-  #?(:default handlers:console/handler:console)
-  #?(:cljs    handlers:console/handler:console-raw)
-  #?(:clj        handlers:file/handler:file))
+  #?(:default ch/handler:console)
+  #?(:cljs    ch/handler:console-raw)
+  #?(:clj     fh/handler:file))
 
 ;;;; Flow benchmarks
 
@@ -418,8 +414,7 @@
 ;;;;
 
 (impl/on-init
-  (when impl/auto-handlers?
-    (add-handler! :default/console (handler:console)))
+  (add-handler! :default/console (handler:console))
 
   #?(:clj (enc/catching (require '[taoensso.telemere.tools-logging])))
   #?(:clj (enc/catching (require '[taoensso.telemere.slf4j]))))
@@ -427,7 +422,7 @@
 ;;;;
 
 (comment
-  (with-handler :hid1 (handlers/console-handler) {} (log! "Message"))
+  (with-handler :hid1 (handler:console) {} (log! "Message"))
 
   (let [sig
         (with-signal
@@ -437,6 +432,6 @@
              (ex-info "Ex2" {:b :B}
                (ex-info "Ex1" {:a :A}))}))]
 
-    (do      (let [hf (handlers/file-handler)]        (hf sig) (hf)))
-    (do      (let [hf (handlers/console-handler)]     (hf sig) (hf)))
-    #?(:cljs (let [hf (handlers/raw-console-handler)] (hf sig) (hf)))))
+    (do      (let [hf (handler:file)]        (hf sig) (hf)))
+    (do      (let [hf (handler:console)]     (hf sig) (hf)))
+    #?(:cljs (let [hf (handler:console-raw)] (hf sig) (hf)))))

@@ -14,10 +14,8 @@
    #_[taoensso.telemere.streams              :as streams]
    #?(:clj [taoensso.telemere.slf4j          :as slf4j])
    #?(:clj [taoensso.telemere.open-telemetry :as otel])
-   #?(:clj [clojure.tools.logging            :as ctl])
-
-   #?(:default [taoensso.telemere.handlers.console :as handlers:console])
-   #?(:clj     [taoensso.telemere.handlers.file    :as handlers:file])))
+   #?(:clj [taoensso.telemere.file-handler   :as fh])
+   #?(:clj [clojure.tools.logging            :as ctl])))
 
 (comment
   (remove-ns      'taoensso.telemere-tests)
@@ -705,8 +703,6 @@
 
 ;;;; File handler
 
-#?(:clj (alias 'fh 'taoensso.telemere.handlers.file))
-
 #?(:clj
    (deftest _file-names
      [(is (= (fh/get-file-name "/logs/app.log" nil  nil false) "/logs/app.log"))
@@ -805,9 +801,9 @@
 ;;;; Other handlers
 
 (deftest _handler-constructors
-  [#?(:default (is (fn? (handlers:console/handler:console))))
-   #?(:cljs    (is (fn? (handlers:console/handler:console-raw))))
-   #?(:clj     (is (fn? (handlers:file/handler:file))))
+  [#?(:default (is (fn? (tel/handler:console))))
+   #?(:cljs    (is (fn? (tel/handler:console-raw))))
+   #?(:clj     (is (fn? (tel/handler:file))))
    #?(:clj     (is (fn? (otel/handler:open-telemetry-logger))))])
 
 (comment (def attrs-map otel/signal->attrs-map))
