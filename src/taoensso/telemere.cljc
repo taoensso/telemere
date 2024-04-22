@@ -410,7 +410,8 @@
     (add-handler! :default/console (handler:console))
     #?(:clj
        (enc/compile-when handler:open-telemetry-logger
-         (add-handler!  :default/open-telemetry-logger handler:open-telemetry-logger)))
+         (when-let [handler (enc/catching (handler:open-telemetry-logger))]
+           (add-handler! :default/open-telemetry-logger handler))))
     nil))
 
 ;;;; Flow benchmarks
