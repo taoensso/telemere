@@ -33,7 +33,7 @@
   (remove-ns 'taoensso.telemere)
   (:api (enc/interns-overview)))
 
-(enc/assert-min-encore-version [3 101 0])
+(enc/assert-min-encore-version [3 103 0])
 
 ;;;; TODO
 ;; - Review, TODOs, missing docstrings
