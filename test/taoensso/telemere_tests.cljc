@@ -8,16 +8,16 @@
     :refer  [signal!       with-signal           with-signals]
     :rename {signal! sig!, with-signal with-sig, with-signals with-sigs}]
 
-   [taoensso.telemere.utils           :as utils]
-   [taoensso.telemere.timbre          :as timbre]
-   #_[taoensso.telemere.tools-logging :as tools-logging]
-   #_[taoensso.telemere.streams       :as streams]
-   #?(:clj [taoensso.telemere.slf4j   :as slf4j])
-   #?(:clj [clojure.tools.logging     :as ctl])
+   [taoensso.telemere.utils                  :as utils]
+   [taoensso.telemere.timbre                 :as timbre]
+   #_[taoensso.telemere.tools-logging        :as tools-logging]
+   #_[taoensso.telemere.streams              :as streams]
+   #?(:clj [taoensso.telemere.slf4j          :as slf4j])
+   #?(:clj [taoensso.telemere.open-telemetry :as otel])
+   #?(:clj [clojure.tools.logging            :as ctl])
 
-   #?(:default [taoensso.telemere.handlers.console        :as handlers:console])
-   #?(:clj     [taoensso.telemere.handlers.file           :as handlers:file])
-   #?(:clj     [taoensso.telemere.handlers.open-telemetry :as handlers:otel])))
+   #?(:default [taoensso.telemere.handlers.console :as handlers:console])
+   #?(:clj     [taoensso.telemere.handlers.file    :as handlers:file])))
 
 (comment
   (remove-ns      'taoensso.telemere-tests)
@@ -808,33 +808,33 @@
   [#?(:default (is (fn? (handlers:console/handler:console))))
    #?(:cljs    (is (fn? (handlers:console/handler:console-raw))))
    #?(:clj     (is (fn? (handlers:file/handler:file))))
-   #?(:clj     (is (fn? (handlers:otel/handler:open-telemetry-logger))))])
+   #?(:clj     (is (fn? (otel/handler:open-telemetry-logger))))])
 
-(comment (def attrs-map handlers:otel/signal->attrs-map))
+(comment (def attrs-map otel/signal->attrs-map))
 
 #?(:clj
    (deftest _open-telemetry
      [(testing "attr-name"
-        [(is (= (#'handlers:otel/attr-name :foo)          "foo"))
-         (is (= (#'handlers:otel/attr-name :foo-bar-baz)  "foo_bar_baz"))
-         (is (= (#'handlers:otel/attr-name :foo/bar-baz)  "foo.bar_baz"))
-         (is (= (#'handlers:otel/attr-name :Foo/Bar-BAZ)  "foo.bar_baz"))
-         (is (= (#'handlers:otel/attr-name "Foo Bar-Baz") "foo_bar_baz"))
-         (is (= (#'handlers:otel/attr-name :x1.x2/x3-x4 :foo/bar-baz)
+        [(is (= (#'otel/attr-name :foo)          "foo"))
+         (is (= (#'otel/attr-name :foo-bar-baz)  "foo_bar_baz"))
+         (is (= (#'otel/attr-name :foo/bar-baz)  "foo.bar_baz"))
+         (is (= (#'otel/attr-name :Foo/Bar-BAZ)  "foo.bar_baz"))
+         (is (= (#'otel/attr-name "Foo Bar-Baz") "foo_bar_baz"))
+         (is (= (#'otel/attr-name :x1.x2/x3-x4 :foo/bar-baz)
                "x1.x2.x3_x4.foo.bar_baz"))])
 
       (testing "merge-prefix-map"
-        [(is (= (#'handlers:otel/merge-prefix-map nil       "pf"     nil) nil))
-         (is (= (#'handlers:otel/merge-prefix-map nil       "pf"      {}) nil))
-         (is (= (#'handlers:otel/merge-prefix-map {"a" "A"} "pf" {:a :A}) {"a" "A", "pf.a" :A}))
-         (is (= (#'handlers:otel/merge-prefix-map {}        "pf"
+        [(is (= (#'otel/merge-prefix-map nil       "pf"     nil) nil))
+         (is (= (#'otel/merge-prefix-map nil       "pf"      {}) nil))
+         (is (= (#'otel/merge-prefix-map {"a" "A"} "pf" {:a :A}) {"a" "A", "pf.a" :A}))
+         (is (= (#'otel/merge-prefix-map {}        "pf"
                   {:a/b1 "v1" :a/b2 "v2" :nil nil, :map {:k1 "v1"}})
 
                {"pf.a.b1" "v1", "pf.a.b2" "v2", "pf.nil" nil, "pf.map" {:k1 "v1"}}))])
 
       (testing "as-attrs"
         (is (= (str
-                 (#'handlers:otel/as-attrs
+                 (#'otel/as-attrs
                    {:string "s", :keyword :foo/bar, :long 5, :double 5.0, :nil nil,
                     :longs   [5   5.0 5.0],
                     :doubles [5.0 5   5],
@@ -846,7 +846,7 @@
               "{bools=[true, false, false], double=5.0, doubles=[5.0, 5.0, 5.0], keyword=\":foo/bar\", long=5, longs=[5, 5, 5], map=[[:k1 \"v1\"]], mixed=[5, \"5\", nil], nil=\"nil\", string=\"s\", strings=[\"a\", \"b\", \"c\"]}")))
 
       (testing "signal->attrs-map"
-        (let [attrs-map #'handlers:otel/signal->attrs-map]
+        (let [attrs-map #'otel/signal->attrs-map]
           [(is (= (attrs-map nil    {                }) {"error" false}))
            (is (= (attrs-map :attrs {:attrs {:a1 :A1}}) {"error" false, :a1 :A1}))
            (is

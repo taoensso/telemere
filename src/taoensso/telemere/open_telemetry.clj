@@ -1,4 +1,4 @@
-(ns taoensso.telemere.handlers.open-telemetry
+(ns taoensso.telemere.open-telemetry
   "Core OpenTelemetry handler and utils.
   Telemere will attempt to load this ns automatically when possible.
 
@@ -18,7 +18,7 @@
    [io.opentelemetry.api GlobalOpenTelemetry]))
 
 (comment
-  (remove-ns 'taoensso.telemere.handlers.open-telemetry)
+  (remove-ns 'taoensso.telemere.open-telemetry)
   (:api (enc/interns-overview)))
 
 ;;;; Implementation
