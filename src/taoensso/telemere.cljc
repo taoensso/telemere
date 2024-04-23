@@ -372,25 +372,6 @@
      streams/streams->telemere!
      streams/streams->reset!))
 
-#?(:clj
-   (enc/compile-when
-     (do (require '[taoensso.telemere.tools-logging :as ttl]) true)
-     (enc/defalias ttl/tools-logging->telemere!) ; Incl. `get-env` docs
-     (when (enc/get-env {:as :bool} :clojure.tools.logging-to-telemere?)
-       (ttl/tools-logging->telemere!))))
-
-#?(:clj
-   (enc/compile-when
-     (and org.slf4j.Logger com.taoensso.telemere.slf4j.TelemereLogger)
-
-     (impl/signal!
-       {:kind  :event
-        :level :info
-        :id    :taoensso.telemere/slf4j->telemere!
-        :msg   "Enabling intake: SLF4J -> Telemere"})
-
-     (require '[taoensso.telemere.slf4j :as slf4j])))
-
 (comment (check-intakes))
 
 ;;;; Handlers
@@ -399,20 +380,6 @@
   #?(:default handlers:console/handler:console)
   #?(:cljs    handlers:console/handler:console-raw)
   #?(:clj        handlers:file/handler:file))
-
-#?(:clj
-   (enc/compile-when
-     (do (require '[taoensso.telemere.handlers.open-telemetry :as handlers:open-tel]) true)
-     (enc/defalias handlers:open-tel/handler:open-telemetry-logger)))
-
-(defonce ^:no-doc __add-default-handlers
-  (do
-    (add-handler! :default/console (handler:console))
-    #?(:clj
-       (enc/compile-when handler:open-telemetry-logger
-         (when-let [handler (enc/catching (handler:open-telemetry-logger))]
-           (add-handler! :default/open-telemetry-logger handler))))
-    nil))
 
 ;;;; Flow benchmarks
 
@@ -447,6 +414,16 @@
 
 ;;;;
 
+(impl/on-init
+  (when impl/auto-handlers?
+    (add-handler! :default/console (handler:console)))
+
+  #?(:clj (enc/catching (require '[taoensso.telemere.tools-logging])))
+  #?(:clj (enc/catching (require '[taoensso.telemere.slf4j])))
+  #?(:clj (enc/catching (require '[taoensso.telemere.handlers.open-telemetry]))))
+
+;;;;
+
 (comment
   (with-handler :hid1 (handlers/console-handler) {} (log! "Message"))
 
@@ -461,5 +438,3 @@
     (do      (let [hf (handlers/file-handler)]        (hf sig) (hf)))
     (do      (let [hf (handlers/console-handler)]     (hf sig) (hf)))
     #?(:cljs (let [hf (handlers/raw-console-handler)] (hf sig) (hf)))))
-
-;;;;

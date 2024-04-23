@@ -29,10 +29,12 @@
     [[org.clojure/clojure                  "1.11.2"]
      [com.github.clj-easy/graal-build-time "1.0.5"]]}
 
+   :test {:aot [taoensso.telemere-tests]}
    :dev
    {:jvm-opts
     ["-server"
      "-Dtaoensso.elide-deprecated=true"
+     "-Dtaoensso.telemere.auto-handlers=false"
      "-Dclojure.tools.logging-to-telemere?=true"]
 
     :global-vars

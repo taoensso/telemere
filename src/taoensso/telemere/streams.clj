@@ -1,23 +1,26 @@
-(ns ^:no-doc taoensso.telemere.streams
-  "Private ns, implementation detail.
-  Intake support: standard stream/s -> Telemere."
+(ns taoensso.telemere.streams
+  "Intake support for standard stream/s -> Telemere."
   (:refer-clojure :exclude [binding])
   (:require
    [taoensso.encore        :as enc :refer [binding have have?]]
    [taoensso.telemere.impl :as impl]))
 
-(enc/defonce           orig-*out* "Original `*out*` on ns load" *out*)
-(enc/defonce           orig-*err* "Original `*err*` on ns load" *err*)
-(enc/defonce ^:dynamic prev-*out* "Previous `*out*` (prior to any Telemere binds)" nil)
-(enc/defonce ^:dynamic prev-*err* "Previous `*err*` (prior to any Telemere binds)" nil)
+(enc/defonce ^:private          orig-*out* "Original `*out*` on ns load" *out*)
+(enc/defonce ^:private          orig-*err* "Original `*err*` on ns load" *err*)
+(enc/defonce ^:no-doc ^:dynamic prev-*out* "Previous `*out*` (prior to any Telemere binds)" nil)
+(enc/defonce ^:no-doc ^:dynamic prev-*err* "Previous `*err*` (prior to any Telemere binds)" nil)
 
 (def ^:private ^:const default-out-opts {:kind :system/out, :level :info})
 (def ^:private ^:const default-err-opts {:kind :system/err, :level :error})
 
-(defn osw ^java.io.OutputStreamWriter [x] (java.io.OutputStreamWriter. x))
+(defn ^:no-doc osw
+  "Private, don't use."
+  ^java.io.OutputStreamWriter [x]
+  (java.io.OutputStreamWriter. x))
 
-(defn telemere-print-stream
-  "Returns a `java.io.PrintStream` that will flush to Telemere signals with given opts."
+(defn ^:no-doc telemere-print-stream
+  "Private, don't use.
+  Returns a `java.io.PrintStream` that will flush to Telemere signals with given opts."
   ^java.io.PrintStream [{:as sig-opts :keys [kind level id]}]
   (let [baos
         (proxy [java.io.ByteArrayOutputStream] []
@@ -41,6 +44,8 @@
 
     (java.io.PrintStream. baos true ; Auto flush
       java.nio.charset.StandardCharsets/UTF_8)))
+
+;;;;
 
 (defmacro ^:public with-out->telemere
   "Executes form with `*out*` bound to flush to Telemere signals with given opts."
@@ -143,14 +148,21 @@
   (streams->telemere! {})
   (streams->reset!))
 
-(impl/add-intake-check! :system/out
-  (fn []
-    (let [sending?   (boolean @orig-out_)
-          receiving? (and  sending? (impl/test-intake! "`System/out` -> Telemere" #(.println System/out %)))]
-      {:sending->telemere? sending?, :telemere-receiving? receiving?})))
+;;;;
 
-(impl/add-intake-check! :system/err
-  (fn []
-    (let [sending?   (boolean @orig-err_)
-          receiving? (and  sending? (impl/test-intake! "`System/err` -> Telemere" #(.println System/err %)))]
-      {:sending->telemere? sending?, :telemere-receiving? receiving?})))
+(defn check-out-intake
+  "Returns {:keys [sending->telemere? telemere-receiving?]}."
+  []
+  (let [sending?   (boolean @orig-out_)
+        receiving? (and  sending? (impl/test-intake! "`System/out` -> Telemere" #(.println System/out %)))]
+    {:sending->telemere? sending?, :telemere-receiving? receiving?}))
+
+(defn check-err-intake
+  "Returns {:keys [sending->telemere? telemere-receiving?]}."
+  []
+  (let [sending?   (boolean @orig-err_)
+        receiving? (and  sending? (impl/test-intake! "`System/err` -> Telemere" #(.println System/err %)))]
+    {:sending->telemere? sending?, :telemere-receiving? receiving?}))
+
+(impl/add-intake-check! :system/out check-out-intake)
+(impl/add-intake-check! :system/err check-err-intake)
