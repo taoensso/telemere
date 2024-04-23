@@ -1,6 +1,6 @@
-(ns ^:no-doc taoensso.telemere.slf4j
-  "Private ns, implementation detail.
-  Intake support: SLF4J -> Telemere.
+(ns taoensso.telemere.slf4j
+  "Intake support for SLF4J -> Telemere.
+  Telemere will attempt to load this ns automatically when possible.
 
   To use Telemere as your SLF4J backend/provider, just include the
   `com.taoensso/slf4j-telemere` dependency on your classpath.
@@ -18,7 +18,11 @@
 
   (:require
    [taoensso.encore        :as enc :refer [have have?]]
-   [taoensso.telemere.impl :as impl]))
+   [taoensso.telemere.impl :as impl])
+
+  (:import
+   [org.slf4j Logger]
+   [com.taoensso.telemere.slf4j TelemereLogger]))
 
 ;;;; Utils
 
@@ -40,10 +44,10 @@
 
 (comment (enc/qb 1e6 (sig-level org.slf4j.event.Level/INFO))) ; 36.47
 
-(defn get-marker "Private util for tests, etc."
+(defn- get-marker "Private util for tests, etc."
   ^org.slf4j.Marker [n] (org.slf4j.MarkerFactory/getMarker n))
 
-(defn est-marker!
+(defn- est-marker!
   "Private util for tests, etc.
   Globally establishes (compound) `org.slf4j.Marker` with name `n` and mutates it
   (all occurences!) to have exactly the given references. Returns the (compound) marker."
@@ -55,7 +59,7 @@
 
 (comment [(est-marker! "a1" "a2") (get-marker  "a1") (= (get-marker "a1") (get-marker "a1"))])
 
-(def marker-names
+(def ^:private marker-names
   "Returns #{<MarkerName>}. Cached => assumes markers NOT modified after creation."
   ;; We use `BasicMarkerFactory` so:
   ;;   1. Our markers are just labels (no other content besides their name).
@@ -95,7 +99,7 @@
 
 ;;;; Intake fns (called by `TelemereLogger`)
 
-(defn allowed?
+(defn- allowed?
   "Private, don't use.
   Called by `com.taoensso.telemere.slf4j.TelemereLogger`."
   [^org.slf4j.event.Level level]
@@ -134,7 +138,7 @@
        :slf4j/kvs  kvs)})
   nil)
 
-(defn log!
+(defn- log!
   "Private, don't use.
   Called by `com.taoensso.telemere.slf4j.TelemereLogger`."
 
@@ -172,15 +176,27 @@
     (org.slf4j.MDC/getCopyOfContextMap)
     (org.slf4j.MDC/clear)))
 
-(impl/add-intake-check! :slf4j
-  (fn []
-    (let [^org.slf4j.Logger sl
-          (org.slf4j.LoggerFactory/getLogger  "IntakeTestTelemereLogger")
-          sending? (instance? com.taoensso.telemere.slf4j.TelemereLogger sl)
-          receiving?
-          (and sending?
-            (impl/test-intake! "SLF4J -> Telemere" #(.info sl %)))]
+;;;;
 
-      {:present?            true
-       :sending->telemere?  sending?
-       :telemere-receiving? receiving?})))
+(defn check-intake
+  "Returns {:keys [present? sending->telemere? telemere-receiving?]}."
+  []
+  (let [^org.slf4j.Logger sl
+        (org.slf4j.LoggerFactory/getLogger  "IntakeTestTelemereLogger")
+        sending? (instance? com.taoensso.telemere.slf4j.TelemereLogger sl)
+        receiving?
+        (and sending?
+          (impl/test-intake! "SLF4J -> Telemere" #(.info sl %)))]
+
+    {:present?            true
+     :sending->telemere?  sending?
+     :telemere-receiving? receiving?}))
+
+(impl/add-intake-check! :slf4j check-intake)
+
+(impl/on-init
+  (impl/signal!
+    {:kind  :event
+     :level :info
+     :id    :taoensso.telemere/slf4j->telemere!
+     :msg   "Enabling intake: SLF4J -> Telemere"}))

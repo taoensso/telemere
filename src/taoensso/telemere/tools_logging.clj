@@ -1,6 +1,6 @@
-(ns ^:no-doc taoensso.telemere.tools-logging
-  "Private ns, implementation detail.
-  Intake support: `clojure.tools.logging` -> Telemere."
+(ns taoensso.telemere.tools-logging
+  "Intake support for `clojure.tools.logging` -> Telemere.
+  Telemere will attempt to load this ns automatically when possible."
   (:require
    [taoensso.encore        :as enc :refer [have have?]]
    [taoensso.telemere.impl :as impl]
@@ -36,7 +36,7 @@
   (name       [_          ] "taoensso.telemere")
   (get-logger [_ logger-ns] (TelemereLogger. (str logger-ns))))
 
-(defn ^:public tools-logging->telemere!
+(defn tools-logging->telemere!
   "Configures `clojure.tools.logging` to use Telemere as its logging implementation.
 
   Called automatically if the following is true:
@@ -53,19 +53,30 @@
   (alter-var-root #'clojure.tools.logging/*logger-factory*
     (fn [_] (TelemereLoggerFactory.))))
 
-(defn tools-logging-factory    [] (TelemereLoggerFactory.))
-(defn tools-logging->telemere? []
+(defn tools-logging->telemere?
+  "Returns true iff `clojure.tools.logging` is configured to use Telemere
+  as its logging implementation."
+  []
   (when-let [lf clojure.tools.logging/*logger-factory*]
     (instance? TelemereLoggerFactory lf)))
 
-(impl/add-intake-check! :tools-logging
-  (fn []
-    (let [sending? (tools-logging->telemere?)
-          receiving?
-          (and sending?
-            (impl/test-intake! "`clojure.tools.logging` -> Telemere"
-              #(clojure.tools.logging/info %)))]
+;;;;
 
-      {:present?            true
-       :sending->telemere?  sending?
-       :telemere-receiving? receiving?})))
+(defn check-intake
+  "Returns {:keys [present? sending->telemere? telemere-receiving?]}."
+  []
+  (let [sending? (tools-logging->telemere?)
+        receiving?
+        (and sending?
+          (impl/test-intake! "`clojure.tools.logging` -> Telemere"
+            #(clojure.tools.logging/info %)))]
+
+    {:present?            true
+     :sending->telemere?  sending?
+     :telemere-receiving? receiving?}))
+
+(impl/add-intake-check! :tools-logging check-intake)
+
+(impl/on-init
+  (when (enc/get-env {:as :bool} :clojure.tools.logging-to-telemere?)
+    (tools-logging->telemere!)))

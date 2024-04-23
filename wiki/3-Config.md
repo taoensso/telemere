@@ -29,9 +29,7 @@ See section [4-Handlers](./4-Handlers).
 To do this:
 
 1. Ensure that you have the `clojure.tools.logging` dependency, and
-2. Call [`tools-logging->telemere!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#tools-logging-%3Etelemere!), or set the relevant system config as described in its docstring.
-
-Note that the `tools-logging->telemere!` var will be present **only if** the `clojure.tools.logging` dependency is present.
+2. Call [`tools-logging->telemere!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.tools-logging#tools-logging-%3Etelemere!), or set the relevant system config as described in its docstring.
 
 Verify successful intake with [`check-intakes`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#check-intakes):
 
@@ -90,9 +88,7 @@ Telemere can send signals as [`LogRecords`](https://opentelemetry.io/docs/specs/
 To do this:
 
 1. Ensure that you have the [OpenTelemetry Java](https://github.com/open-telemetry/opentelemetry-java) dependency.
-2. Use [`handler:open-telemetry-logger`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:open-telemetry-logger) to create an appropriately configured handler, and register it with [`add-handler!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#add-handler!).
-
-Note that the `handler:open-telemetry-logger` var will be present **only if** the OpenTelemetry Java dependency is present.
+2. Use [`handler:open-telemetry-logger`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.open-telemetry#handler:open-telemetry-logger) to create an appropriately configured handler, and register it with [`add-handler!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#add-handler!).
 
 ## Tufte
 

@@ -21,7 +21,17 @@
 
 ;;;; Utils
 
+(def auto-handlers? (enc/get-env {:as :bool, :default true} :taoensso.telemere/auto-handlers))
+
 #?(:clj (defmacro threaded [& body] `(let [t# (Thread. (fn [] ~@body))] (.start t#) t#)))
+
+#?(:clj
+   (defmacro on-init [& body]
+     (let [sym        (with-meta '__on-init {:private true})
+           compiling? (if (:ns &env) false `*compile-files*)]
+       `(defonce ~sym (when-not ~compiling? ~@body nil)))))
+
+(comment (macroexpand-1 '(on-init (println "foo"))))
 
 ;;;; Config
 

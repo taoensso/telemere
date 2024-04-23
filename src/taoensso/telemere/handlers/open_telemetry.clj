@@ -1,6 +1,6 @@
-(ns ^:no-doc taoensso.telemere.handlers.open-telemetry
-  "Private ns, implementation detail.
-  Core OpenTelemetry handlers.
+(ns taoensso.telemere.handlers.open-telemetry
+  "Core OpenTelemetry handler and utils.
+  Telemere will attempt to load this ns automatically when possible.
 
   Needs `OpenTelemetry Java`,
     Ref. <https://github.com/open-telemetry/opentelemetry-java>."
@@ -8,7 +8,9 @@
   (:require
    [clojure.string  :as str]
    [taoensso.encore :as enc :refer [have have?]]
-   [taoensso.telemere.utils :as utils])
+   [taoensso.telemere.utils :as utils]
+   [taoensso.telemere.impl  :as impl]
+   [taoensso.telemere       :as tel])
 
   (:import
    [io.opentelemetry.api.logs LoggerProvider Severity]
@@ -21,7 +23,7 @@
 
 ;;;; Implementation
 
-(defn level->severity
+(defn- level->severity
   ^Severity [level]
   (case level
     :trace  Severity/TRACE
@@ -33,7 +35,7 @@
     :report Severity/INFO4
     Severity/UNDEFINED_SEVERITY_NUMBER))
 
-(def ^String attr-name
+(def ^:private ^String attr-name
   "Returns cached OpenTelemetry-style name: `:foo/bar-baz` -> \"foo_bar_baz\", etc.
   Ref. <https://opentelemetry.io/docs/specs/semconv/general/attribute-naming/>."
   (enc/fmemoize
@@ -49,7 +51,7 @@
 (comment (enc/qb 1e6 (attr-name :x1.x2/x3-x4 :Foo/Bar-BAZ))) ; 63.6
 
 ;; AttributeTypes: String, Long, Double, Boolean, and arrays
-(defprotocol     IAttr+ (attr+ [_aval akey builder]))
+(defprotocol     IAttr+ (^:private attr+ [_aval akey builder]))
 (extend-protocol IAttr+
   nil                (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) "nil")) ; Like pr-edn*
   Boolean            (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k)     v))
@@ -78,7 +80,7 @@
 
   Object (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) (enc/pr-edn* v))))
 
-(defn as-attrs
+(defn- as-attrs
   "Returns `io.opentelemetry.api.common.Attributes` for given map."
   ^Attributes [m]
   (if (empty?  m)
@@ -89,7 +91,7 @@
 
 (comment (str (as-attrs {:s "s", :kw :foo/bar, :long 5, :double 5.0, :longs [5 5 5] :nil nil})))
 
-(defn merge-prefix-map
+(defn- merge-prefix-map
   "Merges prefixed `from` into `to`."
   [to prefix from]
   (enc/cond
@@ -103,7 +105,7 @@
 
 (comment (merge-prefix-map {} "data" {:a/b1 "v1" :a/b2 "v2" :nil nil}))
 
-(defn signal->attrs-map
+(defn- signal->attrs-map
   "Returns attributes map for given signal,
   Ref. <https://opentelemetry.io/docs/specs/otel/logs/data-model/>."
   [attrs-key signal]
@@ -181,7 +183,7 @@
 
 ;;;; Handler
 
-(defn ^:public handler:open-telemetry-logger
+(defn handler:open-telemetry-logger
   "Experimental, subject to change!! Feedback very welcome!
 
   Returns a (fn handler [signal]) that:
@@ -216,3 +218,10 @@
               (.setSeverity      severity)
               (.setBody          msg)
               (.setAllAttributes attrs)))))))))
+
+;;;;
+
+(impl/on-init
+  (when impl/auto-handlers?
+    (when-let [handler (enc/catching (handler:open-telemetry-logger))]
+      (tel/add-handler! :default/open-telemetry-logger handler))))
