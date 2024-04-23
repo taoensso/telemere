@@ -219,9 +219,4 @@
               (.setBody          msg)
               (.setAllAttributes attrs)))))))))
 
-;;;;
 
-(impl/on-init
-  (when impl/auto-handlers?
-    (when-let [handler (enc/catching (handler:open-telemetry-logger))]
-      (tel/add-handler! :default/open-telemetry-logger handler))))

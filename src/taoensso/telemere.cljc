@@ -422,8 +422,7 @@
     (add-handler! :default/console (handler:console)))
 
   #?(:clj (enc/catching (require '[taoensso.telemere.tools-logging])))
-  #?(:clj (enc/catching (require '[taoensso.telemere.slf4j])))
-  #?(:clj (enc/catching (require '[taoensso.telemere.handlers.open-telemetry]))))
+  #?(:clj (enc/catching (require '[taoensso.telemere.slf4j]))))
 
 ;;;;
 

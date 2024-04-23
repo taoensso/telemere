@@ -99,7 +99,6 @@ See section [3-Config](./3-Config) for customization.
 | -------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Clj      | Always    | [Console handler](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console) that prints signals to `*out*` or `*err*`.      |
 | Cljs     | Always    | [Console handler](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console) that prints signals to the **browser console**. |
-| Clj      | [OpenTelemetry API](https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-api) present | [OpenTelemetry handler](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:open-telemetry-logger) that emits signals as log records to a configured [`LoggerProvider`](https://opentelemetry.io/docs/specs/otel/logs/sdk/#loggerprovider). |
 
 **Default signal intakes**:
 
