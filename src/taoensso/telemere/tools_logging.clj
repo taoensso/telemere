@@ -40,7 +40,7 @@
   "Configures `clojure.tools.logging` to use Telemere as its logging implementation.
 
   Called automatically if the following is true:
-    (get-env {:as :bool} :clojure.tools.logging->telemere?)
+    (get-env {:as :bool} :clojure.tools.logging/to-telemere)
 
   See `get-env` for details."
   []
@@ -78,5 +78,5 @@
 (impl/add-intake-check! :tools-logging check-intake)
 
 (impl/on-init
-  (when (enc/get-env {:as :bool} :clojure.tools.logging-to-telemere?)
+  (when (enc/get-env {:as :bool} :clojure.tools.logging/to-telemere)
     (tools-logging->telemere!)))

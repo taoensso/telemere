@@ -35,7 +35,7 @@
     ["-server"
      "-Dtaoensso.elide-deprecated=true"
      "-Dtaoensso.telemere.auto-handlers=false"
-     "-Dclojure.tools.logging-to-telemere?=true"]
+     "-Dclojure.tools.logging.to-telemere=true"]
 
     :global-vars
     {*warn-on-reflection* true
