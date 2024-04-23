@@ -8,7 +8,7 @@
    :url  "https://www.eclipse.org/legal/epl-v10.html"}
 
   :dependencies
-  [[com.taoensso/encore "3.101.0"]]
+  [[com.taoensso/encore "3.104.1"]]
 
   :test-paths ["test" #_"src"]
 
