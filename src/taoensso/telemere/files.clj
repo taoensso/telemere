@@ -1,12 +1,13 @@
-(ns ^:no-doc taoensso.telemere.file-handler
+(ns ^:no-doc taoensso.telemere.files
   "Private ns, implementation detail.
-  Core archiving file handler."
+  Core file handler, aliased in main Telemere ns."
   (:require
    [taoensso.encore :as enc :refer [have have?]]
    [taoensso.telemere.utils :as utils]))
 
 (comment
-  (remove-ns 'taoensso.telemere.file-handler)
+  (require  '[taoensso.telemere :as tel])
+  (remove-ns 'taoensso.telemere.files)
   (:api (enc/interns-overview)))
 
 ;;;; Implementation
@@ -265,7 +266,7 @@
 ;;;; Handler
 
 (defn ^:public handler:file
-  "Experimental, subject to change.
+  "Experimental, subject to change. Feedback welcome!
 
      Returns a (fn handler [signal]) that:
        - Takes a Telemere signal.

@@ -1,21 +1,27 @@
-(ns ^:no-doc taoensso.telemere.console-handlers
+(ns ^:no-doc taoensso.telemere.consoles
   "Private ns, implementation detail.
-  Core console handlers."
+  Core console handlers, aliased in main Telemere ns."
   (:require
    [taoensso.encore         :as enc :refer [have have?]]
    [taoensso.telemere.utils :as utils]))
 
 (comment
-  (remove-ns 'taoensso.telemere.console-handlers)
+  (require  '[taoensso.telemere :as tel])
+  (remove-ns 'taoensso.telemere.consoles)
   (:api (enc/interns-overview)))
+
+;;;; Handlers
 
 #?(:clj
    (defn ^:public handler:console
-     "Experimental, subject to change.
+     "Experimental, subject to change. Feedback welcome!
 
      Returns a (fn handler [signal]) that:
        - Takes a Telemere signal.
        - Writes a formatted signal string to stream.
+
+     A general-purpose `println`-style handler that's well suited for outputting
+     signals formatted as edn, JSON, or human-readable strings.
 
      Options:
        `:format-signal-fn` - (fn [signal]) => output, see `help:signal-formatters`
@@ -42,11 +48,14 @@
 
    :cljs
    (defn ^:public handler:console
-     "Experimental, subject to change.
+     "Experimental, subject to change. Feedback welcome!
 
      If `js/console` exists, returns a (fn handler [signal]) that:
        - Takes a Telemere signal.
        - Writes a formatted signal string to JavaScript console.
+
+     A general-purpose `println`-style handler that's well suited for outputting
+     signals formatted as edn, JSON, or human-readable strings.
 
      Options:
        `:format-signal-fn` - (fn [signal]) => output, see `help:signal-formatters`"
@@ -77,7 +86,7 @@
 
 #?(:cljs
    (defn ^:public handler:console-raw
-     "Experimental, subject to change.
+     "Experimental, subject to change. Feedback welcome!
 
      If `js/console` exists, returns a (fn handler [signal]) that:
        - Takes a Telemere signal.
@@ -87,10 +96,10 @@
      Ref. <https://github.com/binaryage/cljs-devtools>."
 
      ([] (handler:console-raw nil))
-     ([{:keys [format-signal-prelude-fn format-nsecs-fn] :as opts
+     ([{:keys [format-signal->prelude-fn format-nsecs-fn] :as opts
         :or
-        {format-signal-prelude-fn (utils/format-signal-prelude-fn) ; (fn [signal])
-         format-nsecs-fn          (utils/format-nsecs-fn)          ; (fn [nanosecs])
+        {format-signal->prelude-fn (utils/format-signal->prelude-fn) ; (fn [signal])
+         format-nsecs-fn           (utils/format-nsecs-fn)           ; (fn [nanosecs])
          }}]
 
       (when (and (exists? js/console) (exists? js/console.group))
@@ -108,7 +117,7 @@
                    logger (js-console-logger level)]
 
                ;; Unfortunately groups have no level
-               (.group js/console (format-signal-prelude-fn signal))
+               (.group js/console (format-signal->prelude-fn signal))
                (signal-content-handler signal (logger-fn logger) identity)
 
                (when-let [stack (and error (.-stack (enc/ex-root error)))]

@@ -85,7 +85,7 @@
 (let [monitor (Object.)]
 
   (defn ^:public streams->reset!
-    "Experimental, subject to change without notice!
+    "Experimental, subject to change.
     Resets `System/out` and `System/err` to their original value (prior to any
     `streams->telemere!` call)."
     []
@@ -107,7 +107,7 @@
       (boolean (or orig-out orig-err))))
 
   (defn ^:public streams->telemere!
-    "Experimental, subject to change without notice!
+    "Experimental, subject to change.
 
     When given `out`, sets JVM's `System/out` to flush to Telemere signals with those opts.
     When given `err`, sets JVM's `System/err` to flush to Telemere signals with those opts.

@@ -46,7 +46,9 @@
           (str            x))
         (str x)))))
 
-(comment (format-id (str *ns*) ::id1))
+(comment
+  (format-id (str *ns*) ::id1)
+  (format-id nil ::id1))
 
 ;;;; Public misc
 
@@ -174,16 +176,20 @@
 
 #?(:clj
    (defn file-writer
-     "Experimental, subject to change!!
+     "Experimental, subject to change. Feedback welcome!
 
      Opens the specified file and returns a stateful fn of 2 arities:
        [content] => Writes given content to file, or no-ops if closed.
        []        => Closes the writer.
 
-     Thread safe. Automatically creates file and parent dirs as necessary.
-     Writers MUST ALWAYS be manually closed after use!
+     Useful for basic handlers that write to a file, etc.
 
-     Useful for handlers that write to files, etc."
+     Notes:
+       - Automatically creates file and parent dirs as necessary.
+       - Writer should be manually closed after use (with zero-arity call).
+       - Flushes after every write.
+       - Thread safe, locks on single file stream."
+
      [file append?]
      (let [file    (writeable-file! file)
            stream_ (volatile! (file-stream file append?))
@@ -205,7 +211,7 @@
              true)
 
            write-ba!
-           (fn [^bytes ba-content retrying?]
+           (fn [^bytes ba-content]
              (when-let [^java.io.FileOutputStream stream (.deref stream_)]
                (.write stream ba-content)
                (.flush stream)
@@ -219,24 +225,23 @@
 
            lock (Object.)]
 
-       (fn file-writer
+       (fn a-file-writer
          ([] (when (open?_) (locking lock (close!))))
          ([content-or-action]
-          (case content-or-action ; Undocumented
+          (case content-or-action ; Undocumented, for dev/testing
             :writer/open?  (open?_)
-            :writer/file   file
-            :writer/stream (.deref stream_)
             :writer/reset! (locking lock (reset!))
+            :writer/state  {:file file, :stream (.deref stream_)}
             (when (open?_)
               (let [content content-or-action
                     ba (.getBytes (str content) java.nio.charset.StandardCharsets/UTF_8)]
                 (locking lock
                   (try
                     (file-exists!)
-                    (write-ba! ba false)
-                    (catch java.io.IOException _
+                    (write-ba! ba)
+                    (catch java.io.IOException _ ; Retry once
                       (reset!)
-                      (write-ba! ba true))))))))))))
+                      (write-ba! ba))))))))))))
 
 (comment (def fw1 (file-writer "test.txt" true)) (fw1 "x") (fw1))
 
@@ -304,17 +309,17 @@
   (do                         (enc/ex-map (ex-info "Ex2" {:k2 "v2"} (ex-info "Ex1" {:k1 "v1"}))))
   (println (str "--\n" ((format-error-fn) (ex-info "Ex2" {:k2 "v2"} (ex-info "Ex1" {:k1 "v1"}))))))
 
-(defn format-signal-prelude-fn
+(defn format-signal->prelude-fn
   "Experimental, subject to change.
   Returns a (fn format [signal]) that:
     - Takes a Telemere signal.
     - Returns a formatted prelude string like:
       \"2024-03-26T11:14:51.806Z INFO EVENT Hostname taoensso.telemere(2,21) ::ev-id - msg\""
-  ([] (format-signal-prelude-fn nil))
+  ([] (format-signal->prelude-fn nil))
   ([{:keys [format-inst-fn]
      :or   {format-inst-fn (format-inst-fn)}}]
 
-   (fn format-signal-prelude [signal]
+   (fn format-signal->prelude [signal]
      (let [{:keys [inst level kind ns id msg_]} signal
            sb    (enc/str-builder)
            s+spc (enc/sb-appender sb " ")]
@@ -338,12 +343,12 @@
        (when-let [msg (force msg_)] (s+spc "- " msg))
        (str sb)))))
 
-(comment ((format-signal-prelude-fn) (tel/with-signal (tel/event! ::ev-id))))
+(comment ((format-signal->prelude-fn) (tel/with-signal (tel/event! ::ev-id))))
 
 (defn ^:no-doc signal-content-handler
   "Private, don't use.
   Returns a (fn handle [signal handle-fn value-fn]) for internal use.
-  Content equivalent to `format-signal-prelude-fn`."
+  Content equivalent to `format-signal->prelude-fn`."
   ([] (signal-content-handler nil))
   ([{:keys [format-nsecs-fn format-error-fn raw-error?]
      :or
@@ -435,12 +440,12 @@
     - Takes a Telemere signal.
     - Returns a formatted string intended for text consoles, etc."
   ([] (format-signal->str-fn nil))
-  ([{:keys [format-signal-prelude-fn
+  ([{:keys [format-signal->prelude-fn
             format-nsecs-fn format-error-fn]
      :or
-     {format-signal-prelude-fn (format-signal-prelude-fn) ; (fn [signal])
-      format-nsecs-fn          (format-nsecs-fn)          ; (fn [nanosecs])
-      format-error-fn          (format-error-fn)          ; (fn [error])
+     {format-signal->prelude-fn (format-signal->prelude-fn) ; (fn [signal])
+      format-nsecs-fn           (format-nsecs-fn)           ; (fn [nanosecs])
+      format-error-fn           (format-error-fn)           ; (fn [error])
       }}]
 
    (let [signal-content-handler ; (fn [signal hf vf]
@@ -453,7 +458,7 @@
              s+  (partial enc/sb-append sb)
              s++ (partial enc/sb-append sb (str newline " "))]
 
-         (when-let [ff format-signal-prelude-fn] (s+ (ff signal))) ; Prelude
+         (when-let [ff format-signal->prelude-fn] (s+ (ff signal))) ; Prelude
          (signal-content-handler signal s++ enc/pr-edn*) ; Content
          (str sb))))))
 

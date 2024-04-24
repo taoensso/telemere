@@ -8,16 +8,16 @@
    :url  "https://www.eclipse.org/legal/epl-v10.html"}
 
   :dependencies
-  [[com.taoensso/encore "3.104.1"]]
+  [[com.taoensso/encore "3.105.1"]]
 
   :test-paths ["test" #_"src"]
 
   :profiles
   {;; :default [:base :system :user :provided :dev]
    :provided {:dependencies [[org.clojure/clojurescript "1.11.132"]
-                             [org.clojure/clojure       "1.11.2"]]}
-   :c1.12    {:dependencies [[org.clojure/clojure       "1.12.0-alpha9"]]}
-   :c1.11    {:dependencies [[org.clojure/clojure       "1.11.2"]]}
+                             [org.clojure/clojure       "1.11.3"]]}
+   :c1.12    {:dependencies [[org.clojure/clojure       "1.12.0-alpha10"]]}
+   :c1.11    {:dependencies [[org.clojure/clojure       "1.11.3"]]}
    :c1.10    {:dependencies [[org.clojure/clojure       "1.10.1"]]}
 
    :graal-tests
