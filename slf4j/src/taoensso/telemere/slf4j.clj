@@ -144,7 +144,7 @@
 
   ;; Modern "fluent" API calls
   ([^org.slf4j.event.LoggingEvent event]
-   (let [inst        (when-let [ts (.getTimeStamp event)] (when-not (zero? ts) (java.time.Instant/ofEpochMilli ts)))
+   (let [inst        (or (when-let [ts (.getTimeStamp event)] (java.time.Instant/ofEpochMilli ts)) (enc/now-inst*))
          level       (.getLevel     event)
          error       (.getThrowable event)
          msg-pattern (.getMessage   event)
@@ -163,7 +163,7 @@
   ([^org.slf4j.event.Level level error msg-pattern args marker]
    (let [marker-names (when marker (marker-names marker))]
      (when-debug (println [:slf4j/legacy-log-call (sig-level level)]))
-     (normalized-log! :auto level error msg-pattern args marker-names nil))))
+     (normalized-log! (enc/now-inst*) level error msg-pattern args marker-names nil))))
 
 (comment
   (def ^org.slf4j.Logger sl (org.slf4j.LoggerFactory/getLogger "MySlfLogger"))
