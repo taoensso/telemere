@@ -11,9 +11,9 @@
    [taoensso.encore.signals :as sigs]
    [taoensso.telemere.impl  :as impl]
    [taoensso.telemere.utils :as utils]
-   #?(:clj     [taoensso.telemere.streams          :as streams])
-   #?(:default [taoensso.telemere.console-handlers :as ch])
-   #?(:clj     [taoensso.telemere.file-handler     :as fh]))
+   #?(:default [taoensso.telemere.consoles :as consoles])
+   #?(:clj     [taoensso.telemere.streams  :as streams])
+   #?(:clj     [taoensso.telemere.files    :as files]))
 
   #?(:cljs
      (:require-macros
@@ -32,7 +32,7 @@
   (remove-ns 'taoensso.telemere)
   (:api (enc/interns-overview)))
 
-(enc/assert-min-encore-version [3 104 1])
+(enc/assert-min-encore-version [3 105 0])
 
 ;;;; TODO
 ;; - Add email handler
@@ -49,21 +49,7 @@
    :*rt-sig-filter* impl/*rt-sig-filter*
    :*sig-handlers*  impl/*sig-handlers*
    :sig-filter-system-vals-info
-   "These include:
-
-    Compile-time:
-
-      ns-filter: (get-env {:as :edn} :taoensso.telemere/ct-ns-filter<.platform><.edn>)
-      id-filter: (get-env {:as :edn} :taoensso.telemere/ct-id-filter<.platform><.edn>)
-      min-level: (get-env {:as :edn} :taoensso.telemere/ct-min-level<.platform><.edn>)
-
-    Runtime:
-
-      ns-filter: (get-env {:as :edn}                 :taoensso.telemere/rt-ns-filter<.platform><.edn>)
-      id-filter: (get-env {:as :edn}                 :taoensso.telemere/rt-id-filter<.platform><.edn>)
-      min-level: (get-env {:as :edn, :default :info} :taoensso.telemere/rt-min-level<.platform><.edn>)
-
-    See `get-env` for details."})
+   (impl/signal-docstring :filter-system-vals)})
 
 (comment help:filters)
 
@@ -180,30 +166,6 @@
      "Evaluates given form with given `*middleware*` value.
      See `*middleware*` for details."
      [init-val form] `(binding [*middleware* ~init-val] ~form)))
-
-;;;; Encore integration
-
-(do
-  (enc/set-var-root! sigs/*default-handler-error-fn*
-    (fn [{:keys [error] :as m}]
-      (impl/signal!
-        {:kind     :error
-         :level    :error
-         :error     error
-         :location {:ns "taoensso.encore.signals"}
-         :id            :taoensso.encore.signals/handler-error
-         :msg      "Error executing wrapped handler fn"
-         :data     (dissoc m :error)})))
-
-  (enc/set-var-root! sigs/*default-handler-backp-fn*
-    (fn [data]
-      (impl/signal!
-        {:kind     :event
-         :level    :warn
-         :location {:ns "taoensso.encore.signals"}
-         :id            :taoensso.encore.signals/handler-back-pressure
-         :msg      "Back pressure on wrapped handler fn"
-         :data     data}))))
 
 ;;;; Signal creators
 ;; - signal!                  [              opts] ;                 => allowed? / run result (value or throw)
@@ -376,9 +338,39 @@
 ;;;; Handlers
 
 (enc/defaliases
-  #?(:default ch/handler:console)
-  #?(:cljs    ch/handler:console-raw)
-  #?(:clj     fh/handler:file))
+  #?(:default consoles/handler:console)
+  #?(:cljs    consoles/handler:console-raw)
+  #?(:clj     files/handler:file))
+
+;;;; Init
+
+(impl/on-init
+
+  (enc/set-var-root! sigs/*default-handler-error-fn*
+    (fn [{:keys [error] :as m}]
+      (impl/signal!
+        {:kind     :error
+         :level    :error
+         :error     error
+         :location {:ns "taoensso.encore.signals"}
+         :id            :taoensso.encore.signals/handler-error
+         :msg      "Error executing wrapped handler fn"
+         :data     (dissoc m :error)})))
+
+  (enc/set-var-root! sigs/*default-handler-backp-fn*
+    (fn [data]
+      (impl/signal!
+        {:kind     :event
+         :level    :warn
+         :location {:ns "taoensso.encore.signals"}
+         :id            :taoensso.encore.signals/handler-back-pressure
+         :msg      "Back pressure on wrapped handler fn"
+         :data     data})))
+
+  (add-handler! :default/console (handler:console))
+
+  #?(:clj (enc/catching (require '[taoensso.telemere.tools-logging])))
+  #?(:clj (enc/catching (require '[taoensso.telemere.slf4j]))))
 
 ;;;; Flow benchmarks
 
@@ -410,14 +402,6 @@
        (signal! {:level :info})
        (signal! {:level :info, :run "run", :trace? false})
        (signal! {:level :info, :run "run"})))])
-
-;;;;
-
-(impl/on-init
-  (add-handler! :default/console (handler:console))
-
-  #?(:clj (enc/catching (require '[taoensso.telemere.tools-logging])))
-  #?(:clj (enc/catching (require '[taoensso.telemere.slf4j]))))
 
 ;;;;
 

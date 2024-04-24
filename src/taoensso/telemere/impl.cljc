@@ -396,8 +396,8 @@
 
 ;;;; Signal API helpers
 
-#?(:clj (defmacro signal-docstring  [rname] (enc/slurp-resource (str "signal-docstrings/" (name rname) ".txt"))))
-#?(:clj (defmacro defhelp       [sym rname] `(enc/def* ~sym {:doc ~(eval `(signal-docstring ~rname))} "See docstring")))
+#?(:clj (defmacro signal-docstring [    rname] (enc/slurp-resource (str "signal-docstrings/" (name rname) ".txt"))))
+#?(:clj (defmacro defhelp          [sym rname] `(enc/def* ~sym {:doc ~(eval `(signal-docstring ~rname))} "See docstring")))
 
 #?(:clj
    (defn signal-arglists [macro-id]
@@ -693,7 +693,7 @@
 
        (and (not elide?) allow?))))
 
-;;;; Intake
+;;;; Intakes
 
 #?(:clj
    (do
@@ -722,6 +722,3 @@
                (with-signal :raw :trap (test-fn msg)))]
 
          (= (force (get signal :msg_)) msg)))))
-
-
-

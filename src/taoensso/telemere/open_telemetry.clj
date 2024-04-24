@@ -1,9 +1,6 @@
 (ns taoensso.telemere.open-telemetry
-  "Core OpenTelemetry handler and utils.
-
-  Needs `OpenTelemetry Java`,
+  "OpenTelemetry handler using `opentelemetry-java`,
     Ref. <https://github.com/open-telemetry/opentelemetry-java>."
-
   (:require
    [clojure.string  :as str]
    [taoensso.encore :as enc :refer [have have?]]
@@ -165,40 +162,53 @@
 
     attrs-map))
 
-(defn get-default-logger-provider
-  "Experimental, subject to change!! Feedback very welcome!
+(defn default-logger-provider
+  "Experimental, subject to change. Feedback welcome!
+
   Returns `io.opentelemetry.api.logs.LoggerProvider` via:
     `AutoConfiguredOpenTelemetrySdk` when possible, or
-    `GlobalOpenTelemetry` otherwise."
+    `GlobalOpenTelemetry` otherwise.
+
+  See the relevant `opentelemetry-java` docs for details."
   ^LoggerProvider []
   (or
+    ;; Without Java agent
     (enc/compile-when
       io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk
       (enc/catching :common
         (let [builder (io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk/builder)]
           (.getSdkLoggerProvider (.getOpenTelemetrySdk (.build builder))))))
 
+    ;; With Java agent
     (.getLogsBridge (GlobalOpenTelemetry/get))))
 
 ;;;; Handler
 
 (defn handler:open-telemetry-logger
-  "Experimental, subject to change!! Feedback very welcome!
+  "Experimental, subject to change. Feedback welcome!
+
+  Needs `opentelemetry-java`,
+    Ref. <https://github.com/open-telemetry/opentelemetry-java>.
 
   Returns a (fn handler [signal]) that:
     - Takes a Telemere signal.
     - Emits signal content to the `io.opentelemetry.api.logs.Logger`
-      returned by given `io.opentelemetry.api.logs.LoggerProvider`."
+      returned by given `io.opentelemetry.api.logs.LoggerProvider`.
+
+  Options:
+    `:logger-provider` - `io.opentelemetry.api.logs.LoggerProvider`
+      Defaults to the LoggerProvider returned by (default-logger-provider),
+      see that docstring for details."
 
   ([] (handler:open-telemetry-logger nil))
   ([{:keys
      [^LoggerProvider logger-provider
-      attrs-key ; Advanced, undocumented
+      attrs-signal-key ; Advanced, undocumented
       ]
 
      :or
-     {logger-provider (get-default-logger-provider)
-      attrs-key :open-telemetry-attrs}}]
+     {logger-provider (default-logger-provider)
+      attrs-signal-key :open-telemetry/attrs}}]
 
    (let []
      (fn a-handler:open-telemetry-logger
@@ -208,7 +218,7 @@
               logger    (.get logger-provider (or ns "default"))
               severity  (level->severity level)
               msg       (force msg_)
-              attrs-map (signal->attrs-map attrs-key signal)
+              attrs-map (signal->attrs-map attrs-signal-key signal)
               attrs     (as-attrs attrs-map)]
 
           (.emit
@@ -217,5 +227,3 @@
               (.setSeverity      severity)
               (.setBody          msg)
               (.setAllAttributes attrs)))))))))
-
-
