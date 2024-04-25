@@ -34,29 +34,35 @@
 ;;;; Config
 
 #?(:clj
-   (let [base      (enc/get-env {:as :edn} :taoensso.telemere/ct-filters<.platform><.edn>)
-         ns-filter (enc/get-env {:as :edn} :taoensso.telemere/ct-ns-filter<.platform><.edn>)
-         id-filter (enc/get-env {:as :edn} :taoensso.telemere/ct-id-filter<.platform><.edn>)
-         min-level (enc/get-env {:as :edn} :taoensso.telemere/ct-min-level<.platform><.edn>)]
+   (let [base        (enc/get-env {:as :edn} :taoensso.telemere/ct-filters<.platform><.edn>)
+         kind-filter (enc/get-env {:as :edn} :taoensso.telemere/ct-kind-filter<.platform><.edn>)
+         ns-filter   (enc/get-env {:as :edn} :taoensso.telemere/ct-ns-filter<.platform><.edn>)
+         id-filter   (enc/get-env {:as :edn} :taoensso.telemere/ct-id-filter<.platform><.edn>)
+         min-level   (enc/get-env {:as :edn} :taoensso.telemere/ct-min-level<.platform><.edn>)]
 
      (enc/defonce ct-sig-filter
        "`SigFilter` used for compile-time elision, or nil."
        (sigs/sig-filter
-         {:ns-filter (or ns-filter (get base :ns-filter))
-          :id-filter (or id-filter (get base :id-filter))
-          :min-level (or min-level (get base :min-level))}))))
+         {:kind-filter (or kind-filter (get base :kind-filter))
+          :ns-filter   (or ns-filter   (get base :ns-filter))
+          :id-filter   (or id-filter   (get base :id-filter))
+          :min-level   (or min-level   (get base :min-level))}))))
 
-(let [base      (enc/get-env {:as :edn}                 :taoensso.telemere/rt-filters<.platform><.edn>)
-      ns-filter (enc/get-env {:as :edn}                 :taoensso.telemere/rt-ns-filter<.platform><.edn>)
-      id-filter (enc/get-env {:as :edn}                 :taoensso.telemere/rt-id-filter<.platform><.edn>)
-      min-level (enc/get-env {:as :edn, :default :info} :taoensso.telemere/rt-min-level<.platform><.edn>)]
+(let [base        (enc/get-env {:as :edn}                 :taoensso.telemere/rt-filters<.platform><.edn>)
+      kind-filter (enc/get-env {:as :edn}                 :taoensso.telemere/rt-kind-filter<.platform><.edn>)
+      ns-filter   (enc/get-env {:as :edn}                 :taoensso.telemere/rt-ns-filter<.platform><.edn>)
+      id-filter   (enc/get-env {:as :edn}                 :taoensso.telemere/rt-id-filter<.platform><.edn>)
+      min-level   (enc/get-env {:as :edn, :default :info} :taoensso.telemere/rt-min-level<.platform><.edn>)]
 
   (enc/defonce ^:dynamic *rt-sig-filter*
     "`SigFilter` used for runtime filtering, or nil."
     (sigs/sig-filter
-      {:ns-filter (or ns-filter (get base :ns-filter))
-       :id-filter (or id-filter (get base :id-filter))
-       :min-level (or min-level (get base :min-level))})))
+      {:kind-filter (or kind-filter (get base :kind-filter))
+       :ns-filter   (or ns-filter   (get base :ns-filter))
+       :id-filter   (or id-filter   (get base :id-filter))
+       :min-level   (or min-level   (get base :min-level))})))
+
+(comment (enc/get-env {:as :edn, :return :explain} :taoensso.telemere/rt-filters<.platform><.edn>))
 
 ;;;; Context (optional arb app-level state)
 ;; taoensso.telemere/*ctx*

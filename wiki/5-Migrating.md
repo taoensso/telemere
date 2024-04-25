@@ -26,7 +26,7 @@ If not, you may need to [write something yourself](./4-Handlers#writing-handlers
 
 This may be easier than it sounds. Remember that signals are just plain Clojure/Script [maps](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content), and handlers just plain Clojure/Script functions that do something with those maps.
 
-Feel free to [ping me](https://github.com/taoensso/telemere/issues) for assistance, or ask on the [`#telemere` Slack channel](https://clojurians.slack.com/archives/C06ALA6EEUA).
+Feel free to [ping me](https://github.com/taoensso/telemere/issues) for assistance, or ask on the [`#telemere` Slack channel](https://www.taoensso.com/telemere/slack).
 
 ### 2. Imports
 

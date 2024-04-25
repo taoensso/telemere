@@ -1,4 +1,5 @@
 A signal will be provided to a handler iff ALL of the following are true:
+
   1. Signal (creation) is allowed by compile-time filters
   2. Signal (creation) is allowed by runtime      filters
   3. Signal (handling) is allowed by handler      filters
@@ -7,18 +8,40 @@ A signal will be provided to a handler iff ALL of the following are true:
   5. Handler middleware does not suppress the signal (return nil)
 
 For 1-3, filtering may depend on (in order):
+
   Sample rate → namespace → kind → id → level → when form/fn → rate limit
 
-Note that sample rates are multiplicative:
-  If a signal is created with 20% sampling and a handler handles 50%
-  of given signals, then 10% of possible signals will be handled.
+Compile-time vs runtime filtering:
 
-  This multiplicative rate is helpfully reflected in each signal's final
+  Compile-time filtering is an advanced feature that can be tricky to set
+  and use correctly. Most folks will want ONLY runtime filtering.
+
+  Compile-time filtering works by eliding (completely removing the code for)
+  disallowed signals. This means zero performance cost for these signals,
+  but also means that compile-time filtering is PERMANENT once applied.
+
+  So if you set `:info` as the compile-time minimum level, that'll REMOVE
+  CODE for every signal call below `:info` level. To decrease that minimum
+  level, you'll need to rebuild.
+
+  Compile-time filtering can be set ONLY with environmental config
+  (JVM properties, environment variables, or classpath resources).
+
+Signal and handler sampling is multiplicative:
+
+  Both signals and handlers can have independent sample rates, and these
+  MULTIPLY!
+
+  If a signal is created with 20% sampling and a handler handles 50%
+  of received signals, then 10% of possible signals will be handled
+  (50% of 20%).
+
+  The multiplicative rate is helpfully reflected in each signal's final
   `:sample-rate` value.
 
-For a visual flowchart, see: Ref. <https://www.taoensso.com/telemere/flow>
-
 For more info:
+
+  - Signal visual flowchart, Ref. <https://www.taoensso.com/telemere/flow>
   - On signal  filters, see: `help:signal-filters`  docstring
   - On handler filters, see: `help:signal-handlers` docstring
 

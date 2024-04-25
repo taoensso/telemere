@@ -160,7 +160,8 @@
 
 (defn handler:my-handler ; Note naming convention
   "Returns a (fn handler [signal] that:
-    - Does something.
+    - Takes a Telemere signal.
+    - Does something with it.
 
   Options:
     `:option1` - Description
@@ -169,8 +170,9 @@
   ([] (handler:my-handler nil)) ; Use default opts
   ([{:as constructor-opts}]
 
-   ;; Do expensive prep outside returned handler fn whenever possible -
-   ;; i.e. at (one-off) construction time rather than handling time.
+   ;; Do option validation and expensive prep *outside* returned handler
+   ;; fn whenever possible - i.e. at (one-off) construction time rather than
+   ;; at every handler call.
    (let []
 
      (fn a-handler:my-handler ; Note naming convention

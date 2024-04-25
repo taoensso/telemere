@@ -2,18 +2,22 @@ Signal handlers process created signals to *do something with them* (analyse the
 
 # Included handlers
 
-The following handlers are included out-the-box:
+The following signal handlers are currently included out-the-box:
 
-| Name                                                                                                                                                     | Platform | Writes signals to                                                                                              | Writes signals as                                                                |
-| :------------------------------------------------------------------------------------------------------------------------------------------------------- | :------- | :------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------- |
-| [`handler:console`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console)                                            | Clj      | `*out*` or `*err*`                                                                                             | String ([edn](https://github.com/edn-format/edn), JSON, formatted, etc.)         |
-| [`handler:console`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console)                                            | Cljs     | Browser console                                                                                                | String ([edn](https://github.com/edn-format/edn), JSON, formatted, etc.)         |
-| [`handler:console-raw`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console-raw)                                    | Cljs     | Browser console                                                                                                | Raw data (for [cljs-devtools](https://github.com/binaryage/cljs-devtools), etc.) |
-| [`handler:file`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:file)                                                  | Clj      | File/s on disk                                                                                                 | String ([edn](https://github.com/edn-format/edn), JSON, formatted, etc.)         |
-| [`handler:open-telemetry-logger`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.open-telemetry#handler:open-telemetry-logger) | Clj      | [OpenTelemetry](https://opentelemetry.io/) [Java client](https://github.com/open-telemetry/opentelemetry-java) | [LogRecord](https://opentelemetry.io/docs/specs/otel/logs/data-model/)           |
+| Name                                                                                                                                                     | Platform | Output target                                                                                                  | Output format                                                          |
+| :------------------------------------------------------------------------------------------------------------------------------------------------------- | :------- | :------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------- |
+| [`handler:console`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console)                                            | Clj      | `*out*` or `*err*`                                                                                             | Formatted string [1]                                                   |
+| [`handler:console`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console)                                            | Cljs     | Browser console                                                                                                | Formatted string [1]                                                   |
+| [`handler:console-raw`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console-raw)                                    | Cljs     | Browser console                                                                                                | Raw signal data [2]                                                    |
+| [`handler:file`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:file)                                                  | Clj      | File/s on disk                                                                                                 | Formatted string [1]                                                   |
+| [`handler:postal`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.postal#handler:postal)                                       | Clj      | Email (via [postal](https://github.com/drewr/postal))                                                          | Formatted string [1]                                                   |
+| [`handler:open-telemetry-logger`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.open-telemetry#handler:open-telemetry-logger) | Clj      | [OpenTelemetry](https://opentelemetry.io/) [Java client](https://github.com/open-telemetry/opentelemetry-java) | [LogRecord](https://opentelemetry.io/docs/specs/otel/logs/data-model/) |
 
-- See relevant docstrings (links above) for more info.
-- See section [8-Community](8-Community.md) for additional handlers.
+- \[1] [Configurable](https://cljdoc.org/d/com.taoensso/telemere/1.0.0-beta3/api/taoensso.telemere#help:signal-formatters): human-readable (default), [edn](https://github.com/edn-format/edn), [JSON](https://www.json.org/), etc.
+- \[2] For use with browser formatting tools like [cljs-devtools](https://github.com/binaryage/cljs-devtools).
+- See relevant docstrings (links above) for features, usage, etc.
+- See section [8-Community](8-Community.md) for more (community-supported) handlers.
+- If there's other handlers you'd like to see, feel free to [ping me](https://github.com/taoensso/telemere/issues), or ask on the [`#telemere` Slack channel](https://www.taoensso.com/telemere/slack). It helps to know what people most need!
 
 # Configuring handlers
 
@@ -97,11 +101,11 @@ Want to add or remove a particular handler when your application starts?
 
 Just make an appropriate call to [`add-handler!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#add-handler!) or [`remove-handler!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#remove-handler!).
 
-## System-level config
+## Environmental config
 
-If you want to manage handlers **conditionally** based on **system-level config** (e.g. JVM prop, ENV var, or classpath resource) - Telemere provides the highly flexible [`get-env`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-env) util.
+If you want to manage handlers **conditionally** based on **environmental config** (JVM properties, environment variables, or classpath resources) - Telemere provides the highly flexible [`get-env`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-env) util.
 
-Use this to easily check your own cross-platform system config, and make whatever conditional handler management decisions you'd like.
+Use this to easily define your own arbitrary cross-platform config, and make whatever conditional handler management decisions you'd like.
 
 # Writing handlers
 
@@ -120,7 +124,8 @@ For more complex cases, or for handlers that you want to make available for use 
 ```clojure
 (defn handler:my-handler ; Note naming convention
   "Returns a (fn handler [signal] that:
-    - Does something.
+    - Takes a Telemere signal.
+    - Does something with it.
 
   Options:
     `:option1` - Description
@@ -129,8 +134,9 @@ For more complex cases, or for handlers that you want to make available for use 
   ([] (handler:my-handler nil)) ; Use default opts
   ([{:as constructor-opts}]
 
-   ;; Do expensive prep outside returned handler fn whenever possible -
-   ;; i.e. at (one-off) construction time rather than handling time.
+   ;; Do option validation and expensive prep *outside* returned handler
+   ;; fn whenever possible - i.e. at (one-off) construction time rather than
+   ;; at every handler call.
    (let []
 
      (fn a-handler:my-handler ; Note naming convention

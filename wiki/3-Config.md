@@ -13,7 +13,7 @@ A signal will be provided to a handler iff ALL of the following are true:
 For 1-3, filtering may depend on (in order):
   Sample rate → namespace → kind → id → level → when form/fn → rate limit
 
-- See [`help:signal-filters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-filters) for info on signal creation filters.
+- See [`help:signal-filters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-filters) for info on signal creation filters, **environmental config**, etc.
 - See [`add-handler!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#add-handler!) for info on signal handler filters.
 
 # Signal handlers
@@ -29,7 +29,7 @@ See section [4-Handlers](./4-Handlers).
 To do this:
 
 1. Ensure that you have the `clojure.tools.logging` dependency, and
-2. Call [`tools-logging->telemere!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.tools-logging#tools-logging-%3Etelemere!), or set the relevant system config as described in its docstring.
+2. Call [`tools-logging->telemere!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.tools-logging#tools-logging-%3Etelemere!), or set the relevant environmental config as described in its docstring.
 
 Verify successful intake with [`check-intakes`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#check-intakes):
 
