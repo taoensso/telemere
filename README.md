@@ -41,7 +41,7 @@ See [here][GitHub releases] for earlier releases.
 #### Flexibility
 
 - Config via plain **Clojure vals and fns** for easy customization, composition, and REPL debugging.
-- Unmatched support for **system-level config** (JVM props, ENV vars, classpath resources).
+- Unmatched **environmental config** support (JVM properties, environment variables, or classpath resources).
 - Expressive **per-call** and **per-handler** filtering at both **runtime** and **compile-time**.
 - Filter by namespace and id pattern, level, **level by namespace pattern**, etc.
 - **Sampling**, **rate-limiting**, and **back-pressure monitoring**.

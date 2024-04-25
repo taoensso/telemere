@@ -72,7 +72,7 @@ Consider the [differences](https://www.youtube.com/watch?v=oyLBGkS5ICk) between 
 
 - [`log!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#log!) and [`event!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#event!) are both **good general-purpose** signal creators.
   
-- Try **always provide an id** for all signals you create.
+- **Provide an id** for all signals you create.
   
   Qualified keywords are perfect! Downstream behaviour (e.g. alerts) can then look for these ids rather than messages (which are harder to match and more likely to change).
   
@@ -84,11 +84,13 @@ Consider the [differences](https://www.youtube.com/watch?v=oyLBGkS5ICk) between 
   
   The result of signal middleware is cached and *shared between all handlers* making it an efficient place to transform signals. For this reason - prefer signal middleware to handler middleware when possible/convenient.
   
-- **Signal sampling** and **handler sampling**  are **multiplicative**.
+- Signal and handler **sampling is multiplicative**.
   
-  If a signal is created with *20%* sampling and a handler handles *50%* of given signals, then *10%* of possible signals will be handled.
+  Both signals and handlers can have independent sample rates, and these MULTIPLY!
   
-  This multiplicative rate is helpfully reflected in each signal's final `:sample-rate` value, making it possible to estimate unsampled cardinalities in relevant cases.
+  If a signal is created with *20%* sampling and a handler handles *50%* of received signals, then *10%* of possible signals will be handled (50% of 20%).
+  
+  This multiplicative rate is helpfully reflected in each signal's final `:sample-rate` value, making it possible to estimate *unsampled* cardinalities in relevant cases.
   
   So for `n` randomly sampled signals matching some criteria, you'd have seen an estimated `Σ(1.0/sample-rate_i)` such signals _without_ sampling, etc.
   
@@ -117,7 +119,7 @@ Consider the [differences](https://www.youtube.com/watch?v=oyLBGkS5ICk) between 
   
   Note that all user kvs will *also* be available *together* under the signal's `:kvs` key.
   
-  User kvs are a great way of controlling the per-signal behaviour of custom/advanced handlers.
+  User kvs are typically *not* included in handler output, so are a great way of providing custom data/opts for use (only) by custom middleware or handlers.
   
 - Signal `kind` can be useful in advanced cases.
   

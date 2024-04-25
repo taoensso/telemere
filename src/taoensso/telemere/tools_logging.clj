@@ -39,10 +39,10 @@
 (defn tools-logging->telemere!
   "Configures `clojure.tools.logging` to use Telemere as its logging implementation.
 
-  Called automatically if the following is true:
-    (get-env {:as :bool} :clojure.tools.logging/to-telemere)
-
-  See `get-env` for details."
+  Called automatically if one of the following is \"true\":
+          JVM property: `clojure.tools.logging.to-telemere`
+          Env variable: `CLOJURE_TOOLS_LOGGING_TO_TELEMERE`
+    Classpath resource: `clojure.tools.logging.to-telemere`"
   []
   (impl/signal!
     {:kind  :event

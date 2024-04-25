@@ -188,11 +188,11 @@ Quick examples of some basic filtering:
 ```
 
 - Filtering is always O(1), except for rate limits which are O(n_windows).
-- Sample rates are *multiplicative*: if a signal is created with *20%* sampling and a handler handles *50%* of given signals, then *10%* of possible signals will be handled. This multiplicative rate is helpfully reflected in each signal's final `:sample-rate` value.
+- Signal and handler sampling is *multiplicative*: if a signal is created with *20%* sampling and a handler handles *50%* of received signals, then *10%* of possible signals will be handled. This multiplicative rate is helpfully reflected in each signal's final `:sample-rate` value.
 - See [`help:signal-flow`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-flow) for internal docs on signal flow.
 - See section [2-Architecture](./2-Architecture) for a flowchart / visual aid.
 
-Runtime signal  filters can be configured with:
+Runtime signal filters can be set with:
 
 | Global                                                                                                          | Dynamic                                                                                                         | Filters by                                                |
 | :-------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------- |
@@ -202,7 +202,7 @@ Runtime signal  filters can be configured with:
 | [`set-min-level`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#set-min-level)       | [`with-min-level`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#with-min-level)     | Signal level (minimum can be specified by kind and/or ns) |
 
 - See relevant docstrings (links above) for usage info.
-- Compile-time filters are controlled by system-level config, see section [3-Config](./3-Config).
+- Compile-time filters are set with environmental config, see section [3-Config](./3-Config).
 
 # Internal help
 

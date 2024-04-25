@@ -47,8 +47,8 @@
    :ct-sig-filter   impl/ct-sig-filter
    :*rt-sig-filter* impl/*rt-sig-filter*
    :*sig-handlers*  impl/*sig-handlers*
-   :sig-filter-system-vals-info
-   (impl/signal-docstring :filter-system-vals)})
+   :sig-filter-env-config-help
+   (impl/signal-docstring :filter-env-config)})
 
 (comment help:filters)
 
