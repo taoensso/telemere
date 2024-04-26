@@ -125,6 +125,15 @@
 
 (comment (error-in-signal->maps {:level :info :error (ex-info "Ex" {})}))
 
+(defn remove-kvs
+  "Returns the given signal without user-level kvs."
+  [signal]
+  (if-let [kvs (get signal :kvs)]
+    (reduce-kv (fn [m k _v] (dissoc m k)) (dissoc signal :kvs) kvs)
+    signal))
+
+(comment (remove-kvs {:a :A, :b :B, :kvs {:a :A}}))
+
 (defn minify-signal
   "Experimental, subject to change.
   Returns minimal signal map, removing:
@@ -132,6 +141,12 @@
     - Keys with redundant values (`:kvs`, `:location`, `:file`).
 
   Useful when serializing signals to edn/JSON/etc."
+
+  ;; Note that while handlers typically don't include user-level kvs, we
+  ;; DO retain these here since signal serialization often implies transit
+  ;; to some other system that may still need/want this info before final
+  ;; processing/storage/etc.
+
   [signal]
   (reduce-kv
     (fn [m k v]
@@ -360,12 +375,12 @@
          err-stop  (str newline ">>> error >>>")]
 
      (fn a-signal-content-handler [signal hf vf]
-       (let [{:keys [uid parent data kvs ctx sample-rate]} signal]
+       (let [{:keys [uid parent data #_kvs ctx sample-rate]} signal]
          (when sample-rate (hf "sample: " (vf sample-rate)))
          (when uid         (hf "   uid: " (vf uid)))
          (when parent      (hf "parent: " (vf parent)))
          (when data        (hf "  data: " (vf data)))
-         (when kvs         (hf "   kvs: " (vf kvs)))
+         #_(when kvs       (hf "   kvs: " (vf kvs))) ; Don't auto include in output
          (when ctx         (hf "   ctx: " (vf ctx))))
 
        (let [{:keys [run-form error]} signal]
