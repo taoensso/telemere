@@ -2,6 +2,36 @@ This project uses [**Break Versioning**](https://www.taoensso.com/break-versioni
 
 ---
 
+# `v1.0.0-beta4` (2024-04-29)
+
+> **Dep/s**: [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta4) and [Telemere SLF4J provider](https://clojars.org/com.taoensso/slf4j-telemere/versions/1.0.0-beta4) are on Clojars.  
+> **Versioning**: Telemere uses [Break Versioning](https://www.taoensso.com/break-versioning).
+
+This is a **maintenance pre-release** intended to fix issues that have come up during the beta. See below for details, and please **report any unexpected problems** on [GitHub](https://github.com/taoensso/telemere/issues) or the [Slack channel](https://www.taoensso.com/telemere/slack), thank you! 🙏
+
+\- Peter Taoussanis
+
+## Changes since `v1.0.0-beta1`
+
+* d0a15bac [mod] Don't auto add OpenTelemetry handler
+* 6d545dfc [mod] Move (simplify) OpenTelemetry ns
+* 28618f21 [mod] Don't include user-level kvs in default signal content handler
+* d3c63e17 [mod] Rename `clojure.tools.logging` sys val
+
+## Fixes since `v1.0.0-beta1`
+
+* ffea1a30 [fix] Fix broken AOT support, add AOT tests
+* e222297a [fix] SLF4J broken timestamps, add tests
+
+## New since `v1.0.0-beta1`
+
+* 2c7ee749 [new] Add postal (email) handler
+* Handlers will now drain their signal queues on shutdown (configurable)
+* Rate limiter performance improvements (via Encore)
+* Doc improvements based on questions that've come up on Slack, etc.
+
+---
+
 # `v1.0.0-beta3` (2024-04-23)
 
 > **Dep/s**: [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta3) and [Telemere SLF4J provider](https://clojars.org/com.taoensso/slf4j-telemere/versions/1.0.0-beta3) are on Clojars.  
