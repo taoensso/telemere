@@ -4,7 +4,8 @@
   (:require
    [clojure.string          :as str]
    #?(:clj [clojure.java.io :as jio])
-   [taoensso.encore         :as enc :refer [have have?]]))
+   [taoensso.encore         :as enc :refer [have have?]]
+   [taoensso.telemere.impl  :as impl]))
 
 (comment
   (require  '[taoensso.telemere :as tel])
@@ -52,7 +53,7 @@
 
 ;;;; Public misc
 
-(enc/defaliases enc/newline enc/pr-edn #?(:cljs enc/pr-json))
+(enc/defaliases enc/newline enc/pr-edn #?(:cljs enc/pr-json) #?(:clj impl/thread-info))
 
 #?(:clj (defn thread-name "Returns string name of current thread." ^String [] (.getName (Thread/currentThread))))
 #?(:clj (defn thread-id   "Returns long id of current thread."       ^long [] (.getId   (Thread/currentThread))))
@@ -375,10 +376,12 @@
          err-stop  (str newline ">>> error >>>")]
 
      (fn a-signal-content-handler [signal hf vf]
-       (let [{:keys [uid parent data #_kvs ctx sample-rate]} signal]
+       (let [{:keys [uid parent data #_kvs ctx #?(:clj thread) sample-rate]} signal]
          (when sample-rate (hf "sample: " (vf sample-rate)))
          (when uid         (hf "   uid: " (vf uid)))
          (when parent      (hf "parent: " (vf parent)))
+         #?(:clj
+            (when thread   (hf "thread: " (vf thread))))
          (when data        (hf "  data: " (vf data)))
          #_(when kvs       (hf "   kvs: " (vf kvs))) ; Don't auto include in output
          (when ctx         (hf "   ctx: " (vf ctx))))
