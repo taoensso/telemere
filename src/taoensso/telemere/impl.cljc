@@ -215,7 +215,7 @@
 (defrecord Signal
   ;; Telemere's main public data type, we avoid nesting and duplication
   [^long schema inst uid,
-   location ns line column file,
+   location ns line column file #?(:clj thread),
    sample-rate, kind id level, ctx parent,
    data msg_ error run-form run-val,
    end-inst run-nsecs kvs]
@@ -351,7 +351,7 @@
   ^Signal
   ;; Note all dynamic vals passed as explicit args for better control
   [inst uid,
-   location ns line column file,
+   location ns line column file #?(:clj thread :cljs _thread),
    sample-rate, kind id level, ctx parent,
    kvs data msg_,
    run-form run-result error]
@@ -371,14 +371,14 @@
                    msg_)]
 
             (Signal. 1 inst uid,
-              location ns line column file,
+              location ns line column file #?(:clj thread),
               sample-rate, kind id level, ctx parent,
               data msg_,
               run-err run-form run-val,
               end-inst run-nsecs kvs))
 
           (Signal. 1 inst uid,
-            location ns line column file,
+            location ns line column file #?(:clj thread),
             sample-rate, kind id level, ctx parent,
             data msg_, error nil nil nil nil kvs))]
 
@@ -387,10 +387,10 @@
       (do              signal))))
 
 (comment
-  (enc/qb 1e6 ; 55.67
+  (enc/qb 1e6 ; 66.8
     (new-signal
       nil nil nil nil nil nil nil nil nil nil
-      nil nil nil nil nil nil nil nil nil)))
+      nil nil nil nil nil nil nil nil nil nil)))
 
 ;;;; Signal API helpers
 
@@ -541,6 +541,17 @@
 ;;;; Signal macro
 
 #?(:clj
+   (defn thread-info
+     "Returns {:keys [group name id]} for current thread."
+     []
+     (when-let [t (Thread/currentThread)]
+       {:group (when-let [g (.getThreadGroup t)] (.getName g))
+        :name  (.getName t)
+        :id    (.getId   t)})))
+
+(comment (enc/qb 1e6 (thread-info))) ; 44.49
+
+#?(:clj
    (defmacro ^:public signal!
      "Generic low-level signal call, also aliased in Encore."
      {:doc      (signal-docstring :signal!)
@@ -549,6 +560,7 @@
      (have? map? opts) ; We require const map keys, but vals may require eval
      (let [defaults             (get    opts :defaults)
            opts (merge defaults (dissoc opts :defaults))
+           clj? (not (:ns &env))
            {run-form :run} opts
 
            {:keys [#_expansion-id location elide? allow?]}
@@ -581,11 +593,13 @@
                    {:msg     "Expected constant (compile-time) `:trace?` boolean"
                     :context `with-tracing}))
 
-               inst-form (get opts :inst  :auto)
-               inst-form (if (= inst-form :auto) `(enc/now-inst*) inst-form)
+               inst-form   (get opts :inst  :auto)
+               inst-form   (if (= inst-form :auto) `(enc/now-inst*) inst-form)
 
-               uid-form  (get opts :uid (when trace? :auto/uuid))
-               uid-form  (parse-uid-form uid-form)
+               uid-form    (get opts :uid (when trace? :auto/uuid))
+               uid-form    (parse-uid-form uid-form)
+
+               thread-form (if clj? `(thread-info) nil)
 
                signal-delay-form
                (let [{do-form          :do
@@ -626,7 +640,7 @@
                     (let [~@let-form ; Allow to throw, eval BEFORE data, msg, etc.
                           ~'__signal
                           (new-signal ~'__inst ~'__uid
-                            ~location ~'__ns ~line-form ~column-form ~file-form,
+                            ~location ~'__ns ~line-form ~column-form ~file-form ~'__thread,
                             ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form,
                             ~kvs-form ~data-form ~msg-form,
                             '~run-form ~'__run-result ~error-form)]
@@ -645,12 +659,13 @@
 
            `(enc/if-not ~allow? ; Allow to throw at call
               ~run-form
-              (let [~'__inst  ~inst-form  ; Allow to throw at call
-                    ~'__level ~level-form ; ''
-                    ~'__kind  ~kind-form  ; ''
-                    ~'__id    ~id-form    ; ''
-                    ~'__uid   ~uid-form   ; ''
-                    ~'__ns    ~ns-form    ; ''
+              (let [~'__inst   ~inst-form   ; Allow to throw at call
+                    ~'__level  ~level-form  ; ''
+                    ~'__kind   ~kind-form   ; ''
+                    ~'__id     ~id-form     ; ''
+                    ~'__uid    ~uid-form    ; ''
+                    ~'__ns     ~ns-form     ; ''
+                    ~'__thread ~thread-form ; ''
 
                     ~'__run-result ; Non-throwing (traps)
                     ~(when run-form
