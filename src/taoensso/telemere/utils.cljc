@@ -249,7 +249,7 @@
             :writer/state  {:file file, :stream (.deref stream_)}
             (when (open?_)
               (let [content content-or-action
-                    ba (.getBytes (str content) java.nio.charset.StandardCharsets/UTF_8)]
+                    ba (enc/str->utf8-ba (str content))]
                 (locking lock
                   (try
                     (file-exists!)

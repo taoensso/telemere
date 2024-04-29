@@ -18,7 +18,7 @@
 
      Returns a (fn handler [signal]) that:
        - Takes a Telemere signal.
-       - Writes a formatted signal string to stream.
+       - Writes formatted signal string to stream.
 
      A general-purpose `println`-style handler that's well suited for outputting
      signals formatted as edn, JSON, or human-readable strings.
@@ -52,7 +52,7 @@
 
      If `js/console` exists, returns a (fn handler [signal]) that:
        - Takes a Telemere signal.
-       - Writes a formatted signal string to JavaScript console.
+       - Writes formatted signal string to JavaScript console.
 
      A general-purpose `println`-style handler that's well suited for outputting
      signals formatted as edn, JSON, or human-readable strings.

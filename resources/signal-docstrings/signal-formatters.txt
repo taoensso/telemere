@@ -1,5 +1,5 @@
 Common signal formatters include:
-   (utils/format-signal-str->fn) {<opts>}) ; For human-readable string output (default)
+   (utils/format-signal->str-fn) {<opts>}) ; For human-readable string output (default)
    (utils/format-signal->edn-fn) {<opts>}) ; For edn  output
    (utils/format-signal->json-fn {<opts>}) ; For JSON output
 
