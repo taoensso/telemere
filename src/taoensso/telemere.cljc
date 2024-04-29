@@ -35,7 +35,6 @@
 (enc/assert-min-encore-version [3 105 1])
 
 ;;;; TODO
-;; - Add email handler
 ;; - Native OpenTelemetry traces and spans
 ;; - Update Tufte  (signal API, config API, signal keys, etc.)
 ;; - Update Timbre (signal API, config API, signal keys, backport improvements)
