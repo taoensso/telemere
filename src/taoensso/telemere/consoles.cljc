@@ -18,7 +18,7 @@
 
      Returns a (fn handler [signal]) that:
        - Takes a Telemere signal.
-       - Writes a formatted signal string to stream.
+       - Writes formatted signal string to stream.
 
      A general-purpose `println`-style handler that's well suited for outputting
      signals formatted as edn, JSON, or human-readable strings.
@@ -34,8 +34,7 @@
         :or   {format-signal-fn (utils/format-signal->str-fn)}}]
 
       (let [stream (case stream :*out* *out*, :*err* *err* stream)
-            error-signal? utils/error-signal?
-            nl            utils/newline]
+            error-signal? utils/error-signal?]
 
         (fn a-handler:console
           ([]) ; Shut down (no-op)
@@ -52,7 +51,7 @@
 
      If `js/console` exists, returns a (fn handler [signal]) that:
        - Takes a Telemere signal.
-       - Writes a formatted signal string to JavaScript console.
+       - Writes formatted signal string to JavaScript console.
 
      A general-purpose `println`-style handler that's well suited for outputting
      signals formatted as edn, JSON, or human-readable strings.
@@ -65,8 +64,7 @@
         :or   {format-signal-fn (utils/format-signal->str-fn)}}]
 
       (when (exists? js/console)
-        (let [js-console-logger utils/js-console-logger
-              nl utils/newline]
+        (let [js-console-logger utils/js-console-logger]
 
           (fn a-handler:console
             ([]) ; Shut down (no-op)

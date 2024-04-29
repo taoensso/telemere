@@ -55,7 +55,7 @@
 
   Returns a (fn handler [signal]) that:
     - Takes a Telemere signal.
-    - Sends an email with formatted signal content to the configured recipient.
+    - Sends formatted signal string as email to specified recipient.
 
   Useful for emailing important alerts to admins, etc.
 

@@ -8,7 +8,7 @@
    :url  "https://www.eclipse.org/legal/epl-v10.html"}
 
   :dependencies
-  [[com.taoensso/encore "3.105.1"]]
+  [[com.taoensso/encore "3.107.0"]]
 
   :test-paths ["test" #_"src"]
 
@@ -16,7 +16,7 @@
   {;; :default [:base :system :user :provided :dev]
    :provided {:dependencies [[org.clojure/clojurescript "1.11.132"]
                              [org.clojure/clojure       "1.11.3"]]}
-   :c1.12    {:dependencies [[org.clojure/clojure       "1.12.0-alpha10"]]}
+   :c1.12    {:dependencies [[org.clojure/clojure       "1.12.0-alpha11"]]}
    :c1.11    {:dependencies [[org.clojure/clojure       "1.11.3"]]}
    :c1.10    {:dependencies [[org.clojure/clojure       "1.10.1"]]}
 
@@ -48,10 +48,12 @@
      [com.taoensso/slf4j-telemere   "1.0.0-beta5"]
      #_[org.slf4j/slf4j-simple           "2.0.13"]
      #_[org.slf4j/slf4j-nop              "2.0.13"]
-     [com.draines/postal                  "2.0.5"]
+
+     ;;; For optional handlers
      [io.opentelemetry/opentelemetry-api                           "1.37.0"]
      #_[io.opentelemetry/opentelemetry-sdk-extension-autoconfigure "1.37.0"]
-     #_[io.opentelemetry/opentelemetry-exporter-otlp               "1.37.0"]]
+     #_[io.opentelemetry/opentelemetry-exporter-otlp               "1.37.0"]
+     [com.draines/postal "2.0.5"]]
 
     :plugins
     [[lein-pprint                     "1.3.2"]

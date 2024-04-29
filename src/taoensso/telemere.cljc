@@ -32,9 +32,10 @@
   (remove-ns 'taoensso.telemere)
   (:api (enc/interns-overview)))
 
-(enc/assert-min-encore-version [3 105 1])
+(enc/assert-min-encore-version [3 107 0])
 
 ;;;; TODO
+;; - Add handlers: Logstash, Slack, Carmine, Datadog, Kafka
 ;; - Native OpenTelemetry traces and spans
 ;; - Update Tufte  (signal API, config API, signal keys, etc.)
 ;; - Update Timbre (signal API, config API, signal keys, backport improvements)
@@ -118,12 +119,12 @@
 #?(:clj
    (defmacro set-ctx!
      "Set `*ctx*` var's root (base) value. See `*ctx*` for details."
-     [root-val] `(enc/set-var-root! *ctx* ~root-val)))
+     [root-ctx-val] `(enc/set-var-root! *ctx* ~root-ctx-val)))
 
 #?(:clj
    (defmacro with-ctx
      "Evaluates given form with given `*ctx*` value. See `*ctx*` for details."
-     [init-val form] `(binding [*ctx* ~init-val] ~form)))
+     [ctx-val form] `(binding [*ctx* ~ctx-val] ~form)))
 
 (comment (with-ctx "my-ctx" *ctx*))
 

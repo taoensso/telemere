@@ -270,7 +270,7 @@
 
      Returns a (fn handler [signal]) that:
        - Takes a Telemere signal.
-       - Writes a formatted signal string to file.
+       - Writes formatted signal string to file.
 
   Signals will be appended to file specified by `path`.
   Depending on options, archives may be maintained:

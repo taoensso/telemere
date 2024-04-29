@@ -240,6 +240,10 @@
         (is (= rv4 true)) (is (=       sv4 "signal-value"))
         (is (= @c  7)     "3x run + 4x middleware")]))
 
+   (testing "Binding conveyance"
+     (binding [*dynamic-var* :foo]
+       (is (sm? (with-sig (sig! {:level :info, :data {:dynamic-var *dynamic-var*}})) {:data {:dynamic-var :foo}}))))
+
    #?(:clj
       (testing "Printing"
         (let [sv1 (with-sig (sig! {:level :info, :run (+ 1 2), :my-k1 :my-v1}))
