@@ -46,11 +46,12 @@
      [org.clojure/tools.logging           "1.3.0"]
      [org.slf4j/slf4j-api                "2.0.13"]
      [com.taoensso/slf4j-telemere   "1.0.0-beta3"]
-     ;; [org.slf4j/slf4j-simple          "2.0.13"]
-     ;; [org.slf4j/slf4j-nop             "2.0.13"]
-     [io.opentelemetry/opentelemetry-api                         "1.37.0"]
-     [io.opentelemetry/opentelemetry-sdk-extension-autoconfigure "1.37.0"]
-     [io.opentelemetry/opentelemetry-exporter-otlp               "1.37.0"]]
+     #_[org.slf4j/slf4j-simple           "2.0.13"]
+     #_[org.slf4j/slf4j-nop              "2.0.13"]
+     [com.draines/postal                  "2.0.5"]
+     [io.opentelemetry/opentelemetry-api                           "1.37.0"]
+     #_[io.opentelemetry/opentelemetry-sdk-extension-autoconfigure "1.37.0"]
+     #_[io.opentelemetry/opentelemetry-exporter-otlp               "1.37.0"]]
 
     :plugins
     [[lein-pprint                     "1.3.2"]
