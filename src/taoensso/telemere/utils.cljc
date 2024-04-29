@@ -261,6 +261,133 @@
 
 (comment (def fw1 (file-writer "test.txt" true)) (fw1 "x") (fw1))
 
+;;;; Sockets
+
+#?(:clj
+   (defn- default-socket-fn
+     "Returns conected `java.net.Socket`, or throws."
+     ^java.net.Socket [host port connect-timeout-msecs]
+     (let [addr   (java.net.InetSocketAddress. ^String host (int port))
+           socket (java.net.Socket.)]
+
+       (if connect-timeout-msecs
+         (.connect socket addr (int connect-timeout-msecs))
+         (.connect socket addr))
+
+       socket)))
+
+#?(:clj
+   (let [factory_ (delay (javax.net.ssl.SSLSocketFactory/getDefault))]
+     (defn- default-ssl-socket-fn
+       "Returns connected SSL `java.net.Socket`, or throws."
+       ^java.net.Socket [^java.net.Socket socket ^String host port]
+       (.createSocket ^javax.net.ssl.SSLSocketFactory @factory_
+         socket host (int port) true))))
+
+#?(:clj
+   (defn tcp-socket-writer
+     "Experimental, subject to change. Feedback welcome!
+
+  Connects to specified TCP socket and returns a stateful fn of 2 arities:
+    [content] => Writes given content to socket, or no-ops if closed.
+    []        => Closes the writer.
+
+  Useful for basic handlers that write to a TCP socket, etc.
+
+  Options:
+    `:ssl?`                  - Use SSL/TLS?
+    `:connect-timeout-msecs` - Connection timeout (default 3000 msecs)
+    `:socket-fn`             - (fn [host port timeout]) => `java.net.Socket`
+    `:ssl-socket-fn`         - (fn [socket host port])  => `java.net.Socket`
+
+  Notes:
+    - Writer should be manually closed after use (with zero-arity call).
+    - Flushes after every write.
+    - Will retry failed writes once, then drop.
+    - Thread safe, locks on single socket stream.
+    - Advanced users may want a custom implementation using a connection
+      pool and/or more sophisticated retry semantics, etc."
+
+     [host port
+      {:keys
+       [ssl? connect-timeout-msecs,
+        socket-fn ssl-socket-fn] :as opts
+
+       :or
+       {connect-timeout-msecs 3000
+        socket-fn     default-socket-fn
+        ssl-socket-fn default-ssl-socket-fn}}]
+
+     (let [new-conn! ; => [<java.net.Socket> <java.io.OutputStream>], or throws
+           (fn []
+             (try
+               (let [^java.net.Socket socket
+                     (let [socket (socket-fn host port connect-timeout-msecs)]
+                       (if ssl?
+                         (ssl-socket-fn socket host port)
+                         (do            socket)))]
+
+                 [socket (.getOutputStream socket)])
+
+               (catch Exception ex
+                 (throw (ex-info "Failed to create connection" opts ex)))))
+
+           conn_  (volatile! (new-conn!))
+           open?_ (enc/latom true)
+
+           close!
+           (fn []
+             (when (compare-and-set! open?_ true false)
+               (when-let [[^java.net.Socket socket] (.deref conn_)]
+                 (.close  socket)
+                 (vreset! conn_ nil)
+                 true)))
+
+           reset!
+           (fn []
+             (close!)
+             (vreset! conn_ (new-conn!))
+             (reset!  open?_ true)
+             true)
+
+           write-ba!
+           (fn [^bytes ba-content]
+             (when-let [[_ ^java.io.OutputStream output] (.deref conn_)]
+               (.write output ba-content)
+               (.flush output)
+               true))
+
+           conn-okay!
+           (let [rl (enc/rate-limiter-once-per 250)]
+             (fn []
+               (or
+                 (rl)
+                 (when-let [[^java.net.Socket socket] (.deref conn_)]
+                   (and
+                     (not (.isClosed    socket))
+                     (do  (.isConnected socket))))
+                 (throw (java.io.IOException. "Bad connection")))))
+
+           lock (Object.)]
+
+       (fn a-tcp-socket-writer
+         ([] (when (open?_) (locking lock (close!))))
+         ([content-or-action]
+          (case content-or-action ; Undocumented, for dev/testing
+            :writer/open?  (open?_)
+            :writer/reset! (locking lock (reset!))
+            :writer/state  {:conn (.deref conn_)}
+            (when (open?_)
+              (let [content content-or-action
+                    ba (enc/str->utf8-ba (str content))]
+                (locking lock
+                  (try
+                    (conn-okay!)
+                    (write-ba! ba)
+                    (catch Exception _ ; Retry once
+                      (reset!)
+                      (write-ba! ba))))))))))))
+
 ;;;; Formatters
 
 (defn format-nsecs-fn
