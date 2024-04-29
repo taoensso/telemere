@@ -229,10 +229,10 @@
 
    (testing "Call middleware"
      (let [c               (enc/counter)
-           [[rv1 _] [sv1]] (with-sigs :raw nil (sig! {:level :info, :run (c), :middleware [#(assoc % :m1 (c)) #(assoc % :m2 (c))]}))
-           [[rv2 _] [sv2]] (with-sigs :raw nil (sig! {:level :info, :run (c), :middleware [#(assoc % :m1 (c)) #(assoc % :m2 (c))], :allow? false}))
-           [[rv3 _] [sv3]] (with-sigs :raw nil (sig! {:level :info, :run (c), :middleware [#(assoc % :m1 (c)) #(assoc % :m2 (c))]}))
-           [[rv4 _] [sv4]] (with-sigs :raw nil (sig! {:level :info,           :middleware [(fn [_] "signal-value")]}))]
+           [[rv1 _] [sv1]] (with-sigs :raw nil (sig! {:level :info, :run (c), :middleware (tel/comp-middleware #(assoc % :m1 (c)) #(assoc % :m2 (c)))}))
+           [[rv2 _] [sv2]] (with-sigs :raw nil (sig! {:level :info, :run (c), :middleware (tel/comp-middleware #(assoc % :m1 (c)) #(assoc % :m2 (c))), :allow? false}))
+           [[rv3 _] [sv3]] (with-sigs :raw nil (sig! {:level :info, :run (c), :middleware (tel/comp-middleware #(assoc % :m1 (c)) #(assoc % :m2 (c)))}))
+           [[rv4 _] [sv4]] (with-sigs :raw nil (sig! {:level :info,           :middleware (fn [_] "signal-value")}))]
 
        [(is (= rv1 0))    (is (sm? sv1 {:m1 1 :m2 2}))
         (is (= rv2 3))    (is (nil?    sv2))
@@ -260,31 +260,31 @@
      (let [c      (enc/counter)
            sv-h1_ (atom nil)
            sv-h2_ (atom nil)
-           wh1    (sigs/wrap-handler :hid1 (fn [sv] (reset! sv-h1_ sv)) nil {:async nil, :middleware [#(assoc % :hm1 (c)) #(assoc % :hm2 (c))]})
-           wh2    (sigs/wrap-handler :hid2 (fn [sv] (reset! sv-h2_ sv)) nil {:async nil, :middleware [#(assoc % :hm1 (c)) #(assoc % :hm2 (c))]})]
+           wh1    (sigs/wrap-handler :hid1 (fn [sv] (reset! sv-h1_ sv)) nil {:async nil, :middleware (tel/comp-middleware #(assoc % :hm1 (c)) #(assoc % :hm2 (c)))})
+           wh2    (sigs/wrap-handler :hid2 (fn [sv] (reset! sv-h2_ sv)) nil {:async nil, :middleware (tel/comp-middleware #(assoc % :hm1 (c)) #(assoc % :hm2 (c)))})]
 
        ;; Note that call middleware output is cached and shared across all handlers
        (binding [impl/*sig-handlers* [wh1 wh2]]
          (let [;; 1x run + 4x handler middleware + 2x call middleware = 7x
-               rv1    (sig! {:level :info, :run (c), :middleware [#(assoc % :m1 (c)) #(assoc % :m2 (c))]})
+               rv1    (sig! {:level :info, :run (c), :middleware (tel/comp-middleware #(assoc % :m1 (c)) #(assoc % :m2 (c)))})
                sv1-h1 @sv-h1_
                sv1-h2 @sv-h2_
                c1     @c
 
                ;; 1x run
-               rv2    (sig! {:level :info, :run (c), :middleware [#(assoc % :m1 (c)) #(assoc % :m2 (c))], :allow? false})
+               rv2    (sig! {:level :info, :run (c), :middleware (tel/comp-middleware #(assoc % :m1 (c)) #(assoc % :m2 (c))), :allow? false})
                sv2-h1 @sv-h1_
                sv2-h2 @sv-h2_
                c2     @c ; 8
 
                ;; 1x run + 4x handler middleware + 2x call middleware = 7x
-               rv3    (sig! {:level :info, :run (c), :middleware [#(assoc % :m1 (c)) #(assoc % :m2 (c))]})
+               rv3    (sig! {:level :info, :run (c), :middleware (tel/comp-middleware #(assoc % :m1 (c)) #(assoc % :m2 (c)))})
                sv3-h1 @sv-h1_
                sv3-h2 @sv-h2_
                c3     @c ; 15
 
                ;; 4x handler middleware
-               rv4    (sig! {:level :info,           :middleware [(fn [_] {:my-sig-val? true})]})
+               rv4    (sig! {:level :info, :middleware (fn [_] {:my-sig-val? true})})
                sv4-h1 @sv-h1_
                sv4-h2 @sv-h2_
                c4     @c]
@@ -321,7 +321,7 @@
     (tel/with-handler :hid1
       (fn [sv] (force (:data sv)) (reset! sv_ sv))
       {:async nil, :error-fn (fn [x] (reset! error_ x)), :rl-error nil,
-       :middleware [(fn [sv] (if *throwing-handler-middleware?* (ex1!) sv))]}
+       :middleware (fn [sv] (if *throwing-handler-middleware?* (ex1!) sv))}
 
       [(is (->> (sig! {:level :info, :when  (ex1!)}) (throws? :ex-info "Ex1")) "`~filterable-expansion/allow` throws at call")
        (is (->> (sig! {:level :info, :inst  (ex1!)}) (throws? :ex-info "Ex1")) "`~inst-form`                  throws at call")
@@ -339,7 +339,7 @@
 
           (testing "Throwing call middleware"
             (reset-state!)
-            [(is (true? (sig! {:level :info, :middleware [(fn [_] (ex1!))]})))
+            [(is (true? (sig! {:level :info, :middleware (fn [_] (ex1!))})))
              (is (= @sv_ :nx))
              (is (sm? @error_ {:handler-id :hid1, :error pex1?}))])
 

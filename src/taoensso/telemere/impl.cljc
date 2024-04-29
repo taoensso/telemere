@@ -632,9 +632,9 @@
                             '~run-form ~'__run-result ~error-form)]
 
                       ;; Final unwrapped signal value visible to users/handler-fns, allow to throw
-                      (if-let [call-middleware# ~middleware-form]
-                        ((sigs/get-middleware-fn call-middleware#) ~'__signal) ; Can throw
-                        (do                                        ~'__signal)))))]
+                      (if-let [sig-middleware# ~middleware-form]
+                        (sig-middleware# ~'__signal) ; Apply signal middleware, can throw
+                        (do              ~'__signal)))))]
 
            ;; Could avoid double `run-form` expansion with a fn wrap (>0 cost)
            ;; (let [run-fn-form (when run-form `(fn [] (~run-form)))]

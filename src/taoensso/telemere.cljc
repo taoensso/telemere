@@ -72,6 +72,7 @@
   enc/chance
   enc/rate-limiter
   enc/newline
+  enc/comp-middleware
 
   impl/msg-splice
   impl/msg-skip
@@ -143,14 +144,13 @@
 
 (comment (with-ctx {:a :A1 :b :B1} (with-ctx+ {:a :A2} *ctx*)))
 
-;;;; Middleware
+;;;; Signal middleware
 
 (enc/defonce ^:dynamic *middleware*
-  "Optional vector of unary middleware fns to apply (sequentially/left-to-right)
-  to each signal before passing it to handlers. If any middleware fn returns nil,
-  aborts immediately without calling handlers.
+  "Optional (fn [signal]) => ?modified-signal to apply (once) when
+  signal is created. When middleware returns nil, skips all handlers.
 
-  Useful for transforming each signal before handling.
+  Compose multiple middleware fns together with `comp-middleware.
 
   Re/bind dynamic     value using `with-middleware`, `binding`.
   Modify  root (base) value using `set-middleware!`."
@@ -159,13 +159,13 @@
 #?(:clj
    (defmacro set-middleware!
      "Set `*middleware*` var's root (base) value. See `*middleware*` for details."
-     [root-val] `(enc/set-var-root! *middleware* ~root-val)))
+     [?root-middleware-fn] `(enc/set-var-root! *middleware* ~?root-middleware-fn)))
 
 #?(:clj
    (defmacro with-middleware
      "Evaluates given form with given `*middleware*` value.
      See `*middleware*` for details."
-     [init-val form] `(binding [*middleware* ~init-val] ~form)))
+     [?middleware-fn form] `(binding [*middleware* ~?middleware-fn] ~form)))
 
 ;;;; Signal creators
 ;; - signal!                  [              opts] ;                 => allowed? / run result (value or throw)
