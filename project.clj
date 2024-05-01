@@ -29,7 +29,7 @@
     [[org.clojure/clojure                  "1.11.2"]
      [com.github.clj-easy/graal-build-time "1.0.5"]]}
 
-   :test {:aot [taoensso.telemere-tests]}
+   :test {:aot [] #_[taoensso.telemere-tests]}
    :dev
    {:jvm-opts
     ["-server"
