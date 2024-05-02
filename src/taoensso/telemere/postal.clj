@@ -121,12 +121,14 @@
      (defn a-handler:postal
        ([]) ; Shut down (no-op)
        ([signal]
-        (let [msg
-              (assoc msg-opts
-                :subject (format-signal->subject-fn)
-                :body
-                [{:type    "text/plain; charset=utf-8"
-                  :content (format-signal-fn signal)}])
+        (enc/when-let [content (format-signal-fn          signal)
+                       subject (format-signal->subject-fn signal)]
+          (let [msg
+                (assoc msg-opts
+                  :subject (str subject)
+                  :body
+                  [{:type    "text/plain; charset=utf-8"
+                    :content (str content)}])
 
               [result ex]
               (try
@@ -136,4 +138,4 @@
               success? (= (get result :code) 0)]
 
           (when-not success?
-            (throw (ex-info "Failed to send email" result ex)))))))))
+            (throw (ex-info "Failed to send email" result ex))))))))))
