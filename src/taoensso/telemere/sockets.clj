@@ -47,7 +47,7 @@
        ([] (sw)) ; Shut down
        ([signal]
         (when-let [output (format-signal-fn signal)]
-          (sw (str output utils/newline))))))))
+          (sw output)))))))
 
 (defn handler:udp-socket
   "Experimental, subject to change. Feedback welcome!
@@ -90,7 +90,7 @@
        ([] (.close socket)) ; Shut down
        ([signal]
         (when-let [output (format-signal-fn signal)]
-          (let [ba     (enc/str->utf8-ba (str output utils/newline))
+          (let [ba     (enc/str->utf8-ba (str output))
                 ba-len (alength ba)
                 packet (DatagramPacket. ba (min ba-len max-packet-bytes))]
 
