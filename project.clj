@@ -53,6 +53,7 @@
      [io.opentelemetry/opentelemetry-api                           "1.37.0"]
      #_[io.opentelemetry/opentelemetry-sdk-extension-autoconfigure "1.37.0"]
      #_[io.opentelemetry/opentelemetry-exporter-otlp               "1.37.0"]
+     [metosin/jsonista   "0.3.8"]
      [com.draines/postal "2.0.5"]]
 
     :plugins

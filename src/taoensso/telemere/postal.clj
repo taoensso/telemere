@@ -13,23 +13,23 @@
 
 ;;;; Implementation
 
-(defn format-signal->subject-fn
+(defn signal-subject-fn
   "Experimental, subject to change.
   Returns a (fn format [signal]) that:
     - Takes a Telemere signal.
     - Returns a formatted email subject like:
       \"INFO EVENT :taoensso.telemere.postal/ev-id1 - msg\""
-  ([] (format-signal->subject-fn nil))
+  ([] (signal-subject-fn nil))
   ([{:keys [max-len subject-signal-key]
      :or
      {max-len 128
       subject-signal-key :postal/subject}}]
 
-   (fn format-signal->subject [signal]
+   (fn signal-subject [signal]
      (or
        (get signal subject-signal-key) ; Custom subject
 
-       ;; Simplified `format-signal->prelude-fn`
+       ;; Simplified `utils/signal-preamble-fn`
        (let [{:keys [level kind #_ns id msg_]} signal
              sb    (enc/str-builder)
              s+spc (enc/sb-appender sb " ")]
@@ -41,9 +41,7 @@
 
          (enc/get-substr-by-len (str sb) 0 max-len))))))
 
-(comment
-  ((format-signal->subject-fn)
-   (tel/with-signal (tel/event! ::ev-id1 #_{:postal/subject "My subject"}))))
+(comment ((signal-subject-fn) (tel/with-signal (tel/event! ::ev-id1 #_{:postal/subject "My subject"}))))
 
 ;;;; Handler
 
@@ -80,8 +78,8 @@
          :cc \"engineering@example.com\"
          :X-MyHeader \"A custom header\"}
 
-    `:format-signal-fn`          - (fn [signal]) => output, see `help:signal-formatters`
-    `:format-signal->subject-fn` - (fn [signal]) => email subject string
+    `:subject-fn` - (fn [signal]) => email subject string
+    `:body-fn`    - (fn [signal]) => email body content string, see `format-signal-fn` or `pr-signal-fn`
 
   Tips:
 
@@ -107,12 +105,12 @@
   ([{:keys
      [postal/conn-opts
       postal/msg-opts
-      format-signal-fn
-      format-signal->subject-fn]
+      subject-fn
+      body-fn]
 
      :or
-     {format-signal-fn          (utils/format-signal->str-fn)
-      format-signal->subject-fn (format-signal->subject-fn)}}]
+     {subject-fn (signal-subject-fn)
+      body-fn    (utils/format-signal-fn)}}]
 
    (when-not conn-opts (throw (ex-info "No `:postal/conn-opts` was provided" {})))
    (when-not msg-opts  (throw (ex-info "No `:postal/msg-opts` was provided"  {})))
@@ -121,14 +119,16 @@
      (defn a-handler:postal
        ([]) ; Shut down (no-op)
        ([signal]
-        (enc/when-let [content (format-signal-fn          signal)
-                       subject (format-signal->subject-fn signal)]
+        (enc/when-let [subject (subject-fn signal)
+                       body    (body-fn    signal)]
           (let [msg
                 (assoc msg-opts
                   :subject (str subject)
                   :body
-                  [{:type    "text/plain; charset=utf-8"
-                    :content (str content)}])
+                  (if (string? body)
+                    [{:type    "text/plain; charset=utf-8"
+                      :content (str body)}]
+                    body))
 
               [result ex]
               (try

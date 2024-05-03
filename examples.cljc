@@ -141,17 +141,19 @@
 ;; Create console which writes signals as edn
 (def my-handler
   (t/handler:console
-    {:format-signal-fn (taoensso.telemere.utils/format-signal->edn-fn)}))
+    {:output-fn (t/pr-signal-fn :edn)}))
 
 (my-handler my-signal) ; =>
 ;; {:inst #inst "2024-04-11T10:54:57.202869Z", :msg_ "My message", :ns "examples", ...}
 
 ;; Create console which writes signals as JSON
+#?(:clj (require '[jsonista.core :as jsonista]))
 (def my-handler
   (t/handler:console
-    {:format-signal-fn
-     (taoensso.telemere.utils/format-signal->json-fn
-       {:pr-json-fn jsonista.core/write-value-as-string})}))
+    {:output-fn
+     (t/pr-signal-fn
+       #?(:cljs :json
+          :clj  jsonista.core/write-value-as-string))}))
 
 (my-handler my-signal) ; =>
 ;; {"inst":"2024-04-11T10:54:57.202869Z","msg_":"My message","ns":"examples", ...}

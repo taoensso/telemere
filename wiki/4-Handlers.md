@@ -6,20 +6,21 @@ A number of signal handlers are included out-the box. Alphabetically:
 
 | Name                                                                                                                                                     | Platform | Output target                                                                                                  | Output format                                                          |
 | :------------------------------------------------------------------------------------------------------------------------------------------------------- | :------- | :------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------- |
-| [`handler:carmine`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.carmine#handler:carmine)                                    | Clj      | [Redis](https://redis.io/) (via [Carmine](https://www.taoensso.com/carmine))                                   | Serialized signals [1]                                                 |
-| [`handler:console`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console)                                            | Clj      | `*out*` or `*err*`                                                                                             | Formatted string [2]                                                   |
-| [`handler:console`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console)                                            | Cljs     | Browser console                                                                                                | Formatted string [2]                                                   |
+| [`handler:carmine`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.carmine#handler:carmine) [0]                                | Clj      | [Redis](https://redis.io/) (via [Carmine](https://www.taoensso.com/carmine))                                   | Serialized signals [1]                                                 |
+| [`handler:console`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console)                                            | Clj      | `*out*` or `*err*`                                                                                             | String [2]                                                             |
+| [`handler:console`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console)                                            | Cljs     | Browser console                                                                                                | String [2]                                                             |
 | [`handler:console-raw`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console-raw)                                    | Cljs     | Browser console                                                                                                | Raw signals [3]                                                        |
-| [`handler:file`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:file)                                                  | Clj      | File/s on disk                                                                                                 | Formatted string [2]                                                   |
-| [`handler:logstash`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.logstash#handler:logstash)                                 | Clj      | [Logstash](https://www.elastic.co/logstash)                                                                    | TODO                                                                   |
+| [`handler:file`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:file)                                                  | Clj      | File/s on disk                                                                                                 | String [2]                                                             |
+| [`handler:logstash`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.logstash#handler:logstash) [0]                             | Clj      | [Logstash](https://www.elastic.co/logstash)                                                                    | TODO                                                                   |
 | [`handler:open-telemetry-logger`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.open-telemetry#handler:open-telemetry-logger) | Clj      | [OpenTelemetry](https://opentelemetry.io/) [Java client](https://github.com/open-telemetry/opentelemetry-java) | [LogRecord](https://opentelemetry.io/docs/specs/otel/logs/data-model/) |
-| [`handler:postal`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.postal#handler:postal)                                       | Clj      | Email (via [postal](https://github.com/drewr/postal))                                                          | Formatted string [2]                                                   |
-| [`handler:slack`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.slack#handler:slack)                                          | Clj      | [Slack](https://slack.com/) (via [clj-slack](https://github.com/julienXX/clj-slack))                           | Formatted string [2]                                                   |
-| [`handler:tcp-socket`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.sockets#handler:tcp-socket)                              | Clj      | TCP socket                                                                                                     | Formatted string [2]                                                   |
-| [`handler:udp-socket`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.sockets#handler:udp-socket)                              | Clj      | UDP socket                                                                                                     | Formatted string [2]                                                   |
+| [`handler:postal`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.postal#handler:postal)                                       | Clj      | Email (via [postal](https://github.com/drewr/postal))                                                          | String [2]                                                             |
+| [`handler:slack`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.slack#handler:slack) [0]                                      | Clj      | [Slack](https://slack.com/) (via [clj-slack](https://github.com/julienXX/clj-slack))                           | String [2]                                                             |
+| [`handler:tcp-socket`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.sockets#handler:tcp-socket)                              | Clj      | TCP socket                                                                                                     | String [2]                                                             |
+| [`handler:udp-socket`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.sockets#handler:udp-socket)                              | Clj      | UDP socket                                                                                                     | String [2]                                                             |
 
+- \[0] Coming soon
 - \[1] Uses [Nippy](https://taoensso.com/nippy) to support all Clojure's rich data types
-- \[2] [Configurable](https://cljdoc.org/d/com.taoensso/telemere/1.0.0-beta3/api/taoensso.telemere#help:signal-formatters): human-readable (default), [edn](https://github.com/edn-format/edn), [JSON](https://www.json.org/), etc.
+- \[2] [Human-readable](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#format-signal-fn) (default), or [machine-readable](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#pr-signal-fn) ([edn](https://github.com/edn-format/edn), [JSON](https://www.json.org/), etc.).
 - \[3] For use with browser formatting tools like [cljs-devtools](https://github.com/binaryage/cljs-devtools).
 - See relevant docstrings (links above) for features, usage, etc.
 - See section [8-Community](8-Community.md) for more (community-supported) handlers.
@@ -75,7 +76,7 @@ To instead writes signals as edn:
 ;; Create console which writes edn
 (def my-handler
   (t/handler:console
-    {:format-signal-fn (taoensso.telemere.utils/format-signal->edn-fn)}))
+    {:output-fn (t/pr-signal-fn :edn)}))
 
 (my-handler my-signal) ; =>
 ;; {:inst #inst "2024-04-11T10:54:57.202869Z", :msg_ "My message", :ns "examples", ...}
@@ -84,18 +85,17 @@ To instead writes signals as edn:
 To instead writes signals as JSON:
 
 ```clojure
-;; Create console which writes JSON
+;; Create console which writes signals as JSON
+#?(:clj (require '[jsonista.core :as jsonista]))
 (def my-handler
   (t/handler:console
-    {:format-signal-fn
-     (taoensso.telemere.utils/format-signal->json-fn
-       {:pr-json-fn jsonista.core/write-value-as-string})}))
-
-(my-handler my-signal) ; =>
-;; {"inst":"2024-04-11T10:54:57.202869Z","msg_":"My message","ns":"examples", ...}
+    {:output-fn
+     (t/pr-signal-fn
+       #?(:cljs :json
+          :clj  jsonista.core/write-value-as-string))}))
 ```
 
-Note that when writing JSON with Clojure, you *must* specify a `pr-json-fn`. This lets you plug in the JSON serializer of your choice ([jsonista](https://github.com/metosin/jsonista) is my default recommendation).
+Note that when writing JSON with Clojure, you *must* provide an appropriate `pr-fn`. This lets you plug in the JSON serializer of your choice ([jsonista](https://github.com/metosin/jsonista) is my default recommendation).
 
 ### Handler-specific per-signal kvs
 

@@ -674,15 +674,16 @@
             #?(:clj  "  Root: clojure.lang.ExceptionInfo - Ex1\n  data: {:k1 \"v1\"}\n\nCaused: clojure.lang.ExceptionInfo - Ex2\n  data: {:k2 \"v2\"}\n\nRoot stack trace:\n"
                :cljs "  Root: cljs.core/ExceptionInfo - Ex1\n  data: {:k1 \"v1\"}\n\nCaused: cljs.core/ExceptionInfo - Ex2\n  data: {:k2 \"v2\"}\n\nRoot stack trace:\n")))
 
-      (let [sig     (with-sig (tel/event! ::ev-id {:inst t0}))
-            prelude ((utils/format-signal->prelude-fn) sig)] ; "2024-06-09T21:15:20.170Z INFO EVENT taoensso.telemere-tests(592,35) ::ev-id"
-        [(is (enc/str-starts-with? prelude "2024-06-09T21:15:20.170Z INFO EVENT"))
-         (is (enc/str-ends-with?   prelude "::ev-id"))
-         (is (string? (re-find #"taoensso.telemere-tests\(\d+,\d+\)" prelude)))])
+      (testing "signal-preamble-fn"
+        (let [sig      (with-sig (tel/event! ::ev-id {:inst t0}))
+              preamble ((utils/signal-preamble-fn) sig)] ; "2024-06-09T21:15:20.170Z INFO EVENT taoensso.telemere-tests(592,35) ::ev-id"
+          [(is (enc/str-starts-with? preamble "2024-06-09T21:15:20.170Z INFO EVENT"))
+           (is (enc/str-ends-with?   preamble "::ev-id"))
+           (is (string? (re-find #"taoensso.telemere-tests\(\d+,\d+\)" preamble)))]))
 
-      (testing "format-signal->edn-fn"
+      (testing "pr-signal-fn/edn"
         (let [sig  (update (with-sig (tel/event! ::ev-id {:inst t0})) :inst enc/inst->udt)
-              sig* (enc/read-edn ((utils/format-signal->edn-fn) sig))]
+              sig* (enc/read-edn ((tel/pr-signal-fn :edn) sig))]
           (is
             (enc/submap? sig*
               {:schema 1, :kind :event, :id ::ev-id, :level :info,
@@ -692,20 +693,20 @@
                :column  pnat-int?}))))
 
       #?(:cljs
-         (testing "format-signal->json-fn"
+         (testing "pr-signal-fn/json"
            (let [sig  (with-sig (tel/event! ::ev-id {:inst t0}))
-                 sig* (enc/read-json ((utils/format-signal->json-fn) sig))]
+                 sig* (enc/read-json ((tel/pr-signal-fn :json) sig))]
              (is
                (enc/submap? sig*
                  {"schema" 1, "kind" "event", "id" "taoensso.telemere-tests/ev-id",
-                  "level" "info", "ns" "taoensso.telemere-tests",
+                  "level" "info",             "ns" "taoensso.telemere-tests",
                   "inst"    t0s
                   "line"    pnat-int?
                   "column"  pnat-int?})))))
 
-      (testing "format-signal->str-fn"
+      (testing "format-signal-fn"
         (let [sig (with-sig (tel/event! ::ev-id {:inst t0}))]
-          (is (enc/str-starts-with? ((utils/format-signal->str-fn) sig)
+          (is (enc/str-starts-with? ((tel/format-signal-fn) sig)
                 "2024-06-09T21:15:20.170Z INFO EVENT"))))])])
 
 ;;;; File handler

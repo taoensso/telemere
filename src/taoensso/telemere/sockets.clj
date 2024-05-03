@@ -29,8 +29,8 @@
     `host` - Destination TCP socket hostname string
     `port` - Destination TCP socket port int
 
-    `:socket-opts`     - {:keys [ssl? connect-timeout-msecs]}
-    `:format-signal-fn`- (fn [signal])  => output, see `help:signal-formatters`.
+    `:socket-opts` - {:keys [ssl? connect-timeout-msecs]}
+    `:output-fn`   - (fn [signal]) => output string, see `format-signal-fn` or `pr-signal-fn`
 
   Limitations:
     - Failed writes will be retried only once.
@@ -39,14 +39,14 @@
 
   ([host port] (handler:tcp-socket host port nil))
   ([host port
-    {:keys [socket-opts format-signal-fn]
-     :or   {format-signal-fn (utils/format-signal->str-fn)}}]
+    {:keys [socket-opts output-fn]
+     :or   {output-fn (utils/format-signal-fn)}}]
 
    (let [sw (utils/tcp-socket-writer host port socket-opts)]
      (defn a-handler:tcp-socket
        ([] (sw)) ; Shut down
        ([signal]
-        (when-let [output (format-signal-fn signal)]
+        (when-let [output (output-fn signal)]
           (sw output)))))))
 
 (defn handler:udp-socket
@@ -60,7 +60,7 @@
     `host` - Destination UDP socket hostname string
     `port` - Destination UDP socket port int
 
-    `:format-signal-fn`      - (fn [signal])  => output, see `help:signal-formatters`.
+    `:output-fn`             - (fn [signal]) => output string, see `format-signal-fn` or `pr-signal-fn`
     `:max-packet-bytes`      - Max packet size (in bytes) before truncating output (default 512)
     `:truncation-warning-fn` - Optional (fn [{:keys [max actual signal]}]) to call whenever
                                output is truncated. Should be appropriately rate-limited!
@@ -75,10 +75,10 @@
 
   ([host port] (handler:udp-socket host port nil))
   ([host port
-    {:keys [max-packet-bytes truncation-warning-fn format-signal-fn]
+    {:keys [output-fn max-packet-bytes truncation-warning-fn]
      :or
-     {max-packet-bytes 512
-      format-signal-fn (utils/format-signal->str-fn)}}]
+     {output-fn (utils/format-signal-fn)
+      max-packet-bytes 512}}]
 
    (let [max-packet-bytes (int max-packet-bytes)
          socket (DatagramSocket.) ; No need to change socket once created
@@ -89,7 +89,7 @@
      (defn a-handler:udp-socket
        ([] (.close socket)) ; Shut down
        ([signal]
-        (when-let [output (format-signal-fn signal)]
+        (when-let [output (output-fn signal)]
           (let [ba     (enc/str->utf8-ba (str output))
                 ba-len (alength ba)
                 packet (DatagramPacket. ba (min ba-len max-packet-bytes))]
