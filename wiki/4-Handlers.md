@@ -2,19 +2,25 @@ Signal handlers process created signals to *do something with them* (analyse the
 
 # Included handlers
 
-The following signal handlers are currently included out-the-box:
+A number of signal handlers are included out-the box. Alphabetically:
 
 | Name                                                                                                                                                     | Platform | Output target                                                                                                  | Output format                                                          |
 | :------------------------------------------------------------------------------------------------------------------------------------------------------- | :------- | :------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------- |
-| [`handler:console`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console)                                            | Clj      | `*out*` or `*err*`                                                                                             | Formatted string [1]                                                   |
-| [`handler:console`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console)                                            | Cljs     | Browser console                                                                                                | Formatted string [1]                                                   |
-| [`handler:console-raw`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console-raw)                                    | Cljs     | Browser console                                                                                                | Raw signal data [2]                                                    |
-| [`handler:file`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:file)                                                  | Clj      | File/s on disk                                                                                                 | Formatted string [1]                                                   |
-| [`handler:postal`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.postal#handler:postal)                                       | Clj      | Email (via [postal](https://github.com/drewr/postal))                                                          | Formatted string [1]                                                   |
+| [`handler:carmine`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.carmine#handler:carmine)                                    | Clj      | [Redis](https://redis.io/) (via [Carmine](https://www.taoensso.com/carmine))                                   | Serialized signals [1]                                                 |
+| [`handler:console`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console)                                            | Clj      | `*out*` or `*err*`                                                                                             | Formatted string [2]                                                   |
+| [`handler:console`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console)                                            | Cljs     | Browser console                                                                                                | Formatted string [2]                                                   |
+| [`handler:console-raw`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console-raw)                                    | Cljs     | Browser console                                                                                                | Raw signals [3]                                                        |
+| [`handler:file`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:file)                                                  | Clj      | File/s on disk                                                                                                 | Formatted string [2]                                                   |
+| [`handler:logstash`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.logstash#handler:logstash)                                 | Clj      | [Logstash](https://www.elastic.co/logstash)                                                                    | TODO                                                                   |
 | [`handler:open-telemetry-logger`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.open-telemetry#handler:open-telemetry-logger) | Clj      | [OpenTelemetry](https://opentelemetry.io/) [Java client](https://github.com/open-telemetry/opentelemetry-java) | [LogRecord](https://opentelemetry.io/docs/specs/otel/logs/data-model/) |
+| [`handler:postal`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.postal#handler:postal)                                       | Clj      | Email (via [postal](https://github.com/drewr/postal))                                                          | Formatted string [2]                                                   |
+| [`handler:slack`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.slack#handler:slack)                                          | Clj      | [Slack](https://slack.com/) (via [clj-slack](https://github.com/julienXX/clj-slack))                           | Formatted string [2]                                                   |
+| [`handler:tcp-socket`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.sockets#handler:tcp-socket)                              | Clj      | TCP socket                                                                                                     | Formatted string [2]                                                   |
+| [`handler:udp-socket`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.sockets#handler:udp-socket)                              | Clj      | UDP socket                                                                                                     | Formatted string [2]                                                   |
 
-- \[1] [Configurable](https://cljdoc.org/d/com.taoensso/telemere/1.0.0-beta3/api/taoensso.telemere#help:signal-formatters): human-readable (default), [edn](https://github.com/edn-format/edn), [JSON](https://www.json.org/), etc.
-- \[2] For use with browser formatting tools like [cljs-devtools](https://github.com/binaryage/cljs-devtools).
+- \[1] Uses [Nippy](https://taoensso.com/nippy) to support all Clojure's rich data types
+- \[2] [Configurable](https://cljdoc.org/d/com.taoensso/telemere/1.0.0-beta3/api/taoensso.telemere#help:signal-formatters): human-readable (default), [edn](https://github.com/edn-format/edn), [JSON](https://www.json.org/), etc.
+- \[3] For use with browser formatting tools like [cljs-devtools](https://github.com/binaryage/cljs-devtools).
 - See relevant docstrings (links above) for features, usage, etc.
 - See section [8-Community](8-Community.md) for more (community-supported) handlers.
 - If there's other handlers you'd like to see, feel free to [ping me](https://github.com/taoensso/telemere/issues), or ask on the [`#telemere` Slack channel](https://www.taoensso.com/telemere/slack). It helps to know what people most need!
@@ -90,6 +96,30 @@ To instead writes signals as JSON:
 ```
 
 Note that when writing JSON with Clojure, you *must* specify a `pr-json-fn`. This lets you plug in the JSON serializer of your choice ([jsonista](https://github.com/metosin/jsonista) is my default recommendation).
+
+### Handler-specific per-signal kvs
+
+Telemere includes a handy mechanism for including arbitrary user-level data/opts in individual signals for use by custom middleware and/or handlers.
+
+Any *non-standard* (user) keys you include in your signal constructor opts will automatically be included in created signals, e.g.:
+
+```clojure
+(t/with-signal
+  (t/event! ::my-id
+    {:my-middleware-data "foo"
+     :my-handler-data    "bar"}))
+
+;; %>
+;; {;; User kvs included inline (assoc'd to signal root)
+;;  :my-middleware-data "foo"
+;;  :my-handler-data    "bar"
+;;  :kvs ; And also collected together under ":kvs" key
+;;    {:my-middleware-data "foo"
+;;     :my-handler-data    "bar"}
+;;  ... }
+```
+
+These user-level data/opts are typically NOT included by default in handler output, making them a great way to convey data/opts to custom middleware/handlers.
 
 # Managing handlers
 

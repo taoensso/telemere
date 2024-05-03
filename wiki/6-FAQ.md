@@ -18,11 +18,11 @@ Why release Telemere as a *new library* instead of just updating Timbre?
 
 Timbre was first released 12+ years ago, and has mostly attempted to keep breaks in that time minimal. Which means that its fundamental design is now 12+ years old.
 
-I've learnt a lot since then, and would write Timbre differently if I were doing it again today. There's many improvements I've wanted to make over the years, but held back both because of the effort involved and because of not wanting to break Timbre users that are happy with it the way it is.
+I've learnt a lot since then, and would write Timbre differently if I were doing it again today. There's many refinements I've wanted to make over the years, but held back both because of the effort involved and because of not wanting to break Timbre users that are happy with it the way it is.
 
 Since receiving [open source funding](https://www.taoensso.com/my-work), undertaking larger projects became feasible - so I decided to experiment with a proof-of-concept rewrite free of all historical constraints.
 
-That eventually grew into Telemere.
+That eventually grew into Telemere. And I'm happy enough with the result that I feel confident in saying that there's nothing Timbre does better than Telemere, but plenty that Telemere does better than Timbre. Telemere is easier to use, faster, more robust, and significantly more flexible. It offers a better platform for what will be (I hope) the next many years of service.
 
 I will **continue to maintain and support** Timbre for users that are happy with it, though I've also tried to make [migration](./5-Migrating#from-timbre) as easy as possible.
 

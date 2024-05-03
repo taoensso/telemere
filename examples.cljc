@@ -219,3 +219,19 @@
 
 (t/log! (format "This message was built by `%s`" "format"))
 ;; %> {:msg "This message was built by `format`"}
+
+;;; User kvs
+
+(t/with-signal
+  (t/event! ::my-id
+    {:my-middleware-data "foo"
+     :my-handler-data    "bar"}))
+
+;; %>
+;; {;; User kvs included inline (assoc'd to signal root)
+;;  :my-middleware-data "foo"
+;;  :my-handler-data    "bar"
+;;  :kvs ; And also collected together under ":kvs" key
+;;    {:my-middleware-data "foo"
+;;     :my-handler-data    "bar"}
+;;  ... }
