@@ -550,22 +550,26 @@
     - Takes a Telemere signal.
     - Returns edn string of the (minified) signal."
   ([] (format-signal->edn-fn nil))
-  ([{:keys [pr-edn-fn prep-fn end-with-newline?]
+  ([{:keys
+     [incl-kvs? end-with-newline?,
+      pr-edn-fn prep-fn]
+
      :or
-     {pr-edn-fn pr-edn
-      prep-fn (comp error-in-signal->maps minify-signal)
-      end-with-newline? true}}]
+     {end-with-newline? true,
+      pr-edn-fn pr-edn
+      prep-fn (comp error-in-signal->maps minify-signal)}}]
 
    (let [nl newline]
      (fn format-signal->edn [signal]
-       (let [signal* (if prep-fn (prep-fn signal) signal)
-             output  (pr-edn-fn signal*)]
+       (let [signal (if (or incl-kvs? (not (map? signal))) signal (dissoc signal :kvs))
+             signal (if prep-fn (prep-fn signal) signal)
+             output (pr-edn-fn signal)]
 
          (if end-with-newline?
            (str output nl)
            (do  output)))))))
 
-(comment ((format-signal->edn-fn) {:level :info, :msg "msg"}))
+(comment ((format-signal->edn-fn) {:level :info, :msg "msg", :kvs {:k1 :v1}}))
 
 (defn format-signal->json-fn
   "Experimental, subject to change.
@@ -580,11 +584,14 @@
     (format-signal->json-fn {:pr-json-fn jsonista/write-value-as-string ...})"
 
   ([] (format-signal->json-fn nil))
-  ([{:keys [pr-json-fn prep-fn end-with-newline?]
+  ([{:keys
+     [incl-kvs? end-with-newline?,
+      pr-json-fn prep-fn]
+
      :or
-     {#?@(:cljs [pr-json-fn pr-json])
-      prep-fn (comp error-in-signal->maps minify-signal)
-      end-with-newline? true}}]
+     {end-with-newline? true,
+      #?@(:cljs [pr-json-fn pr-json])
+      prep-fn (comp error-in-signal->maps minify-signal)}}]
 
    (when-not pr-json-fn
      (throw
@@ -592,14 +599,15 @@
 
    (let [nl newline]
      (fn format-signal->json [signal]
-       (let [signal* (if prep-fn (prep-fn signal) signal)
-             output  (pr-json-fn signal*)]
+       (let [signal (if (or incl-kvs? (not (map? signal))) signal (dissoc signal :kvs))
+             signal (if prep-fn (prep-fn signal) signal)
+             output (pr-json-fn signal)]
 
          (if end-with-newline?
            (str output nl)
            (do  output)))))))
 
-(comment ((format-signal->json-fn) {:level :info, :msg "msg"}))
+(comment ((format-signal->json-fn) {:level :info, :msg "msg", :kvs {:k1 :v1}}))
 
 (defn format-signal->str-fn
   "Experimental, subject to change.
