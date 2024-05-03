@@ -493,7 +493,13 @@
   Returns a (fn handle [signal handle-fn value-fn]) for internal use.
   Content equivalent to `format-signal->prelude-fn`."
   ([] (signal-content-handler nil))
-  ([{:keys [format-nsecs-fn format-error-fn raw-error?]
+  ([{:keys
+     [format-nsecs-fn
+      format-error-fn
+      raw-error?
+      incl-thread?
+      incl-kvs?]
+
      :or
      {format-nsecs-fn (format-nsecs-fn) ; (fn [nanosecs])
       format-error-fn (format-error-fn) ; (fn [error])
@@ -503,15 +509,14 @@
          err-stop  (str newline ">>> error >>>")]
 
      (fn a-signal-content-handler [signal hf vf]
-       (let [{:keys [uid parent data #_kvs ctx #?(:clj thread) sample-rate]} signal]
-         (when sample-rate (hf "sample: " (vf sample-rate)))
-         (when uid         (hf "   uid: " (vf uid)))
-         (when parent      (hf "parent: " (vf parent)))
-         #?(:clj
-            (when thread   (hf "thread: " (vf thread))))
-         (when data        (hf "  data: " (vf data)))
-         #_(when kvs       (hf "   kvs: " (vf kvs))) ; Don't auto include in output
-         (when ctx         (hf "   ctx: " (vf ctx))))
+       (let [{:keys [uid parent data kvs ctx #?(:clj thread) sample-rate]} signal]
+         (when              sample-rate          (hf "sample: " (vf sample-rate)))
+         (when              uid                  (hf "   uid: " (vf uid)))
+         (when              parent               (hf "parent: " (vf parent)))
+         #?(:clj (when (and thread incl-thread?) (hf "thread: " (vf thread))))
+         (when              data                 (hf "  data: " (vf data)))
+         (when         (and kvs incl-kvs?)       (hf "   kvs: " (vf kvs)))
+         (when              ctx                  (hf "   ctx: " (vf ctx))))
 
        (let [{:keys [run-form error]} signal]
          (when run-form
@@ -604,7 +609,10 @@
   ([] (format-signal->str-fn nil))
   ([{:keys
      [format-signal->prelude-fn
-      format-nsecs-fn format-error-fn
+      format-nsecs-fn
+      format-error-fn
+      incl-thread?
+      incl-kvs?
       end-with-newline?]
 
      :or
@@ -617,7 +625,9 @@
          signal-content-handler ; (fn [signal hf vf]
          (signal-content-handler
            {:format-nsecs-fn format-nsecs-fn
-            :format-error-fn format-error-fn})]
+            :format-error-fn format-error-fn
+            :incl-thread?    incl-thread?
+            :incl-kvs?       incl-kvs?})]
 
      (fn format-signal->str [signal]
        (let [sb  (enc/str-builder)
