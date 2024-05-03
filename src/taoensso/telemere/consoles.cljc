@@ -43,7 +43,7 @@
            (let [^java.io.Writer stream
                  (or stream (if (error-signal? signal) *err* *out*))]
              (when-let [output (format-signal-fn signal)]
-               (.write stream (str output nl))
+               (.write stream (str output))
                (.flush stream))))))))
 
    :cljs
@@ -73,7 +73,7 @@
             ([signal]
              (when-let [output (format-signal-fn signal)]
                (let [logger (js-console-logger (get signal :level))]
-                 (.call logger logger (str output nl)))))))))))
+                 (.call logger logger (str output)))))))))))
 
 #?(:cljs
    (defn- logger-fn [logger]

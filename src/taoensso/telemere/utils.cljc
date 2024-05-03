@@ -545,14 +545,20 @@
     - Takes a Telemere signal.
     - Returns edn string of the (minified) signal."
   ([] (format-signal->edn-fn nil))
-  ([{:keys [pr-edn-fn prep-fn]
+  ([{:keys [pr-edn-fn prep-fn end-with-newline?]
      :or
      {pr-edn-fn pr-edn
-      prep-fn (comp error-in-signal->maps minify-signal)}}]
+      prep-fn (comp error-in-signal->maps minify-signal)
+      end-with-newline? true}}]
 
-   (fn format-signal->edn [signal]
-     (let [signal* (if prep-fn (prep-fn signal) signal)]
-       (pr-edn-fn signal*)))))
+   (let [nl newline]
+     (fn format-signal->edn [signal]
+       (let [signal* (if prep-fn (prep-fn signal) signal)
+             output  (pr-edn-fn signal*)]
+
+         (if end-with-newline?
+           (str output nl)
+           (do  output)))))))
 
 (comment ((format-signal->edn-fn) {:level :info, :msg "msg"}))
 
@@ -562,20 +568,31 @@
     - Takes a Telemere signal.
     - Returns JSON string of the (minified) signal.
 
-  (Clj only): An appropriate `:pr-json-fn` MUST be provided."
+  (Clj only): An appropriate `:pr-json-fn` MUST be provided.
+    jsonista is one good option, Ref. <https://github.com/metosin/jsonista>:
+
+    (require '[jsonista.core :as jsonista])
+    (format-signal->json-fn {:pr-json-fn jsonista/write-value-as-string ...})"
+
   ([] (format-signal->json-fn nil))
-  ([{:keys [pr-json-fn prep-fn]
+  ([{:keys [pr-json-fn prep-fn end-with-newline?]
      :or
      {#?@(:cljs [pr-json-fn pr-json])
-      prep-fn (comp error-in-signal->maps minify-signal)}}]
+      prep-fn (comp error-in-signal->maps minify-signal)
+      end-with-newline? true}}]
 
    (when-not pr-json-fn
      (throw
        (ex-info (str "No `" `format-signal->json-fn "` `:pr-json-fn` was provided") {})))
 
-   (fn format-signal->json [signal]
-     (let [signal* (if prep-fn (prep-fn signal) signal)]
-       (pr-json-fn signal*)))))
+   (let [nl newline]
+     (fn format-signal->json [signal]
+       (let [signal* (if prep-fn (prep-fn signal) signal)
+             output  (pr-json-fn signal*)]
+
+         (if end-with-newline?
+           (str output nl)
+           (do  output)))))))
 
 (comment ((format-signal->json-fn) {:level :info, :msg "msg"}))
 
@@ -585,15 +602,19 @@
     - Takes a Telemere signal.
     - Returns a formatted string intended for text consoles, etc."
   ([] (format-signal->str-fn nil))
-  ([{:keys [format-signal->prelude-fn
-            format-nsecs-fn format-error-fn]
+  ([{:keys
+     [format-signal->prelude-fn
+      format-nsecs-fn format-error-fn
+      end-with-newline?]
+
      :or
      {format-signal->prelude-fn (format-signal->prelude-fn) ; (fn [signal])
       format-nsecs-fn           (format-nsecs-fn)           ; (fn [nanosecs])
       format-error-fn           (format-error-fn)           ; (fn [error])
-      }}]
+      end-with-newline? true}}]
 
-   (let [signal-content-handler ; (fn [signal hf vf]
+   (let [nl newline
+         signal-content-handler ; (fn [signal hf vf]
          (signal-content-handler
            {:format-nsecs-fn format-nsecs-fn
             :format-error-fn format-error-fn})]
@@ -605,6 +626,7 @@
 
          (when-let [ff format-signal->prelude-fn] (s+ (ff signal))) ; Prelude
          (signal-content-handler signal s++ enc/pr-edn*) ; Content
+         (when end-with-newline? (enc/sb-append sb nl))
          (str sb))))))
 
 (comment

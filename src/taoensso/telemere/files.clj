@@ -363,8 +363,7 @@
        ([] (locking lock (fw))) ; Close writer
        ([signal]
         (when-let [output (format-signal-fn signal)]
-          (let [output-str      (str output utils/newline)
-                new-interval?   (when interval      (new-interval!?))
+          (let [new-interval?   (when interval      (new-interval!?))
                 >max-file-size? (when max-file-size (>max-file-size?))
                 reset-stream?   (or   new-interval?  >max-file-size?)]
 
@@ -387,7 +386,7 @@
                     max-num-parts gzip-archives? nil)))
 
               (when reset-stream? (fw :writer/reset!))
-              (do                 (fw output-str))))))))))
+              (do                 (fw output))))))))))
 
 (comment
   (manage-test-files! :create)
