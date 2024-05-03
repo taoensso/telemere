@@ -284,9 +284,10 @@
     `/logs/telemere.log-2020-01-01m.8.gz` ; Archive for Jan 2020, part 8 (oldest entries)
 
   Options:
-    `:format-signal-fn`- (fn [signal])  => output, see `help:signal-formatters`.
-    `:path` - Path string of the target output file (default `logs/telemere.log`).
-    `:interval` - ∈ #{nil :daily :weekly :monthly} (default `:monthly`).
+    `:output-fn`- (fn [signal])  => output string, see `format-signal-fn` or `pr-signal-fn`
+    `:path`     - Path string of the target output file (default `logs/telemere.log`)
+
+    `:interval` - ∈ #{nil :daily :weekly :monthly} (default `:monthly`)
       When non-nil, causes interval-based archives to be maintained.
 
     `:max-file-size` ∈ #{nil <pos-int>} (default 4MB)
@@ -300,7 +301,7 @@
 
   ([] (handler:file nil))
   ([{:keys
-     [format-signal-fn
+     [output-fn
       path interval
       max-file-size
       max-num-parts
@@ -308,7 +309,7 @@
       gzip-archives?]
 
      :or
-     {format-signal-fn (utils/format-signal->str-fn)
+     {output-fn (utils/format-signal-fn)
       path "logs/telemere.log" ; Main path, we'll ALWAYS write to this exact file
       interval :monthly
       max-file-size (* 1024 1024 4) ; 4MB
@@ -362,7 +363,7 @@
      (fn a-handler:file
        ([] (locking lock (fw))) ; Close writer
        ([signal]
-        (when-let [output (format-signal-fn signal)]
+        (when-let [output (output-fn signal)]
           (let [new-interval?   (when interval      (new-interval!?))
                 >max-file-size? (when max-file-size (>max-file-size?))
                 reset-stream?   (or   new-interval?  >max-file-size?)]

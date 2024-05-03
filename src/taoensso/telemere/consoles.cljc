@@ -24,14 +24,13 @@
      signals formatted as edn, JSON, or human-readable strings.
 
      Options:
-       `:format-signal-fn` - (fn [signal]) => output, see `help:signal-formatters`
-
-       `:stream` - `java.io.writer`
+       `:output-fn` - (fn [signal]) => output string, see `format-signal-fn` or `pr-signal-fn`
+       `:stream`    - `java.io.writer`
          Defaults to `*err*` if `utils/error-signal?` is true, and `*out*` otherwise."
 
      ([] (handler:console nil))
-     ([{:keys [format-signal-fn stream]
-        :or   {format-signal-fn (utils/format-signal->str-fn)}}]
+     ([{:keys [output-fn stream]
+        :or   {output-fn (utils/format-signal-fn)}}]
 
       (let [stream (case stream :*out* *out*, :*err* *err* stream)
             error-signal? utils/error-signal?
@@ -42,7 +41,7 @@
           ([signal]
            (let [^java.io.Writer stream
                  (or stream (if (error-signal? signal) *err* *out*))]
-             (when-let [output (format-signal-fn signal)]
+             (when-let [output (output-fn signal)]
                (.write stream (str output))
                (.flush stream))))))))
 
@@ -58,11 +57,11 @@
      signals formatted as edn, JSON, or human-readable strings.
 
      Options:
-       `:format-signal-fn` - (fn [signal]) => output, see `help:signal-formatters`"
+       `:output-fn` - (fn [signal]) => output string, see `format-signal-fn` or `pr-signal-fn`"
 
      ([] (handler:console nil))
-     ([{:keys [format-signal-fn]
-        :or   {format-signal-fn (utils/format-signal->str-fn)}}]
+     ([{:keys [output-fn]
+        :or   {output-fn (utils/format-signal-fn)}}]
 
       (when (exists? js/console)
         (let [js-console-logger utils/js-console-logger
@@ -71,7 +70,7 @@
           (fn a-handler:console
             ([]) ; Shut down (no-op)
             ([signal]
-             (when-let [output (format-signal-fn signal)]
+             (when-let [output (output-fn signal)]
                (let [logger (js-console-logger (get signal :level))]
                  (.call logger logger (str output)))))))))))
 
@@ -96,16 +95,16 @@
      Ref. <https://github.com/binaryage/cljs-devtools>."
 
      ([] (handler:console-raw nil))
-     ([{:keys [format-signal->prelude-fn format-nsecs-fn] :as opts
+     ([{:keys [preamble-fn format-nsecs-fn] :as opts
         :or
-        {format-signal->prelude-fn (utils/format-signal->prelude-fn) ; (fn [signal])
-         format-nsecs-fn           (utils/format-nsecs-fn)           ; (fn [nanosecs])
+        {preamble-fn     (utils/signal-preamble-fn)
+         format-nsecs-fn (utils/format-nsecs-fn) ; (fn [nanosecs])
          }}]
 
       (when (and (exists? js/console) (exists? js/console.group))
         (let [js-console-logger utils/js-console-logger
-              signal-content-handler ; (fn [signal hf vf]
-              (utils/signal-content-handler
+              content-fn ; (fn [signal append-fn val-fn])
+              (utils/signal-content-fn
                 {:format-nsecs-fn format-nsecs-fn
                  :format-error-fn nil
                  :raw-error?      true})]
@@ -117,8 +116,8 @@
                    logger (js-console-logger level)]
 
                ;; Unfortunately groups have no level
-               (.group js/console (format-signal->prelude-fn signal))
-               (signal-content-handler signal (logger-fn logger) identity)
+               (.group js/console (preamble-fn signal))
+               (content-fn signal (logger-fn logger) identity)
 
                (when-let [stack (and error (.-stack (enc/ex-root error)))]
                  (.call logger logger stack))

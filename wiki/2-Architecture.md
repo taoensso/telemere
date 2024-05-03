@@ -28,4 +28,3 @@ For more info see:
 | [`help:signal-flow`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-flow)             | Ordered flow from signal creation to handling |
 | [`help:signal-filters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-filters)       | API for configuring signal filters            |
 | [`help:signal-handlers`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-handlers)     | API for configuring signal handlers           |
-| [`help:signal-formatters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-formatters) | Signal formatters for use by handlers         |

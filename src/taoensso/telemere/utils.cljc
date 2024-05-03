@@ -452,17 +452,21 @@
   (do                         (enc/ex-map (ex-info "Ex2" {:k2 "v2"} (ex-info "Ex1" {:k1 "v1"}))))
   (println (str "--\n" ((format-error-fn) (ex-info "Ex2" {:k2 "v2"} (ex-info "Ex1" {:k1 "v1"}))))))
 
-(defn format-signal->prelude-fn
+;;;;
+
+(defn signal-preamble-fn
   "Experimental, subject to change.
-  Returns a (fn format [signal]) that:
+  Returns a (fn preamble [signal]) that:
     - Takes a Telemere signal.
-    - Returns a formatted prelude string like:
-      \"2024-03-26T11:14:51.806Z INFO EVENT Hostname taoensso.telemere(2,21) ::ev-id - msg\""
-  ([] (format-signal->prelude-fn nil))
+    - Returns a signal preamble string like:
+      \"2024-03-26T11:14:51.806Z INFO EVENT Hostname taoensso.telemere(2,21) ::ev-id - msg\"
+
+  See arglists for options."
+  ([] (signal-preamble-fn nil))
   ([{:keys [format-inst-fn]
      :or   {format-inst-fn (format-inst-fn)}}]
 
-   (fn format-signal->prelude [signal]
+   (fn signal-preamble [signal]
      (let [{:keys [inst level kind ns id msg_]} signal
            sb    (enc/str-builder)
            s+spc (enc/sb-appender sb " ")]
@@ -486,171 +490,162 @@
        (when-let [msg (force msg_)] (s+spc "- " msg))
        (str sb)))))
 
-(comment ((format-signal->prelude-fn) (tel/with-signal (tel/event! ::ev-id))))
+(comment ((signal-preamble-fn) (tel/with-signal (tel/event! ::ev-id))))
 
-(defn ^:no-doc signal-content-handler
-  "Private, don't use.
-  Returns a (fn handle [signal handle-fn value-fn]) for internal use.
-  Content equivalent to `format-signal->prelude-fn`."
-  ([] (signal-content-handler nil))
+(defn signal-content-fn
+  "Experimental, subject to change.
+  Returns a (fn content [signal]) that:
+    - Takes a Telemere signal.
+    - Returns a signal content string (incl. data, ctx, etc.)
+
+  See arglists for options."
+  ([] (signal-content-fn nil))
   ([{:keys
-     [format-nsecs-fn
-      format-error-fn
-      raw-error?
-      incl-thread?
-      incl-kvs?]
+     [incl-thread? incl-kvs? raw-error?,
+      format-nsecs-fn format-error-fn]
 
      :or
      {format-nsecs-fn (format-nsecs-fn) ; (fn [nanosecs])
       format-error-fn (format-error-fn) ; (fn [error])
       }}]
 
-   (let [err-start (str newline "<<< error <<<" newline)
-         err-stop  (str newline ">>> error >>>")]
+   (let [nl        newline
+         err-start (str nl "<<< error <<<" nl)
+         err-stop  (str nl ">>> error >>>")]
 
-     (fn a-signal-content-handler [signal hf vf]
-       (let [{:keys [uid parent data kvs ctx #?(:clj thread) sample-rate]} signal]
-         (when              sample-rate          (hf "sample: " (vf sample-rate)))
-         (when              uid                  (hf "   uid: " (vf uid)))
-         (when              parent               (hf "parent: " (vf parent)))
-         #?(:clj (when (and thread incl-thread?) (hf "thread: " (vf thread))))
-         (when              data                 (hf "  data: " (vf data)))
-         (when         (and kvs incl-kvs?)       (hf "   kvs: " (vf kvs)))
-         (when              ctx                  (hf "   ctx: " (vf ctx))))
+     (fn signal-content
+       ([signal]
+        (let [sb  (enc/str-builder)
+              s++ (enc/sb-appender sb nl)]
+          (signal-content signal s++ enc/pr-edn*)
+          (str sb)))
 
-       (let [{:keys [run-form error]} signal]
-         (when run-form
-           (let [{:keys [run-val run-nsecs]} signal
-                 run-time (when run-nsecs (when-let [ff format-nsecs-fn] (ff run-nsecs)))
-                 run-info
-                 (if error
-                   {:form  run-form
-                    :time  run-time
-                    :nsecs run-nsecs}
+       ;; Undocumented, advanced arity
+       ([signal append-fn val-fn]
+        (let [af append-fn
+              vf    val-fn]
 
-                   {:form  run-form
-                    :time  run-time
-                    :nsecs run-nsecs
-                    :val   run-val
-                    #?@(:clj [:val-type (enc/class-sym run-val)])})]
+          (let [{:keys [uid parent data kvs ctx #?(:clj thread) sample-rate]} signal]
+            (when              sample-rate          (af " sample: " (vf sample-rate)))
+            (when              uid                  (af "    uid: " (vf uid)))
+            (when              parent               (af " parent: " (vf parent)))
+            #?(:clj (when (and thread incl-thread?) (af " thread: " (vf thread))))
+            (when              data                 (af "   data: " (vf data)))
+            (when         (and kvs incl-kvs?)       (af "    kvs: " (vf kvs)))
+            (when              ctx                  (af "    ctx: " (vf ctx))))
 
-             (hf "   run: " (vf run-info))))
+          (let [{:keys [run-form error]} signal]
+            (when run-form
+              (let [{:keys [run-val run-nsecs]} signal
+                    run-time (when run-nsecs (when-let [ff format-nsecs-fn] (ff run-nsecs)))
+                    run-info
+                    (if error
+                      {:form  run-form
+                       :time  run-time
+                       :nsecs run-nsecs}
 
-         (when error
-           (if raw-error?
-             (hf " error: " error)
-             (when-let [ff format-error-fn]
-               (hf err-start (ff error) err-stop)))))))))
+                      {:form  run-form
+                       :time  run-time
+                       :nsecs run-nsecs
+                       :val   run-val
+                       #?@(:clj [:val-type (enc/class-sym run-val)])})]
+                (af "    run: " (vf run-info))))
 
-;;;; Signal formatters
+            (when error
+              (if raw-error?
+                (af "  error: " error)
+                (when-let [ff format-error-fn]
+                  (af err-start (ff error) err-stop)))))))))))
 
-(defn format-signal->edn-fn
+(comment ((signal-content-fn) (tel/with-signal (tel/event! ::ev-id {:data {:k1 "v1"}}))))
+
+(defn pr-signal-fn
   "Experimental, subject to change.
-  Returns a (fn format->edn [signal]) that:
+  Returns a (fn pr-signal [signal]) that:
     - Takes a Telemere signal.
-    - Returns edn string of the (minified) signal."
-  ([] (format-signal->edn-fn nil))
-  ([{:keys
-     [incl-kvs? end-with-newline?,
-      pr-edn-fn prep-fn]
+    - Returns machine-readable serialized string of the (minified) signal.
 
+  Options include:
+    `pr-fn` ∈ #{<unary-fn> :edn :json (Cljs only)}
+    See arglists for more.
+
+  Examples:
+    (pr-signal-fn :edn  {<opts>})
+    (pr-signal-fn :json {<opts>}) ; Cljs only
+
+    ;; To output JSON for Clj, you must provide an appropriate `pr-fn`.
+    ;; `jsonista` is a good option, Ref. <https://github.com/metosin/jsonista>:
+      (require '[jsonista.core :as jsonista])
+      (pr-signal-fn jsonista/write-value-as-string {<opts>})
+
+  See also `format-signal-fn` for human-readable output."
+  ([pr-fn] (pr-signal-fn pr-fn nil))
+  ([pr-fn
+    {:keys [incl-thread? incl-kvs? incl-newline?, prep-fn]
      :or
-     {end-with-newline? true,
-      pr-edn-fn pr-edn
-      prep-fn (comp error-in-signal->maps minify-signal)}}]
-
-   (let [nl newline]
-     (fn format-signal->edn [signal]
-       (let [signal (if (or incl-kvs? (not (map? signal))) signal (dissoc signal :kvs))
-             signal (if prep-fn (prep-fn signal) signal)
-             output (pr-edn-fn signal)]
-
-         (if end-with-newline?
-           (str output nl)
-           (do  output)))))))
-
-(comment ((format-signal->edn-fn) {:level :info, :msg "msg", :kvs {:k1 :v1}}))
-
-(defn format-signal->json-fn
-  "Experimental, subject to change.
-  Returns a (fn format->json [signal]) that:
-    - Takes a Telemere signal.
-    - Returns JSON string of the (minified) signal.
-
-  (Clj only): An appropriate `:pr-json-fn` MUST be provided.
-    jsonista is one good option, Ref. <https://github.com/metosin/jsonista>:
-
-    (require '[jsonista.core :as jsonista])
-    (format-signal->json-fn {:pr-json-fn jsonista/write-value-as-string ...})"
-
-  ([] (format-signal->json-fn nil))
-  ([{:keys
-     [incl-kvs? end-with-newline?,
-      pr-json-fn prep-fn]
-
-     :or
-     {end-with-newline? true,
-      #?@(:cljs [pr-json-fn pr-json])
-      prep-fn (comp error-in-signal->maps minify-signal)}}]
-
-   (when-not pr-json-fn
-     (throw
-       (ex-info (str "No `" `format-signal->json-fn "` `:pr-json-fn` was provided") {})))
-
-   (let [nl newline]
-     (fn format-signal->json [signal]
-       (let [signal (if (or incl-kvs? (not (map? signal))) signal (dissoc signal :kvs))
-             signal (if prep-fn (prep-fn signal) signal)
-             output (pr-json-fn signal)]
-
-         (if end-with-newline?
-           (str output nl)
-           (do  output)))))))
-
-(comment ((format-signal->json-fn) {:level :info, :msg "msg", :kvs {:k1 :v1}}))
-
-(defn format-signal->str-fn
-  "Experimental, subject to change.
-  Returns a (fn format->str [signal]) that:
-    - Takes a Telemere signal.
-    - Returns a formatted string intended for text consoles, etc."
-  ([] (format-signal->str-fn nil))
-  ([{:keys
-     [format-signal->prelude-fn
-      format-nsecs-fn
-      format-error-fn
-      incl-thread?
-      incl-kvs?
-      end-with-newline?]
-
-     :or
-     {format-signal->prelude-fn (format-signal->prelude-fn) ; (fn [signal])
-      format-nsecs-fn           (format-nsecs-fn)           ; (fn [nanosecs])
-      format-error-fn           (format-error-fn)           ; (fn [error])
-      end-with-newline? true}}]
+     {incl-newline? true
+      prep-fn
+      (comp error-in-signal->maps
+        minify-signal)}}]
 
    (let [nl newline
-         signal-content-handler ; (fn [signal hf vf]
-         (signal-content-handler
-           {:format-nsecs-fn format-nsecs-fn
-            :format-error-fn format-error-fn
-            :incl-thread?    incl-thread?
-            :incl-kvs?       incl-kvs?})]
+         pr-fn
+         (or
+           (case  pr-fn
+             :edn pr-edn
+             #?@(:cljs [:json pr-json])
 
-     (fn format-signal->str [signal]
-       (let [sb  (enc/str-builder)
-             s+  (partial enc/sb-append sb)
-             s++ (partial enc/sb-append sb (str newline " "))]
+             (if (fn? pr-fn)
+               (do    pr-fn)
+               (enc/unexpected-arg! pr-fn
+                 {:context  `pr-signal-fn
+                  :param    'pr-fn
+                  :expected
+                  #?(:clj  '#{:edn       unary-fn}
+                     :cljs '#{:edn :json unary-fn})}))
 
-         (when-let [ff format-signal->prelude-fn] (s+ (ff signal))) ; Prelude
-         (signal-content-handler signal s++ enc/pr-edn*) ; Content
-         (when end-with-newline? (enc/sb-append sb nl))
-         (str sb))))))
+             (have fn? pr-fn)))]
+
+     (fn pr-signal [signal]
+       (let [not-map? (not (map? signal))
+             signal   (if (or incl-kvs?    not-map?) signal (dissoc signal :kvs))
+             signal   (if (or incl-thread? not-map?) signal (dissoc signal :thread))
+             signal   (if prep-fn (prep-fn signal) signal)
+             output   (pr-fn signal)]
+
+         (if incl-newline?
+           (str output nl)
+           (do  output)))))))
+
+(comment ((pr-signal-fn :edn) (tel/with-signal (tel/event! ::ev-id {:kvs {:k1 "v1"}}))))
+
+(defn format-signal-fn
+  "Experimental, subject to change.
+  Returns a (fn format [signal]) that:
+    - Takes a Telemere signal.
+    - Returns human-readable formatted string.
+
+  See also `pr-signal-fn` for machine-readable output."
+  ([] (format-signal-fn nil))
+  ([{:keys [incl-newline? preamble-fn content-fn]
+     :or
+     {incl-newline? true
+      preamble-fn (signal-preamble-fn)
+      content-fn  (signal-content-fn)}}]
+
+   (let [nl newline]
+     (fn format-signal [signal]
+       (let [preamble (when preamble-fn (preamble-fn signal))
+             content  (when content-fn  (content-fn  signal))]
+
+         (if preamble
+           (if incl-newline? (str preamble nl content nl) (str preamble nl content))
+           (if incl-newline? (str             content nl) (str             content))))))))
 
 (comment
   (tel/with-ctx {:c :C}
     (println
-      ((format-signal->str-fn)
+      ((format-signal-fn)
        (tel/with-signal
          (tel/event! ::ev-id
            {:user-k1 #{:a :b :c}

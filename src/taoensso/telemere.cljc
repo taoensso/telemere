@@ -79,7 +79,9 @@
   #?(:clj impl/with-signal)
   #?(:clj impl/with-signals)
   #?(:clj impl/signal!)
-  utils/error-signal?)
+  utils/error-signal?
+  utils/pr-signal-fn
+  utils/format-signal-fn)
 
 ;;;; Help
 
@@ -89,7 +91,6 @@
 (impl/defhelp help:signal-content    :signal-content)
 (enc/defalias help:signal-filters    help:filters)  ; Via Encore
 (enc/defalias help:signal-handlers   help:handlers) ; Via Encore
-(impl/defhelp help:signal-formatters :signal-formatters)
 
 ;;;; Context
 
