@@ -127,7 +127,7 @@
 (comment (error-in-signal->maps {:level :info :error (ex-info "Ex" {})}))
 
 (defn remove-kvs
-  "Returns the given signal without user-level kvs."
+  "Returns given signal without user-level kvs."
   [signal]
   (if-let [kvs (get signal :kvs)]
     (reduce-kv (fn [m k _v] (dissoc m k)) (dissoc signal :kvs) kvs)
@@ -137,7 +137,7 @@
 
 (defn minify-signal
   "Experimental, subject to change.
-  Returns minimal signal map, removing:
+  Returns minimal signal, removing:
     - Keys with nil values, and
     - Keys with redundant values (`:kvs`, `:location`, `:file`).
 
@@ -186,14 +186,13 @@
 #?(:clj
    (defn ^:no-doc file-stream
      "Private, don't use.
-     Returns a new `java.io.FileOutputStream` for given `java.io.File`, etc."
+     Returns new `java.io.FileOutputStream` for given `java.io.File`."
      ^java.io.FileOutputStream [file append?]
      (java.io.FileOutputStream. (as-file file) (boolean append?))))
 
 #?(:clj
    (defn file-writer
-     "Experimental, subject to change. Feedback welcome!
-
+     "Experimental, subject to change.
      Opens the specified file and returns a stateful fn of 2 arities:
        [content] => Writes given content to file, or no-ops if closed.
        []        => Closes the writer.
@@ -286,27 +285,26 @@
 
 #?(:clj
    (defn tcp-socket-writer
-     "Experimental, subject to change. Feedback welcome!
+     "Experimental, subject to change.
+     Connects to specified TCP socket and returns a stateful fn of 2 arities:
+       [content] => Writes given content to socket, or no-ops if closed.
+       []        => Closes the writer.
 
-  Connects to specified TCP socket and returns a stateful fn of 2 arities:
-    [content] => Writes given content to socket, or no-ops if closed.
-    []        => Closes the writer.
+     Useful for basic handlers that write to a TCP socket, etc.
 
-  Useful for basic handlers that write to a TCP socket, etc.
+     Options:
+       `:ssl?`                  - Use SSL/TLS?
+       `:connect-timeout-msecs` - Connection timeout (default 3000 msecs)
+       `:socket-fn`             - (fn [host port timeout]) => `java.net.Socket`
+       `:ssl-socket-fn`         - (fn [socket host port])  => `java.net.Socket`
 
-  Options:
-    `:ssl?`                  - Use SSL/TLS?
-    `:connect-timeout-msecs` - Connection timeout (default 3000 msecs)
-    `:socket-fn`             - (fn [host port timeout]) => `java.net.Socket`
-    `:ssl-socket-fn`         - (fn [socket host port])  => `java.net.Socket`
-
-  Notes:
-    - Writer should be manually closed after use (with zero-arity call).
-    - Flushes after every write.
-    - Will retry failed writes once, then drop.
-    - Thread safe, locks on single socket stream.
-    - Advanced users may want a custom implementation using a connection
-      pool and/or more sophisticated retry semantics, etc."
+     Notes:
+       - Writer should be manually closed after use (with zero-arity call).
+       - Flushes after every write.
+       - Will retry failed writes once, then drop.
+       - Thread safe, locks on single socket stream.
+       - Advanced users may want a custom implementation using a connection
+         pool and/or more sophisticated retry semantics, etc."
 
      [host port
       {:keys
@@ -394,7 +392,7 @@
   "Experimental, subject to change.
   Returns a (fn format [nanosecs]) that:
     - Takes a long nanoseconds (e.g. runtime).
-    - Returns a formatted human-readable string like:
+    - Returns a human-readable string like:
       \"1.00m\", \"4.20s\", \"340ms\", \"822μs\", etc."
   ([] (format-nsecs-fn nil))
   ([{:as _opts}] (fn format-nsecs [nanosecs] (enc/format-nsecs nanosecs))))
@@ -421,7 +419,7 @@
   "Experimental, subject to change.
   Returns a (fn format [error]) that:
     - Takes a platform error (`Throwable` or `js/Error`).
-    - Returns a formatted human-readable string"
+    - Returns a human-readable error string."
   ([] (format-error-fn nil))
   ([{:as _opts}]
    (let [nl  enc/newline
@@ -457,11 +455,12 @@
 (defn signal-preamble-fn
   "Experimental, subject to change.
   Returns a (fn preamble [signal]) that:
-    - Takes a Telemere signal.
+    - Takes a Telemere signal (map).
     - Returns a signal preamble ?string like:
       \"2024-03-26T11:14:51.806Z INFO EVENT Hostname taoensso.telemere(2,21) ::ev-id - msg\"
 
-  See arglists for options."
+  Options:
+    `:format-inst-fn` - (fn format [instant]) => string."
   ([] (signal-preamble-fn nil))
   ([{:keys [format-inst-fn]
      :or   {format-inst-fn (format-inst-fn)}}]
@@ -477,7 +476,7 @@
        (if kind (s+spc (upper-qn kind)) (s+spc "DEFAULT"))
        #?(:clj  (s+spc (hostname)))
 
-       ;; "<ns>:(<line>,<column>)"
+       ;; "<ns>(<line>,<column>)"
        (when-let [base (or ns (get signal :file))]
          (let [s+ (partial enc/sb-append sb)] ; Without separator
            (s+ " " base)
@@ -497,10 +496,16 @@
 (defn signal-content-fn
   "Experimental, subject to change.
   Returns a (fn content [signal]) that:
-    - Takes a Telemere signal.
-    - Returns a signal content ?string (incl. data, ctx, etc.)
+    - Takes a Telemere signal (map).
+    - Returns a signal content ?string (incl. data, ctx, etc.).
 
-  See arglists for options."
+  Options:
+    `:incl-thread?`    - Include signal `:thread` info? (default false)
+    `:incl-kvs?`       - Include signal `:kvs`    info? (default false)
+    `:raw-error?`      - Retain unformatted error?      (default false)
+    `:format-nsecs-fn` - (fn [nanosecs]) => string.
+    `:format-error-fn` - (fn [error])    => string."
+
   ([] (signal-content-fn nil))
   ([{:keys
      [incl-thread? incl-kvs? raw-error?,
@@ -566,13 +571,15 @@
 
 (defn pr-signal-fn
   "Experimental, subject to change.
-  Returns a (fn pr-signal [signal]) that:
-    - Takes a Telemere signal.
-    - Returns machine-readable serialized string of the (minified) signal.
+  Returns a (fn pr [signal]) that:
+    - Takes a Telemere signal (map).
+    - Returns a machine-readable (minified) signal string.
 
-  Options include:
-    `pr-fn` ∈ #{<unary-fn> :edn :json (Cljs only)}
-    See arglists for more.
+  Options:
+    `pr-fn`          - ∈ #{<unary-fn> :edn :json (Cljs only)}
+    `:incl-thread?`  - Include signal `:thread` info?      (default false)
+    `:incl-kvs?`     - Include signal `:kvs`    info?      (default false)
+    `:incl-newline?` - Include terminating system newline? (default true)
 
   Examples:
     (pr-signal-fn :edn  {<opts>})
@@ -627,8 +634,13 @@
 (defn format-signal-fn
   "Experimental, subject to change.
   Returns a (fn format [signal]) that:
-    - Takes a Telemere signal.
-    - Returns human-readable formatted string.
+    - Takes a Telemere signal (map).
+    - Returns a human-readable signal string.
+
+  Options:
+    `:incl-newline?` - Include terminating system newline? (default true)
+    `:preamble-fn`   - (fn [signal]) => signal preamble string.
+    `:content-fn`    - (fn [signal]) => signal content  string.
 
   See also `pr-signal-fn` for machine-readable output."
   ([] (format-signal-fn nil))

@@ -1,7 +1,7 @@
 {;;:lein true
  :source-paths ["src" "test"]
  :dependencies
- [[com.taoensso/encore "3.107.0"]
+ [[com.taoensso/encore "3.108.0"]
   [cider/cider-nrepl   "0.47.0"]
   [binaryage/devtools  "1.0.7"]]
 

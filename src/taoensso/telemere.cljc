@@ -32,7 +32,7 @@
   (remove-ns 'taoensso.telemere)
   (:api (enc/interns-overview)))
 
-(enc/assert-min-encore-version [3 107 0])
+(enc/assert-min-encore-version [3 108 0])
 
 ;;;; TODO
 ;; - Add handlers: Logstash, Slack, Carmine, Datadog, Kafka
@@ -66,6 +66,7 @@
 ;;;; Aliases
 
 (enc/defaliases
+  ;; Encore
   #?(:clj enc/set-var-root!)
   #?(:clj enc/update-var-root!)
   #?(:clj enc/get-env)
@@ -74,23 +75,26 @@
   enc/newline
   enc/comp-middleware
 
+  ;; Impl
   impl/msg-splice
   impl/msg-skip
   #?(:clj impl/with-signal)
   #?(:clj impl/with-signals)
   #?(:clj impl/signal!)
-  utils/error-signal?
+
+  ;; Utils
+  utils/format-signal-fn
   utils/pr-signal-fn
-  utils/format-signal-fn)
+  utils/error-signal?)
 
 ;;;; Help
 
-(impl/defhelp help:signal-creators   :signal-creators)
-(impl/defhelp help:signal-options    :signal-options)
-(impl/defhelp help:signal-flow       :signal-flow)
-(impl/defhelp help:signal-content    :signal-content)
-(enc/defalias help:signal-filters    help:filters)  ; Via Encore
-(enc/defalias help:signal-handlers   help:handlers) ; Via Encore
+(impl/defhelp help:signal-creators :signal-creators)
+(impl/defhelp help:signal-options  :signal-options)
+(impl/defhelp help:signal-flow     :signal-flow)
+(impl/defhelp help:signal-content  :signal-content)
+(enc/defalias help:signal-filters  help:filters)  ; Via Encore
+(enc/defalias help:signal-handlers help:handlers) ; Via Encore
 
 ;;;; Context
 
@@ -151,7 +155,7 @@
   "Optional (fn [signal]) => ?modified-signal to apply (once) when
   signal is created. When middleware returns nil, skips all handlers.
 
-  Compose multiple middleware fns together with `comp-middleware.
+  Compose multiple middleware fns together with `comp-middleware`.
 
   Re/bind dynamic     value using `with-middleware`, `binding`.
   Modify  root (base) value using `set-middleware!`."

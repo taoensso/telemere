@@ -13,7 +13,7 @@ It helps enable Clojure/Script systems that are **observable**, **robust**, and 
 
 ## Latest release/s
 
-- `v1.0.0-beta7`: [release info](../../releases/tag/v1.0.0-beta7)
+- `v1.0.0-beta7`: [release info](../../releases/tag/v1.0.0-beta7) (for early adopters)
 
 [![Main tests][Main tests SVG]][Main tests URL]
 [![Graal tests][Graal tests SVG]][Graal tests URL]
@@ -32,7 +32,7 @@ See [here][GitHub releases] for earlier releases.
 
 - 1st-class **out-the-box interop** with [SLF4J v2](https://www.slf4j.org/), [clojure.tools.logging](https://github.com/clojure/tools.logging), [OpenTelemetry](https://opentelemetry.io/), and [Tufte](https://www.taoensso.com/tufte).
 - Included [shim](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.timbre) for easy/gradual [migration from Timbre](../../wiki/5-Migrating).
-- Included [handlers](../../wiki/4-Handlers#included-handlers) for consoles, files, email, Redis, Slack, TCP/UDP sockets, Logstash, etc.
+- Included [handlers](../../wiki/4-Handlers#included-handlers) for consoles, files, email, Redis, Slack, sockets, and more.
 
 #### Scaling
 

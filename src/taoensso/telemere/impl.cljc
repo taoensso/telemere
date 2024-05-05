@@ -263,7 +263,7 @@
 (enc/defonce ^:dynamic *sig-handlers* "?[<wrapped-handler-fn>]"         nil)
 
 (defn force-msg-in-sig [sig]
-  (if-not  (map? sig)
+  (if-not (map? sig)
     sig
     (if-let [e (find sig :msg_)]
       (assoc sig :msg_ (force (val e)))
@@ -276,11 +276,11 @@
      Useful for tests/debugging.
 
      Options:
-       `trap-signals?` (default: false)
+       `trap-signals?` (default false)
          Should ALL signals created by form be trapped to prevent normal dispatch
          to registered handlers?
 
-       `raw-msg?` (default: false)
+       `raw-msg?` (default false)
          Should delayed `:msg_` in returned signal be retained as-is?
          Delay is otherwise replaced by realized string.
 

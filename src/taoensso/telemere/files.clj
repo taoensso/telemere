@@ -266,16 +266,17 @@
 ;;;; Handler
 
 (defn ^:public handler:file
-  "Experimental, subject to change. Feedback welcome!
+  "Experimental, subject to change.
 
-     Returns a (fn handler [signal]) that:
-       - Takes a Telemere signal.
-       - Writes formatted signal string to file.
+  Returns a (fn handler [signal]) that:
+    - Takes a Telemere signal (map).
+    - Writes (appends) the signal as a string to file specified by `path`.
 
-  Signals will be appended to file specified by `path`.
   Depending on options, archives may be maintained:
     - `logs/app.log.n.gz`             (for     nil `:interval`, non-nil `:max-file-size`)
     - `logs/app.log-YYYY-MM-DDd.n.gz` (for non-nil `:interval`) ; d=daily/w=weekly/m=monthly
+
+  Can output signals as human or machine-readable (edn, JSON) strings.
 
   Example files with default options:
     `/logs/telemere.log`                  ; Current file
@@ -284,7 +285,7 @@
     `/logs/telemere.log-2020-01-01m.8.gz` ; Archive for Jan 2020, part 8 (oldest entries)
 
   Options:
-    `:output-fn`- (fn [signal])  => output string, see `format-signal-fn` or `pr-signal-fn`
+    `:output-fn`- (fn [signal]) => string, see `format-signal-fn` or `pr-signal-fn`
     `:path`     - Path string of the target output file (default `logs/telemere.log`)
 
     `:interval` - ∈ #{nil :daily :weekly :monthly} (default `:monthly`)

@@ -161,33 +161,49 @@
 ;;; Writing handlers
 
 (defn handler:my-handler ; Note naming convention
-  "Returns a (fn handler [signal] that:
-    - Takes a Telemere signal.
-    - Does something with it.
+  "Needs `some-lib`, Ref. <https://github.com/example/some-lib>.
+
+  Returns a (fn handler [signal] that:
+    - Takes a Telemere signal (map).
+    - Does something with the signal.
 
   Options:
-    `:option1` - Description
-    `:option2` - Description"
+    `:option1` - Option description
+    `:option2` - Option description
 
-  ([] (handler:my-handler nil)) ; Use default opts
+  Tips:
+    - Tip 1
+    - Tip 2"
+
+  ([] (handler:my-handler nil)) ; Use default opts (when defaults viable)
   ([{:as constructor-opts}]
 
-   ;; Do option validation and expensive prep *outside* returned handler
-   ;; fn whenever possible - i.e. at (one-off) construction time rather than
-   ;; at every handler call.
-   (let []
+   ;; Do option validation and other prep here, i.e. try to keep expensive work
+   ;; outside handler function when possible.
 
-     (fn a-handler:my-handler ; Note naming convention
+   (let [handler-fn
+         (fn a-handler:my-handler ; Note naming convention
 
-       ;; Shutdown arity - called by Telemere exactly once when the handler is
-       ;; to be shut down. This is your opportunity to finalize/free resources, etc.
-       ([])
+           ;; Shutdown arity - called by Telemere exactly once when the handler
+           ;; is to be shut down.
+           ([]
+            ;; Can no-op, or finalize/free resources as necessary.
+            )
 
-       ;; Main arity - called by Telemere whenever the handler should handle the
-       ;; given signal. Never called after shutdown.
-       ([signal]
-        ;; TODO Do something with given signal
-        )))))
+           ;; Main arity - called by Telemere whenever the handler should handle
+           ;; the given signal. Never called after shutdown.
+           ([signal]
+            ;; Do something with given signal (write to console/file/queue/db, etc.).
+            ;; Return value is ignored.
+            ))
+
+         ;; (Advanced) optional default handler dispatch opts,
+         ;; see `add-handler!` for full list of possible opts
+         default-dispatch-opts
+         {:min-level  :info
+          :rate-limit [[1 (enc/msecs :min 1)]]}]
+
+     (with-meta handler-fn default-dispatch-opts))))
 
 ;;; Message building
 

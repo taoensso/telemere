@@ -14,17 +14,17 @@
 
 #?(:clj
    (defn ^:public handler:console
-     "Experimental, subject to change. Feedback welcome!
+     "Experimental, subject to change.
 
      Returns a (fn handler [signal]) that:
-       - Takes a Telemere signal.
-       - Writes formatted signal string to stream.
+       - Takes a Telemere signal (map).
+       - Writes the signal as a string to specified stream.
 
      A general-purpose `println`-style handler that's well suited for outputting
-     signals formatted as edn, JSON, or human-readable strings.
+     signals as human or machine-readable (edn, JSON) strings.
 
      Options:
-       `:output-fn` - (fn [signal]) => output string, see `format-signal-fn` or `pr-signal-fn`
+       `:output-fn` - (fn [signal]) => string, see `format-signal-fn` or `pr-signal-fn`
        `:stream`    - `java.io.writer`
          Defaults to `*err*` if `utils/error-signal?` is true, and `*out*` otherwise."
 
@@ -46,17 +46,17 @@
 
    :cljs
    (defn ^:public handler:console
-     "Experimental, subject to change. Feedback welcome!
+     "Experimental, subject to change.
 
      If `js/console` exists, returns a (fn handler [signal]) that:
-       - Takes a Telemere signal.
-       - Writes formatted signal string to JavaScript console.
+       - Takes a Telemere signal (map).
+       - Writes the signal as a string to JavaScript console.
 
      A general-purpose `println`-style handler that's well suited for outputting
-     signals formatted as edn, JSON, or human-readable strings.
+     signals as human or machine-readable (edn, JSON) strings.
 
      Options:
-       `:output-fn` - (fn [signal]) => output string, see `format-signal-fn` or `pr-signal-fn`"
+       `:output-fn` - (fn [signal]) => string, see `format-signal-fn` or `pr-signal-fn`"
 
      ([] (handler:console nil))
      ([{:keys [output-fn]
@@ -83,21 +83,24 @@
 
 #?(:cljs
    (defn ^:public handler:console-raw
-     "Experimental, subject to change. Feedback welcome!
+     "Experimental, subject to change.
 
      If `js/console` exists, returns a (fn handler [signal]) that:
-       - Takes a Telemere signal.
-       - Writes raw signal data to JavaScript console.
+       - Takes a Telemere signal (map).
+       - Writes the raw signal to JavaScript console.
 
      Intended for use with browser formatting tools like `binaryage/devtools`,
-     Ref. <https://github.com/binaryage/cljs-devtools>."
+     Ref. <https://github.com/binaryage/cljs-devtools>.
+
+     Options:
+       `:preamble-fn`     - (fn [signal])   => string.
+       `:format-nsecs-fn` - (fn [nanosecs]) => string."
 
      ([] (handler:console-raw nil))
      ([{:keys [preamble-fn format-nsecs-fn] :as opts
         :or
         {preamble-fn     (utils/signal-preamble-fn)
-         format-nsecs-fn (utils/format-nsecs-fn) ; (fn [nanosecs])
-         }}]
+         format-nsecs-fn (utils/format-nsecs-fn)}}]
 
       (when (and (exists? js/console) (exists? js/console.group))
         (let [js-console-logger utils/js-console-logger

@@ -19,18 +19,20 @@
 ;;;; Handlers
 
 (defn handler:tcp-socket
-  "Experimental, subject to change. Feedback welcome!
+  "Experimental, subject to change.
 
   Returns a (fn handler [signal]) that:
-    - Takes a Telemere signal.
-    - Sends formatted signal string to specified TCP socket.
+    - Takes a Telemere signal (map).
+    - Sends the signal as a string to specified TCP socket.
+
+  Can output signals as human or machine-readable (edn, JSON) strings.
 
   Options:
     `host` - Destination TCP socket hostname string
     `port` - Destination TCP socket port int
 
     `:socket-opts` - {:keys [ssl? connect-timeout-msecs]}
-    `:output-fn`   - (fn [signal]) => output string, see `format-signal-fn` or `pr-signal-fn`
+    `:output-fn`   - (fn [signal]) => string, see `format-signal-fn` or `pr-signal-fn`
 
   Limitations:
     - Failed writes will be retried only once.
@@ -53,14 +55,16 @@
   "Experimental, subject to change. Feedback welcome!
 
   Returns a (fn handler [signal]) that:
-    - Takes a Telemere signal.
-    - Sends formatted signal string to specified UDP socket.
+    - Takes a Telemere signal (map).
+    - Sends the signal as a string to specified UDP socket.
+
+  Can output signals as human or machine-readable (edn, JSON) strings.
 
   Options:
     `host` - Destination UDP socket hostname string
     `port` - Destination UDP socket port int
 
-    `:output-fn`             - (fn [signal]) => output string, see `format-signal-fn` or `pr-signal-fn`
+    `:output-fn`             - (fn [signal]) => string, see `format-signal-fn` or `pr-signal-fn`
     `:max-packet-bytes`      - Max packet size (in bytes) before truncating output (default 512)
     `:truncation-warning-fn` - Optional (fn [{:keys [max actual signal]}]) to call whenever
                                output is truncated. Should be appropriately rate-limited!
