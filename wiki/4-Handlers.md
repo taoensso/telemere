@@ -1,4 +1,4 @@
-Signal handlers process created signals to *do something with them* (analyse them, write them to console/file/queue/db, etc.).
+Signal handlers process created signals to **do something with them** (analyse them, write them to console/file/queue/db, etc.).
 
 # Included handlers
 
