@@ -35,7 +35,7 @@
 (enc/assert-min-encore-version [3 108 0])
 
 ;;;; TODO
-;; - Add handlers: Logstash, Slack, Carmine, Datadog, Kafka
+;; - Add handlers: Logstash, Carmine, Datadog, Kafka
 ;; - Native OpenTelemetry traces and spans
 ;; - Update Tufte  (signal API, config API, signal keys, etc.)
 ;; - Update Timbre (signal API, config API, signal keys, backport improvements)

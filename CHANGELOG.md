@@ -2,105 +2,40 @@ This project uses [**Break Versioning**](https://www.taoensso.com/break-versioni
 
 ---
 
-# `v1.0.0-beta7` (2024-05-05)
+# `v1.0.0-beta8` (2024-05-06)
 
-> **Dep/s**: [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta7) and [Telemere SLF4J provider](https://clojars.org/com.taoensso/slf4j-telemere/versions/1.0.0-beta7) are on Clojars.  
+> **Dep/s**: [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta8) and [Telemere SLF4J provider](https://clojars.org/com.taoensso/slf4j-telemere/versions/1.0.0-beta8) are on Clojars.  
 > **Versioning**: Telemere uses [Break Versioning](https://www.taoensso.com/break-versioning).
 
-This is a **maintenance pre-release** intended to fix issues that have come up during the beta. See below for details, and please **report any unexpected problems** on [GitHub](https://github.com/taoensso/telemere/issues) or the [Slack channel](https://www.taoensso.com/telemere/slack), thank you! 🙏
+This is a **pre-release** intended for **early adopters** and those who'd like to give feedback. New betas will be released frequently, while I continue to tweak and add to Telemere.
+
+The included handlers and utils are still undergoing changes, though the signal creator API (and signal content) should already be mostly stable.
+
+Please **report any unexpected problems** on [GitHub](https://github.com/taoensso/telemere/issues) or the [Slack channel](https://www.taoensso.com/telemere/slack), thank you! 🙏
 
 \- Peter Taoussanis
 
-## Changes since `v1.0.0-beta1` (2024-04-19)
+## Recent changes
 
-* d0a15bac [mod] Don't auto add OpenTelemetry handler
-* 6d545dfc [mod] Move (simplify) OpenTelemetry ns
-* c4d9dd09 [mod] Don't include user-level kvs in default signal content handler
-* d3c63e17 [mod] Rename `clojure.tools.logging` sys val
-* 83914316 [mod] Simplify middleware - don't auto compose
+- \[mod] [OpenTelemetry handler](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.open-telemetry#handler:open-telemetry-logger) is **no longer auto added** (beta1)
+- \[mod] Various API improvements to [included handlers](https://github.com/taoensso/telemere/wiki/4-Handlers#included-handlers) and [utils](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils)
+- \[mod] Middleware must now be a **single fn**, use [`comp-middleware`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#comp-middleware) to create one fn from many (beta7)
+- \[mod] [User-level kvs](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options) are no longer included by default in handler output. `:incl-kvs?` option has been added to [`format-signal-fn`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#format-signal-fn) and [`pr-signal-fn`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#pr-signal-fn) (beta7)
+## Recent additions
 
-## Fixes since `v1.0.0-beta1` (2024-04-19)
+- \[new] (Advanced) Handler fns can now include `:dispatch-opts` metadata, handy for handler authors that want to set defaults for use by [`add-handler!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#add-handler!)
+- \[new] Ongoing [API](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere) and [wiki](https://github.com/taoensso/telemere/wiki) doc improvements
+- \[new] Added [Slack handler](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.slack#handler:slack) (beta8)
+- \[new] Added [TCP](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.sockets#handler:tcp-socket) and [UDP](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.sockets#handler:udp-socket) socket handlers (beta7)
+- \[new] Added [postal (email) handler](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.postal#handler:postal) (beta5)
+- \[new] Clj [signal content](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content) now includes `:thread {:keys [group name id]}` key (beta7)
+- \[new] Handlers now block to try drain their signal queues on shutdown (beta3)
+* \[new] Rate limiter performance improvements (via Encore) (beta3)
 
-* ffea1a30 [fix] Fix broken AOT support, add AOT tests
-* e222297a [fix] SLF4J broken timestamps, add tests
+## Recent fixes
 
-## New since `v1.0.0-beta1` (2024-04-19)
-
-* 2ba23ee7 [new] Add postal (email) handler
-* 49b6da2c [new] Add TCP, UDP socket handlers
-* ebe8a957 [new] Add experimental `:thread` key to Clj signals
-* Handlers will now drain their signal queues on shutdown (configurable)
-* Rate limiter performance improvements (via Encore)
-* Doc improvements based on questions that've come up on Slack, etc.
-
-## Everything since `v1.0.-beta5` (2024-04-29)
-
-* 21cb44e7 [mod] Rename, refactor signal formatting utils
-* 83914316 [mod] Simplify middleware - don't auto compose
-* 8cc0a6db [fix] Broken postal handler subject
-* 49b6da2c [new] Add TCP, UDP socket handlers
-* ebe8a957 [new] Add experimental `:thread` key to Clj signals
-* 1934ee76 [new] Add `:incl-kvs?` opt to edn and JSON formatters
-* 9a514d1b [new] Add `:incl-thread?`, `:incl-kvs?` opts to `format-signal->str-fn`
-* c5333faa [new] Add `:end-with-newline` opt to signal formatters
-
----
-
-# `v1.0.0-beta5` (2024-04-29)
-
-> **Dep/s**: [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta5) and [Telemere SLF4J provider](https://clojars.org/com.taoensso/slf4j-telemere/versions/1.0.0-beta5) are on Clojars.  
-> **Versioning**: Telemere uses [Break Versioning](https://www.taoensso.com/break-versioning).
-
-This is a **maintenance pre-release** intended to fix issues that have come up during the beta. See below for details, and please **report any unexpected problems** on [GitHub](https://github.com/taoensso/telemere/issues) or the [Slack channel](https://www.taoensso.com/telemere/slack), thank you! 🙏
-
-\- Peter Taoussanis
-
-## Changes since `v1.0.0-beta1`
-
-* d0a15bac [mod] Don't auto add OpenTelemetry handler
-* 6d545dfc [mod] Move (simplify) OpenTelemetry ns
-* c4d9dd09 [mod] Don't include user-level kvs in default signal content handler
-* d3c63e17 [mod] Rename `clojure.tools.logging` sys val
-
-## Fixes since `v1.0.0-beta1`
-
-* ffea1a30 [fix] Fix broken AOT support, add AOT tests
-* e222297a [fix] SLF4J broken timestamps, add tests
-
-## New since `v1.0.0-beta1`
-
-* 2ba23ee7 [new] Add postal (email) handler
-* Handlers will now drain their signal queues on shutdown (configurable)
-* Rate limiter performance improvements (via Encore)
-* Doc improvements based on questions that've come up on Slack, etc.
-
----
-
-# `v1.0.0-beta3` (2024-04-23)
-
-> **Dep/s**: [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta3) and [Telemere SLF4J provider](https://clojars.org/com.taoensso/slf4j-telemere/versions/1.0.0-beta3) are on Clojars.  
-> **Versioning**: Telemere uses [Break Versioning](https://www.taoensso.com/break-versioning).
-
-This is a **maintenance pre-release** intended to fix issues that have come up during the beta. See below for details, and please **report any unexpected problems** on [GitHub](https://github.com/taoensso/telemere/issues) or the [Slack channel](https://www.taoensso.com/telemere/slack), thank you! 🙏
-
-\- Peter Taoussanis
-
-## Changes since `v1.0.0-beta1`
-
-* d0a15bac [mod] Don't auto add OpenTelemetry handler
-* 6d545dfc [mod] Move (simplify) OpenTelemetry ns
-* d3c63e17 [mod] Rename `clojure.tools.logging` sys val
-
-## Fixes since `v1.0.0-beta1`
-
-* ffea1a30 [fix] Fix broken AOT support, add AOT tests
-* e222297a [fix] SLF4J broken timestamps, add tests
-
-## New since `v1.0.0-beta1`
-
-* Handlers will now drain their signal queues on shutdown (configurable)
-* Rate limiter performance improvements (via Encore)
-* Misc improvements to docs
+- \[fix] Fix broken AOT support, add AOT tests [ffea1a30] (beta1)
+* \[fix] SLF4J broken timestamps, add tests [e222297a] (beta1)
 
 ---
 
@@ -109,7 +44,7 @@ This is a **maintenance pre-release** intended to fix issues that have come up d
 > **Dep/s**: [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta1) and [Telemere SLF4J provider](https://clojars.org/com.taoensso/slf4j-telemere/versions/1.0.0-beta1) are on Clojars.  
 > **Versioning**: Telemere uses [Break Versioning](https://www.taoensso.com/break-versioning).
 
-This is Telemere's first public pre-release and mostly intended for early testers and those that'd like to give feedback.
+This is Telemere's first public pre-release and mostly intended for **early testers** and those that'd like to give feedback.
 
 While no significant changes are expected before the [planned v1.0 final release](https://www.taoensso.com/roadmap), you **probably don't want to use this in production** just yet.
 
