@@ -205,7 +205,11 @@
        - Flushes after every write.
        - Thread safe, locks on single file stream."
 
-     [file append?]
+     [{:keys [file append?]
+       :or   {append? true}}]
+
+     (when-not file (throw (ex-info "Expected `:file` value" (enc/typed-val file))))
+
      (let [file    (writeable-file! file)
            stream_ (volatile! (file-stream file append?))
            open?_  (enc/latom true)
@@ -258,7 +262,7 @@
                       (reset!)
                       (write-ba! ba))))))))))))
 
-(comment (def fw1 (file-writer "test.txt" true)) (fw1 "x") (fw1))
+(comment (def fw1 (file-writer {:file "test.txt"})) (fw1 "x") (fw1))
 
 ;;;; Sockets
 
@@ -306,15 +310,17 @@
        - Advanced users may want a custom implementation using a connection
          pool and/or more sophisticated retry semantics, etc."
 
-     [host port
-      {:keys
-       [ssl? connect-timeout-msecs,
+     [{:keys
+       [host port, ssl? connect-timeout-msecs,
         socket-fn ssl-socket-fn] :as opts
 
        :or
        {connect-timeout-msecs 3000
         socket-fn     default-socket-fn
         ssl-socket-fn default-ssl-socket-fn}}]
+
+     (when-not (string? host) (throw (ex-info "Expected `:host` string" (enc/typed-val host))))
+     (when-not (int?    port) (throw (ex-info "Expected `:port` int"    (enc/typed-val port))))
 
      (let [new-conn! ; => [<java.net.Socket> <java.io.OutputStream>], or throws
            (fn []

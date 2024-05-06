@@ -11,8 +11,6 @@
   (remove-ns 'taoensso.telemere.postal)
   (:api (enc/interns-overview)))
 
-;;;; Implementation
-
 (defn signal-subject-fn
   "Experimental, subject to change.
   Returns a (fn format [signal]) that:
@@ -43,7 +41,14 @@
 
 (comment ((signal-subject-fn) (tel/with-signal (tel/event! ::ev-id1 #_{:postal/subject "My subject"}))))
 
-;;;; Handler
+(def default-dispatch-opts
+  {:min-level :info
+   :rate-limit
+   [[5  (enc/msecs :mins  1)]
+    [10 (enc/msecs :mins 15)]
+    [15 (enc/msecs :hours 1)]
+    [30 (enc/msecs :hours 6)]
+    ]})
 
 (defn handler:postal
   "Experimental, subject to change.
@@ -56,18 +61,24 @@
 
   Useful for emailing important alerts to admins, etc.
 
-  NB can incur financial costs!!
-  See tips section re: protecting against unexpected costs.
+  Default handler dispatch options (override when calling `add-handler!`):
+    `:min-level`  - `:info`
+    `:rate-limit` -
+      [[5  (enc/msecs :mins  1)] ; Max 5  emails in 1  min
+       [10 (enc/msecs :mins 15)] ; Max 10 emails in 15 mins
+       [15 (enc/msecs :hours 1)] ; Max 15 emails in 1  hour
+       [30 (enc/msecs :hours 6)] ; Max 30 emails in 6  hours
+       ]
 
   Options:
-    `:postal/conn-opts` - Map of connection opts given to `postal/send-message`
+    `:conn-opts` - Map of connection opts given to `postal/send-message`
       Examples:
         {:host \"mail.isp.net\",   :user \"jsmith\",           :pass \"a-secret\"},
         {:host \"smtp.gmail.com\", :user \"jsmith@gmail.com\", :pass \"a-secret\" :port 587 :tls true},
-        {:host \"email-smtp.us-east-1.amazonaws.com\", :port 587, :tls true
-         :user \"AKIAIDTP........\" :pass \"AikCFhx1P.......\"}
+        {:host \"email-smtp.us-east-1.amazonaws.com\", :port 587, :tls true,
+         :user \"AKIAIDTP........\", :pass \"AikCFhx1P.......\"}
 
-    `:postal/msg-opts` - Map of message options given to `postal/send-message`
+    `:msg-opts` - Map of message opts given to `postal/send-message`
       Examples:
         {:from \"foo@example.com\",        :to \"bar@example.com\"},
         {:from \"Alice <foo@example.com\", :to \"Bob <bar@example.com>\"},
@@ -81,59 +92,42 @@
                       see `format-signal-fn` or `pr-signal-fn`
 
   Tips:
-    - Sending emails can incur financial costs!
-      Use appropriate dispatch filtering options when calling `add-handler!` to prevent
-      handler from sending unnecessary emails!
-
-      At least ALWAYS set an appropriate `:rate-limit` option, e.g.:
-        (add-handler! :my-postal-handler (handler:postal {<my-handler-opts})
-          {:rate-limit {\"Max 1 per min\"     [1 (enc/msecs :mins  1)]
-                        \"Max 3 per 15 mins\" [3 (enc/msecs :mins 15)]
-                        \"Max 5 per hour\"    [5 (enc/msecs :hours 1)]}, ...}), etc.
-
-    - Sending emails is slow!
-      Use appropriate async dispatch options when calling `add-handler!` to prevent
-      handler from blocking signal creator calls, e.g.:
-        (add-handler! :my-postal-handler (handler:postal {<my-handler-opts>})
-          {:async {:mode :dropping, :buffer-size 128, :n-threads 4} ...}), etc.
-
-    - Ref. <https://github.com/drewr/postal> for more info on `postal` options."
+    - Ref. <https://github.com/drewr/postal> for more info on `postal` options.
+    - Sending emails can be slow, and can incur financial costs!
+      Use appropriate handler dispatch options for async handling and rate limiting, etc."
 
   ;; ([] (handler:postal nil))
-  ([{:keys
-     [postal/conn-opts
-      postal/msg-opts
-      subject-fn
-      body-fn]
-
+  ([{:keys [conn-opts msg-opts, subject-fn body-fn]
      :or
      {subject-fn (signal-subject-fn)
       body-fn    (utils/format-signal-fn)}}]
 
-   (when-not conn-opts (throw (ex-info "No `:postal/conn-opts` was given" {})))
-   (when-not msg-opts  (throw (ex-info "No `:postal/msg-opts` was given"  {})))
+   (when-not (map? conn-opts) (throw (ex-info "Expected `:conn-opts` map" (enc/typed-val conn-opts))))
+   (when-not (map? msg-opts)  (throw (ex-info "Expected `:msg-opts` map"  (enc/typed-val msg-opts))))
 
-   (let []
-     (defn a-handler:postal
-       ([]) ; Shut down (no-op)
-       ([signal]
-        (enc/when-let [subject (subject-fn signal)
-                       body    (body-fn    signal)]
-          (let [msg
-                (assoc msg-opts
-                  :subject (str subject)
-                  :body
-                  (if (string? body)
-                    [{:type    "text/plain; charset=utf-8"
-                      :content (str body)}]
-                    body))
+   (let [handler-fn
+         (fn a-handler:postal
+           ([]) ; Shut down (no-op)
+           ([signal]
+            (enc/when-let [subject (subject-fn signal)
+                           body    (body-fn    signal)]
+              (let [msg
+                    (assoc msg-opts
+                      :subject (str subject)
+                      :body
+                      (if (string? body)
+                        [{:type    "text/plain; charset=utf-8"
+                          :content (str body)}]
+                        body))
 
-              [result ex]
-              (try
-                [(postal/send-message conn-opts msg) nil]
-                (catch Exception ex [nil ex]))
+                    [result ex]
+                    (try
+                      [(postal/send-message conn-opts msg) nil]
+                      (catch Exception ex [nil ex]))
 
-              success? (= (get result :code) 0)]
+                    success? (= (get result :code) 0)]
 
-          (when-not success?
-            (throw (ex-info "Failed to send email" result ex))))))))))
+                (when-not success?
+                  (throw (ex-info "Failed to send email" result ex)))))))]
+
+     (with-meta handler-fn default-dispatch-opts))))

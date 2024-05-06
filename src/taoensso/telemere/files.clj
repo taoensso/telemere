@@ -320,7 +320,7 @@
 
    (let [main-path path
          main-file (utils/as-file main-path)
-         fw (utils/file-writer main-file true)
+         fw (utils/file-writer {:file main-file, :append? true})
 
          >max-file-size?
          (when   max-file-size

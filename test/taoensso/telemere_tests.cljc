@@ -644,7 +644,7 @@
    #?(:clj
       (testing "File writer"
         (let [f  (java.io.File/createTempFile "file-writer-test" ".txt")
-              fw (utils/file-writer f false)]
+              fw (utils/file-writer {:file f, :append? false})]
 
           [(is (true? (fw "1")))
            (is (true? (.delete f)))

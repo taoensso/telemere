@@ -14,10 +14,6 @@
   (remove-ns 'taoensso.telemere.sockets)
   (:api (enc/interns-overview)))
 
-;;;; Implementation
-
-;;;; Handlers
-
 (defn handler:tcp-socket
   "Experimental, subject to change.
 
@@ -28,10 +24,12 @@
   Can output signals as human or machine-readable (edn, JSON) strings.
 
   Options:
-    `host` - Destination TCP socket hostname string
-    `port` - Destination TCP socket port int
+    `:socket-opts` - {:keys [host port ssl? connect-timeout-msecs]}
+      `:host`      - Destination TCP socket hostname string
+      `:port`      - Destination TCP socket port     int
+      `:ssl?`      - Use SSL/TLS (default false)
+      `:connect-timeout-msecs` - Connection timeout (default 3000 msecs)
 
-    `:socket-opts` - {:keys [ssl? connect-timeout-msecs]}
     `:output-fn`   - (fn [signal]) => string, see `format-signal-fn` or `pr-signal-fn`
 
   Limitations:
@@ -39,13 +37,12 @@
     - Writes lock on a single underlying socket, so IO won't benefit from adding
       extra handler threads. Let me know if there's demand for socket pooling."
 
-  ([host port] (handler:tcp-socket host port nil))
-  ([host port
-    {:keys [socket-opts output-fn]
+  ;; ([] (handler:tcp-socket nil))
+  ([{:keys [socket-opts output-fn]
      :or   {output-fn (utils/format-signal-fn)}}]
 
-   (let [sw (utils/tcp-socket-writer host port socket-opts)]
-     (defn a-handler:tcp-socket
+   (let [sw (utils/tcp-socket-writer socket-opts)]
+     (fn a-handler:tcp-socket
        ([] (sw)) ; Shut down
        ([signal]
         (when-let [output (output-fn signal)]
@@ -61,11 +58,12 @@
   Can output signals as human or machine-readable (edn, JSON) strings.
 
   Options:
-    `host` - Destination UDP socket hostname string
-    `port` - Destination UDP socket port int
+    `:socket-opts`        - {:keys [host port max-packet-bytes]}
+      `:host`             - Destination UDP socket hostname string
+      `:port`             - Destination UDP socket port     int
+      `:max-packet-bytes` - Max packet size (in bytes) before truncating output (default 512)
 
     `:output-fn`             - (fn [signal]) => string, see `format-signal-fn` or `pr-signal-fn`
-    `:max-packet-bytes`      - Max packet size (in bytes) before truncating output (default 512)
     `:truncation-warning-fn` - Optional (fn [{:keys [max actual signal]}]) to call whenever
                                output is truncated. Should be appropriately rate-limited!
 
@@ -77,20 +75,26 @@
     - No DTLS (Datagram Transport Layer Security) support,
       please let me know if there's demand."
 
-  ([host port] (handler:udp-socket host port nil))
-  ([host port
-    {:keys [output-fn max-packet-bytes truncation-warning-fn]
+  ;; ([] (handler:udp-socket nil))
+  ([{:keys [socket-opts output-fn truncation-warning-fn]
      :or
-     {output-fn (utils/format-signal-fn)
-      max-packet-bytes 512}}]
+     {socket-opts {:max-packet-bytes 512}
+      output-fn   (utils/format-signal-fn)}}]
 
-   (let [max-packet-bytes (int max-packet-bytes)
+   (let [{:keys [host port max-packet-bytes]
+          :or   {max-packet-bytes 512}} socket-opts
+
+         max-packet-bytes (int max-packet-bytes)
+
          socket (DatagramSocket.) ; No need to change socket once created
          lock   (Object.)]
 
+     (when-not (string? host) (throw (ex-info "Expected `:host` string" (enc/typed-val host))))
+     (when-not (int?    port) (throw (ex-info "Expected `:port` int"    (enc/typed-val port))))
+
      (.connect socket (InetSocketAddress. (str host) (int port)))
 
-     (defn a-handler:udp-socket
+     (fn a-handler:udp-socket
        ([] (.close socket)) ; Shut down
        ([signal]
         (when-let [output (output-fn signal)]

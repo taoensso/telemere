@@ -10,8 +10,6 @@
   (remove-ns 'taoensso.telemere.consoles)
   (:api (enc/interns-overview)))
 
-;;;; Handlers
-
 #?(:clj
    (defn ^:public handler:console
      "Experimental, subject to change.
