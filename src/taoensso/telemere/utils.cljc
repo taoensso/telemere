@@ -416,7 +416,7 @@
            s+nl (enc/sb-appender sb enc/newline)]
        (doseq [st-el (force trace)]
          (let [{:keys [class method file line]} st-el]
-           (s+nl class "/" method " at " file ":" line)))
+           (s+nl "  " class "/" method " at " file ":" line)))
        (str sb))))
 
 (comment (println (format-clj-stacktrace (:trace (enc/ex-map (ex-info "Ex2" {:k2 "v2"} (ex-info "Ex1" {:k1 "v1"})))))))
@@ -446,8 +446,8 @@
 
            (when trace
              (s+ nl nl "Root stack trace:" nl)
-             #?(:cljs (s+                    trace)
-                :clj  (format-clj-stacktrace trace)))
+             #?(:cljs (s+                        trace)
+                :clj  (s+ (format-clj-stacktrace trace))))
 
            (str sb)))))))
 

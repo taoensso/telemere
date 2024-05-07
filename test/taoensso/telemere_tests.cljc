@@ -670,9 +670,14 @@
       (is (= ((utils/format-nsecs-fn) 1.5e9) "1.50s")) ; More tests in Encore
       (is (= ((utils/format-inst-fn)     t0) "2024-06-09T21:15:20.170Z"))
 
-      (is (enc/str-starts-with? ((utils/format-error-fn) ex2)
-            #?(:clj  "  Root: clojure.lang.ExceptionInfo - Ex1\n  data: {:k1 \"v1\"}\n\nCaused: clojure.lang.ExceptionInfo - Ex2\n  data: {:k2 \"v2\"}\n\nRoot stack trace:\n"
-               :cljs "  Root: cljs.core/ExceptionInfo - Ex1\n  data: {:k1 \"v1\"}\n\nCaused: cljs.core/ExceptionInfo - Ex2\n  data: {:k2 \"v2\"}\n\nRoot stack trace:\n")))
+      (testing "format-error-fn"
+        (let [ex2-str ((utils/format-error-fn) ex2)]
+          [(is (enc/str-starts-with? ex2-str
+                 #?(:clj  "  Root: clojure.lang.ExceptionInfo - Ex1\n  data: {:k1 \"v1\"}\n\nCaused: clojure.lang.ExceptionInfo - Ex2\n  data: {:k2 \"v2\"}\n\nRoot stack trace:\n"
+                    :cljs "  Root: cljs.core/ExceptionInfo - Ex1\n  data: {:k1 \"v1\"}\n\nCaused: cljs.core/ExceptionInfo - Ex2\n  data: {:k2 \"v2\"}\n\nRoot stack trace:\n")))
+
+           (is (enc/str-contains? ex2-str           "Root stack trace:"))
+           (is (enc/str-contains? ex2-str "invoke") "Root stack trace includes content")]))
 
       (testing "signal-preamble-fn"
         (let [sig      (with-sig (tel/event! ::ev-id {:inst t0}))
