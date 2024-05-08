@@ -620,9 +620,7 @@
                   :param    'pr-fn
                   :expected
                   #?(:clj  '#{:edn       unary-fn}
-                     :cljs '#{:edn :json unary-fn})}))
-
-             (have fn? pr-fn)))]
+                     :cljs '#{:edn :json unary-fn})}))))]
 
      (fn pr-signal [signal]
        (let [not-map? (not (map? signal))
@@ -635,7 +633,9 @@
            (str output nl)
            (do  output)))))))
 
-(comment ((pr-signal-fn :edn) (tel/with-signal (tel/event! ::ev-id {:kvs {:k1 "v1"}}))))
+(comment
+  ((pr-signal-fn :edn)           (tel/with-signal (tel/event! ::ev-id {:kvs {:k1 "v1"}})))
+  ((pr-signal-fn (fn [_] "str")) (tel/with-signal (tel/event! ::ev-id {:kvs {:k1 "v1"}}))))
 
 (defn format-signal-fn
   "Experimental, subject to change.

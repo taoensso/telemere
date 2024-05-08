@@ -686,28 +686,33 @@
            (is (enc/str-ends-with?   preamble "::ev-id"))
            (is (string? (re-find #"taoensso.telemere-tests\(\d+,\d+\)" preamble)))]))
 
-      (testing "pr-signal-fn/edn"
-        (let [sig  (update (with-sig (tel/event! ::ev-id {:inst t0})) :inst enc/inst->udt)
-              sig* (enc/read-edn ((tel/pr-signal-fn :edn) sig))]
-          (is
-            (enc/submap? sig*
-              {:schema 1, :kind :event, :id ::ev-id, :level :info,
-               :ns      "taoensso.telemere-tests"
-               :inst    udt0
-               :line    pnat-int?
-               :column  pnat-int?}))))
+      (testing "pr-signal-fn"
+        (let [sig (with-sig (tel/event! ::ev-id {:inst t0}))]
 
-      #?(:cljs
-         (testing "pr-signal-fn/json"
-           (let [sig  (with-sig (tel/event! ::ev-id {:inst t0}))
-                 sig* (enc/read-json ((tel/pr-signal-fn :json) sig))]
-             (is
-               (enc/submap? sig*
-                 {"schema" 1, "kind" "event", "id" "taoensso.telemere-tests/ev-id",
-                  "level" "info",             "ns" "taoensso.telemere-tests",
-                  "inst"    t0s
-                  "line"    pnat-int?
-                  "column"  pnat-int?})))))
+         [(testing ":edn"
+            (let [sig  (update sig :inst enc/inst->udt)
+                  sig* (enc/read-edn ((tel/pr-signal-fn :edn) sig))]
+              (is
+                (enc/submap? sig*
+                  {:schema 1, :kind :event, :id ::ev-id, :level :info,
+                   :ns      "taoensso.telemere-tests"
+                   :inst    udt0
+                   :line    pnat-int?
+                   :column  pnat-int?}))))
+
+          #?(:cljs
+             (testing ":json"
+               (let [sig* (enc/read-json ((tel/pr-signal-fn :json) sig))]
+                 (is
+                   (enc/submap? sig*
+                     {"schema" 1, "kind" "event", "id" "taoensso.telemere-tests/ev-id",
+                      "level" "info",             "ns" "taoensso.telemere-tests",
+                      "inst"    t0s
+                      "line"    pnat-int?
+                      "column"  pnat-int?})))))
+
+          (testing "user fn"
+            (is (= ((tel/pr-signal-fn (fn [_] "str")) sig) (str "str" utils/newline))))]))
 
       (testing "format-signal-fn"
         (let [sig (with-sig (tel/event! ::ev-id {:inst t0}))]
