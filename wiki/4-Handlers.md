@@ -2,29 +2,32 @@ Signal handlers process created signals to **do something with them** (analyse t
 
 # Included handlers
 
-A number of signal handlers are included out-the box. Alphabetically:
+Telemere includes a number of signal handlers out-the-box.
 
-| Name                                                                                                                                                     | Platform | Output target                                                                                                  | Output format                                                          |
-| :------------------------------------------------------------------------------------------------------------------------------------------------------- | :------- | :------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------- |
-| [`handler:carmine`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.carmine#handler:carmine) [0]                                | Clj      | [Redis](https://redis.io/) (via [Carmine](https://www.taoensso.com/carmine))                                   | Serialized signals [1]                                                 |
-| [`handler:console`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console)                                            | Clj      | `*out*` or `*err*`                                                                                             | String [2]                                                             |
-| [`handler:console`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console)                                            | Cljs     | Browser console                                                                                                | String [2]                                                             |
-| [`handler:console-raw`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console-raw)                                    | Cljs     | Browser console                                                                                                | Raw signals [3]                                                        |
-| [`handler:file`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:file)                                                  | Clj      | File/s on disk                                                                                                 | String [2]                                                             |
-| [`handler:logstash`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.logstash#handler:logstash) [0]                             | Clj      | [Logstash](https://www.elastic.co/logstash)                                                                    | TODO                                                                   |
-| [`handler:open-telemetry-logger`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.open-telemetry#handler:open-telemetry-logger) | Clj      | [OpenTelemetry](https://opentelemetry.io/) [Java client](https://github.com/open-telemetry/opentelemetry-java) | [LogRecord](https://opentelemetry.io/docs/specs/otel/logs/data-model/) |
-| [`handler:postal`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.postal#handler:postal)                                       | Clj      | Email (via [postal](https://github.com/drewr/postal))                                                          | String [2]                                                             |
-| [`handler:slack`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.slack#handler:slack)                                          | Clj      | [Slack](https://slack.com/) (via [clj-slack](https://github.com/julienXX/clj-slack))                           | String [2]                                                             |
-| [`handler:tcp-socket`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.sockets#handler:tcp-socket)                              | Clj      | TCP socket                                                                                                     | String [2]                                                             |
-| [`handler:udp-socket`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.sockets#handler:udp-socket)                              | Clj      | UDP socket                                                                                                     | String [2]                                                             |
+[Writing your own handlers](#writing-handlers) is also often straight-forward, and [PRs](https://github.com/taoensso/telemere/pulls) are **very welcome** for additions to Telemere's included handlers, or to Telemere's [community resources](./8-Community).
 
-- \[0] Coming soon
-- \[1] Uses [Nippy](https://taoensso.com/nippy) to support all Clojure's rich data types
-- \[2] [Human-readable](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#format-signal-fn) (default), or [machine-readable](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#pr-signal-fn) ([edn](https://github.com/edn-format/edn), [JSON](https://www.json.org/), etc.).
-- \[3] For use with browser formatting tools like [cljs-devtools](https://github.com/binaryage/cljs-devtools).
-- See relevant docstrings (links above) for features, usage, etc.
-- See section [8-Community](8-Community.md) for more (community-supported) handlers.
-- If there's other handlers you'd like to see, feel free to [ping me](https://github.com/taoensso/telemere/issues), or ask on the [`#telemere` Slack channel](https://www.taoensso.com/telemere/slack). It helps to know what people most need!
+It helps to know what people need! You can [vote on](https://www.taoensso.com/roadmap/vote) additional handlers to add, [ping me](https://github.com/taoensso/telemere/issues), or ask on the [`#telemere` Slack channel](https://www.taoensso.com/telemere/slack). 
+
+Current handlers, alphabetically (see linked docstrings below for features and usage):
+
+| Name                                                                                                                                                     | Platform | Output target                                                                                                  | Output format                                                                                                                                                                                                    |
+| :------------------------------------------------------------------------------------------------------------------------------------------------------- | :------- | :------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`handler:console`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console)                                            | Clj      | `*out*` or `*err*`                                                                                             | [edn/JSON](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#pr-signal-fn) or [human-readable](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#format-signal-fn) |
+| [`handler:console`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console)                                            | Cljs     | Browser console                                                                                                | [edn/JSON](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#pr-signal-fn) or [human-readable](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#format-signal-fn) |
+| [`handler:console-raw`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console-raw)                                    | Cljs     | Browser console                                                                                                | Raw signals for [cljs-devtools](https://github.com/binaryage/cljs-devtools), etc.                                                                                                                                |
+| [`handler:file`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:file)                                                  | Clj      | File/s on disk                                                                                                 | [edn/JSON](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#pr-signal-fn) or [human-readable](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#format-signal-fn) |
+| [`handler:open-telemetry-logger`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.open-telemetry#handler:open-telemetry-logger) | Clj      | [OpenTelemetry](https://opentelemetry.io/) [Java client](https://github.com/open-telemetry/opentelemetry-java) | [LogRecord](https://opentelemetry.io/docs/specs/otel/logs/data-model/)                                                                                                                                           |
+| [`handler:postal`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.postal#handler:postal)                                       | Clj      | Email (via [postal](https://github.com/drewr/postal))                                                          | [edn/JSON](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#pr-signal-fn) or [human-readable](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#format-signal-fn) |
+| [`handler:slack`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.slack#handler:slack)                                          | Clj      | [Slack](https://slack.com/) (via [clj-slack](https://github.com/julienXX/clj-slack))                           | [edn/JSON](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#pr-signal-fn) or [human-readable](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#format-signal-fn) |
+| [`handler:tcp-socket`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.sockets#handler:tcp-socket)                              | Clj      | TCP socket                                                                                                     | [edn/JSON](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#pr-signal-fn) or [human-readable](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#format-signal-fn) |
+| [`handler:udp-socket`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.sockets#handler:udp-socket)                              | Clj      | UDP socket                                                                                                     | [edn/JSON](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#pr-signal-fn) or [human-readable](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#format-signal-fn) |
+
+Planned (upcoming) handlers:
+
+| Name                                                                                                                     | Platform | Output target                                                                | Output format                                    |
+| :----------------------------------------------------------------------------------------------------------------------- | :------- | :--------------------------------------------------------------------------- | :----------------------------------------------- |
+| [`handler:carmine`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.carmine#handler:carmine)    | Clj      | [Redis](https://redis.io/) (via [Carmine](https://www.taoensso.com/carmine)) | [Serialized](https://taoensso.com/nippy) signals |
+| [`handler:logstash`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.logstash#handler:logstash) | Clj      | [Logstash](https://www.elastic.co/logstash)                                  | TODO                                             |
 
 # Configuring handlers
 
@@ -35,7 +38,7 @@ There's two kinds of config relevant to all signal handlers:
 
 ## Dispatch opts
 
-Dispatch opts includes dispatch priority, handler filtering, handler middleware, queue semantics, back-pressure opts, etc.
+Handler dispatch opts includes dispatch priority, handler filtering, handler middleware, queue semantics, back-pressure opts, etc.
 
 This is all specified when calling [`add-handler!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#add-handler!) - and documented there.
 
@@ -201,7 +204,7 @@ For more complex cases, or for handlers that you want to make available for use 
 
 - See [`help:signal-content`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content) for signal map content.
 - See the [utils namespace](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils) for tools useful for customizing and writing signal handlers.
-- See section [8-Community](8-Community.md) for PRs to link to community-authored handlers.
+- [PRs](https://github.com/taoensso/telemere/pulls) are **very welcome** for additions to Telemere's included handlers, or to Telemere's [community resources](./8-Community)
 
 # Example output
 

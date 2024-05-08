@@ -641,6 +641,14 @@
       (is (= (utils/error-signal? {:level :fatal}) true))
       (is (= (utils/error-signal? {:error?  true}) true))])
 
+   (testing "Misc utils"
+     [(is (= (utils/remove-signal-kvs   {:a :A, :b :B, :kvs {:b :B}}) {:a :A}))
+      (is (= (utils/remove-signal-nils  {:a :A, :b nil}) {:a :A}))
+      (is (= (utils/force-signal-msg    {:a :A, :msg_ (delay "msg")}) {:a :A, :msg_ "msg"}))
+      (is (= (utils/expand-signal-error {:level :info, :error ex2})
+            {:level :info, :error [{:type ex-info-type, :msg "Ex2", :data {:k2 "v2"}}
+                                   {:type ex-info-type, :msg "Ex1", :data {:k1 "v1"}}]}))])
+
    #?(:clj
       (testing "File writer"
         (let [f  (java.io.File/createTempFile "file-writer-test" ".txt")
@@ -662,12 +670,7 @@
            (is (true? (.delete f)))])))
 
    (testing "Formatters, etc."
-     [(is (= (utils/error-in-signal->maps {:level :info, :error ex2})
-            {:level :info, :error [{:type ex-info-type, :msg "Ex2", :data {:k2 "v2"}}
-                                   {:type ex-info-type, :msg "Ex1", :data {:k1 "v1"}}]}))
-
-      (is (= (utils/minify-signal {:level :info, :location {:ns "ns"}, :file "file"}) {:level :info}))
-      (is (= ((utils/format-nsecs-fn) 1.5e9) "1.50s")) ; More tests in Encore
+     [(is (= ((utils/format-nsecs-fn) 1.5e9) "1.50s")) ; More tests in Encore
       (is (= ((utils/format-inst-fn)     t0) "2024-06-09T21:15:20.170Z"))
 
       (testing "format-error-fn"
@@ -680,47 +683,47 @@
            (is (enc/str-contains? ex2-str "invoke") "Root stack trace includes content")]))
 
       (testing "signal-preamble-fn"
-        (let [sig      (with-sig (tel/event! ::ev-id {:inst t0}))
+        (let [sig      (with-sig :raw :trap (tel/event! ::ev-id {:inst t0, :msg ["a" "b"]}))
               preamble ((utils/signal-preamble-fn) sig)] ; "2024-06-09T21:15:20.170Z INFO EVENT taoensso.telemere-tests(592,35) ::ev-id"
           [(is (enc/str-starts-with? preamble "2024-06-09T21:15:20.170Z INFO EVENT"))
-           (is (enc/str-ends-with?   preamble "::ev-id"))
+           (is (enc/str-ends-with?   preamble "::ev-id - a b"))
            (is (string? (re-find #"taoensso.telemere-tests\(\d+,\d+\)" preamble)))]))
 
       (testing "pr-signal-fn"
         (let [sig (with-sig (tel/event! ::ev-id {:inst t0}))]
 
-         [(testing ":edn"
-            (let [sig   (update sig :inst enc/inst->udt)
-                  sig*1 (enc/read-edn ((tel/pr-signal-fn {:pr-fn :edn}) sig))
-                  sig*2 (enc/read-edn ((tel/pr-signal-fn)               sig))]
+          [(testing ":edn"
+             (let [sig   (update sig :inst enc/inst->udt)
+                   sig*1 (enc/read-edn ((tel/pr-signal-fn {:pr-fn :edn}) sig))
+                   sig*2 (enc/read-edn ((tel/pr-signal-fn)               sig))]
 
-              [(is (= sig*1 sig*2) "Default :pr-fn is :edn")
-               (is
-                 (enc/submap? sig*1
-                   {:schema 1, :kind :event, :id ::ev-id, :level :info,
-                    :ns      "taoensso.telemere-tests"
-                    :inst    udt0
-                    :line    pnat-int?
-                    :column  pnat-int?}))]))
+               [(is (= sig*1 sig*2) "Default :pr-fn is :edn")
+                (is
+                  (enc/submap? sig*1
+                    {:schema 1, :kind :event, :id ::ev-id, :level :info,
+                     :ns      "taoensso.telemere-tests"
+                     :inst    udt0
+                     :line    pnat-int?
+                     :column  pnat-int?}))]))
 
-          #?(:cljs
-             (testing ":json"
-               (let [sig* (enc/read-json ((tel/pr-signal-fn {:pr-fn :json}) sig))]
-                 (is
-                   (enc/submap? sig*
-                     {"schema" 1, "kind" "event", "id" "taoensso.telemere-tests/ev-id",
-                      "level" "info",             "ns" "taoensso.telemere-tests",
-                      "inst"    t0s
-                      "line"    pnat-int?
-                      "column"  pnat-int?})))))
+           #?(:cljs
+              (testing ":json"
+                (let [sig* (enc/read-json ((tel/pr-signal-fn {:pr-fn :json}) sig))]
+                  (is
+                    (enc/submap? sig*
+                      {"schema" 1, "kind" "event", "id" "taoensso.telemere-tests/ev-id",
+                       "level" "info",             "ns" "taoensso.telemere-tests"
+                       "inst"    t0s
+                       "line"    pnat-int?
+                       "column"  pnat-int?})))))
 
-          (testing "user fn"
-            (is (= ((tel/pr-signal-fn {:pr-fn (fn [_] "str")}) sig) (str "str" utils/newline))))]))
+           (testing "user fn"
+             (is (= ((tel/pr-signal-fn {:pr-fn (fn [_] "str")}) sig) (str "str" utils/newline))))]))
 
       (testing "format-signal-fn"
-        (let [sig (with-sig (tel/event! ::ev-id {:inst t0}))]
-          (is (enc/str-starts-with? ((tel/format-signal-fn) sig)
-                "2024-06-09T21:15:20.170Z INFO EVENT"))))])])
+        (let [sig (with-sig :raw :trap (tel/event! ::ev-id {:inst t0, :msg ["a" "b"]}))]
+          (is (enc/str-starts-with? ((tel/format-signal-fn) sig) "2024-06-09T21:15:20.170Z INFO EVENT"))
+          (is (enc/str-ends-with?   ((tel/format-signal-fn) sig) "::ev-id - a b\n"))))])])
 
 ;;;; File handler
 

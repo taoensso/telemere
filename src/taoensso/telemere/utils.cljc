@@ -112,58 +112,40 @@
 
 (comment (error-signal? {:level :fatal}))
 
-(defn error-in-signal->maps
-  "Experimental, subject to change.
-  Returns given signal with possible `:error` replaced by
-  [{:keys [type msg data]} ...] cause chain.
-
-  Useful when serializing signals to edn/JSON/etc."
-  [signal]
-  (enc/if-let [error (get signal :error)
-               chain (enc/ex-chain :as-map error)]
-    (assoc signal :error chain)
-    (do    signal)))
-
-(comment (error-in-signal->maps {:level :info :error (ex-info "Ex" {})}))
-
-(defn remove-kvs
-  "Returns given signal without user-level kvs."
+(defn ^:no-doc remove-signal-kvs
+  "Private, don't use.
+  Returns given signal without user-level kvs or `:kvs` key."
   [signal]
   (if-let [kvs (get signal :kvs)]
     (reduce-kv (fn [m k _v] (dissoc m k)) (dissoc signal :kvs) kvs)
     signal))
 
-(comment (remove-kvs {:a :A, :b :B, :kvs {:a :A}}))
-
-(defn minify-signal
-  "Experimental, subject to change.
-  Returns minimal signal, removing:
-    - Keys with nil values, and
-    - Keys with redundant values (`:kvs`, `:location`, `:file`).
-
-  Useful when serializing signals to edn/JSON/etc."
-
-  ;; Note that while handlers typically don't include user-level kvs, we
-  ;; DO retain these here since signal serialization often implies transit
-  ;; to some other system that may still need/want this info before final
-  ;; processing/storage/etc.
-
+(defn ^:no-doc remove-signal-nils
+  "Private, don't use.
+  Returns given signal with nil-valued keys removed."
   [signal]
-  (reduce-kv
-    (fn [m k v]
-      (if (nil? v)
-        m
-        (case k
-          (:kvs :location :file) m
-          (assoc m k v))))
-    nil signal))
-
-(comment
-  (minify-signal (tel/with-signal (tel/event! ::ev-id1)))
-  (let [s        (tel/with-signal (tel/event! ::ev-id1))]
-    (enc/qb 1e6 ; 683
-      (minify-signal s))))
-
+  (if (enc/editable? signal)
+    (persistent! (reduce-kv (fn [m k v] (if (nil? v)   (dissoc! m k) m)) (transient signal) signal))
+    (persistent! (reduce-kv (fn [m k v] (if (nil? v) m (assoc!  m k v))) (transient {})     signal))))
+ 
+(defn ^:no-doc force-signal-msg
+  "Private, don't use.
+  Returns given signal with possible `:msg_` value forced (realized when a delay)."
+  [signal]
+  (if-let [msg_ (get signal :msg_)]
+    (assoc signal :msg_ (force msg_))
+    (do    signal)))
+ 
+(defn ^:no-doc expand-signal-error
+  "Private, don't use.
+  Returns given signal with possible `:error` replaced by
+  [{:keys [type msg data]} ...] cause chain."
+  [signal]
+  (enc/if-let [error (get signal :error)
+               chain (enc/ex-chain :as-map error)]
+    (assoc signal :error chain)
+    (do    signal)))
+ 
 ;;;; Files
 
 #?(:clj (defn ^:no-doc as-file ^java.io.File [file] (jio/as-file file)))
@@ -604,8 +586,8 @@
      {incl-newline? true
       pr-fn         :edn
       prep-fn
-      (comp error-in-signal->maps
-        minify-signal)}}]
+      (comp expand-signal-error
+        remove-signal-nils)}}]
 
    (let [nl newline
          pr-fn
