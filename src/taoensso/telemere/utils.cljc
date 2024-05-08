@@ -582,26 +582,27 @@
     - Returns a machine-readable (minified) signal string.
 
   Options:
-    `pr-fn`          - ∈ #{<unary-fn> :edn :json (Cljs only)}
+    `:pr-fn`         - ∈ #{<unary-fn> :edn (default) :json (Cljs only)}
     `:incl-thread?`  - Include signal `:thread` info?      (default false)
     `:incl-kvs?`     - Include signal `:kvs`    info?      (default false)
     `:incl-newline?` - Include terminating system newline? (default true)
 
   Examples:
-    (pr-signal-fn :edn  {<opts>})
-    (pr-signal-fn :json {<opts>}) ; Cljs only
+    (pr-signal-fn {:pr-fn :edn  ...}) ; Outputs edn
+    (pr-signal-fn {:pr-fn :json ...}) ; Outputs JSON (Cljs only)
 
-    ;; To output JSON for Clj, you must provide an appropriate `pr-fn`.
-    ;; `jsonista` is a good option, Ref. <https://github.com/metosin/jsonista>:
+    To output JSON for Clj, you must provide an appropriate `:pr-fn`.
+    `jsonista` is one good option, Ref. <https://github.com/metosin/jsonista>:
+
       (require '[jsonista.core :as jsonista])
-      (pr-signal-fn jsonista/write-value-as-string {<opts>})
+      (pr-signal-fn {:pr-fn jsonista/write-value-as-string ...})
 
   See also `format-signal-fn` for human-readable output."
-  ([pr-fn] (pr-signal-fn pr-fn nil))
-  ([pr-fn
-    {:keys [incl-thread? incl-kvs? incl-newline?, prep-fn]
+  ([] (pr-signal-fn nil))
+  ([{:keys [incl-thread? incl-kvs? incl-newline?, pr-fn prep-fn]
      :or
      {incl-newline? true
+      pr-fn         :edn
       prep-fn
       (comp error-in-signal->maps
         minify-signal)}}]
@@ -611,7 +612,12 @@
          (or
            (case  pr-fn
              :edn pr-edn
-             #?@(:cljs [:json pr-json])
+             :json
+             #?(:cljs pr-json
+                :clj
+                (throw
+                  (ex-info "`:json` pr-fn only supported in Cljs. To output JSON in Clj, please provide an appropriate unary fn instead (e.g. jsonista/write-value-as-string)."
+                    {})))
 
              (if (fn? pr-fn)
                (do    pr-fn)
@@ -634,8 +640,8 @@
            (do  output)))))))
 
 (comment
-  ((pr-signal-fn :edn)           (tel/with-signal (tel/event! ::ev-id {:kvs {:k1 "v1"}})))
-  ((pr-signal-fn (fn [_] "str")) (tel/with-signal (tel/event! ::ev-id {:kvs {:k1 "v1"}}))))
+  ((pr-signal-fn {:pr-fn :edn})           (tel/with-signal (tel/event! ::ev-id {:kvs {:k1 "v1"}})))
+  ((pr-signal-fn {:pr-fn (fn [_] "str")}) (tel/with-signal (tel/event! ::ev-id {:kvs {:k1 "v1"}}))))
 
 (defn format-signal-fn
   "Experimental, subject to change.

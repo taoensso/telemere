@@ -141,7 +141,7 @@
 ;; Create console which writes signals as edn
 (def my-handler
   (t/handler:console
-    {:output-fn (t/pr-signal-fn :edn)}))
+    {:output-fn (t/pr-signal-fn {:pr-fn :edn})}))
 
 (my-handler my-signal) ; =>
 ;; {:inst #inst "2024-04-11T10:54:57.202869Z", :msg_ "My message", :ns "examples", ...}
@@ -152,8 +152,9 @@
   (t/handler:console
     {:output-fn
      (t/pr-signal-fn
-       #?(:cljs :json
-          :clj  jsonista.core/write-value-as-string))}))
+       {:pr-fn
+        #?(:cljs :json
+           :clj  jsonista.core/write-value-as-string)})}))
 
 (my-handler my-signal) ; =>
 ;; {"inst":"2024-04-11T10:54:57.202869Z","msg_":"My message","ns":"examples", ...}

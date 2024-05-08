@@ -690,19 +690,22 @@
         (let [sig (with-sig (tel/event! ::ev-id {:inst t0}))]
 
          [(testing ":edn"
-            (let [sig  (update sig :inst enc/inst->udt)
-                  sig* (enc/read-edn ((tel/pr-signal-fn :edn) sig))]
-              (is
-                (enc/submap? sig*
-                  {:schema 1, :kind :event, :id ::ev-id, :level :info,
-                   :ns      "taoensso.telemere-tests"
-                   :inst    udt0
-                   :line    pnat-int?
-                   :column  pnat-int?}))))
+            (let [sig   (update sig :inst enc/inst->udt)
+                  sig*1 (enc/read-edn ((tel/pr-signal-fn {:pr-fn :edn}) sig))
+                  sig*2 (enc/read-edn ((tel/pr-signal-fn)               sig))]
+
+              [(is (= sig*1 sig*2) "Default :pr-fn is :edn")
+               (is
+                 (enc/submap? sig*1
+                   {:schema 1, :kind :event, :id ::ev-id, :level :info,
+                    :ns      "taoensso.telemere-tests"
+                    :inst    udt0
+                    :line    pnat-int?
+                    :column  pnat-int?}))]))
 
           #?(:cljs
              (testing ":json"
-               (let [sig* (enc/read-json ((tel/pr-signal-fn :json) sig))]
+               (let [sig* (enc/read-json ((tel/pr-signal-fn {:pr-fn :json}) sig))]
                  (is
                    (enc/submap? sig*
                      {"schema" 1, "kind" "event", "id" "taoensso.telemere-tests/ev-id",
@@ -712,7 +715,7 @@
                       "column"  pnat-int?})))))
 
           (testing "user fn"
-            (is (= ((tel/pr-signal-fn (fn [_] "str")) sig) (str "str" utils/newline))))]))
+            (is (= ((tel/pr-signal-fn {:pr-fn (fn [_] "str")}) sig) (str "str" utils/newline))))]))
 
       (testing "format-signal-fn"
         (let [sig (with-sig (tel/event! ::ev-id {:inst t0}))]

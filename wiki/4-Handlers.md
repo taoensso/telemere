@@ -76,7 +76,7 @@ To instead writes signals as edn:
 ;; Create console which writes edn
 (def my-handler
   (t/handler:console
-    {:output-fn (t/pr-signal-fn :edn)}))
+    {:output-fn (t/pr-signal-fn {:pr-fn :edn})}))
 
 (my-handler my-signal) ; =>
 ;; {:inst #inst "2024-04-11T10:54:57.202869Z", :msg_ "My message", :ns "examples", ...}
@@ -91,8 +91,9 @@ To instead writes signals as JSON:
   (t/handler:console
     {:output-fn
      (t/pr-signal-fn
-       #?(:cljs :json
-          :clj  jsonista.core/write-value-as-string))}))
+       {:pr-fn
+        #?(:cljs :json
+           :clj  jsonista.core/write-value-as-string)})}))
 ```
 
 Note that when writing JSON with Clojure, you *must* provide an appropriate `pr-fn`. This lets you plug in the JSON serializer of your choice ([jsonista](https://github.com/metosin/jsonista) is my default recommendation).
