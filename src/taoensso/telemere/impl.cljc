@@ -625,13 +625,19 @@
                          :elide? :allow? #_:expansion-id))]
 
                  ;; Compile-time validation
-                 (when (and run-form error-form)
-                   (throw ; Prevent ambiguity re: source of error
-                     (ex-info "Signals cannot have both `:run` and `:error` opts at the same time"
-                       {:run-form   run-form
-                        :error-form error-form
-                        :location   location
-                        :other-opts (dissoc opts :run :error)})))
+                 (do
+                   (when (and run-form error-form) ; Ambiguous source of error
+                     (throw
+                       (ex-info "Signals cannot have both `:run` and `:error` opts at the same time"
+                         {:run-form   run-form
+                          :error-form error-form
+                          :location   location
+                          :other-opts (dissoc opts :run :error)})))
+
+                   (when-let [e (find opts :msg_)] ; Common typo/confusion
+                     (throw
+                       (ex-info "Signals cannot have `:msg_` opt (did you mean `:msg`?))"
+                         {:msg_ (enc/typed-val (val e))}))))
 
                  `(delay
                     ;; Delay (cache) shared by all handlers. Covers signal `:let` eval, signal construction,
