@@ -614,6 +614,7 @@
        (let [not-map? (not (map? signal))
              signal   (if (or incl-kvs?    not-map?) signal (dissoc signal :kvs))
              signal   (if (or incl-thread? not-map?) signal (dissoc signal :thread))
+             signal   (if                  not-map?  signal (force-signal-msg signal))
              signal   (if prep-fn (prep-fn signal) signal)
              output   (pr-fn signal)]
 

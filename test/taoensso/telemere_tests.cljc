@@ -690,7 +690,7 @@
            (is (string? (re-find #"taoensso.telemere-tests\(\d+,\d+\)" preamble)))]))
 
       (testing "pr-signal-fn"
-        (let [sig (with-sig (tel/event! ::ev-id {:inst t0}))]
+        (let [sig (with-sig :raw :trap (tel/event! ::ev-id {:inst t0, :msg ["a" "b"]}))]
 
           [(testing ":edn"
              (let [sig   (update sig :inst enc/inst->udt)
@@ -702,6 +702,7 @@
                   (enc/submap? sig*1
                     {:schema 1, :kind :event, :id ::ev-id, :level :info,
                      :ns      "taoensso.telemere-tests"
+                     :msg_    "a b"
                      :inst    udt0
                      :line    pnat-int?
                      :column  pnat-int?}))]))
@@ -713,6 +714,7 @@
                     (enc/submap? sig*
                       {"schema" 1, "kind" "event", "id" "taoensso.telemere-tests/ev-id",
                        "level" "info",             "ns" "taoensso.telemere-tests"
+                       "msg_"    "a b"
                        "inst"    t0s
                        "line"    pnat-int?
                        "column"  pnat-int?})))))
