@@ -1,4 +1,4 @@
-(defproject com.taoensso/telemere "1.0.0-beta10"
+(defproject com.taoensso/telemere "1.0.0-beta11"
   :author "Peter Taoussanis <https://www.taoensso.com>"
   :description "Structured telemetry library for Clojure/Script"
   :url "https://www.taoensso.com/telemere"
@@ -42,12 +42,12 @@
      *unchecked-math*     false #_:warn-on-boxed}
 
     :dependencies
-    [[org.clojure/test.check              "1.1.1"]
-     [org.clojure/tools.logging           "1.3.0"]
-     [org.slf4j/slf4j-api                "2.0.13"]
-     [com.taoensso/slf4j-telemere   "1.0.0-beta7"]
-     #_[org.slf4j/slf4j-simple           "2.0.13"]
-     #_[org.slf4j/slf4j-nop              "2.0.13"]
+    [[org.clojure/test.check             "1.1.1"]
+     [org.clojure/tools.logging          "1.3.0"]
+     [org.slf4j/slf4j-api               "2.0.13"]
+     [com.taoensso/slf4j-telemere "1.0.0-beta11"]
+     #_[org.slf4j/slf4j-simple          "2.0.13"]
+     #_[org.slf4j/slf4j-nop             "2.0.13"]
 
      ;;; For optional handlers
      [io.opentelemetry/opentelemetry-api                           "1.37.0"]
