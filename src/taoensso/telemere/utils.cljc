@@ -560,39 +560,39 @@
   "Experimental, subject to change.
   Returns a (fn pr [signal]) that:
     - Takes a Telemere signal (map).
-    - Returns a machine-readable (minified) signal string.
+    - Returns a machine-readable signal ?string.
 
   Options:
     `:pr-fn`         - ∈ #{<unary-fn> :edn (default) :json (Cljs only)}
-    `:incl-thread?`  - Include signal `:thread` info?      (default false)
-    `:incl-kvs?`     - Include signal `:kvs`    info?      (default false)
-    `:incl-newline?` - Include terminating system newline? (default true)
+    `:incl-kvs?`     - Include signal's user-level kvs?        (default false)
+    `:incl-nils?`    - Include signal's keys with nil values?  (default false)
+    `:incl-newline?` - Include terminating system newline?     (default true)
+    `:incl-keys`     - Subset of signal keys to retain from those otherwise
+                       excluded by default: #{:location :kvs :file :thread}
 
   Examples:
     (pr-signal-fn {:pr-fn :edn  ...}) ; Outputs edn
     (pr-signal-fn {:pr-fn :json ...}) ; Outputs JSON (Cljs only)
 
     To output JSON for Clj, you must provide an appropriate `:pr-fn`.
-    `jsonista` is one good option, Ref. <https://github.com/metosin/jsonista>:
+    `jsonista` offers one good option, Ref. <https://github.com/metosin/jsonista>:
 
       (require '[jsonista.core :as jsonista])
       (pr-signal-fn {:pr-fn jsonista/write-value-as-string ...})
 
   See also `format-signal-fn` for human-readable output."
   ([] (pr-signal-fn nil))
-  ([{:keys [incl-thread? incl-kvs? incl-newline?, pr-fn prep-fn]
+  ([{:keys [pr-fn, incl-kvs? incl-nils? incl-newline? incl-keys] :as opts
      :or
-     {incl-newline? true
-      pr-fn         :edn
-      prep-fn
-      (comp expand-signal-error
-        remove-signal-nils)}}]
+     {pr-fn         :edn
+      incl-newline? true}}]
 
    (let [nl newline
          pr-fn
          (or
-           (case  pr-fn
-             :edn pr-edn
+           (case pr-fn
+             :none nil ; Undocumented, used for unit tests
+             :edn  pr-edn
              :json
              #?(:cljs pr-json
                 :clj
@@ -607,23 +607,61 @@
                   :param    'pr-fn
                   :expected
                   #?(:clj  '#{:edn       unary-fn}
-                     :cljs '#{:edn :json unary-fn})}))))]
+                     :cljs '#{:edn :json unary-fn})}))))
+
+         assoc!*
+         (if-not incl-nils?
+           (fn [m k v] (if (nil? v) m (assoc! m k v))) ; As `remove-signal-nils`
+           (do                         assoc!))
+
+         incl-location? (contains? incl-keys :location)
+         incl-kvs-key?  (contains? incl-keys :kvs)
+         incl-file?     (contains? incl-keys :file)
+         incl-thread?   (contains? incl-keys :thread)]
 
      (fn pr-signal [signal]
-       (let [not-map? (not (map? signal))
-             signal   (if (or incl-kvs?    not-map?) signal (dissoc signal :kvs))
-             signal   (if (or incl-thread? not-map?) signal (dissoc signal :thread))
-             signal   (if                  not-map?  signal (force-signal-msg signal))
-             signal   (if prep-fn (prep-fn signal) signal)
-             output   (pr-fn signal)]
+       (when (map?  signal)
+         (let [signal
+               (persistent!
+                 (reduce-kv
+                   (fn [m k v]
+                     (enc/case-eval k
+                       :msg_                                           (assoc!* m k (force v)) ; As  force-signal-msg
+                       :error (if-let [chain (enc/ex-chain :as-map v)] (assoc!  m k chain) m)  ; As expand-signal-error
 
-         (if incl-newline?
-           (str output nl)
-           (do  output)))))))
+                       ;;; Keys excluded by default
+                       :location (if incl-location? (assoc!* m k v) m)
+                       :kvs      (if incl-kvs-key?  (assoc!* m k v) m)
+                       :file     (if incl-file?     (assoc!* m k v) m)
+                       :thread   (if incl-thread?   (assoc!* m k v) m)
+
+                       (clojure.core/into ()
+                         (clojure.core/disj
+                           taoensso.telemere.impl/standard-signal-keys
+                           :msg_ :error :location :kvs :file :thread))
+                       (assoc!* m k v)
+
+                       (if incl-kvs? (assoc!* m k v) m) ; As remove-signal-kvs
+                       ))
+
+                   (transient {}) signal))]
+
+           (if-not pr-fn
+             signal
+             (let [output (pr-fn signal)]
+               (if incl-newline?
+                 (str output nl)
+                 (do  output))))))))))
 
 (comment
-  ((pr-signal-fn {:pr-fn :edn})           (tel/with-signal (tel/event! ::ev-id {:kvs {:k1 "v1"}})))
-  ((pr-signal-fn {:pr-fn (fn [_] "str")}) (tel/with-signal (tel/event! ::ev-id {:kvs {:k1 "v1"}}))))
+  (def s1 (tel/with-signal (tel/event! ::ev-id {:kvs {:k1 "v1"}})))
+  ((pr-signal-fn {:pr-fn :edn})           s1)
+  ((pr-signal-fn {:pr-fn (fn [_] "str")}) s1)
+  ((pr-signal-fn {:pr-fn :none})          s1)
+
+  (let [pr-fn (pr-signal-fn {:pr-fn :none})]
+    (enc/qb 1e6 ; 817.78
+      (pr-fn s1))))
 
 (defn format-signal-fn
   "Experimental, subject to change.

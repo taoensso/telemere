@@ -33,6 +33,7 @@
   (def  ex-info-type (#'enc/ex-type (ex-info "" {})))
   (def  ex1 (ex-info "Ex1" {}))
   (def  ex2 (ex-info "Ex2" {:k2 "v2"} (ex-info "Ex1" {:k1 "v1"})))
+  (def  ex2-chain (enc/ex-chain :as-map ex2))
   (defn ex1! [] (throw ex1))
 
   (defn ex1?     [x] (= (enc/ex-root x) ex1))
@@ -645,9 +646,7 @@
      [(is (= (utils/remove-signal-kvs   {:a :A, :b :B, :kvs {:b :B}}) {:a :A}))
       (is (= (utils/remove-signal-nils  {:a :A, :b nil}) {:a :A}))
       (is (= (utils/force-signal-msg    {:a :A, :msg_ (delay "msg")}) {:a :A, :msg_ "msg"}))
-      (is (= (utils/expand-signal-error {:level :info, :error ex2})
-            {:level :info, :error [{:type ex-info-type, :msg "Ex2", :data {:k2 "v2"}}
-                                   {:type ex-info-type, :msg "Ex1", :data {:k1 "v1"}}]}))])
+      (is (= (utils/expand-signal-error {:level :info, :error ex2}) {:level :info, :error ex2-chain}))])
 
    #?(:clj
       (testing "File writer"
@@ -692,7 +691,7 @@
       (testing "pr-signal-fn"
         (let [sig (with-sig :raw :trap (tel/event! ::ev-id {:inst t0, :msg ["a" "b"]}))]
 
-          [(testing ":edn"
+          [(testing ":edn pr-fn"
              (let [sig   (update sig :inst enc/inst->udt)
                    sig*1 (enc/read-edn ((tel/pr-signal-fn {:pr-fn :edn}) sig))
                    sig*2 (enc/read-edn ((tel/pr-signal-fn)               sig))]
@@ -708,7 +707,7 @@
                      :column  pnat-int?}))]))
 
            #?(:cljs
-              (testing ":json"
+              (testing ":json pr-fn"
                 (let [sig* (enc/read-json ((tel/pr-signal-fn {:pr-fn :json}) sig))]
                   (is
                     (enc/submap? sig*
@@ -719,8 +718,27 @@
                        "line"    pnat-int?
                        "column"  pnat-int?})))))
 
-           (testing "user fn"
-             (is (= ((tel/pr-signal-fn {:pr-fn (fn [_] "str")}) sig) (str "str" utils/newline))))]))
+           (testing "User pr-fn"
+             (is (= ((tel/pr-signal-fn {:pr-fn (fn [_] "str")}) sig) (str "str" utils/newline))))
+
+           (testing "Other options"
+             (let [sig
+                   {:msg_     (delay "msg")
+                    :error    ex2
+                    :id       nil
+                    :location "loc"
+                    :kvs      "kvs"
+                    :file     "file"
+                    :thread   "thread"
+                    :user-key "user-val"}]
+
+               [(is (= ((tel/pr-signal-fn {:pr-fn :none})                     sig) {:msg_ "msg", :error ex2-chain}))
+                (is (= ((tel/pr-signal-fn {:pr-fn :none, :incl-kvs?  true})   sig) {:msg_ "msg", :error ex2-chain, :user-key "user-val"}))
+                (is (= ((tel/pr-signal-fn {:pr-fn :none, :incl-nils? true})   sig) {:msg_ "msg", :error ex2-chain, :id nil}))
+                (is (= ((tel/pr-signal-fn {:pr-fn :none, :incl-keys #{:kvs}}) sig) {:msg_ "msg", :error ex2-chain, :kvs "kvs"}))
+                (is (= ((tel/pr-signal-fn {:pr-fn :none, :incl-keys
+                                           #{:location :kvs :file :thread}})  sig) {:msg_ "msg", :error ex2-chain,
+                                                                                    :location "loc", :kvs "kvs", :file "file", :thread "thread"}))]))]))
 
       (testing "format-signal-fn"
         (let [sig (with-sig :raw :trap (tel/event! ::ev-id {:inst t0, :msg ["a" "b"]}))]

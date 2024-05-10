@@ -225,6 +225,8 @@
 (do     (enc/def-print-impl [sig Signal] (str "#" `Signal (pr-str (into {} sig)))))
 #?(:clj (enc/def-print-dup  [sig Signal] (str "#" `Signal (pr-str (into {} sig))))) ; NB intentionally verbose, to support extra keys
 
+(def ^:no-doc standard-signal-keys "Private, don't use."  (set (keys (map->Signal {:schema 0}))))
+
 (comment
   (def s1 (with-signal (signal! {:level :info, :my-k1 :my-v1})))
   (read-string (str    (assoc s1 :my-k2 :my-v2)))
