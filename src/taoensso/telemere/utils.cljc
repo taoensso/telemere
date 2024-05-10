@@ -488,25 +488,24 @@
     - Returns a signal content ?string (incl. data, ctx, etc.).
 
   Options:
-    `:incl-thread?`    - Include signal `:thread` info? (default false)
-    `:incl-kvs?`       - Include signal `:kvs`    info? (default false)
-    `:raw-error?`      - Retain unformatted error?      (default false)
+    `:raw-error?`      - Retain unformatted error? (default false)
+    `:incl-keys`       - Subset of signal keys to retain from those
+                         otherwise excluded by default: #{:kvs :thread}
     `:format-nsecs-fn` - (fn [nanosecs]) => string.
     `:format-error-fn` - (fn [error])    => string."
 
   ([] (signal-content-fn nil))
-  ([{:keys
-     [incl-thread? incl-kvs? raw-error?,
-      format-nsecs-fn format-error-fn]
-
+  ([{:keys [raw-error? incl-keys, format-nsecs-fn format-error-fn]
      :or
      {format-nsecs-fn (format-nsecs-fn) ; (fn [nanosecs])
       format-error-fn (format-error-fn) ; (fn [error])
       }}]
 
-   (let [nl        newline
-         err-start (str nl "<<< error <<<" nl)
-         err-stop  (str nl ">>> error >>>")]
+   (let [nl           newline
+         err-start    (str nl "<<< error <<<" nl)
+         err-stop     (str nl ">>> error >>>")
+         incl-kvs?    (contains? incl-keys :kvs)
+         incl-thread? (contains? incl-keys :thread)]
 
      (fn signal-content
        ([signal]
