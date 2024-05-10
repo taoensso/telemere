@@ -21,8 +21,6 @@
 
 ;;;; Utils
 
-#?(:clj (defmacro threaded [& body] `(let [t# (Thread. (fn [] ~@body))] (.start t#) t#)))
-
 #?(:clj
    (defmacro on-init [& body]
      (let [sym        (with-meta '__on-init {:private true})

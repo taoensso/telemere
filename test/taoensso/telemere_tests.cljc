@@ -529,13 +529,13 @@
           [(do (enc/set-var-root! impl/*sig-handlers* [(sigs/wrap-handler "h1" (fn h1 [x] (reset! sv_ x)) nil {:async nil})]) :set-handler)
            ;;
            (is (nil? (tel/uncaught->error!)))
-           (is (do (.join (impl/threaded (ex1!))) (sm? @sv_ {:kind :error, :line :submap/ex, :level :error, :error pex1?, :id  nil})))
+           (is (do (.join (enc/threaded :user (ex1!))) (sm? @sv_ {:kind :error, :line :submap/ex, :level :error, :error pex1?, :id  nil})))
            ;;
            (is (nil? (tel/uncaught->error! :id1)))
-           (is (do (.join (impl/threaded (ex1!))) (sm? @sv_ {:kind :error, :line :submap/ex, :level :error, :error pex1?, :id :id1})))
+           (is (do (.join (enc/threaded :user (ex1!))) (sm? @sv_ {:kind :error, :line :submap/ex, :level :error, :error pex1?, :id :id1})))
            ;;
            (is (nil? (tel/uncaught->error! {:id :id1})))
-           (is (do (.join (impl/threaded (ex1!))) (sm? @sv_ {:kind :error, :line :submap/ex, :level :error, :error pex1?, :id :id1})))
+           (is (do (.join (enc/threaded :user (ex1!))) (sm? @sv_ {:kind :error, :line :submap/ex, :level :error, :error pex1?, :id :id1})))
            ;;
            (do (enc/set-var-root! impl/*sig-handlers* nil) :unset-handler)])))])
 

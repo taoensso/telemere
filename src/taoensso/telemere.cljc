@@ -32,7 +32,7 @@
   (remove-ns 'taoensso.telemere)
   (:api (enc/interns-overview)))
 
-(enc/assert-min-encore-version [3 109 0])
+(enc/assert-min-encore-version [3 110 0])
 
 ;;;; TODO
 ;; - Add handlers: Logstash, Carmine, Datadog, Kafka

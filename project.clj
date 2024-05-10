@@ -8,7 +8,7 @@
    :url  "https://www.eclipse.org/legal/epl-v10.html"}
 
   :dependencies
-  [[com.taoensso/encore "3.109.0"]]
+  [[com.taoensso/encore "3.110.0"]]
 
   :test-paths ["test" #_"src"]
 
@@ -50,9 +50,9 @@
      #_[org.slf4j/slf4j-nop             "2.0.13"]
 
      ;;; For optional handlers
-     [io.opentelemetry/opentelemetry-api                           "1.37.0"]
-     #_[io.opentelemetry/opentelemetry-sdk-extension-autoconfigure "1.37.0"]
-     #_[io.opentelemetry/opentelemetry-exporter-otlp               "1.37.0"]
+     [io.opentelemetry/opentelemetry-api                           "1.38.0"]
+     #_[io.opentelemetry/opentelemetry-sdk-extension-autoconfigure "1.38.0"]
+     #_[io.opentelemetry/opentelemetry-exporter-otlp               "1.38.0"]
      [metosin/jsonista       "0.3.8"]
      [com.draines/postal     "2.0.5"]
      [org.julienxx/clj-slack "0.8.3"]]
