@@ -27,17 +27,23 @@
          Defaults to `*err*` if `utils/error-signal?` is true, and `*out*` otherwise."
 
      ([] (handler:console nil))
-     ([{:keys [output-fn stream]
-        :or   {output-fn (utils/format-signal-fn)}}]
+     ([{:keys [stream output-fn ]
+        :or
+        {stream    :auto
+         output-fn (utils/format-signal-fn)}}]
 
-      (let [stream (case stream :*out* *out*, :*err* *err* stream)
-            error-signal? utils/error-signal?]
+      (let [error-signal? utils/error-signal?]
 
         (fn a-handler:console
           ([]) ; Shut down (no-op)
           ([signal]
            (let [^java.io.Writer stream
-                 (or stream (if (error-signal? signal) *err* *out*))]
+                 (case stream
+                   :*out* *out*
+                   :*err* *err*
+                   :auto  (if (error-signal? signal) *err* *out*)
+                   stream)]
+
              (when-let [output (output-fn signal)]
                (.write stream (str output))
                (.flush stream))))))))
