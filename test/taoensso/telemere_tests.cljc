@@ -306,7 +306,42 @@
              nil #?(:clj {:async {:mode :dropping}} :cljs nil))]
 
        (binding [*dynamic-var* "bound", impl/*sig-handlers* [wh1]] (sig! {:level :info}))
-       (is (= (do #?(:clj (Thread/sleep 500)) @a) "bound"))))])
+       (is (= (do #?(:clj (Thread/sleep 500)) @a) "bound"))))
+
+   #?(:clj
+      (testing "High-volume, cross-thread handler calls"
+        (every? true?
+          (flatten
+            (for [_ (range 16)]
+              (let [n 1e4
+                    test1
+                    (fn [min-num-handled-sigs dispatch-opts]
+                      (let [fp (enc/future-pool [:ratio 1.0])
+                            c1 (enc/counter)
+                            c2 (enc/counter)
+                            c3 (enc/counter)
+                            c4 (enc/counter)
+                            c5 (enc/counter)
+                            c6 (enc/counter)]
+
+                        (tel/with-handler :hid1
+                          (fn ([_] (c5)) ([ ] (c6)))
+                          dispatch-opts
+                          (do
+                            (dotimes [_ n] (fp (fn [] (c1) (tel/event! ::ev-id1 {:run (c2), :do (c3)}) (c4))))
+                            (fp)))
+
+                        [(is (== @c1 n) "fp start    count should always == n")
+                         (is (== @c4 n) "fp end      count should always == n")
+                         (is (== @c2 n) "Signal :run count should always == n")
+                         (is (== @c6 1) "Shutdown    count should always == 1")
+                         (is (>= @c3 min-num-handled-sigs) "Depends on buffer semantics, >n possible with :sync backp-fn calls")
+                         (is (>= @c5 min-num-handled-sigs) "Depends on buffer semantics, >n possible with :sync backp-fn calls")]))]
+
+                [(test1 n  {:async {:mode :sync}})
+                 (test1 n  {:async {:mode :blocking, :buffer-size 64}})
+                 (test1 64 {:async {:mode :dropping, :buffer-size 64}})
+                 (test1 64 {:async {:mode :sliding,  :buffer-size 64}})]))))))])
 
 (def ^:dynamic *throwing-handler-middleware?* false)
 
