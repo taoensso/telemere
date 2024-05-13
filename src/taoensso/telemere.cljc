@@ -74,6 +74,7 @@
   enc/rate-limiter
   enc/newline
   enc/comp-middleware
+  sigs/default-handler-dispatch-opts
 
   ;; Impl
   impl/msg-splice
