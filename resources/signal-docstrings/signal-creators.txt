@@ -26,7 +26,7 @@ and return values), making them more/less convenient for certain use cases:
 - `log!` emphasizes messages, while `event!` emphasizes ids.
 - `signal!` is the generic creator, and is used by all the others.
 
--------------------------------------------------------------------
+----------------------------------------------------------------------
 [2] See `help:signal-options` - {:keys [kind level id data ...]}
 [3] See `help:signal-content` - {:keys [kind level id data ...]}
-[4] See `help:signal-flow`    - (filters, handling, etc.)
+[4] See `help:signal-filters`  - (by ns/kind/id/level, sampling, etc.)

@@ -39,8 +39,8 @@
 
 ;;; A quick taste of filtering...
 
-(t/set-ns-filter! {:deny "taoensso.*" :allow "taoensso.sente.*"}) ; Set namespace filter
-(t/set-id-filter! {:allow #{::my-particular-id "my-app/*"}})      ; Set id        filter
+(t/set-ns-filter! {:disallow "taoensso.*" :allow "taoensso.sente.*"}) ; Set namespace filter
+(t/set-id-filter! {:allow #{::my-particular-id "my-app/*"}})          ; Set id        filter
 
 (t/set-min-level!       :warn) ; Set minimum level
 (t/set-min-level! :log :debug) ; Set minimul level for `log!` signals
@@ -185,17 +185,18 @@
    (let [handler-fn
          (fn a-handler:my-handler ; Note naming convention
 
-           ;; Shutdown arity - called by Telemere exactly once when the handler
-           ;; is to be shut down.
-           ([]
-            ;; Can no-op, or finalize/free resources as necessary.
-            )
-
-           ;; Main arity - called by Telemere whenever the handler should handle
-           ;; the given signal. Never called after shutdown.
+           ;; Main arity, called by Telemere when handler should process given signal
            ([signal]
             ;; Do something with given signal (write to console/file/queue/db, etc.).
             ;; Return value is ignored.
+            )
+
+           ;; Optional stop arity for handlers that need to close/release resources or
+           ;; otherwise finalize themselves during system shutdown, etc. Called by
+           ;; Telemere when appropriate, but ONLY IF the handler's dispatch options
+           ;; include a truthy `:needs-stopping?` value (false by default).
+           ([]
+            ;; Close/release resources, etc.
             ))
 
          ;; (Advanced) optional default handler dispatch opts,

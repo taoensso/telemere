@@ -38,9 +38,9 @@ There's two kinds of config relevant to all signal handlers:
 
 ## Dispatch opts
 
-Handler dispatch opts includes dispatch priority, handler filtering, handler middleware, queue semantics, back-pressure opts, etc.
+Handler dispatch opts includes dispatch priority (determines order in which handlers are called), handler filtering, handler middleware, a/sync queue semantics, back-pressure opts, etc.
 
-This is all specified when calling [`add-handler!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#add-handler!) - and documented there.
+See [`help:handler-dispatch-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) for full info, and [`default-handler-dispatch-opts`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#default-handler-dispatch-opts) for defaults.
 
 Note that handler middleware in particular is an often overlooked but powerful feature, allowing you to arbitrarily transform and/or filter every [signal map](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content) before it is given to the handler.
 
@@ -127,7 +127,7 @@ These user-level data/opts are typically NOT included by default in handler outp
 
 # Managing handlers
 
-See [`help:signal-handlers`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-handlers) for info on handler management.
+See [`help:handlers`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-handlers) for info on handler management.
 
 ## Managing handlers on startup
 
@@ -140,6 +140,10 @@ Just make an appropriate call to [`add-handler!`](https://cljdoc.org/d/com.taoen
 If you want to manage handlers **conditionally** based on **environmental config** (JVM properties, environment variables, or classpath resources) - Telemere provides the highly flexible [`get-env`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-env) util.
 
 Use this to easily define your own arbitrary cross-platform config, and make whatever conditional handler management decisions you'd like.
+
+## Handler stats
+
+By default, Telemere handlers maintain comprehensive internal info about their handling times and outcomes. See [`get-handlers-stats`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-handlers-stats) for more.
 
 # Writing handlers
 
@@ -180,17 +184,18 @@ For more complex cases, or for handlers that you want to make available for use 
    (let [handler-fn
          (fn a-handler:my-handler ; Note naming convention
 
-           ;; Shutdown arity - called by Telemere exactly once when the handler
-           ;; is to be shut down.
-           ([]
-            ;; Can no-op, or finalize/free resources as necessary.
-            )
-
-           ;; Main arity - called by Telemere whenever the handler should handle
-           ;; the given signal. Never called after shutdown.
+           ;; Main arity, called by Telemere when handler should process given signal
            ([signal]
             ;; Do something with given signal (write to console/file/queue/db, etc.).
             ;; Return value is ignored.
+            )
+
+           ;; Optional stop arity for handlers that need to close/release resources or
+           ;; otherwise finalize themselves during system shutdown, etc. Called by
+           ;; Telemere when appropriate, but ONLY IF the handler's dispatch options
+           ;; include a truthy `:needs-stopping?` value (false by default).
+           ([]
+            ;; Close/release resources, etc.
             ))
 
          ;; (Advanced) optional default handler dispatch opts,

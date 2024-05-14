@@ -1,20 +1,20 @@
 See below for config by topic-
 
-# Signal filtering
+# Filtering
 
 A signal will be provided to a handler iff ALL of the following are true:
 
-  1. Signal **creation** is allowed by **compile-time** filter config
-  2. Signal **creation** is allowed by **runtime** filter config
-  3. Signal **handling** is allowed by **handler** filter config
+  1. Signal **creation** is allowed by **compile-time** "signal filters"
+  2. Signal **creation** is allowed by **runtime** "signal filters"
+  3. Signal **handling** is allowed by **runtime** "handler filters"
   4. Signal  **middleware** does not suppress the signal (return nil)
   5. Handler **middleware** does not suppress the signal (return nil)
 
-For 1-3, filtering may depend on (in order):
+All filters (1-3) may depend on (in order):
+
   Sample rate → namespace → kind → id → level → when form/fn → rate limit
 
-- See [`help:signal-filters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-filters) for info on signal creation filters, **environmental config**, etc.
-- See [`add-handler!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#add-handler!) for info on signal handler filters.
+See [`help:filters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters) for more about filtering.
 
 # Signal handlers
 

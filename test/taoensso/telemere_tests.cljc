@@ -325,8 +325,8 @@
                             c6 (enc/counter)]
 
                         (tel/with-handler :hid1
-                          (fn ([_] (c5)) ([ ] (c6)))
-                          dispatch-opts
+                          (fn ([_] (c5)) ([] (c6)))
+                          (assoc dispatch-opts :needs-stopping? true)
                           (do
                             (dotimes [_ n] (fp (fn [] (c1) (tel/event! ::ev-id1 {:run (c2), :do (c3)}) (c4))))
                             (fp)))

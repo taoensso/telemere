@@ -106,7 +106,7 @@
 
 (def ^:public msg-skip
   "For use within signal message vectors.
-  Special value that will be ignored (no-op) when creating message.
+  Special value that will be ignored (noop) when creating message.
   Useful for conditionally skipping parts of message content, etc.:
 
     (signal! {:msg [\"Hello\" (if <cond> <then> msg-skip) \"world\"] <...>}) or
@@ -242,13 +242,10 @@
   [ns kind id level signal-value_]
   sigs/IFilterableSignal
   (allow-signal? [_ sig-filter] (sig-filter ns kind id level))
-  (signal-value  [_ handler-context]
+  (signal-value  [_ handler-sample-rate]
     (let [sig-val @signal-value_]
       (or
-        (when-let [handler-sample-rate
-                   (when-let [^taoensso.encore.signals.HandlerContext hc handler-context]
-                     (.-sample-rate hc))]
-
+        (when handler-sample-rate
           (when (map? sig-val)
             ;; Replace call sample rate with combined (call * handler) sample rate
             (assoc    sig-val :sample-rate

@@ -97,6 +97,16 @@ Note that you can even use `format` or any other formatter/s of your choice. You
 
 See also [`msg-skip`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#msg-skip) and [`msg-splice`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#msg-splice) for some handy utils.
 
+# How does Telemere compare to Mulog?
+
+> [Mulog](https://github.com/BrunoBonacci/mulog) is an excellent "micro-logging library" for Clojure that shares many of the same capabilities and objectives as Telemere!
+
+TODO - will add a comparison here before Telemere's final release.
+
+# How to use Telemere from a library?
+
+TODO - will add advice here before Telemere's final release.
+
 # Other questions?
 
-Please [open a Github issue](https://github.com/taoensso/telemere/issues). I'll regularly update the FAQ to add common questions.
+Please [open a Github issue](https://github.com/taoensso/telemere/issues) or ping on Telemere's [Slack channel](https://www.taoensso.com/telemere/slack). I'll regularly update the FAQ to add common questions.

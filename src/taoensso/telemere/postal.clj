@@ -107,7 +107,7 @@
 
    (let [handler-fn
          (fn a-handler:postal
-           ([]) ; Shut down (no-op)
+           ([]) ; Shut down (noop)
            ([signal]
             (enc/when-let [subject (subject-fn signal)
                            body    (body-fn    signal)]

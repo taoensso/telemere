@@ -54,7 +54,7 @@ Consider the **quantities** of data that'd best suit your needs *for that data*:
 
 <img src="https://raw.githubusercontent.com/taoensso/telemere/master/imgs/signal-sampling.svg" alt="Telemere sampling" width="640"/>
 
-Telemere offers [extensive filtering](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-flow) capabilities that help you easily express the **conditions** and **quantities** that make sense for your needs. *Use these* both for their effects and as a *form of documentation*.
+Telemere offers [extensive filtering](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters) capabilities that help you easily express the **conditions** and **quantities** that make sense for your needs. *Use these* both for their effects and as a *form of documentation*.
 
 ## Consider evolution
 

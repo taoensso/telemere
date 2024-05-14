@@ -30,6 +30,7 @@ Big thanks to those that have patiently helped report and debug issues, especial
 
 * \[new] Ongoing [API](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere) and [wiki](https://github.com/taoensso/telemere/wiki) doc improvements
 * \[new] [`add-handler!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#add-handler!) can now specify per-handler `:max-shutdown-msecs` (beta12)
+* \[new] [`with-handler`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#with-handler) and [`with-handler+`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#with-handler+) now auto shutdown handlers after use (beta12)
 * \[new] (Advanced) Handler fns can now include `:dispatch-opts` metadata, useful for handler authors that want to set defaults for use by [`add-handler!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#add-handler!) (beta8)
 * \[new] Added [Slack handler](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.slack#handler:slack) (beta8)
 * \[new] Added [TCP](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.sockets#handler:tcp-socket) and [UDP](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.sockets#handler:udp-socket) socket handlers (beta7)

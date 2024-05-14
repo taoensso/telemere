@@ -176,7 +176,7 @@
    (defn file-writer
      "Experimental, subject to change.
      Opens the specified file and returns a stateful fn of 2 arities:
-       [content] => Writes given content to file, or no-ops if closed.
+       [content] => Writes given content to file, or noops if closed.
        []        => Closes the writer.
 
      Useful for basic handlers that write to a file, etc.
@@ -273,7 +273,7 @@
    (defn tcp-socket-writer
      "Experimental, subject to change.
      Connects to specified TCP socket and returns a stateful fn of 2 arities:
-       [content] => Writes given content to socket, or no-ops if closed.
+       [content] => Writes given content to socket, or noops if closed.
        []        => Closes the writer.
 
      Useful for basic handlers that write to a TCP socket, etc.

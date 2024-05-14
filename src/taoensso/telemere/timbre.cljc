@@ -159,5 +159,5 @@
 #?(:clj (defmacro with-context+ "Prefer `telemere/with-ctx+`." [context & body] `(tel/with-ctx+ ~context (do ~@body))))
 
 (defn shutdown-appenders!
-  "Prefer `telemere/shut-down-handlers!`."
-  [] (tel/shut-down-handlers!))
+  "Prefer `telemere/stop-handlers!`."
+  [] (tel/stop-handlers!))

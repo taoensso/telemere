@@ -1,3 +1,6 @@
+Telemere supports extensive environmental config via JVM properties,
+environment variables, or classpath resources.
+
 Environmental filter config includes:
 
   Kind filter:
@@ -23,9 +26,11 @@ Environmental filter config includes:
 Examples:
 
   `taoensso.telemere.rt-min-level.edn`       -> ":info"
-  `TAOENSSO_TELEMERE_RT_NS_FILTER_EDN`       -> "{:deny \"taoensso.*\"}"
+  `TAOENSSO_TELEMERE_RT_NS_FILTER_EDN`       -> "{:disallow \"taoensso.*\"}"
   `taoensso.telemere.rt-id-filter.cljs.edn`  -> "#{:my-id1 :my-id2}"
   `TAOENSSO_TELEMERE_RT_KIND_FILTER_CLJ_EDN` -> "nil"
+
+For other (non-filter) environmental config, see the relevant docstrings.
 
 Tips:
 

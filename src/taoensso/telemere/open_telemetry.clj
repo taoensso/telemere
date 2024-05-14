@@ -212,7 +212,7 @@
 
    (let []
      (fn a-handler:open-telemetry-logger
-       ([]) ; Shut down (no-op)
+       ([]) ; Shut down (noop)
        ([signal]
         (let [{:keys [ns inst level msg_]} signal
               logger    (.get logger-provider (or ns "default"))

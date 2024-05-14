@@ -32,11 +32,12 @@
   (remove-ns 'taoensso.telemere)
   (:api (enc/interns-overview)))
 
-(enc/assert-min-encore-version [3 110 0])
+(enc/assert-min-encore-version [3 112 0])
 
 ;;;; TODO
-;; - Add handlers: Logstash, Carmine, Datadog, Kafka
 ;; - Native OpenTelemetry traces and spans
+;; - Solution and docs for lib authors
+;; - Add handlers: Logstash, Carmine, Datadog, Kafka
 ;; - Update Tufte  (signal API, config API, signal keys, etc.)
 ;; - Update Timbre (signal API, config API, signal keys, backport improvements)
 
@@ -47,21 +48,7 @@
    :sf-arity 4
    :ct-sig-filter   impl/ct-sig-filter
    :*rt-sig-filter* impl/*rt-sig-filter*
-   :*sig-handlers*  impl/*sig-handlers*
-   :sig-filter-env-config-help
-   (impl/signal-docstring :filter-env-config)})
-
-(comment help:filters)
-
-(comment
-  [level-aliases
-
-   help:handlers get-handlers add-handler! remove-handler!
-   with-handler with-handler+ shut-down-handlers!
-
-   help:filtering get-filters get-min-level
-   set-kind-filter! set-ns-filter! set-id-filter! set-min-level!
-   with-kind-filter with-ns-filter with-id-filter with-min-level])
+   :*sig-handlers*  impl/*sig-handlers*})
 
 ;;;; Aliases
 
@@ -90,12 +77,11 @@
 
 ;;;; Help
 
-(impl/defhelp help:signal-creators :signal-creators)
-(impl/defhelp help:signal-options  :signal-options)
-(impl/defhelp help:signal-flow     :signal-flow)
-(impl/defhelp help:signal-content  :signal-content)
-(enc/defalias help:signal-filters  help:filters)  ; Via Encore
-(enc/defalias help:signal-handlers help:handlers) ; Via Encore
+(do
+  (impl/defhelp help:signal-creators      :signal-creators)
+  (impl/defhelp help:signal-options       :signal-options)
+  (impl/defhelp help:signal-content       :signal-content)
+  (impl/defhelp help:environmental-config :environmental-config))
 
 ;;;; Context
 
