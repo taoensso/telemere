@@ -2,9 +2,9 @@ This project uses [**Break Versioning**](https://www.taoensso.com/break-versioni
 
 ---
 
-# `v1.0.0-beta11` (2024-05-10)
+# `v1.0.0-beta12` (2024-05-14)
 
-> **Dep/s**: [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta11) and [Telemere SLF4J provider](https://clojars.org/com.taoensso/slf4j-telemere/versions/1.0.0-beta11) are on Clojars.  
+> **Dep/s**: [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta12) and [Telemere SLF4J provider](https://clojars.org/com.taoensso/slf4j-telemere/versions/1.0.0-beta12) are on Clojars.  
 > **Versioning**: Telemere uses [Break Versioning](https://www.taoensso.com/break-versioning).
 
 This is a **pre-release** intended for **early adopters** and those who'd like to give feedback. New betas will be released frequently, while I continue to fix issues and make other improvements/additions.
@@ -29,6 +29,7 @@ Big thanks to those that have patiently helped report and debug issues, especial
 ## Recent additions
 
 * \[new] Ongoing [API](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere) and [wiki](https://github.com/taoensso/telemere/wiki) doc improvements
+* \[new] [`add-handler!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#add-handler!) can now specify per-handler `:max-shutdown-msecs` (beta12)
 * \[new] (Advanced) Handler fns can now include `:dispatch-opts` metadata, useful for handler authors that want to set defaults for use by [`add-handler!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#add-handler!) (beta8)
 * \[new] Added [Slack handler](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.slack#handler:slack) (beta8)
 * \[new] Added [TCP](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.sockets#handler:tcp-socket) and [UDP](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.sockets#handler:udp-socket) socket handlers (beta7)
@@ -39,11 +40,12 @@ Big thanks to those that have patiently helped report and debug issues, especial
 
 ## Recent fixes
 
-* \[fix] [`pr-signal-fn`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#pr-signal-fn) wasn't realizing delayed messages, add tests [cf72017a] (beta11)
-* \[fix] [`pr-signal-fn`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#pr-signal-fn) broken custom pr-fn support, add tests [e7cce0c1] (beta10)
-* \[fix] [#6] Missing root stack trace, add tests [213c6470] (beta9)
-* \[fix] Broken AOT support, add tests [ffea1a30] (beta1)
-* \[fix] SLF4J broken timestamps, add tests [e222297a] (beta1)
+* \[fix] Don't drop signals while draining async buffer during shutdown, add tests (via Encore) (beta12)
+* \[fix] [`pr-signal-fn`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#pr-signal-fn) wasn't realizing delayed messages, add tests \[cf72017a] (beta11)
+* \[fix] [`pr-signal-fn`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#pr-signal-fn) broken custom pr-fn support, add tests \[e7cce0c1] (beta10)
+* \[fix] [#6] Missing root stack trace, add tests \[213c6470] (beta9)
+* \[fix] Broken AOT support, add tests \[ffea1a30] (beta1)
+* \[fix] SLF4J broken timestamps, add tests \[e222297a] (beta1)
 
 ---
 
