@@ -576,15 +576,14 @@
 
 ;;;; Intake
 
-(comment (def ^org.slf4j.Logger sl (org.slf4j.LoggerFactory/getLogger "MyTelemereSLF4JLogger")))
+(comment (def ^org.slf4j.Logger sl (org.slf4j.LoggerFactory/getLogger "my.class")))
 
 #?(:clj
    (deftest _intake
      [(testing "`tools.logging` -> Telemere"
         [(is (sm? (tel/check-intakes) {:tools-logging {:present? true, :sending->telemere? true, :telemere-receiving? true}}))
-
-         (is (sm? (with-sig (ctl/info "Hello" "x" "y")) {:level :info, :location nil, :ns nil, :kind :log, :id :taoensso.telemere/tools-logging, :msg_ "Hello x y", :inst pinst?}))
-         (is (sm? (with-sig (ctl/warn "Hello" "x" "y")) {:level :warn, :location nil, :ns nil, :kind :log, :id :taoensso.telemere/tools-logging, :msg_ "Hello x y", :inst pinst?}))
+         (is (sm? (with-sig (ctl/info "Hello" "x" "y")) {:level :info, :ns "taoensso.telemere-tests", :kind :tools-logging, :msg_ "Hello x y", :inst pinst?}))
+         (is (sm? (with-sig (ctl/warn "Hello" "x" "y")) {:level :warn, :ns "taoensso.telemere-tests", :kind :tools-logging, :msg_ "Hello x y", :inst pinst?}))
          (is (sm? (with-sig (ctl/error ex1 "An error")) {:level :error, :error pex1?, :inst pinst?}) "Errors")])
 
       (testing "Standard out/err streams -> Telemere"
@@ -604,12 +603,12 @@
 
       (testing "SLF4J -> Telemere"
         [(is (sm? (tel/check-intakes) {:slf4j {:present? true, :sending->telemere? true, :telemere-receiving? true}}))
-         (let [^org.slf4j.Logger sl (org.slf4j.LoggerFactory/getLogger "MyTelemereSLF4JLogger")]
+         (let [^org.slf4j.Logger sl (org.slf4j.LoggerFactory/getLogger "my.class")]
            [(testing "Basics"
-              [(is (sm? (with-sig (.info sl "Hello"))               {:level :info, :location nil, :ns nil, :kind :log, :id :taoensso.telemere/slf4j, :msg_ "Hello", :inst pinst?}) "Legacy API: info basics")
-               (is (sm? (with-sig (.warn sl "Hello"))               {:level :warn, :location nil, :ns nil, :kind :log, :id :taoensso.telemere/slf4j, :msg_ "Hello", :inst pinst?}) "Legacy API: warn basics")
-               (is (sm? (with-sig (-> (.atInfo sl) (.log "Hello"))) {:level :info, :location nil, :ns nil, :kind :log, :id :taoensso.telemere/slf4j, :msg_ "Hello", :inst pinst?}) "Fluent API: info basics")
-               (is (sm? (with-sig (-> (.atWarn sl) (.log "Hello"))) {:level :warn, :location nil, :ns nil, :kind :log, :id :taoensso.telemere/slf4j, :msg_ "Hello", :inst pinst?}) "Fluent API: warn basics")])
+              [(is (sm? (with-sig (.info sl "Hello"))               {:level :info, :ns "my.class", :kind :slf4j, :msg_ "Hello", :inst pinst?}) "Legacy API: info basics")
+               (is (sm? (with-sig (.warn sl "Hello"))               {:level :warn, :ns "my.class", :kind :slf4j, :msg_ "Hello", :inst pinst?}) "Legacy API: warn basics")
+               (is (sm? (with-sig (-> (.atInfo sl) (.log "Hello"))) {:level :info, :ns "my.class", :kind :slf4j, :msg_ "Hello", :inst pinst?}) "Fluent API: info basics")
+               (is (sm? (with-sig (-> (.atWarn sl) (.log "Hello"))) {:level :warn, :ns "my.class", :kind :slf4j, :msg_ "Hello", :inst pinst?}) "Fluent API: warn basics")])
 
             (testing "Message formatting"
               (let [msgp "X is {} and Y is {}", expected {:msg_ "X is x and Y is y", :data {:slf4j/args ["x" "y"]}}]

@@ -14,24 +14,22 @@
 
 (defmacro ^:private when-debug [& body] (when #_true false `(do ~@body)))
 
-(deftype TelemereLogger [logger-ns]
+(deftype TelemereLogger [logger-name]
 
   clojure.tools.logging.impl/Logger
   (enabled? [_ level]
-    (when-debug (println [:tools-logging/enabled? logger-ns level]))
+    (when-debug (println [:tools-logging/enabled? level logger-name]))
     (impl/signal-allowed?
-      {:location nil
-       :kind     :log
-       :id       :taoensso.telemere/tools-logging
+      {:location {:ns logger-name} ; Typically *ns* string
+       :kind     :tools-logging
        :level    level}))
 
   (write! [_ level throwable message]
-    (when-debug (println [:tools-logging/write! logger-ns level]))
+    (when-debug (println [:tools-logging/write! level logger-name]))
     (impl/signal!
       {:allow?   true ; Pre-filtered by `enabled?` call
-       :location nil
-       :kind     :log
-       :id       :taoensso.telemere/tools-logging
+       :location {:ns logger-name} ; Typically *ns* string
+       :kind     :tools-logging
        :level    level
        :error    throwable
        :msg      message})
@@ -39,8 +37,8 @@
 
 (deftype TelemereLoggerFactory []
   clojure.tools.logging.impl/LoggerFactory
-  (name       [_          ] "taoensso.telemere")
-  (get-logger [_ logger-ns] (TelemereLogger. (str logger-ns))))
+  (name       [_            ] "taoensso.telemere")
+  (get-logger [_ logger-name] (TelemereLogger. (str logger-name))))
 
 (defn tools-logging->telemere!
   "Configures `tools.logging` to use Telemere as its logging

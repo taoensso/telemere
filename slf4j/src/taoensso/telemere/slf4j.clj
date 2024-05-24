@@ -102,22 +102,20 @@
 (defn- allowed?
   "Private, don't use.
   Called by `com.taoensso.telemere.slf4j.TelemereLogger`."
-  [^org.slf4j.event.Level level]
-  (when-debug (println [:slf4j/allowed? (sig-level level)]))
+  [logger-name level]
+  (when-debug (println [:slf4j/allowed? (sig-level level) logger-name]))
   (impl/signal-allowed?
-    {:location nil
-     :kind     :log
-     :id       :taoensso.telemere/slf4j
+    {:location {:ns logger-name} ; Typically source class name
+     :kind     :slf4j
      :level    (sig-level level)}))
 
 (defn- normalized-log!
-  [inst level error msg-pattern args marker-names kvs]
-  (when-debug (println [:slf4j/normalized-log! (sig-level level)]))
+  [logger-name level inst error msg-pattern args marker-names kvs]
+  (when-debug (println [:slf4j/normalized-log! (sig-level level) logger-name]))
   (impl/signal!
     {:allow?   true ; Pre-filtered by `allowed?` call
-     :location nil
-     :kind     :log
-     :id       :taoensso.telemere/slf4j
+     :location {:ns logger-name} ; Typically source class name
+     :kind     :slf4j
      :level    (sig-level level)
      :inst     inst
      :error    error
@@ -143,7 +141,7 @@
   Called by `com.taoensso.telemere.slf4j.TelemereLogger`."
 
   ;; Modern "fluent" API calls
-  ([^org.slf4j.event.LoggingEvent event]
+  ([logger-name ^org.slf4j.event.LoggingEvent event]
    (let [inst        (or (when-let [ts (.getTimeStamp event)] (java.time.Instant/ofEpochMilli ts)) (enc/now-inst*))
          level       (.getLevel     event)
          error       (.getThrowable event)
@@ -156,17 +154,17 @@
                            (assoc acc (.-key kvp) (.-value kvp)))
                          nil kvps))]
 
-     (when-debug (println [:slf4j/fluent-log-call (sig-level level)]))
-     (normalized-log! inst level error msg-pattern args markers kvs)))
+     (when-debug (println [:slf4j/fluent-log-call (sig-level level) logger-name]))
+     (normalized-log! logger-name level inst error msg-pattern args markers kvs)))
 
   ;; Legacy API calls
-  ([^org.slf4j.event.Level level error msg-pattern args marker]
+  ([logger-name ^org.slf4j.event.Level level error msg-pattern args marker]
    (let [marker-names (when marker (marker-names marker))]
-     (when-debug (println [:slf4j/legacy-log-call (sig-level level)]))
-     (normalized-log! (enc/now-inst*) level error msg-pattern args marker-names nil))))
+     (when-debug (println [:slf4j/legacy-log-call (sig-level level) logger-name]))
+     (normalized-log! logger-name level (enc/now-inst*) error msg-pattern args marker-names nil))))
 
 (comment
-  (def ^org.slf4j.Logger sl (org.slf4j.LoggerFactory/getLogger "MySlfLogger"))
+  (def ^org.slf4j.Logger sl (org.slf4j.LoggerFactory/getLogger "my.class"))
   (impl/with-signal (->          sl  (.info "Hello {}" "x")))
   (impl/with-signal (-> (.atInfo sl) (.log  "Hello {}" "x")))
 
@@ -182,7 +180,7 @@
   "Returns {:keys [present? sending->telemere? telemere-receiving?]}."
   []
   (let [^org.slf4j.Logger sl
-        (org.slf4j.LoggerFactory/getLogger  "IntakeTestTelemereLogger")
+        (org.slf4j.LoggerFactory/getLogger   "IntakeTestTelemereLogger")
         sending? (instance? com.taoensso.telemere.slf4j.TelemereLogger sl)
         receiving?
         (and sending?

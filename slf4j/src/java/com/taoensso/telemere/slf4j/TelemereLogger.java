@@ -49,30 +49,30 @@ public class TelemereLogger extends LegacyAbstractLogger implements LoggingEvent
     }
 
     private static IFn logFn;
-    private static IFn isLevelEnabledFn;
+    private static IFn isAllowedFn;
 
     static void init() {
-	IFn requireFn =    Clojure.var("clojure.core", "require");
-	requireFn.invoke( Clojure.read("taoensso.telemere.slf4j"));
-	logFn =            Clojure.var("taoensso.telemere.slf4j", "log!");
-	isLevelEnabledFn = Clojure.var("taoensso.telemere.slf4j", "allowed?");
+	IFn requireFn =   Clojure.var("clojure.core", "require");
+	requireFn.invoke(Clojure.read("taoensso.telemere.slf4j"));
+	isAllowedFn =     Clojure.var("taoensso.telemere.slf4j", "allowed?");
+	logFn =           Clojure.var("taoensso.telemere.slf4j", "log!");
     }
 
     protected TelemereLogger(String name) { this.name = name; }
 
-    protected boolean isLevelEnabled(Level level) { return (boolean) isLevelEnabledFn.invoke(level);       }
-    public    boolean isTraceEnabled()            { return (boolean) isLevelEnabledFn.invoke(Level.TRACE); }
-    public    boolean isDebugEnabled()            { return (boolean) isLevelEnabledFn.invoke(Level.DEBUG); }
-    public    boolean  isInfoEnabled()            { return (boolean) isLevelEnabledFn.invoke(Level.INFO);  }
-    public    boolean  isWarnEnabled()            { return (boolean) isLevelEnabledFn.invoke(Level.WARN);  }
-    public    boolean isErrorEnabled()            { return (boolean) isLevelEnabledFn.invoke(Level.ERROR); }
+    protected boolean isLevelEnabled(Level level) { return (boolean) isAllowedFn.invoke(this.name, level);       }
+    public    boolean isTraceEnabled()            { return (boolean) isAllowedFn.invoke(this.name, Level.TRACE); }
+    public    boolean isDebugEnabled()            { return (boolean) isAllowedFn.invoke(this.name, Level.DEBUG); }
+    public    boolean  isInfoEnabled()            { return (boolean) isAllowedFn.invoke(this.name, Level.INFO);  }
+    public    boolean  isWarnEnabled()            { return (boolean) isAllowedFn.invoke(this.name, Level.WARN);  }
+    public    boolean isErrorEnabled()            { return (boolean) isAllowedFn.invoke(this.name, Level.ERROR); }
 
-    public void log(LoggingEvent event) { logFn.invoke(event); } // Fluent (modern) API, called after level check
+    public void log(LoggingEvent event) { logFn.invoke(this.name, event); } // Fluent (modern) API, called after level check
 
     @Override protected String getFullyQualifiedCallerName() { return null; }
     @Override
     protected void handleNormalizedLoggingCall(Level level, Marker marker, String messagePattern, Object[] arguments, Throwable throwable) {
-	logFn.invoke(level, throwable, messagePattern, arguments, marker); // Legacy API, called after level check
+	logFn.invoke(this.name, level, throwable, messagePattern, arguments, marker); // Legacy API, called after level check
     }
 
 }
