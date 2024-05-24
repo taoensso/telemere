@@ -9,7 +9,7 @@ This project uses [**Break Versioning**](https://www.taoensso.com/break-versioni
 
 This is a **pre-release** intended for **early adopters** and those who'd like to give feedback. New betas will be released frequently, while I continue to fix issues and make other improvements/additions.
 
-The included handlers and utils are **still undergoing changes**, though the signal creator API (and signal content) should already be mostly stable.
+The included handlers and utils are **still undergoing changes**, though the [signal creator](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-creators) and [signal content](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content) APIs should already be mostly stable.
 
 Please **report any unexpected problems** on [GitHub](https://github.com/taoensso/telemere/issues) or the [Slack channel](https://www.taoensso.com/telemere/slack), thank you! 🙏 
 

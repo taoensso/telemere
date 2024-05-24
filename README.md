@@ -38,19 +38,19 @@ See [here][GitHub releases] for earlier releases.
 
 - Hyper-optimized and **blazing fast**, see [benchmarks](#benchmarks).
 - An API that **scales comfortably** from the smallest disposable code, to the most massive and complex real-world production environments.
+- Auto [handler stats](https://cljdoc.org/d/com.taoensso/telemere/1.0.0-beta13/api/taoensso.telemere#get-handlers-stats) for debugging performance and other issues at scale.
 
 #### Flexibility
 
 - Config via plain **Clojure vals and fns** for easy customization, composition, and REPL debugging.
-- Unmatched **environmental config** support (JVM properties, environment variables, or classpath resources).
-- Expressive **per-call** and **per-handler** filtering at both **runtime** and **compile-time**.
-- Filter by namespace and id pattern, level, **level by namespace pattern**, etc.
-- **Sampling**, **rate-limiting**, and **back-pressure monitoring**.
-- **Fully configurable a/sync dispatch** (blocking, dropping, sliding, etc.).
+- Unmatched [environmental config](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:environmental-config) support: JVM properties, environment variables, or classpath resources. Per platform, or cross-platform.
+- Unmatched [filtering](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters) support: by namespace, id pattern, level, level by namespace pattern, etc. At runtime and compile-time.
+- Fully [configurable](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) **a/sync dispatch support**: blocking, dropping, sliding, etc.
+- Turn-key **sampling**, **rate-limiting**, and **back-pressure monitoring** with sensible defaults.
 
 ## Video demo
 
-See for intro and usage:
+See for intro and basic usage:
 
 <a href="https://www.youtube.com/watch?v=-L9irDG8ysM" target="_blank">
  <img src="https://img.youtube.com/vi/-L9irDG8ysM/maxresdefault.jpg" alt="Telemere demo video" width="480" border="0" />
@@ -169,20 +169,20 @@ See [here](../../wiki/4-Handlers) for more/upcoming handlers, community handlers
 
 Telemere is **highly optimized** and offers terrific performance at any scale:
 
-| Compile-time filtering? | Runtime filtering? | Time? | Trace? | nsecs
-| :-: | :-: | :-: | :-: | --:
-| ✓ (elide) | - | - | - | 0
-| - | ✓ | - | - | 200
-| - | ✓ | ✓ | - | 280
-| - | ✓ | ✓ | ✓ | 650
+| Compile-time filtering? | Runtime filtering? | Time? | Trace? | nsecs |
+| :---------------------: | :----------------: | :---: | :----: | ----: |
+|        ✓ (elide)        |         -          |   -   |   -    |     0 |
+|            -            |         ✓          |   -   |   -    |   200 |
+|            -            |         ✓          |   ✓   |   -    |   280 |
+|            -            |         ✓          |   ✓   |   ✓    |   650 |
 
 Measurements:
 
 - Are **~nanoseconds per signal call** (= milliseconds per 1e6 calls)
-- Exclude handler runtime (which depends on handler/s, is usually async)
+- Exclude [handler runtime](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-handlers-stats) (which depends on handler/s, is usually async)
 - Taken on a 2020 Macbook Pro M1, running OpenJDK 21
 
-**Tip**: Telemere offers extensive per-call and per-handler **filtering**, **sampling**, and **rate-limiting**. Use these to ensure that you're not capturing useless/low-value information in production. See [here](../../wiki/7-Tips) for more tips!
+**Tip**: Telemere offers extensive [filtering](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters) support - including dead-easy per-signal and per-handler **sampling** and **rate-limiting**. Use these to ensure that you're not capturing useless/low-value information in production. See [here](../../wiki/7-Tips) for more tips!
 
 ## Funding
 
