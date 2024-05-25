@@ -30,7 +30,7 @@ See [here][GitHub releases] for earlier releases.
 
 #### Interop
 
-- 1st-class **out-the-box interop** with [SLF4J v2](https://www.slf4j.org/), [clojure.tools.logging](https://github.com/clojure/tools.logging), [OpenTelemetry](https://opentelemetry.io/), and [Tufte](https://www.taoensso.com/tufte).
+- 1st-class **out-the-box interop** with [SLF4J v2](https://www.slf4j.org/), [tools.logging](https://github.com/clojure/tools.logging), [OpenTelemetry](https://opentelemetry.io/), and [Tufte](https://www.taoensso.com/tufte).
 - Included [shim](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.timbre) for easy/gradual [migration from Timbre](../../wiki/5-Migrating).
 - Extensive set of [handlers](../../wiki/4-Handlers#included-handlers) included out-the-box.
 

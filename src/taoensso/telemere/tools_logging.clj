@@ -1,6 +1,12 @@
 (ns taoensso.telemere.tools-logging
-  "Intake support for `clojure.tools.logging` -> Telemere.
-  Telemere will attempt to load this ns automatically when possible."
+  "Intake support for `tools.logging` -> Telemere.
+  Telemere will attempt to load this ns automatically when possible.
+
+  Naming conventions:
+    `tools.logging`         - For referring to the library.
+    `tools-logging`         - For symbols, keywords, and this namespace.
+    `clojure.tools.logging` - For env config to match library's conventions."
+
   (:require
    [taoensso.encore        :as enc :refer [have have?]]
    [taoensso.telemere.impl :as impl]
@@ -12,7 +18,7 @@
 
   clojure.tools.logging.impl/Logger
   (enabled? [_ level]
-    (when-debug (println [:tools.logger/enabled? logger-ns level]))
+    (when-debug (println [:tools-logging/enabled? logger-ns level]))
     (impl/signal-allowed?
       {:location nil
        :kind     :log
@@ -20,7 +26,7 @@
        :level    level}))
 
   (write! [_ level throwable message]
-    (when-debug (println [:tools.logger/write! logger-ns level]))
+    (when-debug (println [:tools-logging/write! logger-ns level]))
     (impl/signal!
       {:allow?   true ; Pre-filtered by `enabled?` call
        :location nil
@@ -37,7 +43,8 @@
   (get-logger [_ logger-ns] (TelemereLogger. (str logger-ns))))
 
 (defn tools-logging->telemere!
-  "Configures `clojure.tools.logging` to use Telemere as its logging implementation.
+  "Configures `tools.logging` to use Telemere as its logging
+  implementation (backend).
 
   Called automatically if one of the following is \"true\":
           JVM property: `clojure.tools.logging.to-telemere`
@@ -47,15 +54,15 @@
   (impl/signal!
     {:kind  :event
      :level :info
-     :id    :taoensso.telemere/clojure.tools.logging->telemere!
-     :msg   "Enabling intake: `clojure.tools.logging` -> Telemere"})
+     :id    :taoensso.telemere/tools-logging->telemere!
+     :msg   "Enabling intake: `tools.logging` -> Telemere"})
 
   (alter-var-root #'clojure.tools.logging/*logger-factory*
     (fn [_] (TelemereLoggerFactory.))))
 
 (defn tools-logging->telemere?
-  "Returns true iff `clojure.tools.logging` is configured to use Telemere
-  as its logging implementation."
+  "Returns true iff `tools.logging` is configured to use Telemere
+  as its logging implementation (backend)."
   []
   (when-let [lf clojure.tools.logging/*logger-factory*]
     (instance? TelemereLoggerFactory lf)))
@@ -68,7 +75,7 @@
   (let [sending? (tools-logging->telemere?)
         receiving?
         (and sending?
-          (impl/test-intake! "`clojure.tools.logging` -> Telemere"
+          (impl/test-intake! "`tools.logging` -> Telemere"
             #(clojure.tools.logging/info %)))]
 
     {:present?            true

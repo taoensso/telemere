@@ -580,7 +580,7 @@
 
 #?(:clj
    (deftest _intake
-     [(testing "`clojure.tools.logging` -> Telemere"
+     [(testing "`tools.logging` -> Telemere"
         [(is (sm? (tel/check-intakes) {:tools-logging {:present? true, :sending->telemere? true, :telemere-receiving? true}}))
 
          (is (sm? (with-sig (ctl/info "Hello" "x" "y")) {:level :info, :location nil, :ns nil, :kind :log, :id :taoensso.telemere/tools-logging, :msg_ "Hello x y", :inst pinst?}))

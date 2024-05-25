@@ -22,13 +22,13 @@ See section [4-Handlers](./4-Handlers).
 
 # Interop
 
-## clojure.tools.logging
+## tools.logging
 
-[`clojure.tools.logging`](https://github.com/clojure/tools.logging) can use Telemere as its logging implementation.
+[`tools.logging`](https://github.com/clojure/tools.logging) can use Telemere as its logging implementation (backend).
 
 To do this:
 
-1. Ensure that you have the `clojure.tools.logging` dependency, and
+1. Ensure that you have the `tools.logging` dependency, and
 2. Call [`tools-logging->telemere!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.tools-logging#tools-logging-%3Etelemere!), or set the relevant environmental config as described in its docstring.
 
 Verify successful intake with [`check-intakes`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#check-intakes):

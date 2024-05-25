@@ -700,7 +700,7 @@
 
 #?(:clj
    (defmacro signal-allowed?
-     "Used only for intake (SLF4J, `clojure.tools.logging`, etc.)."
+     "Used only for intake (SLF4J, `tools.logging`, etc.)."
      {:arglists (signal-arglists :signal!)}
      [opts]
      (let [{:keys [#_expansion-id #_location elide? allow?]}
