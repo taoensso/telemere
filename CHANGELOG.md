@@ -2,9 +2,9 @@ This project uses [**Break Versioning**](https://www.taoensso.com/break-versioni
 
 ---
 
-# `v1.0.0-beta13` (2024-05-23)
+# `v1.0.0-beta14` (2024-05-25)
 
-> **Dep/s**: [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta13) and [Telemere SLF4J provider](https://clojars.org/com.taoensso/slf4j-telemere/versions/1.0.0-beta13) are on Clojars.  
+> **Dep/s**: [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta14) and [Telemere SLF4J provider](https://clojars.org/com.taoensso/slf4j-telemere/versions/1.0.0-beta14) are on Clojars.  
 > **Versioning**: Telemere uses [Break Versioning](https://www.taoensso.com/break-versioning).
 
 This is a **pre-release** intended for **early adopters** and those who'd like to give feedback. New betas will be released frequently, while I continue to fix issues and make other improvements/additions.
@@ -17,8 +17,9 @@ Please **report any unexpected problems** on [GitHub](https://github.com/taoenss
 
 ## Recent changes
 
-* **\[mod]** Renamed `get-min-level` -> [`get-min-levels`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-min-levels) (beta13)
-* **\[mod]** Renamed `shut-down-handlers!` -> [`stop-handlers!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#stop-handlers!) (beta13)
+* **\[mod]** SLF4J and `tools.logging` signals now have a custom `:kind` and no `:id` (beta14)
+* \[mod] Renamed `get-min-level` -> [`get-min-levels`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-min-levels) (beta13)
+* \[mod] Renamed `shut-down-handlers!` -> [`stop-handlers!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#stop-handlers!) (beta13)
 * \[mod] Changed default **handler back-pressure** mechanism from `:dropping` to `:blocking` (eaiser for most users to understand and detect; override when calling [`add-handler!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#add-handler!)) (beta11)
 * \[mod] [`pr-signal-fn`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#pr-signal-fn) now takes only a **single opts map** (beta10)
 * \[mod] [User-level kvs](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options) are **no longer included by default** in handler output. `:incl-kvs?` option has been added to [`format-signal-fn`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#format-signal-fn) and [`pr-signal-fn`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#pr-signal-fn) (beta7)
@@ -29,10 +30,11 @@ Please **report any unexpected problems** on [GitHub](https://github.com/taoenss
 ## Recent additions
 
 * **\[new]** Ongoing [API](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere) and [wiki](https://github.com/taoensso/telemere/wiki) doc improvements
-* **\[new]** Added [`get-handlers-stats`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-handlers-stats) (beta13)
-* **\[new]** [`add-handler!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#add-handler!) can now specify per-handler `:drain-msecs` (beta13)
-* **\[new]** Added [`*auto-stop-handlers?*`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#*auto-stop-handlers?*) (beta13)
-* **\[new]** [`remove-handler!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#remove-handler!) now auto stops relevant handlers after removal (beta13)
+* **\[new]** SLF4J and `tools.logging` signals now have a namespace (from logger name) (beta14)
+* \[new] Added [`get-handlers-stats`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-handlers-stats) (beta13)
+* \[new] [`add-handler!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#add-handler!) can now specify per-handler `:drain-msecs` (beta13)
+* \[new] Added [`*auto-stop-handlers?*`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#*auto-stop-handlers?*) (beta13)
+* \[new] [`remove-handler!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#remove-handler!) now auto stops relevant handlers after removal (beta13)
 * \[new] [`with-handler`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#with-handler) and [`with-handler+`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#with-handler+) now auto stops relevant handlers after use (beta12)
 * \[new] (Advanced) Handler fns can now include `:dispatch-opts` metadata, useful for handler authors that want to set defaults for use by [`add-handler!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#add-handler!) (beta8)
 * \[new] Added [Slack handler](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.slack#handler:slack) (beta8)
@@ -44,7 +46,7 @@ Please **report any unexpected problems** on [GitHub](https://github.com/taoenss
 
 ## Recent fixes
 
-* **\[fix]** Don't drop signals while draining async buffer during shutdown, add tests (via Encore) (beta12, beta13)
+* \[fix] Don't drop signals while draining async buffer during shutdown, add tests (via Encore) (beta12, beta13)
 * \[fix] [`pr-signal-fn`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#pr-signal-fn) wasn't realizing delayed messages, add tests \[cf72017a] (beta11)
 * \[fix] [`pr-signal-fn`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#pr-signal-fn) broken custom pr-fn support, add tests \[e7cce0c1] (beta10)
 * \[fix] [#6] Missing root stack trace, add tests \[213c6470] (beta9)
