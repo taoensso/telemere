@@ -38,7 +38,7 @@ See [here][GitHub releases] for earlier releases.
 
 - Hyper-optimized and **blazing fast**, see [benchmarks](#benchmarks).
 - An API that **scales comfortably** from the smallest disposable code, to the most massive and complex real-world production environments.
-- Auto [handler stats](https://cljdoc.org/d/com.taoensso/telemere/1.0.0-beta13/api/taoensso.telemere#get-handlers-stats) for debugging performance and other issues at scale.
+- Auto [handler stats](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-handlers-stats) for debugging performance and other issues at scale.
 
 #### Flexibility
 
