@@ -35,7 +35,7 @@
       (let [error-signal? utils/error-signal?]
 
         (fn a-handler:console
-          ([]) ; Shut down (noop)
+          ([      ]) ; Stop => noop
           ([signal]
            (let [^java.io.Writer stream
                  (case stream
@@ -70,7 +70,7 @@
         (let [js-console-logger utils/js-console-logger]
 
           (fn a-handler:console
-            ([]) ; Shut down (noop)
+            ([      ]) ; Stop => noop
             ([signal]
              (when-let [output (output-fn signal)]
                (let [logger (js-console-logger (get signal :level))]
@@ -115,7 +115,7 @@
                  :raw-error?      true})]
 
           (fn a-handler:console-raw
-            ([]) ; Shut down (noop)
+            ([      ]) ; Stop => noop
             ([signal]
              (let [{:keys [level error]} signal
                    logger (js-console-logger level)]

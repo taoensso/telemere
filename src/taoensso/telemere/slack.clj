@@ -74,7 +74,7 @@
 
          handler-fn
          (fn a-handler:slack
-           ([]) ; Shut down (noop)
+           ([      ]) ; Stop => noop
            ([signal]
             (when-let [output (output-fn signal)]
               (slack.chat/post-message conn-opts channel-id

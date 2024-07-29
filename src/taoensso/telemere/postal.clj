@@ -107,7 +107,7 @@
 
    (let [handler-fn
          (fn a-handler:postal
-           ([]) ; Shut down (noop)
+           ([      ]) ; Stop => noop
            ([signal]
             (enc/when-let [subject (subject-fn signal)
                            body    (body-fn    signal)]
@@ -130,4 +130,5 @@
                 (when-not success?
                   (throw (ex-info "Failed to send email" result ex)))))))]
 
-     (with-meta handler-fn default-dispatch-opts))))
+     (with-meta handler-fn
+       {:dispatch-opts default-dispatch-opts}))))

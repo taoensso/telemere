@@ -162,7 +162,7 @@
           (merge-prefix-map "ctx"  (get signal :ctx))
           (merge-prefix-map "data" (get signal :data))
           (merge-prefix-map "kvs"  (get signal :kvs))
-          (enc/fast-merge attr-kvs) ; Unprefixed, undocumented
+          (enc/merge attr-kvs) ; Unprefixed, undocumented
           )]
 
     attrs-map))
@@ -217,7 +217,7 @@
 
    (let []
      (fn a-handler:open-telemetry-logger
-       ([]) ; Shut down (noop)
+       ([      ]) ; Stop => noop
        ([signal]
         (let [{:keys [ns inst level msg_]} signal
               logger    (.get logger-provider (or ns "default"))

@@ -43,7 +43,7 @@
 
    (let [sw (utils/tcp-socket-writer socket-opts)]
      (fn a-handler:tcp-socket
-       ([] (sw)) ; Shut down
+       ([      ] (sw)) ; Stop => close socket
        ([signal]
         (when-let [output (output-fn signal)]
           (sw output)))))))
@@ -95,7 +95,7 @@
      (.connect socket (InetSocketAddress. (str host) (int port)))
 
      (fn a-handler:udp-socket
-       ([] (.close socket)) ; Shut down
+       ([      ] (locking lock (.close socket))) ; Stop => close socket
        ([signal]
         (when-let [output (output-fn signal)]
           (let [ba     (enc/str->utf8-ba (str output))

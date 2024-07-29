@@ -362,7 +362,7 @@
          lock (Object.)]
 
      (fn a-handler:file
-       ([] (locking lock (fw))) ; Close writer
+       ([      ] (locking lock (fw))) ; Stop => close writer
        ([signal]
         (when-let [output (output-fn signal)]
           (let [new-interval?   (when interval      (new-interval!?))

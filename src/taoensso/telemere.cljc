@@ -42,8 +42,7 @@
 ;;;; Shared signal API
 
 (sigs/def-api
-  {:purpose  "signal"
-   :sf-arity 4
+  {:sf-arity 4
    :ct-sig-filter   impl/ct-sig-filter
    :*rt-sig-filter* impl/*rt-sig-filter*
    :*sig-handlers*  impl/*sig-handlers*})
