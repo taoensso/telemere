@@ -219,11 +219,17 @@
               severity  (level->severity level)
               msg       (force msg_)
               attrs-map (signal->attrs-map attrs-signal-key signal)
-              attrs     (as-attrs attrs-map)]
+              attrs     (as-attrs attrs-map)
 
-          (.emit
-            (doto (.logRecordBuilder logger)
-              (.setTimestamp     inst)
-              (.setSeverity      severity)
-              (.setBody          msg)
-              (.setAllAttributes attrs)))))))))
+              b (.logRecordBuilder logger)]
+
+          (.setTimestamp     b inst)
+          (.setSeverity      b severity)
+          (.setAllAttributes b attrs)
+          (when-let [body
+                     (or msg
+                       (when-let [error (get signal :error)]
+                         (str (enc/ex-type error) ": " (enc/ex-message error))))]
+            (.setBody b body))
+
+          (.emit b)))))))
