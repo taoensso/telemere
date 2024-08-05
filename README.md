@@ -13,7 +13,7 @@ It helps enable Clojure/Script systems that are **observable**, **robust**, and 
 
 ## Latest release/s
 
-- `2024-05-25` `v1.0.0-beta14`: [release info](../../releases/tag/v1.0.0-beta14) (for early adopters/feedback)
+- `2024-08-07` `v1.0.0-beta15`: [release info](../../releases/tag/v1.0.0-beta15) (for early adopters/feedback)
 
 [![Main tests][Main tests SVG]][Main tests URL]
 [![Graal tests][Graal tests SVG]][Graal tests URL]
