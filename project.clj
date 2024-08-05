@@ -8,16 +8,16 @@
    :url  "https://www.eclipse.org/legal/epl-v10.html"}
 
   :dependencies
-  [[com.taoensso/encore "3.112.0"]]
+  [[com.taoensso/encore "3.114.0"]]
 
   :test-paths ["test" #_"src"]
 
   :profiles
   {;; :default [:base :system :user :provided :dev]
    :provided {:dependencies [[org.clojure/clojurescript "1.11.132"]
-                             [org.clojure/clojure       "1.11.3"]]}
-   :c1.12    {:dependencies [[org.clojure/clojure       "1.12.0-alpha11"]]}
-   :c1.11    {:dependencies [[org.clojure/clojure       "1.11.3"]]}
+                             [org.clojure/clojure       "1.11.4"]]}
+   :c1.12    {:dependencies [[org.clojure/clojure       "1.12.0-rc1"]]}
+   :c1.11    {:dependencies [[org.clojure/clojure       "1.11.4"]]}
    :c1.10    {:dependencies [[org.clojure/clojure       "1.10.1"]]}
 
    :graal-tests
@@ -26,7 +26,7 @@
     :aot [taoensso.graal-tests]
     :uberjar-name "graal-tests.jar"
     :dependencies
-    [[org.clojure/clojure                  "1.11.2"]
+    [[org.clojure/clojure                  "1.11.4"]
      [com.github.clj-easy/graal-build-time "1.0.5"]]}
 
    :test {:aot [] #_[taoensso.telemere-tests]}
@@ -44,16 +44,16 @@
     :dependencies
     [[org.clojure/test.check             "1.1.1"]
      [org.clojure/tools.logging          "1.3.0"]
-     [org.slf4j/slf4j-api               "2.0.13"]
+     [org.slf4j/slf4j-api               "2.0.14"]
      [com.taoensso/slf4j-telemere "1.0.0-beta14"]
-     #_[org.slf4j/slf4j-simple          "2.0.13"]
-     #_[org.slf4j/slf4j-nop             "2.0.13"]
+     #_[org.slf4j/slf4j-simple          "2.0.14"]
+     #_[org.slf4j/slf4j-nop             "2.0.14"]
 
      ;;; For optional handlers
-     [io.opentelemetry/opentelemetry-api                           "1.38.0"]
-     #_[io.opentelemetry/opentelemetry-sdk-extension-autoconfigure "1.38.0"]
-     #_[io.opentelemetry/opentelemetry-exporter-otlp               "1.38.0"]
-     [metosin/jsonista       "0.3.8"]
+     [io.opentelemetry/opentelemetry-api                           "1.40.0"]
+     #_[io.opentelemetry/opentelemetry-sdk-extension-autoconfigure "1.40.0"]
+     #_[io.opentelemetry/opentelemetry-exporter-otlp               "1.40.0"]
+     [metosin/jsonista       "0.3.9"]
      [com.draines/postal     "2.0.5"]
      [org.julienxx/clj-slack "0.8.3"]]
 
