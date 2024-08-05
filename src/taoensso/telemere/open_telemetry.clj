@@ -50,19 +50,24 @@
 (defprotocol     IAttr+ (^:private attr+ [_aval akey builder]))
 (extend-protocol IAttr+
   nil                (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) "nil")) ; Like pr-edn*
-  Boolean            (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k)     v))
+  Boolean            (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k)         v))
+  String             (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k)         v))
+  java.util.UUID     (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) (str    v))) ; "d4fc65a0..."
 
-  String             (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k)     v))
-  clojure.lang.Named (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) (-> v str))) ; ":foo/bar", etc.
-  java.util.UUID     (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) (-> v str))) ; "d4fc65a0..."
+  Long               (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k)         v))
+  Integer            (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) (long   v)))
+  Short              (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) (long   v)))
+  Byte               (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) (long   v)))
+  Double             (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k)         v))
+  Float              (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) (double v)))
+  Number             (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) (double v)))
 
-  Long               (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k)     v))
-  Integer            (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) (-> v long)))
-  Short              (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) (-> v long)))
-  Byte               (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) (-> v long)))
-  Double             (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k)     v))
-  Float              (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) (-> v double)))
-  Number             (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) (-> v double)))
+  clojure.lang.Named
+  (attr+ [v k ^AttributesBuilder b]
+    (.put b (attr-name k)
+      #_(str v)                                                       ; ":foo/bar", etc.
+      (let [n (name v)] (if-let [ns (namespace v)] (str ns "/" n) n)) ;  "foo/bar", etc.
+      ))
 
   clojure.lang.IPersistentCollection
   (attr+ [v k ^AttributesBuilder b]
@@ -233,3 +238,9 @@
             (.setBody b body))
 
           (.emit b)))))))
+
+(comment
+  (as-attrs
+    (signal->attrs-map :my-attrs
+      {:level :info :data {:ns/kw1 :v1 :ns/kw2 :v2}
+       :my-attrs {:longs [1 1 2 3] :strs ["a" "b" "c"]}})))

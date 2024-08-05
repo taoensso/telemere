@@ -917,7 +917,7 @@
                     :strings ["a" "b" "c"],
                     :map     {:k1 "v1"}}))
 
-              "{bools=[true, false, false], double=5.0, doubles=[5.0, 5.0, 5.0], keyword=\":foo/bar\", long=5, longs=[5, 5, 5], map=[[:k1 \"v1\"]], mixed=[5, \"5\", nil], nil=\"nil\", string=\"s\", strings=[\"a\", \"b\", \"c\"]}")))
+              "{bools=[true, false, false], double=5.0, doubles=[5.0, 5.0, 5.0], keyword=\"foo/bar\", long=5, longs=[5, 5, 5], map=[[:k1 \"v1\"]], mixed=[5, \"5\", nil], nil=\"nil\", string=\"s\", strings=[\"a\", \"b\", \"c\"]}")))
 
       (testing "signal->attrs-map"
         (let [attrs-map #'otel/signal->attrs-map]
