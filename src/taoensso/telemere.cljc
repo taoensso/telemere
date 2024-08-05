@@ -18,15 +18,13 @@
   #?(:cljs
      (:require-macros
       [taoensso.telemere :refer
-       [set-ctx! with-ctx with-ctx+
-        set-middleware! with-middleware
-
-        with-signal with-signals
+       [with-signal with-signals
         signal! event! log! trace! spy! catch->error!
 
         ;; Via `sigs/def-api`
         without-filters with-kind-filter with-ns-filter with-id-filter
-        with-min-level with-handler with-handler+]])))
+        with-min-level with-handler with-handler+
+        with-ctx with-ctx+ with-middleware]])))
 
 (comment
   (remove-ns 'taoensso.telemere)
@@ -82,82 +80,6 @@
   (impl/defhelp help:signal-options       :signal-options)
   (impl/defhelp help:signal-content       :signal-content)
   (impl/defhelp help:environmental-config :environmental-config))
-
-;;;; Context
-
-(enc/defonce default-ctx
-  "Default root (base) value of `*ctx*` var.
-  Defaults to `nil`, controlled by:
-    (get-env {:as :edn} :taoensso.telemere/default-ctx<.platform><.edn>)
-
-  See `get-env` for details."
-  (enc/get-env {:as :edn} :taoensso.telemere/default-ctx<.platform><.edn>))
-
-(enc/def* ^:dynamic *ctx*
-  "Dynamic context: arbitrary user-level state attached as `:ctx` to all signals.
-  Value may be any type, but is usually nil or a map.
-
-  Re/bind dynamic     value using `with-ctx`, `with-ctx+`, or `binding`.
-  Modify  root (base) value using `set-ctx!`.
-  Default root (base) value is    `default-ctx`.
-
-  Note that as with all dynamic Clojure vars, \"binding conveyance\" applies
-  when using futures, agents, etc.
-
-  Tips:
-    - Value may be (or may contain) an atom if you want mutable semantics
-    - Value may be of form {<scope-id> <data>} for custom scoping, etc."
-  default-ctx)
-
-#?(:clj
-   (defmacro set-ctx!
-     "Set `*ctx*` var's root (base) value. See `*ctx*` for details."
-     [root-ctx-val] `(enc/set-var-root! *ctx* ~root-ctx-val)))
-
-#?(:clj
-   (defmacro with-ctx
-     "Evaluates given form with given `*ctx*` value. See `*ctx*` for details."
-     [ctx-val form] `(binding [*ctx* ~ctx-val] ~form)))
-
-(comment (with-ctx "my-ctx" *ctx*))
-
-#?(:clj
-   (defmacro with-ctx+
-     "Evaluates given form with updated `*ctx*` value.
-
-     `update-map-or-fn` may be:
-       - A map to merge with    current `*ctx*` value, or
-       - A unary fn to apply to current `*ctx*` value
-
-     See `*ctx*` for details."
-     [update-map-or-fn form]
-     `(binding [*ctx* (impl/update-ctx *ctx* ~update-map-or-fn)]
-        ~form)))
-
-(comment (with-ctx {:a :A1 :b :B1} (with-ctx+ {:a :A2} *ctx*)))
-
-;;;; Signal middleware
-
-(enc/defonce ^:dynamic *middleware*
-  "Optional (fn [signal]) => ?modified-signal to apply (once) when
-  signal is created. When middleware returns nil, skips all handlers.
-
-  Compose multiple middleware fns together with `comp-middleware`.
-
-  Re/bind dynamic     value using `with-middleware`, `binding`.
-  Modify  root (base) value using `set-middleware!`."
-  nil)
-
-#?(:clj
-   (defmacro set-middleware!
-     "Set `*middleware*` var's root (base) value. See `*middleware*` for details."
-     [?root-middleware-fn] `(enc/set-var-root! *middleware* ~?root-middleware-fn)))
-
-#?(:clj
-   (defmacro with-middleware
-     "Evaluates given form with given `*middleware*` value.
-     See `*middleware*` for details."
-     [?middleware-fn form] `(binding [*middleware* ~?middleware-fn] ~form)))
 
 ;;;; Signal creators
 ;; - signal!                  [              opts] ;                 => allowed? / run result (value or throw)

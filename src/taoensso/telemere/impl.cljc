@@ -62,22 +62,6 @@
 
 (comment (enc/get-env {:as :edn, :return :explain} :taoensso.telemere/rt-filters<.platform><.edn>))
 
-;;;; Context (optional arb app-level state)
-;; taoensso.telemere/*ctx*
-
-(defn update-ctx
-  "Returns `new-ctx` given `old-ctx` and an update map or fn."
-  [old-ctx update-map-or-fn]
-  (enc/cond
-    (nil? update-map-or-fn)                   old-ctx
-    (map? update-map-or-fn) (enc/fast-merge   old-ctx update-map-or-fn) ; Before ifn
-    (ifn? update-map-or-fn) (update-map-or-fn old-ctx)
-    :else
-    (enc/unexpected-arg! update-map-or-fn
-      {:context  `update-ctx
-       :param    'update-map-or-fn
-       :expected '#{nil map fn}})))
-
 ;;;; Unique IDs (UIDs)
 
 (enc/def* nanoid-readable (enc/rand-id-fn {:chars :nanoid-readable, :len 23}))

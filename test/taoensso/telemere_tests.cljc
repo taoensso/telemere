@@ -228,22 +228,36 @@
             (is (= rv6 13)) (is (= (force (get sv6 dk)) [:n 12, :c6 15]))
             (is (= @c  16)  "6x run + 6x let (0x suppressed) + 4x data (2x suppressed)")]))))
 
+   (testing "Binding conveyance"
+     (binding [*dynamic-var* :foo]
+       (is (sm? (with-sig (sig! {:level :info, :data {:dynamic-var *dynamic-var*}})) {:data {:dynamic-var :foo}}))))
+
+   (testing "Dynamic context (`*ctx*`)"
+     (let [sv (with-sig (sig! {:level :info, :ctx "my-ctx"}))] (is (sm? sv {:ctx "my-ctx"}) "Can be set via call opt")))
+
+   (testing "Dynamic middleware (`*middleware*`)"
+     [(is (sm? (tel/with-middleware nil               (with-sig (sig! {:level :info                 })))               {:level :info                 }) "nil middleware ~ identity")
+      (is (sm? (tel/with-middleware identity          (with-sig (sig! {:level :info                 })))               {:level :info                 }) "nil middleware ~ identity")
+      (is (sm? (tel/with-middleware #(assoc % :foo 1) (with-sig (sig! {:level :info                 })))               {:level :info, :foo 1         }))
+      (is (sm? (tel/with-middleware #(assoc % :foo 1) (with-sig (sig! {:level :info, :middleware #(assoc % :foo 2)}))) {:level :info, :foo 2         }) "call > dynamic")
+      (is (sm? (tel/with-middleware #(assoc % :foo 1) (with-sig (sig! {:level :info, :middleware nil})))               {:level :info, :foo :submap/nx}) "call > dynamic")
+      (is (=   (tel/with-middleware #(do nil)         (with-sig (sig! {:level :info                 })))               nil)                             "return nil => suppress")
+      (is (sm? (tel/with-middleware #(do nil)         (with-sig (sig! {:level :info, :middleware nil})))               {:level :info})                  "call > dynamic")])
+
    (testing "Call middleware"
      (let [c               (enc/counter)
            [[rv1 _] [sv1]] (with-sigs :raw nil (sig! {:level :info, :run (c), :middleware (tel/comp-middleware #(assoc % :m1 (c)) #(assoc % :m2 (c)))}))
            [[rv2 _] [sv2]] (with-sigs :raw nil (sig! {:level :info, :run (c), :middleware (tel/comp-middleware #(assoc % :m1 (c)) #(assoc % :m2 (c))), :allow? false}))
            [[rv3 _] [sv3]] (with-sigs :raw nil (sig! {:level :info, :run (c), :middleware (tel/comp-middleware #(assoc % :m1 (c)) #(assoc % :m2 (c)))}))
-           [[rv4 _] [sv4]] (with-sigs :raw nil (sig! {:level :info,           :middleware (fn [_] "signal-value")}))]
+           [[rv4 _] [sv4]] (with-sigs :raw nil (sig! {:level :info,           :middleware (fn [_] "signal-value")}))
+           [[rv5 _] [sv5]] (with-sigs :raw nil (sig! {:level :info,           :middleware (fn [_] nil)}))]
 
        [(is (= rv1 0))    (is (sm? sv1 {:m1 1 :m2 2}))
         (is (= rv2 3))    (is (nil?    sv2))
         (is (= rv3 4))    (is (sm? sv3 {:m1 5 :m2 6}))
         (is (= rv4 true)) (is (=       sv4 "signal-value"))
+        (is (= rv5 true)) (is (nil?    sv5))
         (is (= @c  7)     "3x run + 4x middleware")]))
-
-   (testing "Binding conveyance"
-     (binding [*dynamic-var* :foo]
-       (is (sm? (with-sig (sig! {:level :info, :data {:dynamic-var *dynamic-var*}})) {:data {:dynamic-var :foo}}))))
 
    #?(:clj
       (testing "Printing"
@@ -397,17 +411,6 @@
             [(is (true? (sig! {:level :info, :my-k1 (ex1!)})))
              (is (= @sv_ :nx))
              (is (sm? @error_ {:handler-id :hid1, :error pex1?}))])])])))
-
-(deftest _ctx
-  (testing "Context (`*ctx*`)"
-    [(is (= (binding [tel/*ctx* "my-ctx"] tel/*ctx*) "my-ctx") "Supports manual `binding`")
-     (is (= (tel/with-ctx       "my-ctx"  tel/*ctx*) "my-ctx") "Supports any data type")
-
-     (is (= (tel/with-ctx "my-ctx1"       (tel/with-ctx+ nil                        tel/*ctx*)) "my-ctx1")              "nil update => keep old-ctx")
-     (is (= (tel/with-ctx "my-ctx1"       (tel/with-ctx+ (fn [old] [old "my-ctx2"]) tel/*ctx*)) ["my-ctx1" "my-ctx2"])  "fn  update => apply")
-     (is (= (tel/with-ctx {:a :A1 :b :B1} (tel/with-ctx+ {:a :A2 :c :C2}            tel/*ctx*)) {:a :A2 :b :B1 :c :C2}) "map update => merge")
-
-     (let [sv (with-sig (sig! {:level :info, :ctx "my-ctx"}))] (is (sm? sv {:ctx "my-ctx"}) "Can be set via call opt"))]))
 
 (deftest _tracing
   (testing "Tracing"
