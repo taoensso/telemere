@@ -54,6 +54,7 @@
   #?(:clj enc/set-var-root!)
   #?(:clj enc/update-var-root!)
   #?(:clj enc/get-env)
+  #?(:clj enc/call-on-shutdown!)
   enc/chance
   enc/rate-limiter
   enc/newline

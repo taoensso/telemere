@@ -164,15 +164,16 @@ Both have several options, see their docstrings (links above) for details.
 
 A signal will be provided to a handler iff ALL of the following are true:
 
-  1. Signal **creation** is allowed by **compile-time** "signal filters"
-  2. Signal **creation** is allowed by **runtime** "signal filters"
-  3. Signal **handling** is allowed by **runtime** "handler filters"
-  4. Signal  **middleware** does not suppress the signal (return nil)
-  5. Handler **middleware** does not suppress the signal (return nil)
-
-All filters (1-3) may depend on (in order):
-
-  Sample rate → namespace → kind → id → level → when form/fn → rate limit
+- 1. Signal **creation** is allowed by **signal filters**:
+	- a. Compile time: sample rate, kind, ns, id, level, when form, rate limit
+	- b. Runtime: sample rate, kind, ns, id, level, when form, rate limit
+	  
+- 2. Signal **handling** is allowed by **handler filters**:
+	- a. Compile time: not applicable
+	- b. Runtime: sample rate, kind, ns, id, level, when fn, rate limit
+	  
+- 3. **Signal middleware** `(fn [signal]) => ?modified-signal` does not return nil
+- 4. **Handler middleware** `(fn [signal]) => ?modified-signal` does not return nil
 
 Quick examples of some basic filtering:
 
@@ -199,9 +200,9 @@ Telemere includes extensive internal help docstrings:
 | Var                                                                                                                                       | Help with                                                                 |
 | :---------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------ |
 | [`help:signal-creators`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-creators)                   | Creating signals                                                          |
-| [`help:signal-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options)                     | Signal options                                                            |
+| [`help:signal-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options)                     | Options when creating signals                                             |
 | [`help:signal-content`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content)                     | Signal content (map given to middleware/handlers)                         |
-| [`help:filters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters)                                   | Signal and handler filters                                                |
-| [`help:handlers`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handlers)                                 | Signal handlers                                                           |
+| [`help:filters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters)                                   | Signal filtering and transformation                                       |
+| [`help:handlers`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handlers)                                 | Signal handler management                                                 |
 | [`help:handler-dispatch-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) | Signal handler dispatch options                                           |
-| [`help:environmental-config`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:environmental-config)         | Config via JVM properties, environment variables, or classpath resources. 
+| [`help:environmental-config`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:environmental-config)         | Config via JVM properties, environment variables, or classpath resources. |

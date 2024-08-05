@@ -195,7 +195,7 @@
   Needs `opentelemetry-java`,
     Ref. <https://github.com/open-telemetry/opentelemetry-java>.
 
-  Returns a (fn handler [signal]) that:
+  Returns a signal handler that:
     - Takes a Telemere signal (map).
     - Emits the signal to `io.opentelemetry.api.logs.Logger` returned
       by given `io.opentelemetry.api.logs.LoggerProvider`.

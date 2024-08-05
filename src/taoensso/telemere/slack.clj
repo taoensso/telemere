@@ -26,7 +26,7 @@
 
   Needs `clj-slack`, Ref. <https://github.com/julienXX/clj-slack>.
 
-  Returns a (fn handler [signal]) that:
+  Returns a signal handler that:
     - Takes a Telemere signal (map).
     - Writes the signal as a string to specified Slack channel.
 
@@ -42,6 +42,7 @@
        ]
 
   Options:
+     `:output-fn` - (fn [signal]) => string, see `format-signal-fn` or `pr-signal-fn`
      `:conn-opts` - Map of connection opts given to `clj-slack.chat/post-message`
        Examples:
          {:token \"MY-TOKEN\"}
@@ -50,8 +51,6 @@
      `:post-opts` - Map of post opts given to `clj-slack.chat/post-message`
        Examples:
          {:channel-id \"C12345678\", :username \"MY_BOT\"}
-
-     `:output-fn` - (fn [signal]) => string, see `format-signal-fn` or `pr-signal-fn`
 
   Tips:
     - See `clj-slack` docs for more info on its options."

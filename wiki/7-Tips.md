@@ -108,7 +108,7 @@ Consider the [differences](https://www.youtube.com/watch?v=oyLBGkS5ICk) between 
   
   Telemere doesn't couple the presence of an error value to signal level. This can be handy, but means that you need to be clear on what constitutes an "error signal" for your use case. See also the [`error-signal?`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#error-signal) util.
   
-- Signals may contain arbitrary user-level keys.
+- Signals may contain arbitrary app-level keys.
   
   Any non-standard [options](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options) you give to a signal creator call will be added to the signal it creates:
   
@@ -117,9 +117,9 @@ Consider the [differences](https://www.youtube.com/watch?v=oyLBGkS5ICk) between 
   ;; => {:my-key "foo", :kvs {:my-key "foo", ...}, ...}
   ```
   
-  Note that all user kvs will *also* be available *together* under the signal's `:kvs` key.
+  Note that all app-level kvs will *also* be available *together* under the signal's `:kvs` key.
   
-  User kvs are typically *not* included in handler output, so are a great way of providing custom data/opts for use (only) by custom middleware or handlers.
+  App-level kvs are typically *not* included in handler output, so are a great way of providing custom data/opts for use (only) by custom middleware or handlers.
   
 - Signal `kind` can be useful in advanced cases.
   

@@ -6,20 +6,20 @@ Default signal keys:
 `:schema` ------ Int version of signal schema (current: 1)
 `:inst` -------- Platform instant [1] when signal was created
 `:level` ------- Signal level ∈ #{<int> :trace :debug :info :warn :error :fatal :report ...}
-`:kind` -------- Signal ?kind ∈ #{nil :event :error :log :trace :spy :slf4j :tools-logging <user-val> ...}
+`:kind` -------- Signal ?kind ∈ #{nil :event :error :log :trace :spy :slf4j :tools-logging <app-val> ...}
 `:id` ---------- ?id of signal          (common to all  signals created at callsite, contrast with `:uid`)
 `:uid` --------- ?id of signal instance (unique to each signal  created at callsite, contrast with  `:id`)
 
-`:msg` --------- Arb user-level message  ?str              given to signal creator
-`:data` -------- Arb user-level data     ?val (usu. a map) given to signal creator
-`:error` ------- Arb user-level platform ?error [2]        given to signal creator
+`:msg` --------- Arb app-level message  ?str              given to signal creator
+`:data` -------- Arb app-level data     ?val (usu. a map) given to signal creator
+`:error` ------- Arb app-level platform ?error [2]        given to signal creator
 
 `:run-form` ---- Unevaluated ?form given to signal creator as `:run`
 `:run-val` ----- Successful return ?val of  `:run` ?form
 `:run-nsecs` --- ?int nanosecs runtime of   `:run` ?form
 `:end-inst` ---- Platform ?instant [1] when `:run` ?form completed
 
-`:ctx` --------- ?val of `*ctx*` (arb user-level state) when signal was created
+`:ctx` --------- ?val of `*ctx*` (arb app-level state) when signal was created
 `:parent` ------ ?{:keys [id uid]} of parent signal, present in nested signals when tracing
 `:location` ---- ?{:keys [ns file line column]} signal creator callsite
 `:ns` ---------- ?str namespace of signal creator callsite, same as (:ns     location)
@@ -29,7 +29,7 @@ Default signal keys:
 `:thread` ------ (Clj only) {:keys [group name id]} thread info for thread that called signal creator
 `:sample-rate` - ?rate ∈ℝ[0,1] for combined signal AND handler sampling (0.75 => allow 75% of signals, nil => allow all)
 
-<kvs> ---------- Other arb user-level ?kvs given to signal creator. Typically NOT included
+<kvs> ---------- Other arb app-level ?kvs given to signal creator. Typically NOT included
                  in handler output, so a great way to provide custom data/opts for use
                  (only) by custom middleware/handlers.
 

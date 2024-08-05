@@ -50,6 +50,20 @@ They're focused on complementary things. When both are in use:
 - Tufte can be used for detailed performance measurement, and
 - Telemere can be used for conveying (aggregate) performance information as part of your system's general observability signals.
 
+# Does Telemere work with GraalVM?
+
+> [GraalVM](https://en.wikipedia.org/wiki/GraalVM) is a JDK alternative with ahead-of-time compilation for faster app initialization and improved runtime performance, etc.
+
+Yes, this shouldn't be a problem.
+
+# Does Telemere work with Babashka?
+
+> [Babashka](https://github.com/babashka/babashka) is a native Clojure interpreter for scripting with fast startup.
+
+Not currently, though support should be possible with a little work. The current bottleneck is a dependency on [Encore](https://github.com/taoensso/encore), though that could actually be removed (also offering benefits re: library size).
+
+If there's interest in this, please [upvote](https://github.com/taoensso/roadmap/issues/22) on my open source roadmap.
+
 # Why no format-style messages?
 
 Telemere's message API can do everything that traditional print *or* format style message builders can do but **much more flexibly** - and with pure Clojure/Script (so no arcane pattern syntax).
@@ -103,10 +117,48 @@ See section [9-Maintainers](./9-Maintainers).
 
 # How does Telemere compare to Mulog?
 
-> [Mulog](https://github.com/BrunoBonacci/mulog) is an excellent "micro-logging library" for Clojure that shares many of the same capabilities and objectives as Telemere!
+> [Mulog](https://github.com/BrunoBonacci/mulog) is an excellent "micro-logging library" for Clojure that shares many of the same capabilities and objectives as Telemere.
 
-TODO - will add a comparison here before Telemere's final release.
+Some **similarities** between Telemere and Mulog:
+
+- Both emphasize **structured data** rather than string messages
+- Both offer **tracing** to understand (nested) program flow
+- Both offer a (nested) **context** mechanism for arb application state
+- Both are **fast** and offer **async handling**
+- Both offer a variety of **handlers** and are designed for ease of use
+
+Some particular **strengths of Telemere**:
+
+- Both **Clj and Cljs support** (Mulog is Clj only)
+- Rich **filtering capabilities** (see [`help:filters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters)) incl. compile-time elision
+- Rich **dispatch control** (see [`help:handler-dispatch-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options))
+- Rich **environmental config** (see [`help:environmental-config`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:environmental-config)) for all platforms
+- Detailed **handler stats** (see [`get-handlers-stats`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-handlers-stats))
+- Extensive [in-IDE documentation](./1-Getting-started#internal-help)
+- Single **unified API** for all telemetry and traditional logging needs (see [`help:signal-creators`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-creators))
+- Lazy `:let`, `:data`, `:msg`, `:do` - evaluated only **after filtering**
+
+Some particular **strengths of Mulog** that I'm aware of:
+
+- More **established/mature**
+- Wider **range of handlers** (incl. Kafka, Kinesis, Prometheus, Zipkin, etc.)
+- More **community resources** (videos, guides, users, etc.)
+- **Smaller code** base (Telemere currently depends on [Encore](https://github.com/taoensso/encore))
+- There may be others!
+
+**My subjective thoughts**:
+
+Mulog is an awesome, well-designed library with quality documentation and a solid API. It's **absolutely worth checking out** - you may well prefer it to Telemere!
+
+The two libraries have many shared capabilities and objectives.
+
+Ultimately I wrote Telemere because:
+
+1. I have some particular needs, including very complex and large-scale applications that benefit from the kind of flexibility that Telemere offers re: filtering, dispatch, environmental config, lazy (post-filter) evaluation, etc.
+2. I have some particular tastes re: my ideal API.
+3. I wanted something that integrated particularly well with [Tufte](https://taoensso.com/tufte) and could share an identical API for filtering, handlers, etc.
+4. I wanted a modern replacement for [Timbre](https://www.taoensso.com/timbre) users that offered a superset of its functionality and easy migration path.
 
 # Other questions?
 
-Please [open a Github issue](https://github.com/taoensso/telemere/issues) or ping on Telemere's [Slack channel](https://www.taoensso.com/telemere/slack). I'll regularly update the FAQ to add common questions.
+Please [open a Github issue](https://github.com/taoensso/telemere/issues) or ping on Telemere's [Slack channel](https://www.taoensso.com/telemere/slack). I'll regularly update the FAQ to add common questions. - [Peter](https://www.taoensso.com)

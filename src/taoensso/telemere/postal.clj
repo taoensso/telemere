@@ -55,7 +55,7 @@
 
   Needs `postal`, Ref. <https://github.com/drewr/postal>.
 
-  Returns a (fn handler [signal]) that:
+  Returns a signal handler that:
     - Takes a Telemere signal (map).
     - Sends the signal as an email to specified recipient.
 

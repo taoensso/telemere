@@ -17,20 +17,19 @@
 (defn handler:tcp-socket
   "Experimental, subject to change.
 
-  Returns a (fn handler [signal]) that:
+  Returns a signal handler that:
     - Takes a Telemere signal (map).
     - Sends the signal as a string to specified TCP socket.
 
   Can output signals as human or machine-readable (edn, JSON) strings.
 
   Options:
+    `:output-fn`   - (fn [signal]) => string, see `format-signal-fn` or `pr-signal-fn`
     `:socket-opts` - {:keys [host port ssl? connect-timeout-msecs]}
       `:host`      - Destination TCP socket hostname string
       `:port`      - Destination TCP socket port     int
       `:ssl?`      - Use SSL/TLS (default false)
       `:connect-timeout-msecs` - Connection timeout (default 3000 msecs)
-
-    `:output-fn`   - (fn [signal]) => string, see `format-signal-fn` or `pr-signal-fn`
 
   Limitations:
     - Failed writes will be retried only once.
@@ -51,21 +50,22 @@
 (defn handler:udp-socket
   "Experimental, subject to change. Feedback welcome!
 
-  Returns a (fn handler [signal]) that:
+  Returns a signal handler that:
     - Takes a Telemere signal (map).
     - Sends the signal as a string to specified UDP socket.
 
   Can output signals as human or machine-readable (edn, JSON) strings.
 
   Options:
+    `:output-fn`          - (fn [signal]) => string, see `format-signal-fn` or `pr-signal-fn`
     `:socket-opts`        - {:keys [host port max-packet-bytes]}
       `:host`             - Destination UDP socket hostname string
       `:port`             - Destination UDP socket port     int
       `:max-packet-bytes` - Max packet size (in bytes) before truncating output (default 512)
 
-    `:output-fn`             - (fn [signal]) => string, see `format-signal-fn` or `pr-signal-fn`
-    `:truncation-warning-fn` - Optional (fn [{:keys [max actual signal]}]) to call whenever
-                               output is truncated. Should be appropriately rate-limited!
+    `:truncation-warning-fn`
+      Optional (fn [{:keys [max actual signal]}]) to call whenever output is truncated.
+      Should be appropriately rate-limited!
 
   Limitations:
     - Due to UDP limitations, truncates output to `max-packet-bytes`!

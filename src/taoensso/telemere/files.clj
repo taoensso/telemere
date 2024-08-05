@@ -268,7 +268,7 @@
 (defn ^:public handler:file
   "Experimental, subject to change.
 
-  Returns a (fn handler [signal]) that:
+  Returns a signal handler that:
     - Takes a Telemere signal (map).
     - Writes (appends) the signal as a string to file specified by `path`.
 

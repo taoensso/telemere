@@ -38,7 +38,7 @@ See [here][GitHub releases] for earlier releases.
 
 - Hyper-optimized and **blazing fast**, see [benchmarks](#benchmarks).
 - An API that **scales comfortably** from the smallest disposable code, to the most massive and complex real-world production environments.
-- Auto [handler stats](https://cljdoc.org/d/com.taoensso/telemere/1.0.0-beta13/api/taoensso.telemere#get-handlers-stats) for debugging performance and other issues at scale.
+- Auto [handler stats](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-handlers-stats) for debugging performance and other issues at scale.
 
 #### Flexibility
 
@@ -47,6 +47,8 @@ See [here][GitHub releases] for earlier releases.
 - Unmatched [filtering](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters) support: by namespace, id pattern, level, level by namespace pattern, etc. At runtime and compile-time.
 - Fully [configurable](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) **a/sync dispatch support**: blocking, dropping, sliding, etc.
 - Turn-key **sampling**, **rate-limiting**, and **back-pressure monitoring** with sensible defaults.
+
+> A comparison to the excellent [Mulog](https://github.com/BrunoBonacci/mulog) micro-logging library is provided [here](../../wiki/6-FAQ#how-does-telemere-compare-to-mulog).
 
 ## Video demo
 
@@ -66,11 +68,11 @@ See for intro and basic usage:
 ;; 2024-04-11T10:54:57.202869Z INFO LOG Schrebermann.local examples(56,1) ::my-id - My message
 ;;    data: {:x1 :x2}
 
-(t/log! "This will send a `:log` signal to the Clj/s console")
+(t/log!       "This will send a `:log` signal to the Clj/s console")
 (t/log! :info "This will do the same, but only when the current level is >= `:info`")
 
-;; Easily construct messages
-(let [x "constructed"] (t/log! :info ["Here's a" x "message!"]))
+;; Easily construct messages from parts
+(t/log! :info ["Here's a" "joined" "message!"])
 
 ;; Attach an id
 (t/log! {:level :info, :id ::my-id} "This signal has an id")
@@ -82,8 +84,8 @@ See for intro and basic usage:
 (t/with-signal (t/log! "This will be captured"))
 ;; => {:keys [location level id data msg_ ...]}
 
-;; `:let` bindings available to `:data` and message, only paid for
-;; when allowed by minimum level and other filtering criteria
+;; `:let` bindings are available to `:data` and message, but only paid
+;; for when allowed by minimum level and other filtering criteria
 (t/log!
   {:level :info
    :let [expensive-metric1 (last (for [x (range 100), y (range 100)] (* x y)))]
@@ -96,19 +98,49 @@ See for intro and basic usage:
    :rate-limit  {"1 per sec" [1 1000]}}
   "This signal will be sampled and rate limited")
 
-;;; A quick taste of filtering...
+;; There are several signal creators available for convenience.
+;; All support the same options but each offer's a calling API
+;; optimized for a particular use case. Compare:
 
-(t/set-ns-filter! {:disallow "taoensso.*" :allow "taoensso.sente.*"}) ; Set namespace filter
-(t/set-id-filter! {:allow #{::my-particular-id "my-app/*"}})          ; Set id        filter
+;; `log!` - [msg] or [level-or-opts msg]
+(t/with-signal (t/log! {:level :info, :id ::my-id} "Hi!"))
 
-(t/set-min-level!       :warn) ; Set minimum level
-(t/set-min-level! :log :debug) ; Set minimul level for `:log` signals
+;; `event!` - [id] or [id level-or-opts]
+(t/with-signal (t/event! ::my-id {:level :info, :msg "Hi!"}))
 
-;; Set minimum level for `:event` signals originating in the "taoensso.sente.*" ns
+;; `signal!` - [opts]
+(t/with-signal (t/signal! {:level :info, :id ::my-id, :msg "Hi!"}))
+
+;; See `t/help:signal-creators` docstring for more
+
+;;; A quick taste of filtering
+
+(t/set-ns-filter! {:disallow "taoensso.*" :allow "taoensso.sente.*"})
+(t/set-id-filter! {:allow #{::my-particular-id "my-app/*"}})
+
+(t/set-min-level!       :warn) ; Set minimum level for all    signals
+(t/set-min-level! :log :debug) ; Set minimul level for `log!` signals
+
+;; Set minimum level for `event!` signals originating in
+;; the "taoensso.sente.*" ns
 (t/set-min-level! :event "taoensso.sente.*" :warn)
+
+;; See `t/help:filters` docstring for more
+
+;;; Use middleware to transform signals and/or filter signals
+;;; by signal data/content/etc.
+
+(t/set-middleware!
+  (fn [signal]
+    (if (get-in signal [:data :hide-me?])
+      nil ; Suppress signal (don't handle)
+      (assoc signal :passed-through-middleware? true))))
+
+(t/with-signal (t/event! ::my-id {:data {:hide-me? true}}))  ; => nil
+(t/with-signal (t/event! ::my-id {:data {:hide-me? false}})) ; => {...}
 ```
 
-See [examples.cljc](https://github.com/taoensso/telemere/blob/master/examples.cljc) for more REPL-ready snippets.
+See [examples.cljc](https://github.com/taoensso/telemere/blob/master/examples.cljc) for more REPL-ready snippets!
 
 ## API overview
 
@@ -128,15 +160,15 @@ See relevant docstrings (links below) for usage info-
 
 ### Internal help
 
-Help is available without leaving your IDE:
+Detailed help is available without leaving your IDE:
 
 | Var                                                                                                                                       | Help with                                                                 |
 | :---------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------ |
 | [`help:signal-creators`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-creators)                   | Creating signals                                                          |
-| [`help:signal-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options)                     | Signal options                                                            |
+| [`help:signal-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options)                     | Options when creating signals                                             |
 | [`help:signal-content`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content)                     | Signal content (map given to middleware/handlers)                         |
-| [`help:filters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters)                                   | Signal and handler filters                                                |
-| [`help:handlers`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handlers)                                 | Signal handlers                                                           |
+| [`help:filters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters)                                   | Signal filtering and transformation                                       |
+| [`help:handlers`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handlers)                                 | Signal handler management                                                 |
 | [`help:handler-dispatch-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) | Signal handler dispatch options                                           |
 | [`help:environmental-config`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:environmental-config)         | Config via JVM properties, environment variables, or classpath resources. |
 

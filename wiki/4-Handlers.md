@@ -1,14 +1,12 @@
 Signal handlers process created signals to **do something with them** (analyse them, write them to console/file/queue/db, etc.).
 
+Telemere includes a number of signal handlers out-the-box, and more may be available via the [community](./8-Community#handlers).
+
+You can also easily [write your own handlers](#writing-handlers) for any output or integration you need.
+
 # Included handlers
 
-Telemere includes a number of signal handlers out-the-box.
-
-[Writing your own handlers](#writing-handlers) is also often straight-forward, and [PRs](https://github.com/taoensso/telemere/pulls) are **very welcome** for additions to Telemere's included handlers, or to Telemere's [community resources](./8-Community).
-
-It helps to know what people need! You can [vote on](https://www.taoensso.com/roadmap/vote) additional handlers to add, [ping me](https://github.com/taoensso/telemere/issues), or ask on the [`#telemere` Slack channel](https://www.taoensso.com/telemere/slack). 
-
-Current handlers, alphabetically (see linked docstrings below for features and usage):
+Alphabetically (see linked docstrings below for features and usage):
 
 | Name                                                                                                                                                     | Platform | Output target                                                                                                  | Output format                                                                                                                                                                                                    |
 | :------------------------------------------------------------------------------------------------------------------------------------------------------- | :------- | :------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -29,6 +27,8 @@ Planned (upcoming) handlers:
 | [`handler:carmine`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.carmine#handler:carmine)    | Clj      | [Redis](https://redis.io/) (via [Carmine](https://www.taoensso.com/carmine)) | [Serialized](https://taoensso.com/nippy) signals |
 | [`handler:logstash`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.logstash#handler:logstash) | Clj      | [Logstash](https://www.elastic.co/logstash)                                  | TODO                                             |
 
+It helps to know what people need! You can [vote on](https://www.taoensso.com/roadmap/vote) additional handlers to add, [ping me](https://github.com/taoensso/telemere/issues), or ask on the [`#telemere` Slack channel](https://www.taoensso.com/telemere/slack). 
+
 # Configuring handlers
 
 There's two kinds of config relevant to all signal handlers:
@@ -42,7 +42,7 @@ Handler dispatch opts includes dispatch priority (determines order in which hand
 
 See [`help:handler-dispatch-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) for full info, and [`default-handler-dispatch-opts`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#default-handler-dispatch-opts) for defaults.
 
-Note that handler middleware in particular is an often overlooked but powerful feature, allowing you to arbitrarily transform and/or filter every [signal map](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content) before it is given to the handler.
+Note that handler middleware in particular is an often overlooked but powerful feature, allowing you to arbitrarily transform and/or filter every [signal map](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content) before it is given to each handler.
 
 ## Handler-specific opts
 
@@ -68,7 +68,7 @@ By default it writes formatted strings intended for human consumption:
 (def my-handler (t/handler:console))
 
 ;; Test handler, remember it's just a (fn [signal])
-(my-handler my-signal) ; =>
+(my-handler my-signal) ; %>
 ;; 2024-04-11T10:54:57.202869Z INFO LOG Schrebermann.local examples(56,1) ::my-id - My message
 ;;     data: {:x1 :x2}
 ```
@@ -81,7 +81,7 @@ To instead writes signals as edn:
   (t/handler:console
     {:output-fn (t/pr-signal-fn {:pr-fn :edn})}))
 
-(my-handler my-signal) ; =>
+(my-handler my-signal) ; %>
 ;; {:inst #inst "2024-04-11T10:54:57.202869Z", :msg_ "My message", :ns "examples", ...}
 ```
 
@@ -97,15 +97,18 @@ To instead writes signals as JSON:
        {:pr-fn
         #?(:cljs :json
            :clj  jsonista.core/write-value-as-string)})}))
+
+(my-handler my-signal) ; %>
+;; {"inst":"2024-04-11T10:54:57.202869Z","msg_":"My message","ns":"examples", ...}
 ```
 
 Note that when writing JSON with Clojure, you *must* provide an appropriate `pr-fn`. This lets you plug in the JSON serializer of your choice ([jsonista](https://github.com/metosin/jsonista) is my default recommendation).
 
 ### Handler-specific per-signal kvs
 
-Telemere includes a handy mechanism for including arbitrary user-level data/opts in individual signals for use by custom middleware and/or handlers.
+Telemere includes a handy mechanism for including arbitrary app-level data/opts in individual signals for use by custom middleware and/or handlers.
 
-Any *non-standard* (user) keys you include in your signal constructor opts will automatically be included in created signals, e.g.:
+Any *non-standard* (app-level) keys you include in your signal constructor opts will automatically be included in created signals, e.g.:
 
 ```clojure
 (t/with-signal
@@ -114,20 +117,20 @@ Any *non-standard* (user) keys you include in your signal constructor opts will 
      :my-handler-data    "bar"}))
 
 ;; %>
-;; {;; User kvs included inline (assoc'd to signal root)
+;; {;; App-level kvs included inline (assoc'd to signal root)
 ;;  :my-middleware-data "foo"
 ;;  :my-handler-data    "bar"
 ;;  :kvs ; And also collected together under ":kvs" key
-;;    {:my-middleware-data "foo"
-;;     :my-handler-data    "bar"}
+;;  {:my-middleware-data "foo"
+;;   :my-handler-data    "bar"}
 ;;  ... }
 ```
 
-These user-level data/opts are typically NOT included by default in handler output, making them a great way to convey data/opts to custom middleware/handlers.
+These app-level data/opts are typically NOT included by default in handler output, making them a great way to convey data/opts to custom middleware/handlers.
 
 # Managing handlers
 
-See [`help:handlers`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-handlers) for info on handler management.
+See [`help:handlers`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-handlers) for info on signal handler management.
 
 ## Managing handlers on startup
 
@@ -135,37 +138,55 @@ Want to add or remove a particular handler when your application starts?
 
 Just make an appropriate call to [`add-handler!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#add-handler!) or [`remove-handler!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#remove-handler!).
 
-## Environmental config
+### Environmental config
 
 If you want to manage handlers **conditionally** based on **environmental config** (JVM properties, environment variables, or classpath resources) - Telemere provides the highly flexible [`get-env`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-env) util.
 
 Use this to easily define your own arbitrary cross-platform config, and make whatever conditional handler management decisions you'd like.
 
+## Stopping handlers
+
+Telemere supports complex handlers that may use internal state, buffers, etc.
+
+For this reason, you should **always manually call** [`stop-handlers!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#stop-handlers!) somewhere appropriate to give registered handlers the opportunity to flush buffers, close files, etc.
+
+The best place to do this is usually near the end of your application's `-main` or shutdown procedure, **AFTER** all other code has completed that could create signals.
+
+You can use [`call-on-shutdown!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#call-on-shutdown!) to create a JVM shutdown hook.
+
+Note that `stop-handlers!` will conveniently **block** to finish async handling of any pending signals. The max blocking time can be configured *per-handler* via the `:drain-msecs` [handler dispatch option](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) and defaults to 6 seconds.
+
 ## Handler stats
 
-By default, Telemere handlers maintain comprehensive internal info about their handling times and outcomes. See [`get-handlers-stats`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-handlers-stats) for more.
+By default, Telemere handlers maintain **comprehensive internal stats** including handling times and outcome counters.
+
+This can be **really useful** for debugging handlers, and understanding handler performance and back-pressure behaviour in practice.
+
+See [`get-handlers-stats`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-handlers-stats) for an output example, etc.
 
 # Writing handlers
 
 Writing your own signal handlers for Telemere is straightforward, and a reasonable choice if you prefer customizing behaviour that way, or want to write signals to a DB/format/service for which a ready-made handler isn't available.
 
-Remember that signals are just plain Clojure/Script [maps](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content), and handlers just plain Clojure/Script functions that do something with those maps.
-
-Here's a simple Telemere handler:
+- Signals are just plain Clojure/Script [maps](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content).
+- Handlers just plain Clojure/Script fns of 2 arities:
 
 ```clojure
-(fn my-handler [signal] (println signal))
+(defn my-basic-handler
+  ([signal] (println signal)) ; Arity-1 called when handling a signal
+  ([])                        ; Arity-0 called when stopping the handler
+  )
 ```
 
-For more complex cases, or for handlers that you want to make available for use by other folks, here's the general template that Telemere uses for all its included handlers:
+If you're making a customizable handler for use by others, it's often handy to define a handler **constructor**:
 
 ```clojure
-(defn handler:my-handler ; Note naming convention
+(defn handler:my-fancy-handler ; Note constructor naming convention
   "Needs `some-lib`, Ref. <https://github.com/example/some-lib>.
 
-  Returns a (fn handler [signal] that:
+  Returns a signal handler that:
     - Takes a Telemere signal (map).
-    - Does something with the signal.
+    - Does something useful with the signal!
 
   Options:
     `:option1` - Option description
@@ -175,41 +196,42 @@ For more complex cases, or for handlers that you want to make available for use 
     - Tip 1
     - Tip 2"
 
-  ([] (handler:my-handler nil)) ; Use default opts (when defaults viable)
+  ([] (handler:my-fancy-handler nil)) ; Use default opts (iff defaults viable)
   ([{:as constructor-opts}]
 
-   ;; Do option validation and other prep here, i.e. try to keep expensive work
-   ;; outside handler function when possible.
+   ;; Do option validation and other prep here, i.e. try to keep
+   ;; expensive work outside handler function when possible!
 
-   (let [handler-fn
-         (fn a-handler:my-handler ; Note naming convention
+   (let [handler-fn ; Fn of exactly 2 arities
+         (fn a-handler:my-fancy-handler ; Note fn naming convention
 
-           ;; Main arity, called by Telemere when handler should process given signal
-           ([signal]
-            ;; Do something with given signal (write to console/file/queue/db, etc.).
-            ;; Return value is ignored.
+           ([signal] ; Arity-1 called when handling a signal
+            ;; Do something useful with the given signal (write to
+            ;; console/file/queue/db, etc.). Return value is ignored.
             )
 
-           ;; Optional stop arity for handlers that need to close/release resources or
-           ;; otherwise finalize themselves during system shutdown, etc. Called by
-           ;; Telemere when appropriate, but ONLY IF the handler's dispatch options
-           ;; include a truthy `:needs-stopping?` value (false by default).
-           ([]
-            ;; Close/release resources, etc.
-            ))
+           ([] ; Arity-0 called when stopping the handler
+            ;; Flush buffers, close files, etc. May just noop.
+            ;; Return value is ignored.
+            ))]
 
-         ;; (Advanced) optional default handler dispatch opts,
-         ;; see `add-handler!` for full list of possible opts
-         default-dispatch-opts
-         {:min-level  :info
-          :rate-limit [[1 (enc/msecs :min 1)]]}]
+     ;; (Advanced, optional) You can use metadata to provide default
+     ;; handler dispatch options (see `help:handler-dispatch-options`)
 
-     (with-meta handler-fn default-dispatch-opts))))
+     (with-meta handler-fn
+       {:dispatch-opts
+        {:min-level  :info
+         :rate-limit
+         [[1   1000] ; Max 1  signal  per second
+          [10 60000] ; Max 10 signals per minute
+          ]}}))))
 ```
 
 - See [`help:signal-content`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content) for signal map content.
+- See [`help:handler-dispatch-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) for dispatch options.
 - See the [utils namespace](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils) for tools useful for customizing and writing signal handlers.
-- [PRs](https://github.com/taoensso/telemere/pulls) are **very welcome** for additions to Telemere's included handlers, or to Telemere's [community resources](./8-Community)
+- Feel free to [ping me](https://github.com/taoensso/telemere/issues) for assistance, or ask on the [`#telemere` Slack channel](https://www.taoensso.com/telemere/slack).
+- [PRs](https://github.com/taoensso/telemere/pulls) are **very welcome** for additions to Telemere's included handlers, or to Telemere's [community resources](./8-Community)!
 
 # Example output
 
@@ -219,7 +241,7 @@ For more complex cases, or for handlers that you want to make available for use 
 
 ## Clj console handler
 
-String output:
+[API](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console) |  string output:
 
 ```
 2024-04-11T10:54:57.202869Z INFO LOG Schrebermann.local examples(56,1) ::my-id - My message
@@ -228,18 +250,18 @@ String output:
 
 ## Cljs console handler
 
-Chrome console:
+[API](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console) |  Chrome console:
 
 <img src="https://raw.githubusercontent.com/taoensso/telemere/master/imgs/handler-output-cljs-console.png" alt="Default ClojureScript console handler output" width="640"/>
 
 ## Cljs raw console handler
 
-Chrome console, with [cljs-devtools](https://github.com/binaryage/cljs-devtools):
+[API](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console-raw) | Chrome console, with [cljs-devtools](https://github.com/binaryage/cljs-devtools):
 
 <img src="https://raw.githubusercontent.com/taoensso/telemere/master/imgs/handler-output-cljs-console-raw.png" alt="Raw ClojureScript console handler output" width="640"/>
 
 ## Clj file handler
 
-MacOS terminal:
+[API](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:file) |  MacOS terminal:
 
 <img src="https://raw.githubusercontent.com/taoensso/telemere/master/imgs/handler-output-clj-file.png" alt="Default Clojure file handler output" width="640"/>

@@ -14,7 +14,7 @@
    (defn ^:public handler:console
      "Experimental, subject to change.
 
-     Returns a (fn handler [signal]) that:
+     Returns a signal handler that:
        - Takes a Telemere signal (map).
        - Writes the signal as a string to specified stream.
 
@@ -52,7 +52,7 @@
    (defn ^:public handler:console
      "Experimental, subject to change.
 
-     If `js/console` exists, returns a (fn handler [signal]) that:
+     If `js/console` exists, returns a signal handler that:
        - Takes a Telemere signal (map).
        - Writes the signal as a string to JavaScript console.
 
@@ -89,7 +89,7 @@
    (defn ^:public handler:console-raw
      "Experimental, subject to change.
 
-     If `js/console` exists, returns a (fn handler [signal]) that:
+     If `js/console` exists, returns a signal handler that:
        - Takes a Telemere signal (map).
        - Writes the raw signal to JavaScript console.
 

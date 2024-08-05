@@ -107,14 +107,14 @@
         (get signal :error)
         (enc/identical-kw? (get signal :kind) :error)
         (case (get signal :level) (:error :fatal) true false)
-        (get signal :error?) ; User kv
+        (get signal :error?) ; Provided kv
         ))))
 
 (comment (error-signal? {:level :fatal}))
 
 (defn ^:no-doc remove-signal-kvs
   "Private, don't use.
-  Returns given signal without user-level kvs or `:kvs` key."
+  Returns given signal without app-level kvs or `:kvs` key."
   [signal]
   (if-let [kvs (get signal :kvs)]
     (reduce-kv (fn [m k _v] (dissoc m k)) (dissoc signal :kvs) kvs)
@@ -564,7 +564,7 @@
 
   Options:
     `:pr-fn`         - ∈ #{<unary-fn> :edn (default) :json (Cljs only)}
-    `:incl-kvs?`     - Include signal's user-level kvs?        (default false)
+    `:incl-kvs?`     - Include signal's app-level kvs?         (default false)
     `:incl-nils?`    - Include signal's keys with nil values?  (default false)
     `:incl-newline?` - Include terminating system newline?     (default true)
     `:incl-keys`     - Subset of signal keys to retain from those otherwise
@@ -697,7 +697,7 @@
       ((format-signal-fn)
        (tel/with-signal
          (tel/event! ::ev-id
-           {:user-k1 #{:a :b :c}
+           {:my-k1 #{:a :b :c}
             :msg   "hi"
             :data  {:a :A}
             ;; :error (ex-info "Ex2" {:k2 "v2"} (ex-info "Ex1" {:k1 "v1"}))

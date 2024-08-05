@@ -4,9 +4,9 @@ While [Timbre](https://taoensso.com/timbre) will **continue to be maintained and
 
 Telemere's functionality is a **superset of Timbre**, and offers *many* improvements including:
 
-- Significantly better performance
-- A cleaner and more flexible API
+- Improved performance
 - Better support for structured logging
+- A cleaner and more flexible API
 - Much better documentation
 - Better built-in handlers
 - Easier configuration in many cases
@@ -20,7 +20,7 @@ Migrating from Timbre to Telemere should be straightforward **unless you depend 
 
 Where Timbre uses the term "appender", Telemere uses the more general "handler". Functionally they're the same thing.
 
-Check which **Timbre appenders** you use, and whether a similar handler is [currently included](./4-Handlers#included-handlers) with Telemere or available via the [community](./8-Community).
+Check which **Timbre appenders** you use, and whether a similar handler is [currently included](./4-Handlers#included-handlers) with Telemere or available via the [community](./8-Community#handlers).
 
 If not, you may need to [write something yourself](./4-Handlers#writing-handlers).
 
