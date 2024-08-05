@@ -325,7 +325,7 @@
          >max-file-size?
          (when   max-file-size
            (let [max-file-size (long max-file-size)
-                 rl (enc/rate-limiter-once-per 2500)]
+                 rl (enc/rate-limiter-once-per 250)]
              (fn [] (and (not (rl)) (> (.length main-file) max-file-size)))))
 
          prev-timestamp_ (enc/latom nil) ; Initially nil
@@ -395,6 +395,7 @@
   (.setLastModified (utils/as-file "test/logs/app6.log")
     (enc/as-udt "1999-01-01T01:00:00.00Z"))
 
+  (let [f (utils/as-file "test/logs/app6.log")] (enc/qb 1e5 (.length f)))
   (let [hfn
         (handler:file
           {:path "test/logs/app6.log"

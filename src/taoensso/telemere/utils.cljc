@@ -219,7 +219,7 @@
                true))
 
            file-exists!
-           (let [rl (enc/rate-limiter-once-per 250)]
+           (let [rl (enc/rate-limiter-once-per 100)]
              (fn []
                (or (rl) (.exists file)
                  (throw (java.io.IOException. "File doesn't exist")))))
@@ -344,7 +344,7 @@
                true))
 
            conn-okay!
-           (let [rl (enc/rate-limiter-once-per 250)]
+           (let [rl (enc/rate-limiter-once-per 100)]
              (fn []
                (or
                  (rl)
