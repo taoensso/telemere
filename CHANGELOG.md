@@ -22,7 +22,7 @@ Latest (beta 15):
 * **\[mod]** Removed `*auto-stop-handlers?*` var
 * **\[mod]** Removed `:needs-stopping?` [handler dispatch opt](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options)
 * **\[mod]** Cljs handlers MUST now include stop (0) arity
-- **\[mod]** Users MUST now **manually call** [`stop-handlers!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#stop-handlers!)
+* **\[mod]** Users MUST now **manually call** [`stop-handlers!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#stop-handlers!)
 
 --
 
