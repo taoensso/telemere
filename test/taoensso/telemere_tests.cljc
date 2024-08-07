@@ -939,6 +939,15 @@
 (comment (def attrs-map otel/signal->attrs-map))
 
 #?(:clj
+   (defn signal->attrs* [signal]
+     (enc/map-keys str
+       (into {}
+         (.asMap ^io.opentelemetry.api.common.Attributes
+           (#'otel/signal->attrs signal))))))
+
+(comment (signal->attrs* {:level :info}))
+
+#?(:clj
    (deftest _open-telemetry
      [(testing "attr-name"
         [(is (= (#'otel/attr-name :foo)          "foo"))
@@ -949,80 +958,67 @@
          (is (= (#'otel/attr-name :x1.x2/x3-x4 :foo/bar-baz)
                "x1.x2.x3_x4.foo.bar_baz"))])
 
-      (testing "merge-prefix-map"
-        [(is (= (#'otel/merge-prefix-map nil       "pf"     nil) nil))
-         (is (= (#'otel/merge-prefix-map nil       "pf"      {}) nil))
-         (is (= (#'otel/merge-prefix-map {"a" "A"} "pf" {:a :A}) {"a" "A", "pf.a" :A}))
-         (is (= (#'otel/merge-prefix-map {}        "pf"
-                  {:a/b1 "v1" :a/b2 "v2" :nil nil, :map {:k1 "v1"}})
-
-               {"pf.a.b1" "v1", "pf.a.b2" "v2", "pf.nil" nil, "pf.map" {:k1 "v1"}}))])
-
-      (testing "as-attrs"
-        (is (= (str
-                 (#'otel/as-attrs
-                   {:string "s", :keyword :foo/bar, :long 5, :double 5.0, :nil nil,
-                    :longs   [5   5.0 5.0],
-                    :doubles [5.0 5   5],
-                    :bools   [true false nil],
-                    :mixed   [5 "5" nil],
-                    :strings ["a" "b" "c"],
-                    :map     {:k1 "v1"}}))
-
-              "{bools=[true, false, false], double=5.0, doubles=[5.0, 5.0, 5.0], keyword=\":foo/bar\", long=5, longs=[5, 5, 5], map=[[:k1 \"v1\"]], mixed=[5, \"5\", nil], nil=\"nil\", string=\"s\", strings=[\"a\", \"b\", \"c\"]}")))
-
-      (testing "signal->attrs-map"
-        (let [attrs-map #'otel/signal->attrs-map]
-          [(is (= (attrs-map nil    {                }) {"error" false}))
-           (is (= (attrs-map :attrs {:attrs {:a1 :A1}}) {"error" false, :a1 :A1}))
-           (is
-             (sm?
-               (attrs-map :attrs
-                 {:ns   "ns"
-                  :line 100
-                  :file "file"
-
-                  :error ex2
-                  :kind  :event
+      (testing "signal->attrs"
+        [(is (= (signal->attrs* {:level :info})          {"error" false, "level" "INFO"}))
+         (is (= (signal->attrs* {:level :info, :k1 :v1}) {"error" false, "level" "INFO"}) "app-level kvs excluded")
+         (is (sm?
+               (signal->attrs*
+                 {:kind  :event
                   :level :info
-                  :id    ::id1
-                  :uid   #uuid "7e9c1df6-78e4-40ac-8c5c-e2353df9ab82"
+
+                  :ns   "ns"
+                  :file "file"
+                  :line 100
+
+                  :id     ::id1
+                  :uid                           #uuid "7e9c1df6-78e4-40ac-8c5c-e2353df9ab82"
+                  :parent {:id ::parent-id1 :uid #uuid "443154cf-b6cf-47bf-b86a-8b185afee256"}
+                  :root   {:id ::root-id1   :uid #uuid "82a53b6a-b28a-4102-8025-9e735dee103c"}
 
                   :run-form    '(+ 3 2)
                   :run-val     5
                   :run-nsecs   100
                   :sample-rate 0.5
 
-                  :parent
-                  {:id  ::parent-id1
-                   :uid #uuid "443154cf-b6cf-47bf-b86a-8b185afee256"}
+                  :data
+                  {:key-kw :val-kw
+                   :num-set #{1 2 3 4 5}
+                   :mix-set #{1 2 3 4 5 "foo"}}
 
-                  :attrs {:a1 :A1}})
+                  :error ex2
+                  :otel/attrs {:a1 :A1}})
 
-               {"ns"   "ns"
-                "line" 100
+               {"kind" ":event"
+                "level" "INFO"
+
+                "ns"   "ns"
                 "file" "file"
+                "line" 100
 
-                "error" true
-                "exception.type"       'clojure.lang.ExceptionInfo
-                "exception.message"    "Ex1"
-                "exception.stacktrace" (enc/pred string?)
-                "exception.data.k1"    "v1"
+                "id"         ":taoensso.telemere-tests/id1",
+                "uid"        "7e9c1df6-78e4-40ac-8c5c-e2353df9ab82",
+                "parent.id"  ":taoensso.telemere-tests/parent-id1",
+                "parent.uid" "443154cf-b6cf-47bf-b86a-8b185afee256",
+                "root.id"    ":taoensso.telemere-tests/root-id1",
+                "root.uid"   "82a53b6a-b28a-4102-8025-9e735dee103c",
 
-                "kind"       :event
-                "level"      "INFO"
-                "id"         :taoensso.telemere-tests/id1
-                "parent.id"  :taoensso.telemere-tests/parent-id1
-                "uid"        #uuid "7e9c1df6-78e4-40ac-8c5c-e2353df9ab82"
-                "parent.uid" #uuid "443154cf-b6cf-47bf-b86a-8b185afee256"
-
-                "run.form"     '(+ 3 2)
+                "run.form"     "(+ 3 2)"
                 "run.val"      5
-                "run.val_type" 'java.lang.Long
+                "run.val_type" "java.lang.Long"
                 "run.nsecs"    100
                 "sample"       0.5
 
-                :a1 :A1}))]))]))
+                "data.key_kw"  ":val-kw",
+                "data.num_set" [1 4 3 2 5],
+                "data.mix_set" "#{\"foo\" 1 4 3 2 5}",
+
+                "error"                true
+                "exception.type"       "clojure.lang.ExceptionInfo"
+                "exception.message"    "Ex1"
+                "exception.data.k1"    "v1"
+                "exception.stacktrace" (enc/pred string?)
+
+                "a1" ":A1"}))])]))
 
 ;;;;
 

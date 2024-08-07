@@ -1,27 +1,324 @@
 (ns taoensso.telemere.open-telemetry
   "OpenTelemetry handler using `opentelemetry-java`,
-    Ref. <https://github.com/open-telemetry/opentelemetry-java>."
+    Ref. <https://github.com/open-telemetry/opentelemetry-java>,
+         <https://javadoc.io/doc/io.opentelemetry/opentelemetry-api/latest/index.html>"
   (:require
    [clojure.string  :as str]
+   [clojure.set     :as set]
    [taoensso.encore :as enc :refer [have have?]]
    [taoensso.telemere.utils :as utils]
    [taoensso.telemere.impl  :as impl]
    [taoensso.telemere       :as tel])
 
   (:import
-   [io.opentelemetry.api.logs LoggerProvider Severity]
-   [io.opentelemetry.api.common Attributes AttributesBuilder]
-   [io.opentelemetry.api GlobalOpenTelemetry]))
+   [io.opentelemetry.api.common AttributesBuilder Attributes]
+   [io.opentelemetry.api.logs  LoggerProvider Severity]
+   [io.opentelemetry.api.trace TracerProvider Tracer Span]))
 
 (comment
   (remove-ns 'taoensso.telemere.open-telemetry)
   (:api (enc/interns-overview)))
 
-;;;; Implementation
+;;;; TODO
+;; - API for `remote-span-context`, trace state, span links?
+;; - Ability to actually set (compatible) traceId, spanId?
+
+;;;; Providers
+
+(defn get-default-providers
+  "Experimental, subject to change. Feedback welcome!
+
+  Returns map with keys:
+    :logger-provider - default `io.opentelemetry.api.logs.LoggerProvider`
+    :tracer-provider - default `io.opentelemetry.api.trace.TracerProvider`
+    :via             - ∈ #{:sdk-extension-autoconfigure :global}
+
+  Uses `AutoConfiguredOpenTelemetrySdk` when possible, or
+  `GlobalOpenTelemetry` otherwise.
+
+  See the relevant `opentelemetry-java` docs for details."
+  []
+  (or
+    ;; Via SDK autoconfiguration extension (when available)
+    (enc/compile-when
+      io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk
+      (enc/catching :common
+        (let [builder (io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk/builder)
+              sdk    (.getOpenTelemetrySdk (.build builder))]
+          {:logger-provider (.getLogsBridge     sdk)
+           :tracer-provider (.getTracerProvider sdk)
+           :via :sdk-extension-autoconfigure})))
+
+    ;; Via Global (generally not recommended)
+    (let [g (io.opentelemetry.api.GlobalOpenTelemetry/get)]
+      {:logger-provider (.getLogsBridge     g)
+       :tracer-provider (.getTracerProvider g)
+       :via :global})))
+
+(def ^:no-doc default-providers_
+  (delay (get-default-providers)))
+
+(comment
+  (get-default-providers)
+  (let [{:keys [logger-provider tracer-provider]} (get-default-providers)]
+    (def ^LoggerProvider my-lp       logger-provider)
+    (def ^Tracer         my-tr (.get tracer-provider "Telemere")))
+
+  ;; Confirm that we have a real (not noop) SpanBuilder
+  (.spanBuilder my-tr "my-span"))
+
+;;;; Attributes
+
+(def ^:private ^String attr-name
+  "Returns cached OpenTelemetry-style name: `:a.b/c-d` -> \"a.b.c_d\", etc.
+  Ref. <https://opentelemetry.io/docs/specs/semconv/general/attribute-naming/>."
+  (enc/fmemoize
+    (fn self
+      ([prefix x] (str (self prefix) "." (self x)))
+      ([       x]
+       (if-not (enc/named? x)
+         (str/replace (str/lower-case (str x)) #"[-\s]" "_")
+         (if-let [ns (namespace x)]
+           (str/replace (str/lower-case (str ns "." (name x))) "-" "_")
+           (str/replace (str/lower-case             (name x))  "-" "_")))))))
+
+(comment (enc/qb 1e6 (attr-name :a.b/c-d) (attr-name :x.y/z :a.b/c-d))) ; [44.13 63.19]
+
+;; AttributeTypes: String, Long, Double, Boolean, and arrays
+(defprotocol     ^:private IAttributesBuilder (^:private -put-attr! ^AttributesBuilder [attr-val attr-name attr-builder]))
+(extend-protocol           IAttributesBuilder
+  ;; nil             (-put-attr! [v ^String k ^AttributesBuilder ab] (.put ab k     "nil"))  ; As pr-edn*
+  nil                (-put-attr! [v ^String k ^AttributesBuilder ab]       ab             )  ; Noop
+  Boolean            (-put-attr! [v ^String k ^AttributesBuilder ab] (.put ab k         v))
+  String             (-put-attr! [v ^String k ^AttributesBuilder ab] (.put ab k         v))
+  java.util.UUID     (-put-attr! [v ^String k ^AttributesBuilder ab] (.put ab k (str    v))) ; "d4fc65a0..."
+  clojure.lang.Named (-put-attr! [v ^String k ^AttributesBuilder ab] (.put ab k (str    v))) ; ":foo/bar"
+
+  Long               (-put-attr! [v ^String k ^AttributesBuilder ab] (.put ab k         v))
+  Integer            (-put-attr! [v ^String k ^AttributesBuilder ab] (.put ab k (long   v)))
+  Short              (-put-attr! [v ^String k ^AttributesBuilder ab] (.put ab k (long   v)))
+  Byte               (-put-attr! [v ^String k ^AttributesBuilder ab] (.put ab k (long   v)))
+  Double             (-put-attr! [v ^String k ^AttributesBuilder ab] (.put ab k         v))
+  Float              (-put-attr! [v ^String k ^AttributesBuilder ab] (.put ab k (double v)))
+  Number             (-put-attr! [v ^String k ^AttributesBuilder ab] (.put ab k (double v)))
+
+  clojure.lang.IPersistentCollection
+  (-put-attr! [v ^String k ^AttributesBuilder ab]
+    (when-some [v1 (if (indexed? v) (nth v 0 nil) (first v))]
+      (or
+        (cond
+          (string?  v1) (enc/catching :common (.put ab k ^"[Ljava.lang.String;" (into-array String v)))
+          (int?     v1) (enc/catching :common (.put ab k                        (long-array        v)))
+          (float?   v1) (enc/catching :common (.put ab k                        (double-array      v)))
+          (boolean? v1) (enc/catching :common (.put ab k                        (boolean-array     v))))
+
+        (when-let [^String s (enc/catching :common (enc/pr-edn* v))]
+          (.put ab k s))))
+    ab)
+
+  Object
+  (-put-attr! [v ^String k ^AttributesBuilder ab]
+    (when-let [^String s (enc/catching :common (enc/pr-edn* v))]
+      (.put ab k s))))
+
+(defmacro ^:private put-attr! [attr-builder attr-name attr-val]
+  `(-put-attr! ~attr-val ~attr-name ~attr-builder)) ; Fix arg order
+
+(defn- merge-attrs!
+  "If given a map, merges prefixed key/values (~like `into`).
+  Otherwise just puts single named value."
+  [attr-builder name-or-prefix x]
+  (if (map? x)
+    (enc/run-kv! (fn [k v] (put-attr! attr-builder (attr-name name-or-prefix k) v)) x)
+    (do                    (put-attr! attr-builder            name-or-prefix        x))))
+
+;;;; Spans
+
+(defn- remote-span-context
+  "Returns new remote `io.opentelemetry.api.trace.SpanContext`
+  for use as `start-span` parent."
+  ^io.opentelemetry.api.trace.SpanContext
+  [^String trace-id ^String span-id sampled? ?trace-state]
+  (io.opentelemetry.api.trace.SpanContext/createFromRemoteParent
+    trace-id span-id
+    (if sampled?
+      (io.opentelemetry.api.trace.TraceFlags/getSampled)
+      (io.opentelemetry.api.trace.TraceFlags/getDefault))
+
+    (enc/if-not [trace-state ?trace-state]
+      (io.opentelemetry.api.trace.TraceState/getDefault)
+      (cond
+        (map? trace-state)
+        (let [tsb (io.opentelemetry.api.trace.TraceState/builder)]
+          (enc/run-kv! (fn [k v] (.put tsb k v)) trace-state) ; NB only `a-zA-Z.-_` chars allowed
+          (.build tsb))
+
+        (instance? io.opentelemetry.api.trace.TraceState trace-state) trace-state
+        :else
+        (enc/unexpected-arg! trace-state
+          :context  `remote-span-context
+          :param    'trace-state
+          :expected '#{nil {string string} io.opentelemetry.api.trace.TraceState})))))
+
+(comment (enc/qb 1e6 (remote-span-context "c5b856d919f65e39a202bfb3034d65d8" "9740419096347616" false {"a" "A"}))) ; 111.13
+
+(def ^:private ^String span-name
+  (enc/fmemoize
+    (fn [id]
+      #_(if id (str          id) ":telemere/nil-id")
+      (if   id (enc/as-qname id)  "telemere/nil-id"))))
+
+(comment (enc/qb 1e6 (span-name :foo/bar))) ; 46.09
+
+(let [span-name span-name]
+  (defn- start-span
+    "Returns new `io.opentelemetry.api.trace.Span` with random `traceId` and `spanId`."
+    ^Span [^Tracer tracer ?id ?uid ^java.time.Instant inst ?parent]
+    (let [sb (.spanBuilder tracer (span-name ?id))]
+      (when-let [parent ?parent]
+        (cond
+          ;; Local parent span, etc.
+          (instance? Span parent)
+          (.setParent sb (.with (io.opentelemetry.context.Context/root) ^Span parent))
+
+          ;; Remote parent context, etc.
+          (instance? io.opentelemetry.api.trace.SpanContext parent)
+          (.setParent sb
+            (.with
+              (io.opentelemetry.context.Context/root)
+              (Span/wrap ^io.opentelemetry.api.trace.SpanContext parent)))
+
+          :else
+          (enc/unexpected-arg! parent
+            {:context `start-span
+             :expected
+             #{io.opentelemetry.api.trace.Span
+               io.opentelemetry.api.trace.SpanContext}})))
+
+      (when-let [uid ?uid]
+        (.setAttribute    sb "uid" (str uid)))
+      (.setStartTimestamp sb inst)
+      (.startSpan         sb))))
+
+(comment
+  (let [inst (enc/now-inst)] (enc/qb 1e6      (start-span my-tr :id1 :uid1          inst  nil))) ; 217.47
+  (start-span my-tr :id1 :uid1 (enc/now-inst) (start-span my-tr :id2 :uid2 (enc/now-inst) nil))
+  (start-span my-tr :id1 :uid1 (enc/now-inst)
+    (remote-span-context "c5b856d919f65e39a202bfb3034d65d8" "1111111111111111" false nil)))
+
+(enc/def* ^:private
+  ^io.opentelemetry.api.common.AttributeKey uid-attr-key
+  (io.opentelemetry.api.common.AttributeKey/stringKey "uid"))
+
+(defn- handle-tracing!
+  "Experimental! Takes care of relevant signal `Span` management.
+  Returns nil or `io.opentelemetry.api.trace.Span` for possible use as
+  `io.opentelemetry.api.logs.LogRecordBuilder` context.
+
+  Expect:
+    - `spans_`      - latom: {<uid> <Span_>}
+    - `end-buffer_` - latom: #{[<uid> <end-inst>]}
+    - `gc-buffer_`  - latom: #{<uid>}"
+
+  [tracer spans_ end-buffer_ gc-buffer_ signal]
+
+  ;; Notes:
+  ;; - Spans go to `SpanExporter` after `.end` call, ~random order okay
+  ;; - Span data: t1 of self, and name + id + t0 of #{self parent trace}
+  ;; - No API to directly create spans with needed data, so we ~simulate
+  ;;   typical usage
+
+  (enc/when-let
+    [root     (get signal :root) ; Tracing iff root
+     root-uid (get root   :uid)
+     :let [curr-spans (spans_)]
+     root-span
+     (force
+       (or ; Fetch/ensure Span for root
+         (get curr-spans root-uid)
+         (when-let [root-inst (get root :inst)]
+           (let    [root-id   (get root :id)]
+             (spans_ root-uid
+               (fn  [old]
+                 (or old
+                   (delay
+                     ;; TODO Support remote-span-context parent and/or span links?
+                     (start-span tracer root-id root-uid root-inst nil)))))))))]
+
+    (let [?parent-span ; May be identical to root-span
+          (when-let   [parent     (get signal :parent)]
+            (when-let [parent-uid (get parent :uid)]
+              (if (= parent-uid root-uid)
+                root-span
+                (force
+                  (or ; Fetch/ensure Span for parent
+                    (get curr-spans parent-uid)
+                    (let [{parent-id :id, parent-inst :inst} parent]
+                      (spans_ parent-uid
+                        (fn  [old]
+                          (or old
+                            (delay (start-span tracer parent-id parent-uid parent-inst root-span)))))))))))
+
+          {this-uid :uid, this-end-inst :end-inst} signal]
+
+      (enc/cond
+        ;; No end-inst => no run-form =>
+        ;; add `Event` (rather than child `Span`) to parent
+        :if-let [this-is-event? (not this-end-inst)]
+        (when-let [^Span parent-span ?parent-span]
+          (let [{this-id :id, this-inst :inst} signal
+                attrs (Attributes/of uid-attr-key (str this-uid))]
+            (.addEvent parent-span (span-name this-id) attrs ^java.time.Instant this-inst))
+          (do          parent-span))
+
+        :if-let
+        [^Span this-span
+         (if (= this-uid root-uid)
+           root-span
+           (force
+             (or ; Fetch/ensure Span for this (child)
+               (get curr-spans this-uid)
+               (let [{this-id :id, this-inst :inst} signal]
+                 (spans_ this-uid
+                   (fn  [old]
+                     (or old
+                       (delay
+                         (start-span tracer this-id this-uid this-inst
+                           (or ?parent-span root-span))))))))))]
+
+        (do
+          (if (utils/error-signal? signal)
+            (.setStatus this-span io.opentelemetry.api.trace.StatusCode/ERROR)
+            (.setStatus this-span io.opentelemetry.api.trace.StatusCode/OK))
+
+          (when-let [error (get signal :error)]
+            (when (instance? Throwable    error)
+              (.recordException this-span error)))
+
+          ;; (.end this-span this-end-inst) ; Ready for `SpanExporter`
+          (end-buffer_ (fn [old] (conj old [this-uid this-end-inst])))
+          (gc-buffer_  (fn [old] (conj old  this-uid)))
+
+          this-span)))))
+
+(comment
+  (do
+    (require '[taoensso.telemere :as t])
+    (def spans_       "{<uid> <Span_>}"      (enc/latom {}))
+    (def end-buffer_ "#{[<uid> <end-inst>]}" (enc/latom #{}))
+    (def gc-buffer_  "#{<uid>}"              (enc/latom #{}))
+    (let [[_ [s1 s2]] (t/with-signals (t/trace! ::id1 (t/trace! ::id2 "form2")))]
+      (def s1 s1)
+      (def s2 s2)))
+
+  [@gc-buffer_ @end-buffer_ @spans_]
+  (handle-tracing! my-tr spans_ end-buffer_ gc-buffer_ s1))
+
+;;;; Logging
 
 (defn- level->severity
   ^Severity [level]
-  (case level
+  (case      level
     :trace  Severity/TRACE
     :debug  Severity/DEBUG
     :info   Severity/INFO
@@ -33,220 +330,258 @@
 
 (defn- level->string
   ^String [level]
-  (case    level
-    :trace  "TRACE"
-    :debug  "DEBUG"
-    :info   "INFO"
-    :warn   "WARN"
-    :error  "ERROR"
-    :fatal  "FATAL"
-    :report "INFO4"
-    (str level)))
+  (when    level
+    (case  level
+      :trace  "TRACE"
+      :debug  "DEBUG"
+      :info   "INFO"
+      :warn   "WARN"
+      :error  "ERROR"
+      :fatal  "FATAL"
+      :report "INFO4"
+      (str level))))
 
-(def ^:private ^String attr-name
-  "Returns cached OpenTelemetry-style name: `:foo/bar-baz` -> \"foo_bar_baz\", etc.
-  Ref. <https://opentelemetry.io/docs/specs/semconv/general/attribute-naming/>."
-  (enc/fmemoize
-    (fn
-      ([prefix x] (str (attr-name prefix) "." (attr-name x))) ; For `merge-prefix-map`, etc.
-      ([       x]
-       (if-not (enc/named? x)
-         (str/replace (str/lower-case (str x)) #"[-\s]" "_")
-         (if-let [ns (namespace x)]
-           (str/replace (str/lower-case (str ns "." (name x))) "-" "_")
-           (str/replace (str/lower-case             (name x))  "-" "_")))))))
-
-(comment (enc/qb 1e6 (attr-name :x1.x2/x3-x4 :Foo/Bar-BAZ))) ; 63.6
-
-;; AttributeTypes: String, Long, Double, Boolean, and arrays
-(defprotocol     IAttr+ (^:private attr+ [_aval akey builder]))
-(extend-protocol IAttr+
-  nil                (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k)     "nil"))  ; As pr-edn*
-  Boolean            (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k)         v))
-  String             (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k)         v))
-  java.util.UUID     (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) (str    v))) ; "d4fc65a0..."
-  clojure.lang.Named (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) (str    v))) ; ":foo/bar"
-
-  Long               (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k)         v))
-  Integer            (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) (long   v)))
-  Short              (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) (long   v)))
-  Byte               (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) (long   v)))
-  Double             (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k)         v))
-  Float              (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) (double v)))
-  Number             (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) (double v)))
-
-  clojure.lang.IPersistentCollection
-  (attr+ [v k ^AttributesBuilder b]
-    (let [v1 (first v)]
-      (or
-        (cond
-          (boolean? v1) (enc/catching :common (.put b (attr-name k)                        (boolean-array     (mapv boolean     v))))
-          (int?     v1) (enc/catching :common (.put b (attr-name k)                        (long-array        (mapv long        v))))
-          (float?   v1) (enc/catching :common (.put b (attr-name k)                        (double-array      (mapv double      v)))))
-        (do                                   (.put b (attr-name k) ^"[Ljava.lang.String;" (into-array String (mapv enc/pr-edn* v)))))))
-
-  Object (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) (enc/pr-edn* v))))
-
-(defn- as-attrs
-  "Returns `io.opentelemetry.api.common.Attributes` for given map."
-  ^Attributes [m]
-  (if (empty?  m)
-    (Attributes/empty)
-    (let [builder (Attributes/builder)]
-      (enc/run-kv! (fn [k v] (attr+ v k builder)) m)
-      (.build builder))))
-
-(comment (str (as-attrs {:s "s", :kw :foo/bar, :long 5, :double 5.0, :longs [5 5 5] :nil nil})))
-
-(defn- merge-prefix-map
-  "Merges prefixed `from` into `to`."
-  [to prefix from]
-  (enc/cond
-    (map? from)
-    (reduce-kv
-      (fn [acc k v] (assoc acc (attr-name prefix k) v))
-      to from)
-
-    from (assoc to prefix from)
-    :else       to))
-
-(comment (merge-prefix-map {} "data" {:a/b1 "v1" :a/b2 "v2" :nil nil}))
-
-(defn- signal->attrs-map
-  "Returns attributes map for given signal,
+(defn- signal->attrs
+  "Returns `io.opentelemetry.api.common.Attributes` for given signal.
   Ref. <https://opentelemetry.io/docs/specs/otel/logs/data-model/>."
-  [attrs-key signal]
-  (let [attrs-map
-        (let [{:keys [ns line file, kind level id uid parent,
-                      run-form run-val run-nsecs, sample-rate]}
-              signal]
+  ^Attributes [signal]
+  (let [ab (Attributes/builder)]
+    (put-attr!    ab "error"     (utils/error-signal? signal)) ; Standard
+    ;; (put-attr! ab "host.name" (utils/hostname))             ; Standard
 
-          (enc/assoc-some nil
-            {"ns"    ns
-             "line"  line
-             "file"  file
+    (when-let [{:keys [name ip]} (get signal :host)]
+      (put-attr! ab "host.name" name) ; Standard
+      (put-attr! ab "host.ip"   ip))
 
-             "error" (utils/error-signal? signal) ; Standard key
-             "kind"  kind
-             "level" (when level (level->string level))
-             "id"    id
-             "uid"   uid
+    (when-let [level (get signal :level)]
+      (put-attr! ab "level" ; Standard
+        (level->string level)))
 
-             "run.form"     run-form
-             "run.val_type" (enc/class-sym run-val)
-             "run.val"      run-val
-             "run.nsecs"    run-nsecs
-             "sample"       sample-rate
+    (when-let [{:keys [type msg trace data]} (enc/ex-map (get signal :error))]
+      (put-attr! ab "exception.type"    type) ; Standard
+      (put-attr! ab "exception.message" msg)  ; Standard
+      (when trace
+        (put-attr! ab "exception.stacktrace"  ; Standard
+          (#'utils/format-clj-stacktrace trace)))
 
-             "parent.id"  (get parent  :id)
-             "parent.uid" (get parent :uid)}))
+      (when data (merge-attrs! ab "exception.data" data)))
 
-        attrs-map
-        (enc/if-not [{:keys [type msg data trace]} (enc/ex-map (get signal :error))]
-          attrs-map
-          (merge-prefix-map
-            (enc/assoc-some attrs-map
-              ;; 3x standard keys
-              "exception.type"       type
-              "exception.message"    msg
-              "exception.stacktrace" (when trace (#'utils/format-clj-stacktrace trace)))
-            "exception.data" data))
+    (let [{:keys [ns line file, kind id uid]} signal]
+      (put-attr! ab "ns"   ns)
+      (put-attr! ab "line" line)
+      (put-attr! ab "file" file)
 
-        kvs (get signal :kvs)
-        attr-kvs
-        (when attrs-key
-          (when-let [kvs (get signal attrs-key)]
-            (not-empty kvs)))
+      (put-attr! ab "kind" kind)
+      (put-attr! ab "id"    id)
+      (put-attr! ab "uid"  uid))
 
-        kvs
-        (if attr-kvs
-          (dissoc kvs attrs-key)
-          (do     kvs))
+    (when-let [run-form (get signal :run-form)]
+      (let [{:keys [run-val run-nsecs]} signal]
+        (put-attr! ab "run.form"     (if (nil? run-form) "nil" (str run-form)))
+        (put-attr! ab "run.val_type" (if (nil? run-val)  "nil" (.getName (class run-val))))
+        (put-attr! ab "run.val"                run-val)
+        (put-attr! ab "run.nsecs"    run-nsecs)))
 
-        attrs-map
-        (-> attrs-map
-          (merge-prefix-map "ctx"  (get signal :ctx))
-          (merge-prefix-map "data" (get signal :data))
-          (merge-prefix-map "kvs"  (get signal :kvs))
-          (enc/merge attr-kvs) ; Unprefixed, undocumented
-          )]
+    (put-attr! ab "sample" (get signal :sample-rate))
 
-    attrs-map))
+    (when-let [{:keys [id uid]} (get signal :parent)]
+      (put-attr! ab "parent.id"  id)
+      (put-attr! ab "parent.uid" uid))
 
-(defn default-logger-provider
-  "Experimental, subject to change. Feedback welcome!
+    (when-let [{:keys [id uid]} (get signal :root)]
+      (put-attr! ab "root.id"  id)
+      (put-attr! ab "root.uid" uid))
 
-  Returns `io.opentelemetry.api.logs.LoggerProvider` via:
-    `AutoConfiguredOpenTelemetrySdk` when possible, or
-    `GlobalOpenTelemetry` otherwise.
+    (when-let [ctx   (get signal :ctx)]  (merge-attrs! ab "ctx"  ctx))
+    (when-let [data  (get signal :data)] (merge-attrs! ab "data" data))
+    (when-let [attrs (get signal :otel/attrs)] ; Undocumented
+      (cond
+        (map? attrs) (enc/run-kv! (fn [k v] (put-attr! ab (attr-name k) v)) attrs) ; Unprefixed
+        (instance? Attributes attrs) (.putAll ab ^Attributes attrs)                ; Unprefixed
+        :else
+        (enc/unexpected-arg! attrs
+          {:context `signal->attrs!
+           :expected #{nil map io.opentelemetry.api.common.Attributes}})))
 
-  See the relevant `opentelemetry-java` docs for details."
-  ^LoggerProvider []
-  (or
-    ;; Without Java agent
-    (enc/compile-when
-      io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk
-      (enc/catching :common
-        (let [builder (io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk/builder)]
-          (.getSdkLoggerProvider (.getOpenTelemetrySdk (.build builder))))))
+    (.build ab)))
 
-    ;; With Java agent
-    (.getLogsBridge (GlobalOpenTelemetry/get))))
-
-;;;; Handler
+(comment
+  (enc/qb 1e6 ; 850.93
+    (signal->attrs
+      {:level :info :data {:ns/kw1 :v1 :ns/kw2 :v2}
+       :otel/attrs {:longs [1 1 2 3] :strs ["a" "b" "c"]}})))
 
 (defn handler:open-telemetry-logger
-  "Experimental, subject to change. Feedback welcome!
+  "Highly experimental, possibly buggy, and subject to change!!
+  Feedback and bug reports very welcome! Please ping me (Peter) at:
+    <https://www.taoensso.com/telemere> or
+    <https://www.taoensso.com/telemere/slack>
 
   Needs `opentelemetry-java`,
     Ref. <https://github.com/open-telemetry/opentelemetry-java>.
 
   Returns a signal handler that:
     - Takes a Telemere signal (map).
-    - Emits the signal to `io.opentelemetry.api.logs.Logger` returned
-      by given `io.opentelemetry.api.logs.LoggerProvider`.
+    - Emits signal  data to configured `io.opentelemetry.api.logs.Logger`
+    - Emits tracing data to configured `io.opentelemetry.api.logs.Tracer`
 
   Options:
-    `:logger-provider` - `io.opentelemetry.api.logs.LoggerProvider`
-      Defaults to the LoggerProvider returned by (default-logger-provider),
-      see that docstring for details."
+    `:logger-provider` - ∈ #{nil :default <io.opentelemetry.api.logs.LoggerProvider>}  [1]
+    `:tracer-provider` - ∈ #{nil :default <io.opentelemetry.api.trace.TracerProvider>} [1]
+    `:max-span-msecs`  - (Advanced) Longest tracing span to support in milliseconds
+                         (default 120 mins). If recorded spans exceed this max, emitted
+                         data will be inaccurate. Larger values use more memory.
+
+  [1] See `get-default-providers` for more info"
+
+  ;; Notes:
+  ;; - Multi-threaded handlers may see signals ~out of order
+  ;; - Sampling means that root/parent/child signals may never be handled
+  ;; - `:otel/attrs` currently undocumented
 
   ([] (handler:open-telemetry-logger nil))
-  ([{:keys
-     [^LoggerProvider logger-provider
-      attrs-signal-key ; Advanced, undocumented
-      ]
-
+  ([{:keys [logger-provider tracer-provider max-span-msecs]
      :or
-     {logger-provider (default-logger-provider)
-      attrs-signal-key :open-telemetry/attrs}}]
+     {logger-provider :default
+      tracer-provider :default
+      max-span-msecs  (enc/msecs :mins 120)}}]
 
-   (let []
+   (let [min-max-span-msecs (enc/msecs :mins 15)]
+    (when (< (long max-span-msecs) min-max-span-msecs)
+      (throw
+        (ex-info "`max-span-msecs` too small"
+          {:given max-span-msecs, :min min-max-span-msecs}))))
+
+   (let [?logger-provider (if (= logger-provider :default) (:logger-provider (force default-providers_)) logger-provider)
+         ?tracer-provider (if (= tracer-provider :default) (:tracer-provider (force default-providers_)) tracer-provider)
+         ?tracer
+         (when-let [^io.opentelemetry.api.trace.TracerProvider p ?tracer-provider]
+           (.get p "Telemere"))
+
+         ;;; Tracing state
+         root-context (when ?tracer (io.opentelemetry.context.Context/root))
+         spans_       (when ?tracer (enc/latom  {})) ; {<uid> <Span_>}
+         end-buffer1_ (when ?tracer (enc/latom #{})) ; #{[<uid> <end-inst>]}
+         sgc-buffer1_ (when ?tracer (enc/latom #{})) ; #{<uid>} ; Slow GC
+         stop-tracing!
+         (if-not ?tracer
+           (fn stop-tracing! []) ; Noop
+           (let [end-buffer2_ (enc/latom #{})
+                 sgc-buffer2_ (enc/latom #{})
+                 fgc-buffer1_ (enc/latom #{})
+                 fgc-buffer2_ (enc/latom #{})
+
+                 tmax (java.util.Timer. "autoTelemereOpenTelemetryHandlerTimerMax" (boolean :daemon))
+                 t2m  (java.util.Timer. "autoTelemereOpenTelemetryHandlerTimer2m"  (boolean :daemon))
+                 t3s  (java.util.Timer. "autoTelemereOpenTelemetryHandlerTimer3s"  (boolean :daemon))
+                 schedule!
+                 (fn [^java.util.Timer timer ^long interval-msecs f]
+                   (.schedule timer (proxy [java.util.TimerTask] [] (run [] (f)))
+                     interval-msecs interval-msecs))
+
+                 gc-spans!
+                 (fn [uids-to-gc]
+                   (when-not (empty? uids-to-gc)
+                     (let [uids-to-gc (set/intersection uids-to-gc (set (keys (spans_))))]
+                       (when-not (empty? uids-to-gc)
+                         ;; Update in small batches to minimize spans_ contention
+                         (doseq [batch (partition-all 10 uids-to-gc)]
+                           (spans_ (fn [old] (reduce dissoc old batch))))))))
+
+                 move-uids!
+                 (fn [src_ dst_]
+                   (let [drained (enc/reset-in! src_ #{})]
+                     (when-not (empty? drained)
+                       (dst_ (fn [old] (set/union old drained))))))]
+
+             ;; Notes:
+             ;; - Maintain local {<uid> <Span_>} state, creating spans as needed
+             ;; - A timer+buffer system is used to delay calling `.end` on
+             ;;   spans, allowing parents to linger in case they're handled
+             ;;   before children.
+             ;;
+             ;; Internal buffer flow:
+             ;;   1. handler->end1->end2->(end!)->fgc1->fgc2->(gc!) ; Fast GC path (span     ended)
+             ;;   2. handler                    ->sgc1->sgc2->(gc!) ; Slow GC path (span not ended)
+             ;;
+             ;; Properties:
+             ;;   - End spans 3-6   secs after trace handler ; Linger for possible out-of-order children
+             ;;   - GC  spans 2-4   mins after ending        ; '', children will noop
+             ;;   - GC  spans 90-92 mins after span first created
+             ;;     Final catch-all for spans that may have been created but
+             ;;     never ended (e.g. due to sampling or filtering).
+             ;;     => Max span runtime!
+
+             (schedule! tmax max-span-msecs ; sgc2->(gc!)
+               (fn [] (gc-spans! (enc/reset-in! sgc-buffer2_ #{}))))
+
+             (schedule! t2m (enc/msecs :mins 2)
+               (fn []
+                 (gc-spans! (enc/reset-in! fgc-buffer2_ #{})) ; fgc2->(gc!)
+                 (move-uids! fgc-buffer1_  fgc-buffer2_)      ; fgc1->fgc2
+                 (move-uids! sgc-buffer1_  sgc-buffer2_)      ; sgc1->sgc2
+                 ))
+
+             (schedule! t3s (enc/msecs :secs 3)
+               (fn []
+                 (let [drained (enc/reset-in! end-buffer2_ #{})]
+                   (when-not (empty? drained)
+
+                     ;; end2->(end!)
+                     (let [spans (spans_)]
+                       (doseq [[uid end-inst] drained]
+                         (when-let [span_ (get spans uid)]
+                           (.end ^Span (force span_) ^java.time.Instant end-inst))))
+
+                     ;; (end!)->fgc1
+                     (let [uids (into #{} (map (fn [[uid _]] uid)) drained)]
+                       (fgc-buffer1_ (fn [old] (set/union old uids))))))
+
+                 ;; end1->end2
+                 (move-uids! end-buffer1_ end-buffer2_)))
+
+             (fn stop-tracing! []
+               (loop [] (when-not (empty? (end-buffer1_)) (recur))) ; Block to drain `end1`
+               (loop [] (when-not (empty? (end-buffer2_)) (recur))) ; Block to drain `end2`
+               (.cancel t3s) (.cancel t2m) (.cancel tmax))))]
+
      (fn a-handler:open-telemetry-logger
-       ([      ]) ; Stop => noop
+       ([      ] (stop-tracing!))
        ([signal]
-        (let [{:keys [ns inst level msg_]} signal
-              logger    (.get logger-provider (or ns "default"))
-              severity  (level->severity level)
-              msg       (force msg_)
-              attrs-map (signal->attrs-map attrs-signal-key signal)
-              attrs     (as-attrs attrs-map)
+        (let [?span
+              (when-let [^io.opentelemetry.api.trace.Tracer tracer ?tracer]
+                (handle-tracing! tracer spans_ end-buffer1_ sgc-buffer1_ signal))]
 
-              b (.logRecordBuilder logger)]
+          (when-let [^io.opentelemetry.api.logs.LoggerProvider logger-provider ?logger-provider]
+            (let [{:keys [ns inst level msg_]} signal
+                  logger (.get logger-provider (or ns "default"))
+                  lrb    (.logRecordBuilder logger)]
 
-          (.setTimestamp     b inst)
-          (.setSeverity      b severity)
-          (.setAllAttributes b attrs)
-          (when-let [body
-                     (or msg
-                       (when-let [error (get signal :error)]
-                         (str (enc/ex-type error) ": " (enc/ex-message error))))]
-            (.setBody b body))
+              (.setTimestamp     lrb inst)
+              (.setSeverity      lrb (level->severity level))
+              (.setAllAttributes lrb (signal->attrs   signal))
 
-          (.emit b)))))))
+              (when-let [^Span span ?span] ; Incl. traceId, SpanId, etc.
+                (let [span-in-context (.storeInContext span root-context)]
+                  (.setContext lrb span-in-context)))
+
+              (when-let [body
+                         (or
+                           (force msg_)
+                           (when-let [error (get signal :error)]
+                             (when (instance? Throwable error)
+                               (str (enc/ex-type error) ": " (enc/ex-message error)))))]
+                (.setBody lrb body))
+
+              ;; Ready for `LogRecordExporter`
+              (.emit lrb)))))))))
 
 (comment
-  (as-attrs
-    (signal->attrs-map :my-attrs
-      {:level :info :data {:ns/kw1 :v1 :ns/kw2 :v2}
-       :my-attrs {:longs [1 1 2 3] :strs ["a" "b" "c"]}})))
+  (do
+    (require '[taoensso.telemere :as t])
+    (def h1 (handler:open-telemetry-logger))
+    (let [[_ [s1 s2]] (t/with-signals (t/trace! ::id1 (t/trace! ::id2 "form2")))]
+      (def s1 s1)
+      (def s2 s2)))
+
+  (h1 s1))

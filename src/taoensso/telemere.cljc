@@ -33,7 +33,6 @@
 (enc/assert-min-encore-version [3 115 0])
 
 ;;;; TODO
-;; - Native OpenTelemetry traces and spans
 ;; - Solution and docs for lib authors
 ;; - Add handlers: Logstash, Carmine, Datadog, Kafka
 ;; - Update Tufte  (signal API, config API, signal keys, etc.)

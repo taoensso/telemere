@@ -86,12 +86,19 @@ Verify successful intake with [`check-intakes`](https://cljdoc.org/d/com.taoenss
 
 ## OpenTelemetry
 
-Telemere can send signals as [`LogRecords`](https://opentelemetry.io/docs/specs/otel/logs/data-model/) to [OpenTelemetry](https://opentelemetry.io/).
+> **OpenTelemetry interop is experimental** - feedback very welcome!
+
+Telemere can send signals as correlated [`LogRecords`](https://opentelemetry.io/docs/specs/otel/logs/data-model/) and tracing data to configured JVM [OpenTelemetry](https://opentelemetry.io/) exporters.
 
 To do this:
 
 1. Ensure that you have the [OpenTelemetry Java](https://github.com/open-telemetry/opentelemetry-java) dependency.
-2. Use [`handler:open-telemetry-logger`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.open-telemetry#handler:open-telemetry-logger) to create an appropriately configured handler, and register it with [`add-handler!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#add-handler!).
+2. Ensure that OpenTelemetry Java and relevant exporters are [appropriately configured](https://opentelemetry.io/docs/languages/java/configuration/).
+3. Use [`handler:open-telemetry-logger`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.open-telemetry#handler:open-telemetry-logger) to create an appropriately configured handler, and register it with [`add-handler!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#add-handler!).
+
+Once registered, this handler will automatically process relevant Telemere signals to emit detailed log and trace data to your OpenTelemetry exporters.
+
+Note that aside from configuring the exporters, Telemere's OpenTelemetry interop **does not require** any use of or familiarity with the OpenTelemetry Java API or concepts. Just use Telemere as you normally would.
 
 ## Tufte
 

@@ -53,6 +53,7 @@
      [io.opentelemetry/opentelemetry-api                           "1.41.0"]
      #_[io.opentelemetry/opentelemetry-sdk-extension-autoconfigure "1.41.0"]
      #_[io.opentelemetry/opentelemetry-exporter-otlp               "1.41.0"]
+     #_[io.opentelemetry/opentelemetry-exporters-jaeger             "0.9.1"]
      [metosin/jsonista       "0.3.10"]
      [com.draines/postal     "2.0.5"]
      [org.julienxx/clj-slack "0.8.3"]]
