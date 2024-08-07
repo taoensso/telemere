@@ -134,9 +134,9 @@ Some particular **strengths of Telemere**:
 - Rich **dispatch control** (see [`help:handler-dispatch-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options))
 - Rich **environmental config** (see [`help:environmental-config`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:environmental-config)) for all platforms
 - Detailed **handler stats** (see [`get-handlers-stats`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-handlers-stats))
-- Extensive [in-IDE documentation](./1-Getting-started#internal-help)
 - Single **unified API** for all telemetry and traditional logging needs (see [`help:signal-creators`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-creators))
 - Lazy `:let`, `:data`, `:msg`, `:do` - evaluated only **after filtering**
+- Extensive [in-IDE documentation](./1-Getting-started#internal-help)
 
 Some particular **strengths of Mulog** that I'm aware of:
 
@@ -157,7 +157,7 @@ Ultimately I wrote Telemere because:
 1. I have some particular needs, including very complex and large-scale applications that benefit from the kind of flexibility that Telemere offers re: filtering, dispatch, environmental config, lazy (post-filter) evaluation, etc.
 2. I have some particular tastes re: my ideal API.
 3. I wanted something that integrated particularly well with [Tufte](https://taoensso.com/tufte) and could share an identical API for filtering, handlers, etc.
-4. I wanted a modern replacement for [Timbre](https://www.taoensso.com/timbre) users that offered a superset of its functionality and easy migration path.
+4. I wanted a modern replacement for [Timbre](https://www.taoensso.com/timbre) users that offered a superset of its functionality and an [easy migration path](./5-Migrating#from-timbre).
 
 # Other questions?
 

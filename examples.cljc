@@ -147,8 +147,8 @@
 (t/with-min-level :trace ; Override global minimum level
   (t/with-signal (t/event! ::my-id1 :debug))) ; => {:keys [inst id ...]}
 
-;; Deny all signals in matching namespaces
-(t/set-ns-filter! {:deny "some.nosy.namespace.*"})
+;; Disallow all signals in matching namespaces
+(t/set-ns-filter! {:disallow "some.nosy.namespace.*"})
 
 ;;; Configuring handlers
 

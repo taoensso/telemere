@@ -29,4 +29,4 @@ and return values), making them more/less convenient for certain use cases:
 ----------------------------------------------------------------------
 [2] See `help:signal-options` - {:keys [kind level id data ...]}
 [3] See `help:signal-content` - {:keys [kind level id data ...]}
-[4] See `help:signal-filters`  - (by ns/kind/id/level, sampling, etc.)
+[4] See `help:signal-filters` - (by ns/kind/id/level, sampling, etc.)

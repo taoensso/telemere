@@ -5,7 +5,7 @@
 
 ### Structured telemetry library for Clojure/Script
 
-**Telemere** is a next-generation replacement for [Timbre](https://www.taoensso.com/timbre). It handles **structured and traditional logging**, **tracing**, and **basic performance monitoring** with a simple unified API.
+**Telemere** is a next-generation replacement for [Timbre](https://www.taoensso.com/timbre) that offers a simple **unified API** for **structured and traditional logging**, **tracing**, and **basic performance monitoring**.
 
 It helps enable Clojure/Script systems that are **observable**, **robust**, and **debuggable** - and it represents the refinement and culmination of ideas brewing over 12+ years in [Timbre](https://www.taoensso.com/timbre), [Tufte](https://www.taoensso.com/tufte), [Truss](https://www.taoensso.com/truss), etc.
 
@@ -48,7 +48,10 @@ See [here][GitHub releases] for earlier releases.
 - Fully [configurable](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) **a/sync dispatch support**: blocking, dropping, sliding, etc.
 - Turn-key **sampling**, **rate-limiting**, and **back-pressure monitoring** with sensible defaults.
 
-> A comparison to the excellent [Mulog](https://github.com/BrunoBonacci/mulog) micro-logging library is provided [here](../../wiki/6-FAQ#how-does-telemere-compare-to-mulog).
+#### Comparisons
+
+- Telemere [compared](../../wiki/5-Migrating#from-timbre) to [Timbre](https://www.taoensso.com/timbre)
+- Telemere [compared](../../wiki/6-FAQ#how-does-telemere-compare-to-mulog) to [Mulog](https://github.com/BrunoBonacci/mulog)
 
 ## Video demo
 
@@ -193,8 +196,9 @@ See [here](../../wiki/4-Handlers) for more/upcoming handlers, community handlers
 ## Documentation
 
 - [Wiki][GitHub wiki] (getting started, usage, etc.)
-- API reference: [cljdoc][cljdoc docs] or [Codox][Codox docs]
-- Support: [Slack channel][] or [GitHub issues][]
+- API reference via [cljdoc][cljdoc docs] or [Codox][Codox docs]
+- Extensive [internal help](#internal-help) (no need to leave your IDE)
+- Support via [Slack channel][] or [GitHub issues][]
 - [General observability tips](../../wiki/7-Tips) (advice on building and maintaining observable Clojure/Script systems, and getting the most out of Telemere)
 
 ## Benchmarks
