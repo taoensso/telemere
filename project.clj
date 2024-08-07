@@ -18,7 +18,7 @@
                              [org.clojure/clojure       "1.11.4"]]}
    :c1.12    {:dependencies [[org.clojure/clojure       "1.12.0-rc1"]]}
    :c1.11    {:dependencies [[org.clojure/clojure       "1.11.4"]]}
-   :c1.10    {:dependencies [[org.clojure/clojure       "1.10.1"]]}
+   :c1.10    {:dependencies [[org.clojure/clojure       "1.10.3"]]}
 
    :graal-tests
    {:source-paths ["test"]
