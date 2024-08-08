@@ -1,4 +1,4 @@
-(defproject com.taoensso/telemere "1.0.0-beta15"
+(defproject com.taoensso/telemere "1.0.0-beta16"
   :author "Peter Taoussanis <https://www.taoensso.com>"
   :description "Structured telemetry library for Clojure/Script"
   :url "https://www.taoensso.com/telemere"
@@ -45,7 +45,7 @@
     [[org.clojure/test.check             "1.1.1"]
      [org.clojure/tools.logging          "1.3.0"]
      [org.slf4j/slf4j-api               "2.0.14"]
-     [com.taoensso/slf4j-telemere "1.0.0-beta15"]
+     [com.taoensso/slf4j-telemere "1.0.0-beta16"]
      #_[org.slf4j/slf4j-simple          "2.0.14"]
      #_[org.slf4j/slf4j-nop             "2.0.14"]
 

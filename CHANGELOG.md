@@ -2,9 +2,9 @@ This project uses [**Break Versioning**](https://www.taoensso.com/break-versioni
 
 ---
 
-# `v1.0.0-beta15` (2024-08-07)
+# `v1.0.0-beta16` (2024-08-08)
 
-> **Dep/s**: [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta15) and [Telemere SLF4J provider](https://clojars.org/com.taoensso/slf4j-telemere/versions/1.0.0-beta15) are on Clojars.  
+> **Dep/s**: [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta16) and [Telemere SLF4J provider](https://clojars.org/com.taoensso/slf4j-telemere/versions/1.0.0-beta16) are on Clojars.  
 > **Versioning**: Telemere uses [Break Versioning](https://www.taoensso.com/break-versioning).
 
 This is a **pre-release** intended for **early adopters** and those who'd like to give feedback. New betas will be released frequently, while I continue to fix issues and make other improvements/additions.
@@ -17,7 +17,7 @@ Please **report any unexpected problems** on [GitHub](https://github.com/taoenss
 
 ## Recent changes
 
-Latest (beta 15):
+Latest (beta 16, 15):
 
 * **\[mod]** Removed `*auto-stop-handlers?*` var
 * **\[mod]** Removed `:needs-stopping?` [handler dispatch opt](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options)
@@ -40,7 +40,7 @@ Earlier:
 
 ## Recent additions
 
-Latest (beta 15):
+Latest (beta 16, 15):
 
 * **\[new]** Ongoing [API](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere) and [wiki](https://github.com/taoensso/telemere/wiki) doc improvements
 * **\[new]** [#5] Added [comparison to Mulog](https://github.com/taoensso/telemere/wiki/6-FAQ#how-does-telemere-compare-to-mulog)
@@ -65,8 +65,9 @@ Earlier:
 
 ## Recent fixes
 
-Latest (beta 15):
+Latest (beta 16, 15):
 
+* **\[fix]** Broken handler ns and kind filters \[23194238]
 * **\[fix]** [#10] OpenTelemetry handler: render keywords as plain strings \[6e94215e]
 * **\[fix]** [#11] OpenTelemetry handler: signals without message fail \[863cea15]
 * **\[fix]** [#14] File handler: Don't truncate gzip output \[2d4b0497]
