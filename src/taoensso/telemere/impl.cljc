@@ -225,7 +225,7 @@
   ;; incl. lazy + cached `signal-value_` field.
   [ns kind id level signal-value_]
   sigs/IFilterableSignal
-  (allow-signal? [_ sig-filter] (sig-filter ns kind id level))
+  (allow-signal? [_ sig-filter] (sig-filter kind ns id level))
   (signal-value  [_ handler-sample-rate]
     (let [sig-val @signal-value_]
       (or
