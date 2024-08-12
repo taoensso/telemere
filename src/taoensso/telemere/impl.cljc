@@ -197,10 +197,9 @@
 (defrecord Signal
   ;; Telemere's main public data type, we avoid nesting and duplication
   [^long schema inst uid,
-   location ns line column file #?(:clj thread),
-   sample-rate, kind id level, ctx parent,
-   data msg_ error run-form run-val,
-   end-inst run-nsecs kvs]
+   location ns line column file thread,
+   sample-rate, kind id level, ctx parent, data kvs msg_,
+   error run-form run-val end-inst run-nsecs]
 
   Object (toString [sig] (str "#" `Signal (into {} sig))))
 
@@ -311,67 +310,6 @@
       (when trap-signals? :stop))
 
     (sigs/call-handlers! *sig-handlers* signal)))
-
-;;;; Signal constructor
-
-(deftype RunResult [value error ^long run-nsecs]
-  #?(:clj clojure.lang.IFn :cljs IFn)
-  (#?(:clj invoke :cljs -invoke) [_] (if error (throw error) value))
-  (#?(:clj invoke :cljs -invoke) [_ signal_]
-    (if error
-      (throw
-        (ex-info "Signal `:run` form error"
-          (enc/try*
-            (do           {:taoensso.telemere/signal (force signal_)})
-            (catch :all t {:taoensso.telemere/signal-error t}))
-          error))
-      value)))
-
-(defn new-signal
-  "Returns a new `Signal` with given opts."
-  ^Signal
-  ;; Note all dynamic vals passed as explicit args for better control
-  [inst uid,
-   location ns line column file #?(:clj thread :cljs _thread),
-   sample-rate, kind id level, ctx parent,
-   kvs data msg_,
-   run-form run-result error]
-
-  (let [signal
-        (if-let [^RunResult run-result run-result]
-          (let  [run-nsecs (.-run-nsecs run-result)
-                 end-inst
-                 #?(:clj  (.plusNanos ^java.time.Instant inst run-nsecs)
-                    :cljs (js/Date. (+ (.getTime inst) (/ run-nsecs 1e6))))
-
-                 run-err (.-error run-result)
-                 run-val (.-value run-result)
-                 msg_
-                 (if (fn?  msg_) ; Undocumented, handy for `trace!`/`spy!`, etc.
-                   (delay (msg_ run-form run-val run-err run-nsecs))
-                   msg_)]
-
-            (Signal. 1 inst uid,
-              location ns line column file #?(:clj thread),
-              sample-rate, kind id level, ctx parent,
-              data msg_,
-              run-err run-form run-val,
-              end-inst run-nsecs kvs))
-
-          (Signal. 1 inst uid,
-            location ns line column file #?(:clj thread),
-            sample-rate, kind id level, ctx parent,
-            data msg_, error nil nil nil nil kvs))]
-
-    (if kvs
-      (reduce-kv assoc signal kvs)
-      (do              signal))))
-
-(comment
-  (enc/qb 1e6 ; 66.8
-    (new-signal
-      nil nil nil nil nil nil nil nil nil nil
-      nil nil nil nil nil nil nil nil nil nil)))
 
 ;;;; Signal API helpers
 
@@ -521,6 +459,19 @@
 
 ;;;; Signal macro
 
+(deftype RunResult [value error ^long run-nsecs]
+  #?(:clj clojure.lang.IFn :cljs IFn)
+  (#?(:clj invoke :cljs -invoke) [_] (if error (throw error) value))
+  (#?(:clj invoke :cljs -invoke) [_ signal_]
+    (if error
+      (throw
+        (ex-info "Signal `:run` form error"
+          (enc/try*
+            (do           {:taoensso.telemere/signal (force signal_)})
+            (catch :all t {:taoensso.telemere/signal-error t}))
+          error))
+      value)))
+
 #?(:clj
    (defn thread-info
      "Returns {:keys [group name id]} for current thread."
@@ -531,6 +482,14 @@
         :id    (.getId   t)})))
 
 (comment (enc/qb 1e6 (thread-info))) ; 44.49
+
+(defn inst+nsecs
+  "Returns given platform instant plus given number of nanosecs."
+  [inst run-nsecs]
+  #?(:clj  (.plusNanos ^java.time.Instant inst run-nsecs)
+     :cljs (js/Date. (+ (.getTime inst) (/ run-nsecs 1e6)))))
+
+(comment (enc/qb 1e6 (inst+nsecs (enc/now-inst) 1e9)))
 
 #?(:clj
    (defmacro ^:public signal!
@@ -603,39 +562,65 @@
                          :elidable? :location :inst :uid :middleware,
                          :sample-rate :ns :kind :id :level :filter :when #_:rate-limit,
                          :ctx :parent #_:trace?, :do :let :data :msg :error :run
-                         :elide? :allow? #_:expansion-id))]
+                         :elide? :allow? #_:expansion-id))
 
-                 ;; Compile-time validation
-                 (do
-                   (when (and run-form error-form) ; Ambiguous source of error
-                     (throw
-                       (ex-info "Signals cannot have both `:run` and `:error` opts at the same time"
-                         {:run-form   run-form
-                          :error-form error-form
-                          :location   location
-                          :other-opts (dissoc opts :run :error)})))
+                     _ ; Compile-time validation
+                     (do
+                       (when (and run-form error-form) ; Ambiguous source of error
+                         (throw
+                           (ex-info "Signals cannot have both `:run` and `:error` opts at the same time"
+                             {:run-form   run-form
+                              :error-form error-form
+                              :location   location
+                              :other-opts (dissoc opts :run :error)})))
 
-                   (when-let [e (find opts :msg_)] ; Common typo/confusion
-                     (throw
-                       (ex-info "Signals cannot have `:msg_` opt (did you mean `:msg`?))"
-                         {:msg_ (enc/typed-val (val e))}))))
+                       (when-let [e (find opts :msg_)] ; Common typo/confusion
+                         (throw
+                           (ex-info "Signals cannot have `:msg_` opt (did you mean `:msg`?))"
+                             {:msg_ (enc/typed-val (val e))}))))
+
+                     record-form
+                     (if run-form
+                       `(let [^RunResult run-result# ~'__run-result
+                              run-nsecs# (.-run-nsecs    run-result#)
+                              run-val#   (.-value        run-result#)
+                              run-err#   (.-error        run-result#)
+                              end-inst#  (inst+nsecs ~'__inst run-nsecs#)
+                              msg_#
+                              (let [mf# ~msg-form]
+                                (if (fn? mf#) ; Undocumented, handy for `trace!`/`spy!`, etc.
+                                  (delay (mf# '~run-form run-val# run-err# run-nsecs#))
+                                  mf#))]
+
+                          (Signal. 1 ~'__inst ~'__uid,
+                            ~location ~'__ns ~line-form ~column-form ~file-form ~'__thread,
+                            ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form,
+                            ~data-form ~kvs-form msg_#,
+                            run-err# '~run-form run-val# end-inst# run-nsecs#))
+
+                       `(Signal. 1 ~'__inst ~'__uid,
+                          ~location ~'__ns ~line-form ~column-form ~file-form ~'__thread,
+                          ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form,
+                          ~data-form ~kvs-form ~msg-form,
+                          ~error-form nil nil nil nil))
+
+                     signal-form
+                     (if-not kvs-form
+                       record-form
+                       `(let [signal# ~record-form]
+                          (reduce-kv assoc signal# (.-kvs signal#))))]
 
                  `(delay
                     ;; Delay (cache) shared by all handlers. Covers signal `:let` eval, signal construction,
                     ;; middleware (possibly expensive), etc. Throws here will be caught by handler.
                     ~do-form
                     (let [~@let-form ; Allow to throw, eval BEFORE data, msg, etc.
-                          ~'__signal
-                          (new-signal ~'__inst ~'__uid
-                            ~location ~'__ns ~line-form ~column-form ~file-form ~'__thread,
-                            ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form,
-                            ~kvs-form ~data-form ~msg-form,
-                            '~run-form ~'__run-result ~error-form)]
+                          signal# ~signal-form]
 
                       ;; Final unwrapped signal value visible to users/handler-fns, allow to throw
                       (if-let [sig-middleware# ~middleware-form]
-                        (sig-middleware# ~'__signal) ; Apply signal middleware, can throw
-                        (do              ~'__signal)))))]
+                        (sig-middleware# signal#) ; Apply signal middleware, can throw
+                        (do              signal#)))))]
 
            ;; Could avoid double `run-form` expansion with a fn wrap (>0 cost)
            ;; (let [run-fn-form (when run-form `(fn [] (~run-form)))]
