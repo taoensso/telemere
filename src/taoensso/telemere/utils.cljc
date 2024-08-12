@@ -520,10 +520,11 @@
         (let [af append-fn
               vf    val-fn]
 
-          (let [{:keys [uid parent data kvs ctx #?(:clj thread) sample-rate]} signal]
+          (let [{:keys [uid parent root data kvs ctx #?(:clj thread) sample-rate]} signal]
             (when              sample-rate          (af " sample: " (vf sample-rate)))
             (when              uid                  (af "    uid: " (vf uid)))
-            (when              parent               (af " parent: " (vf parent)))
+            (when              parent               (af " parent: " (vf (dissoc parent :inst))))
+            (when         (and parent root)         (af "   root: " (vf (dissoc root   :inst))))
             #?(:clj (when (and thread incl-thread?) (af " thread: " (vf thread))))
             (when              data                 (af "   data: " (vf data)))
             (when         (and kvs incl-kvs?)       (af "    kvs: " (vf kvs)))

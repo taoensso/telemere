@@ -176,21 +176,20 @@
 
 ;;;; Tracing (optional flow tracking)
 
-(enc/def* ^:dynamic *trace-parent* "?TraceParent" nil)
-(defrecord TraceParent [id uid])
+(enc/def* ^:dynamic *trace-root*   "?{:keys [id uid inst]}" nil)
+(enc/def* ^:dynamic *trace-parent* "?{:keys [id uid inst]}" nil)
 
 #?(:clj
-   (defmacro with-tracing
-     "Wraps `form` with tracing iff const boolean `trace?` is true."
-     [trace? id uid form]
-     (if trace?
-       `(binding [*trace-parent* (TraceParent. ~id ~uid)] ~form)
-       (do                                                 form))))
+   (defmacro cond-binding
+     "Wraps `form` with binding if `bind?` is true."
+     [bind? bindings body-form]
+     (if bind?
+       `(binding ~bindings ~body-form)
+       (do                  body-form))))
 
 (comment
-  [(enc/qb 1e6   (with-tracing true  :id1 :uid1 "form")) ; 257.5
-   (macroexpand '(with-tracing false :id1 :uid1 "form"))
-   (macroexpand '(with-tracing true  :id1 :uid1 "form"))])
+  [(enc/qb 1e6   (cond-binding true [*trace-parent* {:id :id1, :uid :uid1, :inst :inst1}] *trace-parent*)) ; 226.18
+   (macroexpand '(cond-binding true [*trace-parent* {:id :id1, :uid :uid1, :inst :inst1}] *trace-parent*))])
 
 ;;;; Main types
 
@@ -198,7 +197,7 @@
   ;; Telemere's main public data type, we avoid nesting and duplication
   [^long schema inst uid,
    location ns line column file thread,
-   sample-rate, kind id level, ctx parent, data kvs msg_,
+   sample-rate, kind id level, ctx parent root, data kvs msg_,
    error run-form run-val end-inst run-nsecs]
 
   Object (toString [sig] (str "#" `Signal (into {} sig))))
@@ -325,7 +324,7 @@
            [#_defaults #_elide? #_allow? #_expansion-id, ; Undocumented
             elidable? location inst uid middleware,
             sample-rate kind ns id level when rate-limit,
-            ctx parent trace?, do let data msg error run & kvs]}])
+            ctx parent root trace?, do let data msg error run & kvs]}])
 
        :event! ; [id] [id level-or-opts] => allowed?
        '([id      ]
@@ -335,7 +334,7 @@
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location inst uid middleware,
             sample-rate kind ns id level when rate-limit,
-            ctx parent trace?, do let data msg error #_run & kvs]}])
+            ctx parent root trace?, do let data msg error #_run & kvs]}])
 
        :log! ; [msg] [level-or-opts msg] => allowed?
        '([      msg]
@@ -344,7 +343,7 @@
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location inst uid middleware,
             sample-rate kind ns id level when rate-limit,
-            ctx parent trace?, do let data msg error #_run & kvs]}
+            ctx parent root trace?, do let data msg error #_run & kvs]}
           msg])
 
        :error! ; [error] [id-or-opts error] => given error
@@ -354,7 +353,7 @@
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location inst uid middleware,
             sample-rate kind ns id level when rate-limit,
-            ctx parent trace?, do let data msg error #_run & kvs]}
+            ctx parent root trace?, do let data msg error #_run & kvs]}
           error])
 
        (:trace! :spy!) ; [form] [id-or-opts form] => run result (value or throw)
@@ -364,7 +363,7 @@
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location inst uid middleware,
             sample-rate kind ns id level when rate-limit,
-            ctx parent trace?, do let data msg error run & kvs]}
+            ctx parent root trace?, do let data msg error run & kvs]}
           form])
 
        :catch->error! ; [form] [id-or-opts form] => run result (value or throw)
@@ -374,7 +373,7 @@
            [#_defaults #_elide? #_allow? #_expansion-id, rethrow? catch-val,
             elidable? location inst uid middleware,
             sample-rate kind ns id level when rate-limit,
-            ctx parent trace?, do let data msg error #_run & kvs]}
+            ctx parent root trace?, do let data msg error #_run & kvs]}
           form])
 
        :uncaught->error! ; [] [id-or-opts] => nil
@@ -384,7 +383,7 @@
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location inst uid middleware,
             sample-rate kind ns id level when rate-limit,
-            ctx parent trace?, do let data msg error #_run & kvs]}])
+            ctx parent root trace?, do let data msg error #_run & kvs]}])
 
        (enc/unexpected-arg! macro-id))))
 
@@ -527,11 +526,13 @@
                trace? (get opts :trace? (boolean run-form))
                _
                (when-not (contains? #{true false nil} trace?)
-                 ;; Not much motivation to support runtime `trace?` form, but easy
-                 ;; to add support later if desired
                  (enc/unexpected-arg! trace?
-                   {:msg     "Expected constant (compile-time) `:trace?` boolean"
-                    :context `with-tracing}))
+                   {:msg "Expected constant (compile-time) `:trace?` boolean"
+                    :context `signal!}))
+
+               parent-form (get opts :parent (when trace?     `taoensso.telemere.impl/*trace-parent*))
+               root-form   (get opts :root   (when trace? `(or taoensso.telemere.impl/*trace-root*
+                                                             {:id ~'__id, :uid ~'__uid, :inst ~'__inst})))
 
                inst-form   (get opts :inst  :auto)
                inst-form   (if (= inst-form :auto) `(enc/now-inst*) inst-form)
@@ -552,9 +553,8 @@
                      let-form (or let-form '[])
                      msg-form (parse-msg-form msg-form)
 
-                     ctx-form        (get opts :ctx                 `taoensso.telemere/*ctx*)
-                     parent-form     (get opts :parent (when trace? `taoensso.telemere.impl/*trace-parent*))
-                     middleware-form (get opts :middleware          `taoensso.telemere/*middleware*)
+                     ctx-form        (get opts :ctx        `taoensso.telemere/*ctx*)
+                     middleware-form (get opts :middleware `taoensso.telemere/*middleware*)
 
                      kvs-form
                      (not-empty
@@ -594,13 +594,13 @@
 
                           (Signal. 1 ~'__inst ~'__uid,
                             ~location ~'__ns ~line-form ~column-form ~file-form ~'__thread,
-                            ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form,
+                            ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root,
                             ~data-form ~kvs-form msg_#,
                             run-err# '~run-form run-val# end-inst# run-nsecs#))
 
                        `(Signal. 1 ~'__inst ~'__uid,
                           ~location ~'__ns ~line-form ~column-form ~file-form ~'__thread,
-                          ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form,
+                          ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root,
                           ~data-form ~kvs-form ~msg-form,
                           ~error-form nil nil nil nil))
 
@@ -631,18 +631,22 @@
 
            `(enc/if-not ~allow? ; Allow to throw at call
               ~run-form
-              (let [~'__inst   ~inst-form   ; Allow to throw at call
-                    ~'__level  ~level-form  ; ''
-                    ~'__kind   ~kind-form   ; ''
-                    ~'__id     ~id-form     ; ''
-                    ~'__uid    ~uid-form    ; ''
-                    ~'__ns     ~ns-form     ; ''
-                    ~'__thread ~thread-form ; ''
+              (let [;;; Allow to throw at call
+                    ~'__inst   ~inst-form
+                    ~'__level  ~level-form
+                    ~'__kind   ~kind-form
+                    ~'__id     ~id-form
+                    ~'__uid    ~uid-form
+                    ~'__ns     ~ns-form
+                    ~'__thread ~thread-form
+                    ~'__root   ~root-form
 
                     ~'__run-result ; Non-throwing (traps)
                     ~(when run-form
                        `(let [t0# (enc/now-nano*)]
-                          (with-tracing ~trace? ~'__id ~'__uid
+                          (cond-binding ~trace?
+                            [*trace-root*   ~'__root
+                             *trace-parent* {:id ~'__id, :uid ~'__uid, :inst ~'__inst}]
                             (enc/try*
                               (do            (RunResult. ~run-form nil (- (enc/now-nano*) t0#)))
                               (catch :all t# (RunResult. nil       t#  (- (enc/now-nano*) t0#)))))))

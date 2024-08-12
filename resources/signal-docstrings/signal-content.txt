@@ -21,6 +21,7 @@ Default signal keys:
 
 `:ctx` --------- ?val of `*ctx*` (arb app-level state) when signal was created
 `:parent` ------ ?{:keys [id uid]} of parent signal, present in nested signals when tracing
+`:root` -------- ?{:keys [id uid]} of root   signal, present in nested signals when tracing
 `:location` ---- ?{:keys [ns file line column]} signal creator callsite
 `:ns` ---------- ?str namespace of signal creator callsite, same as (:ns     location)
 `:line` -------- ?int line      of signal creator callsite, same as (:line   location)

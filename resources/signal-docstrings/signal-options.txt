@@ -15,7 +15,8 @@ Signal options (shared by all signal creators):
 `:let` --------- ?bindings to establish conditionally (iff signal allowed), BEFORE evaluating `:data` and `:msg` (useful!)
 
 `:ctx` --------- Custom ?val to override auto (dynamic `*ctx*`) in signal
-`:parent` ------ Custom ?{:keys [id uid]} to override auto (dynamic) parent signal info in signal
+`:parent` ------ Custom ?{:keys [id uid]} to override auto (dynamic) parent signal tracing info
+`:root` -------- Custom ?{:keys [id uid]} to override auto (dynamic) root   signal tracing info
 `:location` ---- Custom ?{:keys [ns line column file]} to override auto signal creator callsite location
 
 `:elidable?` --- Should signal be subject to compile-time elision? (Default: true)

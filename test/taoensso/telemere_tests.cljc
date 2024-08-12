@@ -264,8 +264,9 @@
         (let [sv1 (with-sig (sig! {:level :info, :run (+ 1 2), :my-k1 :my-v1}))
               sv1 ; Ensure instants are printable
               (-> sv1
-                (update :inst     enc/inst->udt)
-                (update :end-inst enc/inst->udt))]
+                (update-in [:inst]       enc/inst->udt)
+                (update-in [:end-inst]   enc/inst->udt)
+                (update-in [:root :inst] enc/inst->udt))]
 
        [(is (= sv1 (read-string (pr-str sv1))))])))])
 
@@ -414,39 +415,87 @@
 
 (deftest _tracing
   (testing "Tracing"
-    [(let [sv (with-sig (sig! {:level :info                      }))] (is (sm? sv {:parent nil})))
-     (let [sv (with-sig (sig! {:level :info, :parent {:id   :id0}}))] (is (sm? sv {:parent {:id :id0       :uid :submap/nx}}) "`:parent/id`  can be set via call opt"))
-     (let [sv (with-sig (sig! {:level :info, :parent {:uid :uid0}}))] (is (sm? sv {:parent {:id :submap/nx :uid      :uid0}}) "`:parent/uid` can be set via call opt"))
+    [(testing "Opts overrides"
+       [(let [sv (with-sig (sig! {:level :info                                 }))] (is (sm? sv {:parent nil})))
+        (let [sv (with-sig (sig! {:level :info, :parent {:id   :id1, :foo :bar}}))] (is (sm? sv {:parent {:id :id1       :uid :submap/nx, :foo :bar}}) "Manual `:parent/id`"))
+        (let [sv (with-sig (sig! {:level :info, :parent {:uid :uid1, :foo :bar}}))] (is (sm? sv {:parent {:id :submap/nx :uid      :uid1, :foo :bar}}) "Manual `:parent/uid`"))
+        (let [sv (with-sig (sig! {:level :info, :root   {:id   :id1, :foo :bar}}))] (is (sm? sv {:root   {:id :id1       :uid :submap/nx, :foo :bar}}) "Manual `:root/id`"))
+        (let [sv (with-sig (sig! {:level :info, :root   {:uid :uid1, :foo :bar}}))] (is (sm? sv {:root   {:id :submap/nx :uid      :uid1, :foo :bar}}) "Manual `:root/uid`"))])
 
-     (testing "Auto call id, uid"
-       (let [sv (with-sig (sig! {:level :info, :parent {:id :id0, :uid :uid0}, :run impl/*trace-parent*, :data impl/*trace-parent*}))]
-         [(is (sm? sv {:parent  {:id :id0, :uid :uid0}}))
-          (is (sm? sv {:run-val {:id nil,  :uid (get sv :uid ::nx)}}) "`*trace-parent*`     visible to run-form, bound to call's auto {:keys [id uid]}")
-          (is (sm? sv {:data    nil})                                 "`*trace-parent*` not visible to data-form ")]))
+     (testing "Auto trace {:keys [id uid inst]}s for parent and root"
+       [(testing "Tracing enabled"
+          (let [sv (with-sig (sig! {:level :info, :id :id1, :uid :uid1, :inst t1, :trace? true
+                                    :run  [impl/*trace-parent* impl/*trace-root*],
+                                    :data [impl/*trace-parent* impl/*trace-root*]}))]
 
-     (testing "Manual call id, uid"
-       (let [sv (with-sig (sig! {:level :info, :parent {:id :id0, :uid :uid0}, :id :id1, :uid :uid1, :run impl/*trace-parent*, :data impl/*trace-parent*}))]
-         [(is (sm? sv {:parent  {:id :id0, :uid :uid0}}))
-          (is (sm? sv {:run-val {:id :id1, :uid :uid1}}) "`*trace-parent*`     visible to run-form, bound to call's auto {:keys [id uid]}")
-          (is (sm? sv {:data    nil})                    "`*trace-parent*` not visible to data-form ")]))
+            [(is (sm? sv {:parent nil, :root {:id :id1, :uid :uid1, :inst t1}}))
+             (let [[rv1 rv2] (:run-val sv)]
+               [(is (sm? rv1 {:id :id1, :uid :uid1, :inst t1}) "`*trace-parent*` visible to run-form")
+                (is (sm? rv2 {:id :id1, :uid :uid1, :inst t1}) "`*trace-root*`   visible to run-form")])
 
-     (testing "Tracing can be disabled via call opt"
-       (let [sv (with-sig (sig! {:level :info, :parent {:id :id0, :uid :uid0}, :id :id1, :uid :uid1, :run impl/*trace-parent*, :data impl/*trace-parent*, :trace? false}))]
-         [(is (sm? sv {:parent  {:id :id0, :uid :uid0}}))
-          (is (sm? sv {:run-val nil}))]))
+             (let [[dv1 dv2] (:data sv)]
+               [(is (= dv1 nil) "`*trace-parent*` NOT visible to data-form")
+                (is (= dv2 nil) "`*trace-root*`   NOT visible to data-form")])]))
+
+        (testing "Tracing disabled"
+          (let [sv (with-sig (sig! {:level :info, :id :id1, :uid :uid1, :inst t1, :trace? false
+                                    :run  [impl/*trace-parent* impl/*trace-root*],
+                                    :data [impl/*trace-parent* impl/*trace-root*]}))]
+
+            [(is (sm? sv {:parent nil, :root nil}))
+             (let [[rv1 rv2] (:run-val sv)]
+               [(is (= rv1 nil) "`*trace-parent*` visible to run-form")
+                (is (= rv2 nil) "`*trace-root*`   visible to run-form")])
+
+             (let [[dv1 dv2] (:data sv)]
+               [(is (= dv1 nil) "`*trace-parent*` NOT visible to data-form")
+                (is (= dv2 nil) "`*trace-root*`   NOT visible to data-form")])]))])
+
+     (testing "Manual trace {:keys [id uid inst]}s for parent and root"
+       [(testing "Tracing enabled"
+          (let [sv (with-sig (sig! {:level :info, :id :id1, :uid :uid1, :inst t1, :trace? true,
+                                    :parent {:id :id2, :uid :uid2, :inst t2},
+                                    :root   {:id :id3, :uid :uid3, :inst t3}
+                                    :run  [impl/*trace-parent* impl/*trace-root*],
+                                    :data [impl/*trace-parent* impl/*trace-root*]}))]
+
+            [(is (sm? sv {:parent {:id :id2, :uid :uid2, :inst t2}, :root {:id :id3, :uid :uid3, :inst t3}}))
+             (let [[rv1 rv2] (:run-val sv)]
+               [(is (sm? rv1 {:id :id1, :uid :uid1, :inst t1}) "`*trace-parent*` visible to run-form")
+                (is (sm? rv2 {:id :id3, :uid :uid3, :inst t3}) "`*trace-root*`   visible to run-form")])
+
+             (let [[dv1 dv2] (:data sv)]
+               [(is (= dv1 nil) "`*trace-parent*` NOT visible to data-form")
+                (is (= dv2 nil) "`*trace-root*`   NOT visible to data-form")])]))
+
+        (testing "Tracing disabled"
+          (let [sv (with-sig (sig! {:level :info, :id :id1, :uid :uid1, :inst t1, :trace? false,
+                                    :parent {:id :id2, :uid :uid2, :inst t2},
+                                    :root   {:id :id3, :uid :uid3, :inst t3}
+                                    :run  [impl/*trace-parent* impl/*trace-root*],
+                                    :data [impl/*trace-parent* impl/*trace-root*]}))]
+
+            [(is (sm? sv {:parent {:id :id2, :uid :uid2, :inst t2}, :root {:id :id3, :uid :uid3, :inst t3}}))
+             (let [[rv1 rv2] (:run-val sv)]
+               [(is (= rv1 nil) "`*trace-parent*` visible to run-form")
+                (is (= rv2 nil) "`*trace-root*`   visible to run-form")])
+
+             (let [[dv1 dv2] (:data sv)]
+               [(is (= dv1 nil) "`*trace-parent*` NOT visible to data-form")
+                (is (= dv2 nil) "`*trace-root*`   NOT visible to data-form")])]))])
 
      (testing "Signal nesting"
        (let [[[outer-rv _] [outer-sv]]
              (with-sigs
-               (sig! {                       :level :info, :id :id1, :uid :uid1,
-                      :run (with-sigs (sig! {:level :info, :id :id2, :uid :uid2, :run impl/*trace-parent*}))}))
+               (sig! {                       :level :info, :id :id1, :uid :uid1, :inst t1
+                      :run (with-sigs (sig! {:level :info, :id :id2, :uid :uid2, :inst t2, :run [impl/*trace-parent* impl/*trace-root*]}))}))
 
              [[inner-rv _] [inner-sv]] outer-rv]
 
-         [(is (sm? outer-sv           {:id :id1, :uid :uid1, :parent nil}))
-          (is (sm? inner-rv           {:id :id2, :uid :uid2}))
-          (is (sm? inner-sv {:parent  {:id :id1, :uid :uid1}}))
-          (is (sm? inner-sv {:run-val {:id :id2, :uid :uid2}}))]))]))
+         [(is (sm? outer-sv            {:id :id1, :uid :uid1, :parent nil}))
+          (is (sm? inner-rv           [{:id :id2, :uid :uid2, :inst t2} {:id :id1, :uid :uid1, :inst t1}]))
+          (is (sm? inner-sv {:parent   {:id :id1, :uid :uid1, :inst t1}}))
+          (is (sm? inner-sv {:run-val [{:id :id2, :uid :uid2, :inst t2} {:id :id1, :uid :uid1, :inst t1}]}))]))]))
 
 (deftest _sampling
   ;; Capture combined (call * handler) sample rate in Signal when possible
