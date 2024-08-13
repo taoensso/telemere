@@ -19,10 +19,10 @@ Please **report any unexpected problems** on [GitHub](https://github.com/taoenss
 
 Latest (beta 16, 15):
 
-* **\[mod]** Removed `*auto-stop-handlers?*` var
-* **\[mod]** Removed `:needs-stopping?` [handler dispatch opt](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options)
-* **\[mod]** Cljs handlers MUST now include stop (0) arity
-* **\[mod]** Users MUST now **manually call** [`stop-handlers!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#stop-handlers!)
+* **\[mod]** Removed `*auto-stop-handlers?*` var (beta 15)
+* **\[mod]** Removed `:needs-stopping?` [handler dispatch opt](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) (beta 15)
+* **\[mod]** Cljs handlers MUST now include stop (0) arity (beta 15)
+* **\[mod]** Users MUST now **manually call** [`stop-handlers!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#stop-handlers!) (beta 15)
 
 --
 
@@ -42,8 +42,8 @@ Earlier:
 
 Latest (beta 16, 15):
 
-* **\[new]** Ongoing [API](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere) and [wiki](https://github.com/taoensso/telemere/wiki) doc improvements
-* **\[new]** [#5] Added [comparison to Mulog](https://github.com/taoensso/telemere/wiki/6-FAQ#how-does-telemere-compare-to-mulog)
+* **\[new]** Ongoing [API](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere) and [wiki](https://github.com/taoensso/telemere/wiki) doc improvements (beta 15)
+* **\[new]** [#5] Added [comparison to Mulog](https://github.com/taoensso/telemere/wiki/6-FAQ#how-does-telemere-compare-to-mulog) (beta 15)
 
 --
 
@@ -67,10 +67,10 @@ Earlier:
 
 Latest (beta 16, 15):
 
-* **\[fix]** Broken handler ns and kind filters \[23194238]
-* **\[fix]** [#10] OpenTelemetry handler: render keywords as plain strings \[6e94215e]
-* **\[fix]** [#11] OpenTelemetry handler: signals without message fail \[863cea15]
-* **\[fix]** [#14] File handler: Don't truncate gzip output \[2d4b0497]
+* **\[fix]** Broken handler ns and kind filters \[23194238] (beta 16)
+* **\[fix]** [#10] OpenTelemetry handler: render keywords as plain strings \[6e94215e] (beta 15)
+* **\[fix]** [#11] OpenTelemetry handler: signals without message fail \[863cea15] (beta 15)
+* **\[fix]** [#14] File handler: Don't truncate gzip output \[2d4b0497] (beta 15)
 
 --
 

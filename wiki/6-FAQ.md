@@ -127,6 +127,14 @@ Some **similarities** between Telemere and Mulog:
 - Both are **fast** and offer **async handling**
 - Both offer a variety of **handlers** and are designed for ease of use
 
+Some particular **strengths of Mulog** that I'm aware of:
+
+- More **established/mature**
+- Wider **range of handlers** (incl. Kafka, Kinesis, Prometheus, Zipkin, etc.)
+- More **community resources** (videos, guides, users, etc.)
+- **Smaller code** base (Telemere currently depends on [Encore](https://github.com/taoensso/encore))
+- There may be others!
+
 Some particular **strengths of Telemere**:
 
 - Both **Clj and Cljs support** (Mulog is Clj only)
@@ -137,14 +145,6 @@ Some particular **strengths of Telemere**:
 - Single **unified API** for all telemetry and traditional logging needs (see [`help:signal-creators`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-creators))
 - Lazy `:let`, `:data`, `:msg`, `:do` - evaluated only **after filtering**
 - Extensive [in-IDE documentation](./1-Getting-started#internal-help)
-
-Some particular **strengths of Mulog** that I'm aware of:
-
-- More **established/mature**
-- Wider **range of handlers** (incl. Kafka, Kinesis, Prometheus, Zipkin, etc.)
-- More **community resources** (videos, guides, users, etc.)
-- **Smaller code** base (Telemere currently depends on [Encore](https://github.com/taoensso/encore))
-- There may be others!
 
 **My subjective thoughts**:
 

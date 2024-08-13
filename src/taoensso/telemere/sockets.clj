@@ -48,7 +48,8 @@
           (sw output)))))))
 
 (defn handler:udp-socket
-  "Experimental, subject to change. Feedback welcome!
+  "Highly experimental, subject to change.
+  Feedback very welcome!
 
   Returns a signal handler that:
     - Takes a Telemere signal (map).

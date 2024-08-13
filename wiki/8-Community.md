@@ -1,4 +1,4 @@
-My plan is for Telemere to offer a **stable core of limited scope**, and leave it to the **community** to author additional stuff like handlers, middleware, and utils.
+My plan for Telemere is to offer a **stable core of limited scope**, then to focus on making it as easy for the **community** to write additional stuff like handlers, middleware, and utils.
 
 **PRs very welcome** to add links to this page!
 

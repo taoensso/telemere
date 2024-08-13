@@ -198,8 +198,14 @@ See [here](../../wiki/4-Handlers) for more/upcoming handlers, community handlers
 - [Wiki][GitHub wiki] (getting started, usage, etc.)
 - API reference via [cljdoc][cljdoc docs] or [Codox][Codox docs]
 - Extensive [internal help](#internal-help) (no need to leave your IDE)
-- Support via [Slack channel][] or [GitHub issues][]
+- Support via [#Telemere Slack channel][] or [GitHub issues][]
 - [General observability tips](../../wiki/7-Tips) (advice on building and maintaining observable Clojure/Script systems, and getting the most out of Telemere)
+
+## Community
+
+My plan for Telemere is to offer a **stable core of limited scope**, then to focus on making it as easy for the **community** to write additional stuff like handlers, middleware, and utils.
+
+See [here](../../wiki/8-Community) for community resources.
 
 ## Benchmarks
 

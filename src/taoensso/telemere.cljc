@@ -151,8 +151,8 @@
 
 (comment
   (with-signal (catch->error! ::my-id (/ 1 0)))
-  (with-signal (catch->error! {                  :msg_ ["Error:" __caught-error]} (/ 1 0)))
-  (with-signal (catch->error! {:catch-sym my-err :msg_ ["Error:" my-err]}         (/ 1 0))))
+  (with-signal (catch->error! {                  :msg ["Error:" __caught-error]} (/ 1 0)))
+  (with-signal (catch->error! {:catch-sym my-err :msg ["Error:" my-err]}         (/ 1 0))))
 
 #?(:clj
    (defmacro trace!
@@ -333,3 +333,5 @@
     (do      (let [hf (handler:file)]        (hf sig) (hf)))
     (do      (let [hf (handler:console)]     (hf sig) (hf)))
     #?(:cljs (let [hf (handler:console-raw)] (hf sig) (hf)))))
+
+(comment (let [[_ [s1 s2]] (with-signals (trace! ::id1 (trace! ::id2 "form2")))] s1))

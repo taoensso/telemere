@@ -26,9 +26,9 @@
 (do
   (def ^:dynamic *dynamic-var* nil)
 
-  (def   t0s "2024-06-09T21:15:20.170Z")
-  (def   t0  (enc/as-inst t0s))
-  (def udt0  (enc/as-udt  t0))
+  (do (def t1s "2024-01-01T01:01:01.110Z") (def t1 (enc/as-inst t1s)) (def udt1 (enc/as-udt t1)))
+  (do (def t2s "2024-02-02T02:02:02.120Z") (def t2 (enc/as-inst t2s)) (def udt2 (enc/as-udt t2)))
+  (do (def t3s "2024-03-03T03:03:03.130Z") (def t3 (enc/as-inst t3s)) (def udt3 (enc/as-udt t3)))
 
   (def  ex-info-type (#'enc/ex-type (ex-info "" {})))
   (def  ex1 (ex-info "Ex1" {}))
@@ -707,7 +707,7 @@
 
    (testing "Formatters, etc."
      [(is (= ((utils/format-nsecs-fn) 1.5e9) "1.50s")) ; More tests in Encore
-      (is (= ((utils/format-inst-fn)     t0) "2024-06-09T21:15:20.170Z"))
+      (is (= ((utils/format-inst-fn)     t1) "2024-01-01T01:01:01.110Z"))
 
       (testing "format-error-fn"
         (let [ex2-str ((utils/format-error-fn) ex2)]
@@ -719,14 +719,14 @@
            (is (enc/str-contains? ex2-str "invoke") "Root stack trace includes content")]))
 
       (testing "signal-preamble-fn"
-        (let [sig      (with-sig :raw :trap (tel/event! ::ev-id {:inst t0, :msg ["a" "b"]}))
+        (let [sig      (with-sig :raw :trap (tel/event! ::ev-id {:inst t1, :msg ["a" "b"]}))
               preamble ((utils/signal-preamble-fn) sig)] ; "2024-06-09T21:15:20.170Z INFO EVENT taoensso.telemere-tests(592,35) ::ev-id"
-          [(is (enc/str-starts-with? preamble "2024-06-09T21:15:20.170Z INFO EVENT"))
+          [(is (enc/str-starts-with? preamble "2024-01-01T01:01:01.110Z INFO EVENT"))
            (is (enc/str-ends-with?   preamble "::ev-id - a b"))
            (is (string? (re-find #"taoensso.telemere-tests\(\d+,\d+\)" preamble)))]))
 
       (testing "pr-signal-fn"
-        (let [sig (with-sig :raw :trap (tel/event! ::ev-id {:inst t0, :msg ["a" "b"]}))]
+        (let [sig (with-sig :raw :trap (tel/event! ::ev-id {:inst t1, :msg ["a" "b"]}))]
 
           [(testing ":edn pr-fn"
              (let [sig   (update sig :inst enc/inst->udt)
@@ -739,7 +739,7 @@
                     {:schema 1, :kind :event, :id ::ev-id, :level :info,
                      :ns      "taoensso.telemere-tests"
                      :msg_    "a b"
-                     :inst    udt0
+                     :inst    udt1
                      :line    pnat-int?
                      :column  pnat-int?}))]))
 
@@ -751,7 +751,7 @@
                       {"schema" 1, "kind" "event", "id" "taoensso.telemere-tests/ev-id",
                        "level" "info",             "ns" "taoensso.telemere-tests"
                        "msg_"    "a b"
-                       "inst"    t0s
+                       "inst"    t1s
                        "line"    pnat-int?
                        "column"  pnat-int?})))))
 
@@ -778,8 +778,8 @@
                                                                                     :location "loc", :kvs "kvs", :file "file", :thread "thread"}))]))]))
 
       (testing "format-signal-fn"
-        (let [sig (with-sig :raw :trap (tel/event! ::ev-id {:inst t0, :msg ["a" "b"]}))]
-          (is (enc/str-starts-with? ((tel/format-signal-fn) sig) "2024-06-09T21:15:20.170Z INFO EVENT"))
+        (let [sig (with-sig :raw :trap (tel/event! ::ev-id {:inst t1, :msg ["a" "b"]}))]
+          (is (enc/str-starts-with? ((tel/format-signal-fn) sig) "2024-01-01T01:01:01.110Z INFO EVENT"))
           (is (enc/str-ends-with?   ((tel/format-signal-fn) sig) "::ev-id - a b\n"))))])])
 
 ;;;; File handler
@@ -796,9 +796,9 @@
 
 #?(:clj
    (deftest _file-timestamps
-     [(is (= (files/format-file-timestamp :daily   (files/udt->edy udt0)) "2024-06-09d"))
-      (is (= (files/format-file-timestamp :weekly  (files/udt->edy udt0)) "2024-06-03w"))
-      (is (= (files/format-file-timestamp :monthly (files/udt->edy udt0)) "2024-06-01m"))]))
+     [(is (= (files/format-file-timestamp :daily   (files/udt->edy udt1)) "2024-01-01d"))
+      (is (= (files/format-file-timestamp :weekly  (files/udt->edy udt1)) "2024-01-01w"))
+      (is (= (files/format-file-timestamp :monthly (files/udt->edy udt1)) "2024-01-01m"))]))
 
 (comment (files/manage-test-files! :create))
 

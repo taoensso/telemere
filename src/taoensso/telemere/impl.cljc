@@ -207,7 +207,7 @@
 (do     (enc/def-print-impl [sig Signal] (str "#" `Signal (pr-str (into {} sig)))))
 #?(:clj (enc/def-print-dup  [sig Signal] (str "#" `Signal (pr-str (into {} sig))))) ; NB intentionally verbose, to support extra keys
 
-(def ^:no-doc standard-signal-keys "Private, don't use."  (set (keys (map->Signal {:schema 0}))))
+(def standard-signal-keys (set (keys (map->Signal {:schema 0}))))
 
 (comment
   (def s1 (with-signal (signal! {:level :info, :my-k1 :my-v1})))
@@ -252,7 +252,7 @@
 
 #?(:clj
    (defmacro ^:public with-signal
-     "Experimental.
+     "Experimental, subject to change.
      Executes given form, trapping errors. Returns the LAST signal created by form.
      Useful for tests/debugging.
 
@@ -279,7 +279,7 @@
 
 #?(:clj
    (defmacro ^:public with-signals
-     "Experimental.
+     "Experimental, subject to change.
      Like `with-signal` but returns [[<form-value> <form-error>] [<signal1> ...]].
      Useful for tests/debugging."
      ([                        form] `(with-signals false false          ~form))
