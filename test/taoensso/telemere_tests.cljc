@@ -969,7 +969,7 @@
                     :strings ["a" "b" "c"],
                     :map     {:k1 "v1"}}))
 
-              "{bools=[true, false, false], double=5.0, doubles=[5.0, 5.0, 5.0], keyword=\"foo/bar\", long=5, longs=[5, 5, 5], map=[[:k1 \"v1\"]], mixed=[5, \"5\", nil], nil=\"nil\", string=\"s\", strings=[\"a\", \"b\", \"c\"]}")))
+              "{bools=[true, false, false], double=5.0, doubles=[5.0, 5.0, 5.0], keyword=\":foo/bar\", long=5, longs=[5, 5, 5], map=[[:k1 \"v1\"]], mixed=[5, \"5\", nil], nil=\"nil\", string=\"s\", strings=[\"a\", \"b\", \"c\"]}")))
 
       (testing "signal->attrs-map"
         (let [attrs-map #'otel/signal->attrs-map]
@@ -1010,7 +1010,7 @@
                 "exception.data.k1"    "v1"
 
                 "kind"       :event
-                "level"      :info
+                "level"      "INFO"
                 "id"         :taoensso.telemere-tests/id1
                 "parent.id"  :taoensso.telemere-tests/parent-id1
                 "uid"        #uuid "7e9c1df6-78e4-40ac-8c5c-e2353df9ab82"

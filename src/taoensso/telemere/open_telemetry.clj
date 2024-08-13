@@ -31,6 +31,18 @@
     :report Severity/INFO4
     Severity/UNDEFINED_SEVERITY_NUMBER))
 
+(defn- level->string
+  ^String [level]
+  (case    level
+    :trace  "TRACE"
+    :debug  "DEBUG"
+    :info   "INFO"
+    :warn   "WARN"
+    :error  "ERROR"
+    :fatal  "FATAL"
+    :report "INFO4"
+    (str level)))
+
 (def ^:private ^String attr-name
   "Returns cached OpenTelemetry-style name: `:foo/bar-baz` -> \"foo_bar_baz\", etc.
   Ref. <https://opentelemetry.io/docs/specs/semconv/general/attribute-naming/>."
@@ -49,10 +61,11 @@
 ;; AttributeTypes: String, Long, Double, Boolean, and arrays
 (defprotocol     IAttr+ (^:private attr+ [_aval akey builder]))
 (extend-protocol IAttr+
-  nil                (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) "nil")) ; Like pr-edn*
+  nil                (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k)     "nil"))  ; As pr-edn*
   Boolean            (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k)         v))
   String             (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k)         v))
   java.util.UUID     (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) (str    v))) ; "d4fc65a0..."
+  clojure.lang.Named (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) (str    v))) ; ":foo/bar"
 
   Long               (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k)         v))
   Integer            (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) (long   v)))
@@ -61,13 +74,6 @@
   Double             (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k)         v))
   Float              (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) (double v)))
   Number             (attr+ [v k ^AttributesBuilder b] (.put b (attr-name k) (double v)))
-
-  clojure.lang.Named
-  (attr+ [v k ^AttributesBuilder b]
-    (.put b (attr-name k)
-      #_(str v)                                                       ; ":foo/bar", etc.
-      (let [n (name v)] (if-let [ns (namespace v)] (str ns "/" n) n)) ;  "foo/bar", etc.
-      ))
 
   clojure.lang.IPersistentCollection
   (attr+ [v k ^AttributesBuilder b]
@@ -122,7 +128,7 @@
 
              "error" (utils/error-signal? signal) ; Standard key
              "kind"  kind
-             "level" level
+             "level" (when level (level->string level))
              "id"    id
              "uid"   uid
 
