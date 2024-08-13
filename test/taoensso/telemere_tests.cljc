@@ -828,8 +828,8 @@
 
       (testing "format-signal-fn"
         (let [sig (with-sig :raw :trap (tel/event! ::ev-id {:inst t1, :msg ["a" "b"]}))]
-          (is (enc/str-starts-with? ((tel/format-signal-fn) sig) "2024-01-01T01:01:01.110Z INFO EVENT"))
-          (is (enc/str-ends-with?   ((tel/format-signal-fn) sig) "::ev-id - a b\n"))))])])
+          [(is (enc/str-starts-with? ((tel/format-signal-fn)         sig       ) "2024-01-01T01:01:01.110Z INFO EVENT"))
+           (is (enc/str-ends-with?   ((tel/format-signal-fn) (dissoc sig :host)) "::ev-id - a b\n"))]))])])
 
 ;;;; File handler
 

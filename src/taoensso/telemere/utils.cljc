@@ -53,26 +53,10 @@
 
 ;;;; Public misc
 
-(enc/defaliases enc/newline enc/pr-edn #?(:cljs enc/pr-json) #?(:clj impl/thread-info))
-
-#?(:clj (defn thread-name "Returns string name of current thread." ^String [] (.getName (Thread/currentThread))))
-#?(:clj (defn thread-id   "Returns long id of current thread."       ^long [] (.getId   (Thread/currentThread))))
-
-(comment [(thread-name) (thread-id)])
-
-#?(:clj
-   (defn host-ip
-     "Returns cached local host IP address string, or `timeout-val` (default \"UnknownHost\")."
-     (        [timeout-msecs timeout-val] (enc/get-host-ip (enc/msecs :mins 1) timeout-msecs timeout-val))
-     (^String [                         ] (enc/get-host-ip (enc/msecs :mins 1) 5000 "UnknownHost"))))
-
-#?(:clj
-   (defn hostname
-     "Returns cached local hostname string, or `timeout-val` (default \"UnknownHost\")."
-     (        [timeout-msecs timeout-val] (enc/get-hostname (enc/msecs :mins 1) timeout-msecs timeout-val))
-     (^String [                         ] (enc/get-hostname (enc/msecs :mins 1) 3500 (delay (host-ip 1500 "UnknownHost"))))))
-
-(comment (enc/qb 1e6 (hostname))) ; 56.88
+(enc/defaliases
+  enc/newline enc/pr-edn #?(:cljs enc/pr-json)
+  #?@(:clj [enc/thread-info enc/thread-id enc/thread-name
+            enc/host-info   enc/host-ip   enc/hostname]))
 
 #?(:cljs
    (defn js-console-logger
@@ -520,12 +504,13 @@
         (let [af append-fn
               vf    val-fn]
 
-          (let [{:keys [uid parent root data kvs ctx #?(:clj thread) sample-rate]} signal]
+          (let [{:keys [uid parent root data kvs ctx #?@(:clj [host thread]) sample-rate]} signal]
             (when              sample-rate          (af " sample: " (vf sample-rate)))
             (when              uid                  (af "    uid: " (vf uid)))
-            (when              parent               (af " parent: " (vf (dissoc parent :inst))))
-            (when         (and parent root)         (af "   root: " (vf (dissoc root   :inst))))
-            #?(:clj (when (and thread incl-thread?) (af " thread: " (vf thread))))
+            (when              parent               (af " parent: " (vf (dissoc parent :inst)))) ; {:keys [id uid]}
+            (when         (and parent root)         (af "   root: " (vf (dissoc root   :inst)))) ; {:keys [id uid]}
+            #?(:clj (when      host                 (af "   host: " (vf host))))   ; {:keys [      name ip]}
+            #?(:clj (when (and thread incl-thread?) (af " thread: " (vf thread)))) ; {:keys [group name id]}
             (when              data                 (af "   data: " (vf data)))
             (when         (and kvs incl-kvs?)       (af "    kvs: " (vf kvs)))
             (when              ctx                  (af "    ctx: " (vf ctx))))

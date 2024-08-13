@@ -196,7 +196,7 @@
 (defrecord Signal
   ;; Telemere's main public data type, we avoid nesting and duplication
   [^long schema inst uid,
-   location ns line column file thread,
+   location ns line column file, #?@(:clj [host thread]),
    sample-rate, kind id level, ctx parent root, data kvs msg_,
    error run-form run-val end-inst run-nsecs]
 
@@ -471,17 +471,6 @@
           error))
       value)))
 
-#?(:clj
-   (defn thread-info
-     "Returns {:keys [group name id]} for current thread."
-     []
-     (when-let [t (Thread/currentThread)]
-       {:group (when-let [g (.getThreadGroup t)] (.getName g))
-        :name  (.getName t)
-        :id    (.getId   t)})))
-
-(comment (enc/qb 1e6 (thread-info))) ; 44.49
-
 (defn inst+nsecs
   "Returns given platform instant plus given number of nanosecs."
   [inst run-nsecs]
@@ -540,7 +529,7 @@
                uid-form    (get opts :uid (when trace? :auto/uuid))
                uid-form    (parse-uid-form uid-form)
 
-               thread-form (if clj? `(thread-info) nil)
+               thread-form (if clj? `(enc/thread-info) nil)
 
                signal-delay-form
                (let [{do-form          :do
@@ -579,36 +568,35 @@
                            (ex-info "Signals cannot have `:msg_` opt (did you mean `:msg`?))"
                              {:msg_ (enc/typed-val (val e))}))))
 
-                     record-form
-                     (if run-form
-                       `(let [^RunResult run-result# ~'__run-result
-                              run-nsecs# (.-run-nsecs    run-result#)
-                              run-val#   (.-value        run-result#)
-                              run-err#   (.-error        run-result#)
-                              end-inst#  (inst+nsecs ~'__inst run-nsecs#)
-                              msg_#
-                              (let [mf# ~msg-form]
-                                (if (fn? mf#) ; Undocumented, handy for `trace!`/`spy!`, etc.
-                                  (delay (mf# '~run-form run-val# run-err# run-nsecs#))
-                                  mf#))]
-
-                          (Signal. 1 ~'__inst ~'__uid,
-                            ~location ~'__ns ~line-form ~column-form ~file-form ~'__thread,
-                            ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root,
-                            ~data-form ~kvs-form msg_#,
-                            run-err# '~run-form run-val# end-inst# run-nsecs#))
-
-                       `(Signal. 1 ~'__inst ~'__uid,
-                          ~location ~'__ns ~line-form ~column-form ~file-form ~'__thread,
-                          ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root,
-                          ~data-form ~kvs-form ~msg-form,
-                          ~error-form nil nil nil nil))
-
                      signal-form
-                     (if-not kvs-form
-                       record-form
-                       `(let [signal# ~record-form]
-                          (reduce-kv assoc signal# (.-kvs signal#))))]
+                     (let [record-form
+                           (let [clause [(if run-form :run :no-run) (if clj? :clj :cljs)]]
+                             (case clause
+                               [:run    :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form, (enc/host-info) ~'__thread, ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~run-form ~'_run-val ~'_end-inst ~'_run-nsecs)
+                               [:run    :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form,                             ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~run-form ~'_run-val ~'_end-inst ~'_run-nsecs)
+                               [:no-run :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form, (enc/host-info) ~'__thread, ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root, ~data-form ~kvs-form ~msg-form, ~error-form nil        nil        nil         nil)
+                               [:no-run :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form,                             ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root, ~data-form ~kvs-form ~msg-form, ~error-form nil        nil        nil         nil)
+                               (enc/unexpected-arg! clause {:context :signal-constructor-args})))
+
+                           record-form
+                           (if-not run-form
+                             record-form
+                             `(let [~(with-meta '_run-result {:tag `RunResult}) ~'__run-result
+                                    ~'_run-nsecs (.-run-nsecs    ~'_run-result)
+                                    ~'_run-val   (.-value        ~'_run-result)
+                                    ~'_run-err   (.-error        ~'_run-result)
+                                    ~'_end-inst  (inst+nsecs ~'__inst ~'_run-nsecs)
+                                    ~'_msg_
+                                    (let [mf# ~msg-form]
+                                      (if (fn? mf#) ; Undocumented, handy for `trace!`/`spy!`, etc.
+                                        (delay (mf# '~run-form ~'_run-val ~'_run-err ~'_run-nsecs))
+                                        mf#))]
+                                ~record-form))]
+
+                       (if-not kvs-form
+                         record-form
+                         `(let [signal# ~record-form]
+                            (reduce-kv assoc signal# (.-kvs signal#)))))]
 
                  `(delay
                     ;; Delay (cache) shared by all handlers. Covers signal `:let` eval, signal construction,

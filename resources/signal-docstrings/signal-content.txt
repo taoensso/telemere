@@ -22,12 +22,16 @@ Default signal keys:
 `:ctx` --------- ?val of `*ctx*` (arb app-level state) when signal was created
 `:parent` ------ ?{:keys [id uid]} of parent signal, present in nested signals when tracing
 `:root` -------- ?{:keys [id uid]} of root   signal, present in nested signals when tracing
+
 `:location` ---- ?{:keys [ns file line column]} signal creator callsite
 `:ns` ---------- ?str namespace of signal creator callsite, same as (:ns     location)
 `:line` -------- ?int line      of signal creator callsite, same as (:line   location)
 `:column` ------ ?int column    of signal creator callsite, same as (:column location)
 `:file` -------- ?str filename  of signal creator callsite, same as (:file   location)
-`:thread` ------ (Clj only) {:keys [group name id]} thread info for thread that called signal creator
+
+`:host` -------- (Clj only) {:keys [name ip]}       info for network host
+`:thread` ------ (Clj only) {:keys [name id group]} info for thread that created signal
+
 `:sample-rate` - ?rate ∈ℝ[0,1] for combined signal AND handler sampling (0.75 => allow 75% of signals, nil => allow all)
 
 <kvs> ---------- Other arb app-level ?kvs given to signal creator. Typically NOT included
