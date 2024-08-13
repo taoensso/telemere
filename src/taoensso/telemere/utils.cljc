@@ -51,12 +51,91 @@
   (format-id (str *ns*) ::id1)
   (format-id nil ::id1))
 
-;;;; Public misc
+;;;; Unique IDs (UIDs)
+
+(defn nano-uid-fn
+  "Experimental, subject to change.
+  Returns a (fn nano-uid [root?]) that returns a random nano-style uid string like:
+    \"r76-B8LoIPs5lBG1_Uhdy\" - 126 bit (21 char)     root         uid
+    \"tMEYoZH0K-\"            - 60  bit (10 char) non-root (child) uid"
+  {:tag #?(:clj 'String :cljs 'string)}
+  ([] (nano-uid-fn nil))
+  ([{:keys [secure? root-len child-len]
+     :or
+     {root-len  21
+      child-len 10}}]
+
+   (let [root-len  (long root-len)
+         child-len (long child-len)]
+
+     #?(:cljs (fn nano-uid [root?] (if root? (enc/nanoid secure? root-len) (enc/nanoid secure? child-len)))
+        :clj
+        (if secure?
+          (fn nano-uid-secure [root?]
+            (let [srng (.get com.taoensso.encore.Ids/SRNG_STRONG)]
+              (if root?
+                (com.taoensso.encore.Ids/genNanoId srng root-len)
+                (com.taoensso.encore.Ids/genNanoId srng child-len))))
+
+          (fn nano-uid-insecure [root?]
+            (if root?
+              (com.taoensso.encore.Ids/genNanoId root-len)
+              (com.taoensso.encore.Ids/genNanoId child-len))))))))
+
+(comment ((nano-uid-fn) true))
+
+(defn hex-uid-fn
+  "Experimental, subject to change.
+  Returns a (fn hex-uid [root?]) that returns a random hex-style uid string like:
+    \"05039666eb9dc3206475f44ab9f3d843\" - 128 bit (32 char)     root         uid
+    \"721fcef639a51513\"                 - 64  bit (16 char) non-root (child) uid"
+  {:tag #?(:clj 'String :cljs 'string)}
+  ([] (hex-uid-fn nil))
+  ([{:keys [secure? root-len child-len]
+     :or
+     {root-len  32
+      child-len 16}}]
+
+   (let [root-len  (long root-len)
+         child-len (long child-len)]
+
+     #?(:cljs
+        (let [rand-bytes-fn
+              (if secure?
+                (partial enc/rand-bytes true)
+                (partial enc/rand-bytes false))
+
+              hex-uid-root  (enc/rand-id-fn {:chars :hex-lowercase, :len root-len,  :rand-bytes-fn rand-bytes-fn})
+              hex-uid-child (enc/rand-id-fn {:chars :hex-lowercase, :len child-len, :rand-bytes-fn rand-bytes-fn})]
+
+          (fn hex-uid [root?] (if root? (hex-uid-root) (hex-uid-child))))
+
+        :clj
+        (if secure?
+          (fn hex-uid-secure [root?]
+            (let [srng (.get com.taoensso.encore.Ids/SRNG_STRONG)]
+              (if root?
+                (com.taoensso.encore.Ids/genHexId srng root-len)
+                (com.taoensso.encore.Ids/genHexId srng child-len))))
+
+          (fn hex-uid-insecure [root?]
+            (if root?
+              (com.taoensso.encore.Ids/genHexId root-len)
+              (com.taoensso.encore.Ids/genHexId child-len))))))))
+
+(comment ((hex-uid-fn) true))
+(comment
+  ;; [170.47 180.18 53.87 60.68]
+  (let [nano-uid-fn (nano-uid-fn), hex-uid-fn (hex-uid-fn)]
+    (enc/qb 1e6 (enc/uuid) (enc/uuid-str) (nano-uid true) (hex-uid true))))
+
+;;;; Misc
 
 (enc/defaliases
-  enc/newline enc/pr-edn #?(:cljs enc/pr-json)
-  #?@(:clj [enc/thread-info enc/thread-id enc/thread-name
-            enc/host-info   enc/host-ip   enc/hostname]))
+  enc/newline enc/pr-edn #?(:clj enc/uuid) enc/uuid-str
+  #?@(:cljs [enc/pr-json])
+  #?@(:clj  [enc/thread-info enc/thread-id enc/thread-name
+             enc/host-info   enc/host-ip   enc/hostname]))
 
 #?(:cljs
    (defn js-console-logger

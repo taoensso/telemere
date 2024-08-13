@@ -17,7 +17,8 @@
 #?(:clj
    (enc/declare-remote ; For macro expansions
      ^:dynamic taoensso.telemere/*ctx*
-     ^:dynamic taoensso.telemere/*middleware*))
+     ^:dynamic taoensso.telemere/*middleware*
+     ^:dynamic taoensso.telemere/*uid-fn*))
 
 ;;;; Utils
 
@@ -61,27 +62,6 @@
        :min-level   (or min-level   (get base :min-level))})))
 
 (comment (enc/get-env {:as :edn, :return :explain} :taoensso.telemere/rt-filters<.platform><.edn>))
-
-;;;; Unique IDs (UIDs)
-
-(enc/def* nanoid-readable (enc/rand-id-fn {:chars :nanoid-readable, :len 23}))
-
-#?(:clj
-   (defn- parse-uid-form [uid-form]
-     (when   uid-form
-       (case uid-form
-         :auto/uuid            `(enc/uuid)
-         :auto/uuid-str        `(enc/uuid-str)
-         :auto/nanoid          `(enc/nanoid)
-         :auto/nanoid-readable `(nanoid-readable)
-         uid-form))))
-
-(comment
-  (enc/qb 1e6 ; [161.36 184.69 274.53 468.67]
-    (enc/uuid)
-    (enc/uuid-str)
-    (enc/nanoid)
-    (nanoid-readable)))
 
 ;;;; Messages
 
@@ -519,15 +499,14 @@
                    {:msg "Expected constant (compile-time) `:trace?` boolean"
                     :context `signal!}))
 
-               parent-form (get opts :parent (when trace?     `taoensso.telemere.impl/*trace-parent*))
-               root-form   (get opts :root   (when trace? `(or taoensso.telemere.impl/*trace-root*
-                                                             {:id ~'__id, :uid ~'__uid, :inst ~'__inst})))
+               parent-form (get opts :parent (when trace? `taoensso.telemere.impl/*trace-parent*))
+               root-form   (get opts :root   (when trace? `taoensso.telemere.impl/*trace-root*))
 
-               inst-form   (get opts :inst  :auto)
-               inst-form   (if (= inst-form :auto) `(enc/now-inst*) inst-form)
+               inst-form   (get opts :inst              :auto)
+               uid-form    (get opts :uid  (when trace? :auto))
 
-               uid-form    (get opts :uid (when trace? :auto/uuid))
-               uid-form    (parse-uid-form uid-form)
+               inst-form   (if (not= inst-form :auto) inst-form `(enc/now-inst*))
+               uid-form    (if (not= uid-form  :auto) uid-form  `(taoensso.telemere/*uid-fn* (if ~'__root0 false true)))
 
                thread-form (if clj? `(enc/thread-info) nil)
 
@@ -621,13 +600,14 @@
               ~run-form
               (let [;;; Allow to throw at call
                     ~'__inst   ~inst-form
+                    ~'__root0  ~root-form
                     ~'__level  ~level-form
                     ~'__kind   ~kind-form
                     ~'__id     ~id-form
                     ~'__uid    ~uid-form
                     ~'__ns     ~ns-form
                     ~'__thread ~thread-form
-                    ~'__root   ~root-form
+                    ~'__root   (or ~'__root0 (when ~trace? {:id ~'__id, :uid ~'__uid, :inst ~'__inst}))
 
                     ~'__run-result ; Non-throwing (traps)
                     ~(when run-form

@@ -7,8 +7,8 @@ Default signal keys:
 `:inst` -------- Platform instant [1] when signal was created
 `:level` ------- Signal level ∈ #{<int> :trace :debug :info :warn :error :fatal :report ...}
 `:kind` -------- Signal ?kind ∈ #{nil :event :error :log :trace :spy :slf4j :tools-logging <app-val> ...}
-`:id` ---------- ?id of signal          (common to all  signals created at callsite, contrast with `:uid`)
-`:uid` --------- ?id of signal instance (unique to each signal  created at callsite, contrast with  `:id`)
+`:id` ---------- ?id of signal          (common to all  signals created at callsite,              contrast with `:uid`)
+`:uid` --------- ?id of signal instance (unique to each signal  created at callsite when tracing, contrast with  `:id`)
 
 `:msg` --------- Arb app-level message  ?str              given to signal creator
 `:data` -------- Arb app-level data     ?val (usu. a map) given to signal creator

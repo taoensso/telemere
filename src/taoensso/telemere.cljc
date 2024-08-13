@@ -81,6 +81,35 @@
   (impl/defhelp help:signal-content       :signal-content)
   (impl/defhelp help:environmental-config :environmental-config))
 
+;;;;
+
+(def ^:dynamic *uid-fn*
+  "Experimental, subject to change.
+  (fn [root?]) used to generate signal `:uid` values when tracing.
+  These are basically unique signal instance identifiers.
+
+  `root?` argument is true iff signal is a top-level trace (i.e. form
+  being traced is unnested = has no parent form).
+
+  Root  uids typically have ~128 bits of entropy to ensure uniqueness.
+  Child uids are typically used only with respect to a parent/root,
+  and so can often make do with ~64 bits of entropy or less.
+
+  Smaller uids are generally cheaper to generate, and use less space
+  when serializing/transmitting/storing/etc.
+
+  By default generates nano-style uids like
+    \"r76-B8LoIPs5lBG1_Uhdy\" (root) and \"tMEYoZH0K-\" (non-root).
+
+  For plain fixed-length UUIDs        use: (fn [_root?] (utils/uuid))
+  For plain fixed-length UUID strings use: (fn [_root?] (utils/uuid-str))
+
+  See also `utils/nano-uid-fn`, `utils/hex-id-fn`, etc."
+
+  (utils/nano-uid-fn {:secure? false}))
+
+(comment (enc/qb 1e6 (enc/uuid) (*uid-fn* true) (*uid-fn* false))) ; [168.83 79.02 62.95]
+
 ;;;; Signal creators
 ;; - event!           [id   ] [id   opts/level] ; id     + ?level => allowed? ; Sole signal with descending main arg!
 ;; - log!             [msg  ] [opts/level  msg] ; msg    + ?level => allowed?
