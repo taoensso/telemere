@@ -14,13 +14,13 @@ various keys:
 Creators vary only in in their default options and call APIs (expected args
 and return values), making them more/less convenient for certain use cases:
 
-  `log!` ---------- [message + opts/level] => true iff signal was created (allowed)
-  `event!` -------- [id      + opts/level] => true iff signal was created (allowed)
-  `error!` -------- [error   + opts/id   ] => given error (unconditional)
-  `trace!` -------- [form    + opts/id   ] => form result (value/throw) (unconditional)
-  `spy!` ---------- [form    + opts/level] => form result (value/throw) (unconditional)
-  `catch->error!` - [error   + opts/id   ] => form value, or given fallback
-  `signal!` ------- [          opts      ] => depends on options
+  `event!` -------- [id   ] or [id   opts/level] => true iff signal was created (allowed)
+  `log!` ---------- [msg  ] or [opts/level  msg] => true iff signal was created (allowed)
+  `error!` -------- [error] or [opts/id   error] => given error (unconditional)
+  `trace!` -------- [form ] or [opts/id    form] => form result (value/throw) (unconditional)
+  `spy!` ---------- [form ] or [opts/level form] => form result (value/throw) (unconditional)
+  `catch->error!` - [form ] or [opts/id    form] => form value, or given fallback
+  `signal!` ------- [opts ]                      => depends on options
 
 - `log!` and `event!` are both good default/general-purpose signal creators.
 - `log!` emphasizes messages, while `event!` emphasizes ids.

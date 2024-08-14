@@ -82,14 +82,14 @@
   (impl/defhelp help:environmental-config :environmental-config))
 
 ;;;; Signal creators
-;; - signal!                  [              opts] ;                 => allowed? / run result (value or throw)
-;; - event!           [id   ] [id   level-or-opts] ; id     + ?level => allowed? ; Sole signal with descending main arg!
-;; - log!             [msg  ] [level-or-opts  msg] ; msg    + ?level => allowed?
-;; - error!           [error] [id-or-opts   error] ; error  + ?id    => given error
-;; - trace!           [form ] [id-or-opts    form] ; run    + ?id    => run result (value or throw)
-;; - spy!             [form ] [level-or-opts form] ; run    + ?level => run result (value or throw)
-;; - catch->error!    [form ] [id-or-opts    form] ; run    + ?id    => run value or ?return
-;; - uncaught->error! [     ] [id-or-opts        ] ;          ?id    => nil
+;; - event!           [id   ] [id   opts/level] ; id     + ?level => allowed? ; Sole signal with descending main arg!
+;; - log!             [msg  ] [opts/level  msg] ; msg    + ?level => allowed?
+;; - error!           [error] [opts/id   error] ; error  + ?id    => given error
+;; - trace!           [form ] [opts/id    form] ; run    + ?id    => run result (value or throw)
+;; - spy!             [form ] [opts/level form] ; run    + ?level => run result (value or throw)
+;; - catch->error!    [form ] [opts/id    form] ; run    + ?id    => run value or ?return
+;; - signal!          [opts ]                   ;                 => allowed? / run result (value or throw)
+;; - uncaught->error! [opts/id]                 ;          ?id    => nil
 
 #?(:clj
    (defmacro event!
