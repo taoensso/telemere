@@ -195,6 +195,6 @@
 (impl/on-init
   (impl/signal!
     {:kind  :event
-     :level :info
+     :level :debug ; < :info since runs on init
      :id    :taoensso.telemere/slf4j->telemere!
      :msg   "Enabling intake: SLF4J -> Telemere"}))

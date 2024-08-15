@@ -51,7 +51,7 @@
   []
   (impl/signal!
     {:kind  :event
-     :level :info
+     :level :debug ; < :info since runs on init
      :id    :taoensso.telemere/tools-logging->telemere!
      :msg   "Enabling intake: `tools.logging` -> Telemere"})
 
