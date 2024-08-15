@@ -318,33 +318,36 @@
 ;;;; Flow benchmarks
 
 (comment
-  {:last-updated    "2024-02-12"
+  {:last-updated    "2024-08-15"
    :system          "2020 Macbook Pro M1, 16 GB memory"
-   :clojure-version "1.11.1"
-   :java-version    "OpenJDK 21"}
+   :clojure-version "1.12.0-rc1"
+   :java-version    "OpenJDK 22"}
 
   [(binding [impl/*sig-handlers* nil]
-     (enc/qb 1e6 ; [10.4 17.06 195.42 200.34]
-       (signal! {:level :info, :run nil, :elide? true})
-       (signal! {:level :info, :run nil, :allow? false})
-       (signal! {:level :info, :run nil, :allow? true })
-       (signal! {:level :info, :run nil})))
+     (enc/qb 1e6 ; [9.31 16.76 264.12 350.43]
+       (signal! {:level :info, :run nil, :elide? true }) ; 9
+       (signal! {:level :info, :run nil, :allow? false}) ; 17
+       (signal! {:level :info, :run nil, :allow? true }) ; 264
+       (signal! {:level :info, :run nil               }) ; 350
+       ))
 
    (binding [impl/*sig-handlers* nil]
-     (enc/qb 1e6 ; [8.1 15.35 647.82 279.67 682.1]
-       (signal! {:level :info, :run "run", :elide? true})
-       (signal! {:level :info, :run "run", :allow? false})
-       (signal! {:level :info, :run "run", :allow? true })
-       (signal! {:level :info, :run "run", :trace? false})
-       (signal! {:level :info, :run "run"})))
+     (enc/qb 1e6 ; [8.34 15.78 999.27 444.08 1078.83]
+       (signal! {:level :info, :run "run", :elide? true }) ; 8
+       (signal! {:level :info, :run "run", :allow? false}) ; 16
+       (signal! {:level :info, :run "run", :allow? true }) ; 1000
+       (signal! {:level :info, :run "run", :trace? false}) ; 444
+       (signal! {:level :info, :run "run"               }) ; 1079
+       ))
 
    ;; For README "performance" table
    (binding [impl/*sig-handlers* nil]
-     (enc/qb [8 1e6] ; [9.23 197.2 277.55 649.32]
-       (signal! {:level :info, :elide? true})
-       (signal! {:level :info})
-       (signal! {:level :info, :run "run", :trace? false})
-       (signal! {:level :info, :run "run"})))])
+     (enc/qb [8 1e6] ; [9.34 347.7 447.71 1086.65]
+       (signal! {:level :info, :elide? true             }) ; 9
+       (signal! {:level :info                           }) ; 348
+       (signal! {:level :info, :run "run", :trace? false}) ; 448
+       (signal! {:level :info, :run "run"               }) ; 1087
+       ))])
 
 ;;;;
 

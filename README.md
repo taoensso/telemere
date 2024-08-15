@@ -209,22 +209,32 @@ See [here](../../wiki/8-Community) for community resources.
 
 ## Benchmarks
 
-Telemere is **highly optimized** and offers terrific performance at any scale:
+Telemere is **highly optimized** and offers great performance at any scale:
 
-| Compile-time filtering? | Runtime filtering? | Time? | Trace? | nsecs |
-| :---------------------: | :----------------: | :---: | :----: | ----: |
-|        ✓ (elide)        |         -          |   -   |   -    |     0 |
-|            -            |         ✓          |   -   |   -    |   200 |
-|            -            |         ✓          |   ✓   |   -    |   280 |
-|            -            |         ✓          |   ✓   |   ✓    |   650 |
+| Compile-time filtering? | Runtime filtering? | Profile? | Trace? | nsecs |
+| :---------------------: | :----------------: | :------: | :----: | ----: |
+|        ✓ (elide)        |         -          |    -     |   -    |     0 |
+|            -            |         ✓          |    -     |   -    |   350 |
+|            -            |         ✓          |    ✓     |   -    |   450 |
+|            -            |         ✓          |    ✓     |   ✓    |  1000 |
 
 Measurements:
 
 - Are **~nanoseconds per signal call** (= milliseconds per 1e6 calls)
 - Exclude [handler runtime](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-handlers-stats) (which depends on handler/s, is usually async)
-- Taken on a 2020 Macbook Pro M1, running OpenJDK 21
+- Taken on a 2020 Macbook Pro M1, running Clojure v1.12 and OpenJDK v22
 
-**Tip**: Telemere offers extensive [filtering](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters) support - including dead-easy per-signal and per-handler **sampling** and **rate-limiting**. Use these to ensure that you're not capturing useless/low-value information in production. See [here](../../wiki/7-Tips) for more tips!
+### Performance philosophy
+
+Telemere is optimized for *real-world* performance. This means **prioritizing flexibility** and realistic usage over synthetic micro benchmarks.
+
+Large applications can produce absolute *heaps* of data, not all equally valuable. Quickly processing infinite streams of unmanageable junk is an anti-pattern. As scale and complexity increase, it becomes more important to **strategically plan** what data to collect, when, in what quantities, and how to manage it.
+
+Telemere is designed to help with all that. It offers [rich data](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content) and unmatched [filtering](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters) support - including per-signal and per-handler **sampling** and **rate-limiting**.
+
+Use these to ensure that you're not capturing useless/low-value/high-noise information in production! With appropriate planning, Telemere is designed to scale to systems of any size and complexity. 
+
+See [here](../../wiki/7-Tips) for detailed tips on real-world usage.
 
 ## Funding
 
