@@ -209,17 +209,17 @@
     (if uid
       (if-let   [ns   (get signal :ns)]
         (if-let [line (get signal :line)]
-          (Attributes/of ak-uid (str uid), ak-ns ns, ak-line line)
+          (Attributes/of ak-uid (str uid), ak-ns ns, ak-line (long line))
           (Attributes/of ak-uid (str uid), ak-ns ns))
         (Attributes/of   ak-uid (str uid)))
 
       (if-let   [ns   (get signal :ns)]
         (if-let [line (get signal :line)]
-          (Attributes/of ak-ns ns, ak-line line)
+          (Attributes/of ak-ns ns, ak-line (long line))
           (Attributes/of ak-ns ns))
         nil))))
 
-(comment (enc/qb 1e6 (span-attrs "uid1" {:ns "ns1" :line 495}))) ; 100.91
+(comment (enc/qb 1e6 (span-attrs "uid1" {:ns "ns1" :line 495}))) ; 101.36
 
 (def ^:private ^String span-name
   (enc/fmemoize
