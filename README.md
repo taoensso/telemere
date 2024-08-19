@@ -30,7 +30,7 @@ See [here][GitHub releases] for earlier releases.
 
 #### Interop
 
-- 1st-class **out-the-box interop** with [SLF4J v2](https://www.slf4j.org/), [tools.logging](https://github.com/clojure/tools.logging), [OpenTelemetry](https://opentelemetry.io/), and [Tufte](https://www.taoensso.com/tufte).
+- 1st-class **out-the-box interop** with [SLF4J v2](../../wiki/3-Config#java-logging), [tools.logging](../../wiki/3-Config#toolslogging), [OpenTelemetry](../../wiki/3-Config#opentelemetry), and [Tufte](../../wiki/3-Config#tufte).
 - Included [shim](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.timbre) for easy/gradual [migration from Timbre](../../wiki/5-Migrating).
 - Extensive set of [handlers](../../wiki/4-Handlers#included-handlers) included out-the-box.
 
@@ -193,19 +193,19 @@ See linked docstrings below for features and usage:
 
 See [here](../../wiki/4-Handlers) for more/upcoming handlers, community handlers, info on **writing your own handlers**, etc.
 
-## Documentation
-
-- [Wiki][GitHub wiki] (getting started, usage, etc.)
-- API reference via [cljdoc][cljdoc docs] or [Codox][Codox docs]
-- Extensive [internal help](#internal-help) (no need to leave your IDE)
-- Support via [#Telemere Slack channel][] or [GitHub issues][]
-- [General observability tips](../../wiki/7-Tips) (advice on building and maintaining observable Clojure/Script systems, and getting the most out of Telemere)
-
 ## Community
 
 My plan for Telemere is to offer a **stable core of limited scope**, then to focus on making it as easy for the **community** to write additional stuff like handlers, middleware, and utils.
 
 See [here](../../wiki/8-Community) for community resources.
+
+## Documentation
+
+- [Wiki][GitHub wiki] (getting started, usage, etc.)
+- API reference via [cljdoc][cljdoc docs] or [Codox][Codox docs]
+- Extensive [internal help](#internal-help) (no need to leave your IDE)
+- Support via [Slack channel][] or [GitHub issues][]
+- [General observability tips](../../wiki/7-Tips) (advice on building and maintaining observable Clojure/Script systems, and getting the most out of Telemere)
 
 ## Benchmarks
 
