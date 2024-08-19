@@ -595,6 +595,7 @@
                 [^Tracer  tracer ?tracer
                  ^Context context
                  (enc/get* signal :otel/context ; Undocumented
+                   :_otel-context
                    #_(io.opentelemetry.context.Context/root)
                    (io.opentelemetry.context.Context/current))
 
