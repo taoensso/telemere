@@ -11,6 +11,7 @@
    [taoensso.telemere       :as tel])
 
   (:import
+   [io.opentelemetry.context Context]
    [io.opentelemetry.api.common AttributesBuilder Attributes]
    [io.opentelemetry.api.logs  LoggerProvider Severity]
    [io.opentelemetry.api.trace TracerProvider Tracer Span]
@@ -165,19 +166,18 @@
 
 (defn- start-span
   "Returns new `io.opentelemetry.api.trace.Span` with random `traceId` and `spanId`."
-  ^Span [^Tracer tracer ^String span-name ^java.time.Instant inst ?parent]
+  ^Span
+  [^Tracer tracer ^Context context ^String span-name ^java.time.Instant inst ?parent]
   (let [sb (.spanBuilder tracer span-name)]
     (when-let [parent ?parent]
       (cond
         ;; Local parent span, etc.
-        (instance? Span parent)
-        (.setParent sb (.with (io.opentelemetry.context.Context/root) ^Span parent))
+        (instance? Span parent) (.setParent sb (.with context ^Span parent))
 
         ;; Remote parent context, etc.
         (instance? io.opentelemetry.api.trace.SpanContext parent)
         (.setParent sb
-          (.with
-            (io.opentelemetry.context.Context/root)
+          (.with context
             (Span/wrap ^io.opentelemetry.api.trace.SpanContext parent)))
 
         :else
@@ -191,9 +191,9 @@
     (.startSpan         sb)))
 
 (comment
-  (let [inst (enc/now-inst)] (enc/qb 1e6 (start-span my-tr "id1"          inst  nil))) ; 142.33
-  (start-span my-tr "id1" (enc/now-inst) (start-span my-tr "id2" (enc/now-inst) nil))
-  (start-span my-tr "id1" (enc/now-inst)
+  (let [inst (enc/now-inst)] (enc/qb 1e6                   (start-span my-tr (Context/current) "id1"          inst  nil))) ; 158.09
+  (start-span my-tr (Context/current) "id1" (enc/now-inst) (start-span my-tr (Context/current) "id2" (enc/now-inst) nil))
+  (start-span my-tr (Context/current) "id1" (enc/now-inst)
     (remote-span-context "c5b856d919f65e39a202bfb3034d65d8" "1111111111111111" false nil)))
 
 (let [ak-uid  (io.opentelemetry.api.common.AttributeKey/stringKey "uid")
@@ -236,7 +236,7 @@
     - `end-buffer_` - latom: #{[<uid> <end-inst>]}
     - `gc-buffer_`  - latom: #{<uid>}"
 
-  [tracer spans_ end-buffer_ gc-buffer_ gc-latch_ signal]
+  [tracer context spans_ end-buffer_ gc-buffer_ gc-latch_ signal]
 
   ;; Notes:
   ;; - Spans go to `SpanExporter` after `.end` call, ~random order okay
@@ -262,7 +262,7 @@
                  (or old
                    (delay
                      ;; TODO Support remote-span-context parent and/or span links?
-                     (start-span tracer (span-name root-id)
+                     (start-span tracer context (span-name root-id)
                        root-inst nil)))))))))]
 
     (let [?parent-span ; May be identical to root-span
@@ -278,7 +278,7 @@
                         (fn  [old]
                           (or old
                             (delay
-                              (start-span tracer (span-name parent-id)
+                              (start-span tracer context (span-name parent-id)
                                 parent-inst root-span)))))))))))
 
           {this-uid :uid, this-end-inst :end-inst} signal]
@@ -306,7 +306,7 @@
                    (fn  [old]
                      (or old
                        (delay
-                         (start-span tracer (span-name this-id)
+                         (start-span tracer context (span-name this-id)
                            this-inst (or ?parent-span root-span))))))))))]
 
         (do
@@ -471,7 +471,7 @@
   ;; Notes:
   ;; - Multi-threaded handlers may see signals ~out of order
   ;; - Sampling means that root/parent/child signals may never be handled
-  ;; - `:otel/attrs` currently undocumented
+  ;; - `:otel/attrs`, `:otel/context` currently undocumented
 
   ([] (handler:open-telemetry-logger nil))
   ([{:keys [logger-provider tracer-provider max-span-msecs]
@@ -493,7 +493,6 @@
            (.get p "Telemere"))
 
          ;;; Tracing state
-         root-context (when ?tracer (io.opentelemetry.context.Context/root))
          spans_       (when ?tracer (enc/latom  {})) ; {<uid> <Span_>}
          end-buffer1_ (when ?tracer (enc/latom #{})) ; #{[<uid> <end-inst>]}
          sgc-buffer1_ (when ?tracer (enc/latom #{})) ; #{<uid>} ; Slow GC
@@ -591,9 +590,19 @@
      (fn a-handler:open-telemetry-logger
        ([      ] (stop-tracing!))
        ([signal]
-        (let [?span
-              (when-let [^io.opentelemetry.api.trace.Tracer tracer ?tracer]
-                (handle-tracing! tracer spans_ end-buffer1_ sgc-buffer1_ gc-latch_ signal))]
+        (let [?context
+              (enc/when-let
+                [^Tracer  tracer ?tracer
+                 ^Context context
+                 (enc/get* signal :otel/context ; Undocumented
+                   #_(io.opentelemetry.context.Context/root)
+                   (io.opentelemetry.context.Context/current))
+
+                 ^Span span
+                 (handle-tracing! tracer context
+                   spans_ end-buffer1_ sgc-buffer1_ gc-latch_ signal)]
+
+                (.storeInContext span context))]
 
           (when-let [^io.opentelemetry.api.logs.LoggerProvider logger-provider ?logger-provider]
             (let [{:keys [ns inst level msg_]} signal
@@ -604,9 +613,8 @@
               (.setSeverity      lrb (level->severity level))
               (.setAllAttributes lrb (signal->attrs   signal))
 
-              (when-let [^Span span ?span] ; Incl. traceId, SpanId, etc.
-                (let [span-in-context (.storeInContext span root-context)]
-                  (.setContext lrb span-in-context)))
+              (when-let [^Context context ?context] ; Incl. traceId, SpanId, etc.
+                (.setContext lrb  context))
 
               (when-let [body
                          (or
