@@ -2,9 +2,9 @@ This project uses [**Break Versioning**](https://www.taoensso.com/break-versioni
 
 ---
 
-# `v1.0.0-beta16` (2024-08-08)
+# `v1.0.0-beta18` (2024-08-19)
 
-> **Dep/s**: [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta16) and [Telemere SLF4J provider](https://clojars.org/com.taoensso/slf4j-telemere/versions/1.0.0-beta16) are on Clojars.  
+> **Dep/s**: [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta18) and [Telemere SLF4J provider](https://clojars.org/com.taoensso/slf4j-telemere/versions/1.0.0-beta18) are on Clojars.  
 > **Versioning**: Telemere uses [Break Versioning](https://www.taoensso.com/break-versioning).
 
 This is a **pre-release** intended for **early adopters** and those who'd like to give feedback. New betas will be released frequently, while I continue to fix issues and make other improvements/additions.
@@ -17,17 +17,19 @@ Please **report any unexpected problems** on [GitHub](https://github.com/taoenss
 
 ## Recent changes
 
-Latest (beta 16, 15):
+Latest (beta 18):
 
-* **\[mod]** Removed `*auto-stop-handlers?*` var (beta 15)
-* **\[mod]** Removed `:needs-stopping?` [handler dispatch opt](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) (beta 15)
-* **\[mod]** Cljs handlers MUST now include stop (0) arity (beta 15)
-* **\[mod]** Users MUST now **manually call** [`stop-handlers!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#stop-handlers!) (beta 15)
+* **\[mod]** OpenTelemetry handler: revert #10 \[599236f4] (beta 18)
+* **\[mod]** Decrease level of :on-init signals \[4d2b5d46] (beta 18)
 
 --
 
 Earlier:
 
+* \[mod] Removed `*auto-stop-handlers?*` var (beta 15)
+* \[mod] Removed `:needs-stopping?` [handler dispatch opt](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) (beta 15)
+* \[mod] Cljs handlers MUST now include stop (0) arity (beta 15)
+* \[mod] Users MUST now **manually call** [`stop-handlers!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#stop-handlers!) (beta 15)
 * \[mod] SLF4J and `tools.logging` signals now have a custom `:kind` and no `:id` (beta 14)
 * \[mod] Renamed `get-min-level` -> [`get-min-levels`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-min-levels) (beta 13)
 * \[mod] Renamed `shut-down-handlers!` -> [`stop-handlers!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#stop-handlers!) (beta 13)
@@ -40,15 +42,19 @@ Earlier:
 
 ## Recent additions
 
-Latest (beta 16, 15):
+Latest (beta 18):
 
-* **\[new]** Ongoing [API](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere) and [wiki](https://github.com/taoensso/telemere/wiki) doc improvements (beta 15)
-* **\[new]** [#5] Added [comparison to Mulog](https://github.com/taoensso/telemere/wiki/6-FAQ#how-does-telemere-compare-to-mulog) (beta 15)
+* **\[new]** OpenTelemetry handler: add experimental trace output \[67cb4941] (beta 18)
+* **\[new]** Improve uid control, switch to nano-style by default \[5ab2736c] (beta 18)
+* **\[new]** Add host info to signal content \[1cef1957] (beta 18)
+* **\[new]** Add extra tracing info to signal content \[d635318f] (beta 18)
 
 --
 
 Earlier:
 
+* \[new] Ongoing [API](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere) and [wiki](https://github.com/taoensso/telemere/wiki) doc improvements (beta 15)
+* \[new] [#5] Added [comparison to Mulog](https://github.com/taoensso/telemere/wiki/6-FAQ#how-does-telemere-compare-to-mulog) (beta 15)
 * \[new] SLF4J and `tools.logging` signals now have a namespace (from logger name) (beta 14)
 * \[new] Added [`get-handlers-stats`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-handlers-stats) (beta 13)
 * \[new] [`add-handler!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#add-handler!) can now specify per-handler `:drain-msecs` (beta 13)
@@ -65,35 +71,21 @@ Earlier:
 
 ## Recent fixes
 
-Latest (beta 16, 15):
+Latest (beta 18):
 
-* **\[fix]** Broken handler ns and kind filters \[23194238] (beta 16)
-* **\[fix]** [#10] OpenTelemetry handler: render keywords as plain strings \[6e94215e] (beta 15)
-* **\[fix]** [#11] OpenTelemetry handler: signals without message fail \[863cea15] (beta 15)
-* **\[fix]** [#14] File handler: Don't truncate gzip output \[2d4b0497] (beta 15)
+* No fixes
 
 --
 
 Earlier:
 
+* \[fix] Broken handler ns and kind filters \[23194238] (beta 16)
+* \[fix] [#10] OpenTelemetry handler: render keywords as plain strings \[6e94215e] (beta 15)
+* \[fix] [#11] OpenTelemetry handler: signals without message fail \[863cea15] (beta 15)
+* \[fix] [#14] File handler: Don't truncate gzip output \[2d4b0497] (beta 15)
 * \[fix] Don't drop signals while draining async buffer during shutdown, add tests (via Encore) (beta 12, beta 13)
 * \[fix] [`pr-signal-fn`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#pr-signal-fn) wasn't realizing delayed messages, add tests \[cf72017a] (beta 11)
 * \[fix] [`pr-signal-fn`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#pr-signal-fn) broken custom pr-fn support, add tests \[e7cce0c1] (beta 10)
 * \[fix] [#6] Missing root stack trace, add tests \[213c6470] (beta 9)
 * \[fix] Broken AOT support, add tests \[ffea1a30] (beta 1)
 * \[fix] SLF4J broken timestamps, add tests \[e222297a] (beta 1)
-
----
-
-# `v1.0.0-beta1` (2024-04-19)
-
-> **Dep/s**: [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta1) and [Telemere SLF4J provider](https://clojars.org/com.taoensso/slf4j-telemere/versions/1.0.0-beta1) are on Clojars.  
-> **Versioning**: Telemere uses [Break Versioning](https://www.taoensso.com/break-versioning).
-
-This is Telemere's first public pre-release and mostly intended for **early testers** and those that'd like to give feedback.
-
-While no significant changes are expected before the [planned v1.0 final release](https://www.taoensso.com/roadmap), you **probably don't want to use this in production** just yet.
-
-**Please report any unexpected problems** and let me know if anything is unclear, inconvenient, etc. Now's the ideal time to get any last-minute changes in. Thank you! 🙏
-
-\- Peter Taoussanis
