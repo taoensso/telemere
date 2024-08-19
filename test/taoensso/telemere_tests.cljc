@@ -261,7 +261,7 @@
 
    #?(:clj
       (testing "Printing"
-        (let [sv1 (with-sig (sig! {:level :info, :run (+ 1 2), :my-k1 :my-v1}))
+        (let [sv1 (dissoc (with-sig (sig! {:level :info, :run (+ 1 2), :my-k1 :my-v1})) :_otel-context)
               sv1 ; Ensure instants are printable
               (-> sv1
                 (update-in [:inst]       enc/inst->udt)

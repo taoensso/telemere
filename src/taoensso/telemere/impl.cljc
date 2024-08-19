@@ -192,7 +192,9 @@
 (do     (enc/def-print-impl [sig Signal] (str "#" `Signal (pr-str (into {} sig)))))
 #?(:clj (enc/def-print-dup  [sig Signal] (str "#" `Signal (pr-str (into {} sig))))) ; NB intentionally verbose, to support extra keys
 
-(def standard-signal-keys (set (keys (map->Signal {:schema 0}))))
+(def standard-signal-keys
+  (disj (set (keys (map->Signal {:schema 0})))
+    :_otel-context))
 
 (comment
   (def s1 (with-signal (signal! {:level :info, :my-k1 :my-v1})))
