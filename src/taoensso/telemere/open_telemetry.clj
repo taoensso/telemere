@@ -163,6 +163,61 @@
 
 (comment (enc/qb 1e6 (remote-span-context "c5b856d919f65e39a202bfb3034d65d8" "9740419096347616" false {"a" "A"}))) ; 111.13
 
+(defn- start-span
+  "Returns new `io.opentelemetry.api.trace.Span` with random `traceId` and `spanId`."
+  ^Span [^Tracer tracer ^String span-name ^java.time.Instant inst ?parent]
+  (let [sb (.spanBuilder tracer span-name)]
+    (when-let [parent ?parent]
+      (cond
+        ;; Local parent span, etc.
+        (instance? Span parent)
+        (.setParent sb (.with (io.opentelemetry.context.Context/root) ^Span parent))
+
+        ;; Remote parent context, etc.
+        (instance? io.opentelemetry.api.trace.SpanContext parent)
+        (.setParent sb
+          (.with
+            (io.opentelemetry.context.Context/root)
+            (Span/wrap ^io.opentelemetry.api.trace.SpanContext parent)))
+
+        :else
+        (enc/unexpected-arg! parent
+          {:context `start-span
+           :expected
+           #{io.opentelemetry.api.trace.Span
+             io.opentelemetry.api.trace.SpanContext}})))
+
+    (.setStartTimestamp sb inst)
+    (.startSpan         sb)))
+
+(comment
+  (let [inst (enc/now-inst)] (enc/qb 1e6 (start-span my-tr "id1"          inst  nil))) ; 142.33
+  (start-span my-tr "id1" (enc/now-inst) (start-span my-tr "id2" (enc/now-inst) nil))
+  (start-span my-tr "id1" (enc/now-inst)
+    (remote-span-context "c5b856d919f65e39a202bfb3034d65d8" "1111111111111111" false nil)))
+
+(let [ak-uid  (io.opentelemetry.api.common.AttributeKey/stringKey "uid")
+      ak-ns   (io.opentelemetry.api.common.AttributeKey/stringKey "ns")
+      ak-line (io.opentelemetry.api.common.AttributeKey/longKey   "line")]
+
+  (defn- span-attrs
+    "Returns `io.opentelemetry.api.common.Attributes` or nil."
+    [uid signal]
+    (if uid
+      (if-let   [ns   (get signal :ns)]
+        (if-let [line (get signal :line)]
+          (Attributes/of ak-uid (str uid), ak-ns ns, ak-line line)
+          (Attributes/of ak-uid (str uid), ak-ns ns))
+        (Attributes/of   ak-uid (str uid)))
+
+      (if-let   [ns   (get signal :ns)]
+        (if-let [line (get signal :line)]
+          (Attributes/of ak-ns ns, ak-line line)
+          (Attributes/of ak-ns ns))
+        nil))))
+
+(comment (enc/qb 1e6 (span-attrs "uid1" {:ns "ns1" :line 495}))) ; 100.91
+
 (def ^:private ^String span-name
   (enc/fmemoize
     (fn [id]
@@ -170,46 +225,6 @@
       (if   id (enc/as-qname id)  "telemere/nil-id"))))
 
 (comment (enc/qb 1e6 (span-name :foo/bar))) ; 46.09
-
-(let [span-name span-name]
-  (defn- start-span
-    "Returns new `io.opentelemetry.api.trace.Span` with random `traceId` and `spanId`."
-    ^Span [^Tracer tracer ?id ?uid ^java.time.Instant inst ?parent]
-    (let [sb (.spanBuilder tracer (span-name ?id))]
-      (when-let [parent ?parent]
-        (cond
-          ;; Local parent span, etc.
-          (instance? Span parent)
-          (.setParent sb (.with (io.opentelemetry.context.Context/root) ^Span parent))
-
-          ;; Remote parent context, etc.
-          (instance? io.opentelemetry.api.trace.SpanContext parent)
-          (.setParent sb
-            (.with
-              (io.opentelemetry.context.Context/root)
-              (Span/wrap ^io.opentelemetry.api.trace.SpanContext parent)))
-
-          :else
-          (enc/unexpected-arg! parent
-            {:context `start-span
-             :expected
-             #{io.opentelemetry.api.trace.Span
-               io.opentelemetry.api.trace.SpanContext}})))
-
-      (when-let [uid ?uid]
-        (.setAttribute    sb "uid" (str uid)))
-      (.setStartTimestamp sb inst)
-      (.startSpan         sb))))
-
-(comment
-  (let [inst (enc/now-inst)] (enc/qb 1e6      (start-span my-tr :id1 :uid1          inst  nil))) ; 217.47
-  (start-span my-tr :id1 :uid1 (enc/now-inst) (start-span my-tr :id2 :uid2 (enc/now-inst) nil))
-  (start-span my-tr :id1 :uid1 (enc/now-inst)
-    (remote-span-context "c5b856d919f65e39a202bfb3034d65d8" "1111111111111111" false nil)))
-
-(enc/def* ^:private
-  ^io.opentelemetry.api.common.AttributeKey uid-attr-key
-  (io.opentelemetry.api.common.AttributeKey/stringKey "uid"))
 
 (defn- handle-tracing!
   "Experimental! Takes care of relevant signal `Span` management.
@@ -247,7 +262,8 @@
                  (or old
                    (delay
                      ;; TODO Support remote-span-context parent and/or span links?
-                     (start-span tracer root-id root-uid root-inst nil)))))))))]
+                     (start-span tracer (span-name root-id)
+                       root-inst nil)))))))))]
 
     (let [?parent-span ; May be identical to root-span
           (when-let   [parent     (get signal :parent)]
@@ -261,7 +277,9 @@
                       (spans_ parent-uid
                         (fn  [old]
                           (or old
-                            (delay (start-span tracer parent-id parent-uid parent-inst root-span)))))))))))
+                            (delay
+                              (start-span tracer (span-name parent-id)
+                                parent-inst root-span)))))))))))
 
           {this-uid :uid, this-end-inst :end-inst} signal]
 
@@ -270,10 +288,11 @@
         ;; add `Event` (rather than child `Span`) to parent
         :if-let [this-is-event? (not this-end-inst)]
         (when-let [^Span parent-span ?parent-span]
-          (let [{this-id :id, this-inst :inst} signal
-                attrs (Attributes/of uid-attr-key (str this-uid))]
-            (.addEvent parent-span (span-name this-id) attrs ^java.time.Instant this-inst))
-          (do          parent-span))
+          (let [{this-id :id, this-inst :inst} signal]
+            (if-let [^Attributes attrs (span-attrs this-uid signal)]
+              (.addEvent parent-span (span-name this-id) attrs ^java.time.Instant this-inst)
+              (.addEvent parent-span (span-name this-id)       ^java.time.Instant this-inst)))
+          (do            parent-span))
 
         :if-let
         [^Span this-span
@@ -287,17 +306,28 @@
                    (fn  [old]
                      (or old
                        (delay
-                         (start-span tracer this-id this-uid this-inst
-                           (or ?parent-span root-span))))))))))]
+                         (start-span tracer (span-name this-id)
+                           this-inst (or ?parent-span root-span))))))))))]
 
         (do
           (if (utils/error-signal? signal)
             (.setStatus this-span io.opentelemetry.api.trace.StatusCode/ERROR)
             (.setStatus this-span io.opentelemetry.api.trace.StatusCode/OK))
 
+          (when-let [^Attributes attrs (span-attrs this-uid signal)]
+            (.setAllAttributes this-span attrs))
+
+          ;; Error stuff
           (when-let [error (get signal :error)]
-            (when (instance? Throwable    error)
-              (.recordException this-span error)))
+            (when (instance? Throwable error)
+              (if-let [attrs
+                       (when-let [ex-data (ex-data error)]
+                         (when-not (empty? ex-data)
+                           (let [sb (Attributes/builder)]
+                             (enc/run-kv! (fn [k v] (put-attr! sb (attr-name k) v)) ex-data)
+                             (.build sb))))]
+                (.recordException this-span error attrs)
+                (.recordException this-span error))))
 
           ;; (.end this-span this-end-inst) ; Ready for `SpanExporter`
           (end-buffer_ (fn [old] (conj old [this-uid this-end-inst])))
