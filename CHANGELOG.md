@@ -2,9 +2,9 @@ This project uses [**Break Versioning**](https://www.taoensso.com/break-versioni
 
 ---
 
-# `v1.0.0-beta18` (2024-08-19)
+# `v1.0.0-beta19` (2024-08-20)
 
-> **Dep/s**: [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta18) and [Telemere SLF4J provider](https://clojars.org/com.taoensso/slf4j-telemere/versions/1.0.0-beta18) are on Clojars.  
+> **Dep/s**: [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta19) and [Telemere SLF4J provider](https://clojars.org/com.taoensso/slf4j-telemere/versions/1.0.0-beta19) are on Clojars.  
 > **Versioning**: Telemere uses [Break Versioning](https://www.taoensso.com/break-versioning).
 
 This is a **pre-release** intended for **early adopters** and those who'd like to give feedback. New betas will be released frequently, while I continue to fix issues and make other improvements/additions.
@@ -17,12 +17,11 @@ Please **report any unexpected problems** on [GitHub](https://github.com/taoenss
 
 ## Recent changes
 
-Latest (beta 18):
+Latest (beta 18, 19):
 
+* **\[mod]** OpenTelemetry handler: rename (generalize) \[064ef323] (beta 19)
 * **\[mod]** OpenTelemetry handler: revert #10 \[599236f4] (beta 18)
 * **\[mod]** Decrease level of :on-init signals \[4d2b5d46] (beta 18)
-
---
 
 Earlier:
 
@@ -42,14 +41,12 @@ Earlier:
 
 ## Recent additions
 
-Latest (beta 18):
+Latest (beta 18, 19):
 
 * **\[new]** OpenTelemetry handler: add experimental trace output \[67cb4941] (beta 18)
 * **\[new]** Improve uid control, switch to nano-style by default \[5ab2736c] (beta 18)
 * **\[new]** Add host info to signal content \[1cef1957] (beta 18)
 * **\[new]** Add extra tracing info to signal content \[d635318f] (beta 18)
-
---
 
 Earlier:
 
@@ -71,11 +68,11 @@ Earlier:
 
 ## Recent fixes
 
-Latest (beta 18):
+Latest (beta 18, 19):
 
-* No fixes
-
---
+* **\[fix]** OpenTelemetry handler: use signal callsite Context as root span parent \[a8e92303] (beta 19)
+* **\[fix]** [#16] OpenTelemetry handler: coerce line attrs (@flyingmachine) \[17349a08] (beta 19)
+* **\[fix]** Decrease min Java version (11->8) (@flyingmachine) \[a1c50f10] (beta 19)
 
 Earlier:
 
