@@ -172,7 +172,7 @@
    (macroexpand '(cond-binding true [*trace-parent* {:id :id1, :uid :uid1, :inst :inst1}] *trace-parent*))])
 
 #?(:clj
-   (enc/compile-if               io.opentelemetry.context.Context/current
+   (enc/compile-if               io.opentelemetry.context.Context
      (defmacro otel-context [] `(io.opentelemetry.context.Context/current))
      (defmacro otel-context [] nil)))
 
@@ -517,7 +517,8 @@
                inst-form   (if (not= inst-form :auto) inst-form `(enc/now-inst*))
                uid-form    (if (not= uid-form  :auto) uid-form  `(taoensso.telemere/*uid-fn* (if ~'__root0 false true)))
 
-               thread-form (if clj? `(enc/thread-info) nil)
+               thread-form   (if clj? `(enc/thread-info) nil)
+               otel-ctx-form (if clj? `(otel-context)    nil)
 
                signal-delay-form
                (let [{do-form          :do
@@ -560,10 +561,10 @@
                      (let [record-form
                            (let [clause [(if run-form :run :no-run) (if clj? :clj :cljs)]]
                              (case clause
-                               [:run    :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form, (enc/host-info) ~'__thread (otel-context), ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~run-form ~'_run-val ~'_end-inst ~'_run-nsecs)
-                               [:run    :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form,                                            ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~run-form ~'_run-val ~'_end-inst ~'_run-nsecs)
-                               [:no-run :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form, (enc/host-info) ~'__thread (otel-context), ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root, ~data-form ~kvs-form ~msg-form, ~error-form nil        nil        nil         nil)
-                               [:no-run :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form,                                            ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root, ~data-form ~kvs-form ~msg-form, ~error-form nil        nil        nil         nil)
+                               [:run    :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form, (enc/host-info) ~'__thread ~'__otel-ctx, ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~run-form ~'_run-val ~'_end-inst ~'_run-nsecs)
+                               [:run    :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form,                                          ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~run-form ~'_run-val ~'_end-inst ~'_run-nsecs)
+                               [:no-run :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form, (enc/host-info) ~'__thread ~'__otel-ctx, ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root, ~data-form ~kvs-form ~msg-form, ~error-form nil        nil        nil         nil)
+                               [:no-run :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form,                                          ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root, ~data-form ~kvs-form ~msg-form, ~error-form nil        nil        nil         nil)
                                (enc/unexpected-arg! clause {:context :signal-constructor-args})))
 
                            record-form
@@ -608,15 +609,19 @@
            `(enc/if-not ~allow? ; Allow to throw at call
               ~run-form
               (let [;;; Allow to throw at call
-                    ~'__inst   ~inst-form
-                    ~'__root0  ~root-form
-                    ~'__level  ~level-form
-                    ~'__kind   ~kind-form
-                    ~'__id     ~id-form
-                    ~'__uid    ~uid-form
-                    ~'__ns     ~ns-form
-                    ~'__thread ~thread-form
-                    ~'__root   (or ~'__root0 (when ~trace? {:id ~'__id, :uid ~'__uid, :inst ~'__inst}))
+                    ~'__inst  ~inst-form
+                    ~'__root0 ~root-form
+                    ~'__level ~level-form
+                    ~'__kind  ~kind-form
+                    ~'__id    ~id-form
+                    ~'__uid   ~uid-form
+                    ~'__ns    ~ns-form
+                    ~'__root
+                    (or ~'__root0
+                      (when ~trace? {:id ~'__id, :uid ~'__uid, :inst ~'__inst}))
+
+                    ~'__thread   ~thread-form   ; Necessarily eager to get callsite value
+                    ~'__otel-ctx ~otel-ctx-form ; ''
 
                     ~'__run-result ; Non-throwing (traps)
                     ~(when run-form

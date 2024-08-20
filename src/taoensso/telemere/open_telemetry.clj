@@ -172,7 +172,8 @@
   ^Span
   [^Tracer tracer ^Context context ^String span-name ^java.time.Instant inst ?parent]
   (let [sb (.spanBuilder tracer span-name)]
-    (when-let [parent ?parent]
+    (enc/if-not [parent ?parent]
+      (.setParent sb context) ; Base (callsite) context
       (cond
         ;; Local parent span, etc.
         (instance? Span parent) (.setParent sb (.with context ^Span parent))
