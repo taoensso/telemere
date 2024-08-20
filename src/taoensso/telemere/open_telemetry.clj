@@ -449,7 +449,7 @@
       {:level :info :data {:ns/kw1 :v1 :ns/kw2 :v2}
        :otel/attrs {:longs [1 1 2 3] :strs ["a" "b" "c"]}})))
 
-(defn handler:open-telemetry-logger
+(defn handler:open-telemetry
   "Highly experimental, possibly buggy, and subject to change!!
   Feedback and bug reports very welcome! Please ping me (Peter) at:
     <https://www.taoensso.com/telemere> or
@@ -477,7 +477,7 @@
   ;; - Sampling means that root/parent/child signals may never be handled
   ;; - `:otel/attrs`, `:otel/context` currently undocumented
 
-  ([] (handler:open-telemetry-logger nil))
+  ([] (handler:open-telemetry nil))
   ([{:keys [logger-provider tracer-provider max-span-msecs]
      :or
      {logger-provider :default
@@ -591,7 +591,7 @@
                (loop [] (when-not (empty? (end-buffer2_)) (recur))) ; Block to drain `end2`
                (.cancel t3s) (.cancel t2m) (.cancel tmax))))]
 
-     (fn a-handler:open-telemetry-logger
+     (fn a-handler:open-telemetry
        ([      ] (stop-tracing!))
        ([signal]
         (let [?context
@@ -632,10 +632,15 @@
               ;; Ready for `LogRecordExporter`
               (.emit lrb)))))))))
 
+(enc/deprecated
+  (def ^:no-doc ^:deprecated handler:open-telemetry-logger
+    "Prefer `handler:open-telemetry`."
+    handler:open-telemetry))
+
 (comment
   (do
     (require '[taoensso.telemere :as t])
-    (def h1 (handler:open-telemetry-logger))
+    (def h1 (handler:open-telemetry))
     (let [[_ [s1 s2]] (t/with-signals (t/trace! ::id1 (t/trace! ::id2 "form2")))]
       (def s1 s1)
       (def s2 s2)))

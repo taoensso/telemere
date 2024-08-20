@@ -934,7 +934,7 @@
   [#?(:default (is (fn? (tel/handler:console))))
    #?(:cljs    (is (fn? (tel/handler:console-raw))))
    #?(:clj     (is (fn? (tel/handler:file))))
-   #?(:clj     (is (fn? (otel/handler:open-telemetry-logger))))])
+   #?(:clj     (is (fn? (otel/handler:open-telemetry))))])
 
 (comment (def attrs-map otel/signal->attrs-map))
 
