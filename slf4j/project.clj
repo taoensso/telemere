@@ -8,7 +8,7 @@
    :url  "https://www.eclipse.org/legal/epl-v10.html"}
 
   :java-source-paths ["src/java"]
-  :javac-options     ["--release" "11" "-g"] ; Support Java >= v11
+  :javac-options     ["--release" "8" "-g"] ; Support Java >= v8
   :dependencies      []
 
   :profiles
