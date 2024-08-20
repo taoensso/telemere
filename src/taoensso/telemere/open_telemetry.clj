@@ -24,6 +24,9 @@
 ;;;; TODO
 ;; - API for `remote-span-context`, trace state, span links?
 ;; - Ability to actually set (compatible) traceId, spanId?
+;; - Consider actually establishing relevant OpenTelemetry Context when tracing?
+;;   Would allow a simpler OpenTelemetry handler, and allow low-level
+;;   manual/auto tracing *within* Telemere run forms.
 
 ;;;; Providers
 

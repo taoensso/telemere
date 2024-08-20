@@ -34,7 +34,6 @@
 
 ;;;; TODO
 ;; - Solution and docs for lib authors
-;; - Add handlers: Logstash, Carmine, Datadog, Kafka
 ;; - Update Tufte  (signal API, config API, signal keys, etc.)
 ;; - Update Timbre (signal API, config API, signal keys, backport improvements)
 
