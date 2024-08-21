@@ -177,8 +177,8 @@ Detailed help is available without leaving your IDE:
 
 ### Included handlers
 
-> See ✅ links for **features and usage**  
-> See 👍 links to **vote on handler** for future addition
+See ✅ links below for **features and usage**,  
+See 👍 links below to **vote on future handlers**:
 
 | Target (↓)                                     |                                                            Clj                                                             |                                               Cljs                                                |
 | :--------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------: |

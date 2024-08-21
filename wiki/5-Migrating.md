@@ -20,7 +20,7 @@ Migrating from Timbre to Telemere should be straightforward **unless you depend 
 
 Where Timbre uses the term "appender", Telemere uses the more general "handler". Functionally they're the same thing.
 
-Check which **Timbre appenders** you use, and whether a similar handler is [currently included](./4-Handlers#included-handlers) with Telemere or available via the [community](./8-Community#handlers).
+Check which **Timbre appenders** you use, and whether a similar handler is [currently included](./4-Handlers#included-handlers) with Telemere or available via the [community](./8-Community#handlers-and-tools).
 
 If not, you may need to [write something yourself](./4-Handlers#writing-handlers).
 

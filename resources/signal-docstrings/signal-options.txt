@@ -30,8 +30,6 @@ Signal options (shared by all signal creators):
                  handler output, so a great way to provide custom data/opts for use
                  (only) by custom middleware/handlers.
 
-handler-specific data that can just be ignored by other handlers
-
 If anything is unclear, please ping me (@ptaoussanis) so that I can improve these docs!
 
 [1] `java.time.Instant`   or `js/Date`
