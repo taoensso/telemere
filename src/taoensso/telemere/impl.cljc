@@ -16,10 +16,11 @@
   (:api (enc/interns-overview)))
 
 #?(:clj
-   (enc/declare-remote ; For macro expansions
+   (enc/declare-remote
      ^:dynamic taoensso.telemere/*ctx*
      ^:dynamic taoensso.telemere/*middleware*
-     ^:dynamic taoensso.telemere/*uid-fn*))
+     ^:dynamic taoensso.telemere/*uid-fn*
+     ^:dynamic taoensso.telemere/*otel-tracer*))
 
 ;;;; Config
 
@@ -32,7 +33,12 @@
 
      (def enabled:tools-logging?
        "Documented at `taoensso.telemere.tools-logging/tools-logging->telemere!`."
-       (enc/get-env {:as :bool} :clojure.tools.logging/to-telemere))))
+       (enc/get-env {:as :bool} :clojure.tools.logging/to-telemere))
+
+     (def enabled:otel-mode?
+       "Documented at `taoensso.telemere/otel-mode?`."
+       (enc/get-env {:as :bool, :default present:otel?}
+         :taoensso.telemere/open-telemetry-mode<.platform>))))
 
 #?(:clj
    (let [base        (enc/get-env {:as :edn} :taoensso.telemere/ct-filters<.platform><.edn>)
@@ -166,29 +172,61 @@
   (default-trace-msg "(+ 1 2)" 3   nil               12345)
   (default-trace-msg "(+ 1 2)" nil (Exception. "Ex") 12345))
 
-;;;; Tracing (optional flow tracking)
+;;;; Tracing
 
-(enc/def* ^:dynamic *trace-root*   "?{:keys [id uid inst]}" nil)
-(enc/def* ^:dynamic *trace-parent* "?{:keys [id uid inst]}" nil)
+(enc/def* ^:dynamic *trace-root*   "?{:keys [id uid]}" nil) ; Fixed once bound
+(enc/def* ^:dynamic *trace-parent* "?{:keys [id uid]}" nil) ; Changes each nesting level
+
+;; Root Telemere ids: {:parent nil, :id id1, :uid uid1  :root {:id id1, :uid uid1}}
+;; Root     OTel ids: {:parent nil, :id id1, :uid span1,:root {:id id1, :uid trace1}}
+
+;;;; OpenTelemetry
 
 #?(:clj
-   (defmacro cond-binding
-     "Wraps `form` with binding if `bind?` is true."
-     [bind? bindings body-form]
-     (if bind?
-       `(binding ~bindings ~body-form)
-       (do                  body-form))))
+   (enc/compile-when present:otel?
+     (do
+       (enc/def*            ^:dynamic *otel-context* "`?Context`" nil)
+       (defmacro otel-context [] `(or *otel-context* (io.opentelemetry.context.Context/current)))
+
+       (defn otel-trace-id
+         "Returns valid `traceId` or nil."
+         [^io.opentelemetry.context.Context context]
+         (let [sc (.getSpanContext (io.opentelemetry.api.trace.Span/fromContext context))]
+           (when (.isValid sc) (.getTraceId sc))))
+
+       (defn otel-span-id
+         "Returns valid `spanId` or nil."
+         [^io.opentelemetry.context.Context context]
+         (let [sc (.getSpanContext (io.opentelemetry.api.trace.Span/fromContext context))]
+           (when (.isValid sc) (.getSpanId sc))))
+
+       (defn viable-tracer
+         "Returns viable `Tracer`, or nil."
+         [^io.opentelemetry.api.trace.Tracer tracer]
+         (let [sb   (.spanBuilder tracer "test-span")
+               span (.startSpan sb)]
+           (when (.isValid (.getSpanContext span))
+             tracer)))
+
+       (def ^String otel-name (enc/fmemoize (fn [id] (if id (enc/as-qname id) "telemere/no-id"))))
+       (defn otel-context+span
+         "Returns new `Context` that includes minimal `Span` in given parent `Context`.
+         We leave the (expensive) population of attributes, etc. for signal handler.
+         Interop needs only the basics (t0, traceId, spanId, spanName) right away."
+         ^io.opentelemetry.context.Context
+         [id inst ?parent-context]
+         (let [parent-context (or ?parent-context (otel-context))]
+           (enc/if-not [tracer (force taoensso.telemere/*otel-tracer*)]
+             parent-context ; Can't add Span without Tracer
+             (let [sb (.spanBuilder ^io.opentelemetry.api.trace.Tracer tracer (otel-name id))]
+               (.setStartTimestamp sb ^java.time.Instant inst)
+               (.with ^io.opentelemetry.context.Context parent-context
+                 (.startSpan sb)))))))))
 
 (comment
-  [(enc/qb 1e6   (cond-binding true [*trace-parent* {:id :id1, :uid :uid1, :inst :inst1}] *trace-parent*)) ; 226.18
-   (macroexpand '(cond-binding true [*trace-parent* {:id :id1, :uid :uid1, :inst :inst1}] *trace-parent*))])
-
-#?(:clj
-   (enc/compile-if               io.opentelemetry.context.Context
-     (defmacro otel-context [] `(io.opentelemetry.context.Context/current))
-     (defmacro otel-context [] nil)))
-
-(comment (enc/qb 1e6 (otel-context))) ; 20.43
+  (enc/qb 1e6 (otel-context) (otel-context+span ::id1 (enc/now-inst) nil)) ; [46.42 186.89]
+  (viable-tracer (force taoensso.telemere/*otel-tracer*))
+  (otel-trace-id (otel-context)))
 
 ;;;; Main types
 
@@ -481,6 +519,7 @@
 
 (comment (enc/qb 1e6 (inst+nsecs (enc/now-inst) 1e9)))
 
+#?(:clj (defn- auto-> [form auto-form] (if (= form :auto) auto-form form)))
 #?(:clj
    (defmacro ^:public signal!
      "Generic low-level signal call, also aliased in Encore."
@@ -488,9 +527,10 @@
       :arglists (signal-arglists  :signal!)}
      [opts]
      (have? map? opts) ; We require const map keys, but vals may require eval
-     (let [defaults             (get    opts :defaults)
-           opts (merge defaults (dissoc opts :defaults))
-           clj? (not (:ns &env))
+     (let [defaults              (get    opts :defaults)
+           opts  (merge defaults (dissoc opts :defaults))
+           cljs? (boolean (:ns &env))
+           clj?  (not cljs?)
            {run-form :run} opts
 
            {:keys [#_expansion-id location elide? allow?]}
@@ -521,17 +561,15 @@
                    {:msg "Expected constant (compile-time) `:trace?` boolean"
                     :context `signal!}))
 
-               parent-form (get opts :parent (when trace? `taoensso.telemere.impl/*trace-parent*))
-               root-form   (get opts :root   (when trace? `taoensso.telemere.impl/*trace-root*))
+               thread-form (when clj? `(enc/thread-info))
 
-               inst-form   (get opts :inst              :auto)
-               uid-form    (get opts :uid  (when trace? :auto))
+               inst-form   (get opts :inst :auto)
+               inst-form   (auto-> inst-form `(enc/now-inst*))
 
-               inst-form   (if (not= inst-form :auto) inst-form `(enc/now-inst*))
-               uid-form    (if (not= uid-form  :auto) uid-form  `(taoensso.telemere/*uid-fn* (if ~'__root0 false true)))
+               parent-form (get opts :parent `*trace-parent*)
+               root-form0  (get opts :root   `*trace-root*)
 
-               thread-form   (if clj? `(enc/thread-info) nil)
-               otel-ctx-form (if clj? `(otel-context)    nil)
+               uid-form    (get opts :uid (when trace? :auto))
 
                signal-delay-form
                (let [{do-form          :do
@@ -553,7 +591,7 @@
                          :elidable? :location :inst :uid :middleware,
                          :sample-rate :ns :kind :id :level :filter :when #_:rate-limit,
                          :ctx :parent #_:trace?, :do :let :data :msg :error :run
-                         :elide? :allow? #_:expansion-id))
+                         :elide? :allow? #_:expansion-id :otel/context))
 
                      _ ; Compile-time validation
                      (do
@@ -572,12 +610,12 @@
 
                      signal-form
                      (let [record-form
-                           (let [clause [(if run-form :run :no-run) (if clj? :clj :cljs)]]
+                           (let   [clause [(if run-form :run :no-run) (if clj? :clj :cljs)]]
                              (case clause
-                               [:run    :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form, (enc/host-info) ~'__thread ~'__otel-ctx, ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~run-form ~'_run-val ~'_end-inst ~'_run-nsecs)
-                               [:run    :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form,                                          ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~run-form ~'_run-val ~'_end-inst ~'_run-nsecs)
-                               [:no-run :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form, (enc/host-info) ~'__thread ~'__otel-ctx, ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root, ~data-form ~kvs-form ~msg-form, ~error-form nil        nil        nil         nil)
-                               [:no-run :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form,                                          ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root, ~data-form ~kvs-form ~msg-form, ~error-form nil        nil        nil         nil)
+                               [:run    :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form, (enc/host-info) ~'__thread ~'__otel-context1, ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~run-form ~'_run-val ~'_end-inst ~'_run-nsecs)
+                               [:run    :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form,                                               ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~run-form ~'_run-val ~'_end-inst ~'_run-nsecs)
+                               [:no-run :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form, (enc/host-info) ~'__thread ~'__otel-context1, ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil        nil        nil         nil)
+                               [:no-run :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form,                                               ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil        nil        nil         nil)
                                (enc/unexpected-arg! clause {:context :signal-constructor-args})))
 
                            record-form
@@ -610,7 +648,56 @@
                       ;; Final unwrapped signal value visible to users/handler-fns, allow to throw
                       (if-let [sig-middleware# ~middleware-form]
                         (sig-middleware# signal#) ; Apply signal middleware, can throw
-                        (do              signal#)))))]
+                        (do              signal#)))))
+
+               into-let-form
+               (enc/cond!
+                 (not trace?) ; Don't trace
+                 `[~'__otel-context1 nil
+                   ~'__uid   ~uid-form ; Given or nil
+                   ~'__root1 ~'__root0 ; Retain, but don't establish
+                   ~'__run-result
+                   ~(when run-form
+                      `(let [t0# (enc/now-nano*)]
+                         (enc/try*
+                           (do            (RunResult. ~run-form nil (- (enc/now-nano*) t0#)))
+                           (catch :all t# (RunResult. nil       t#  (- (enc/now-nano*) t0#))))))]
+
+                 ;; Trace without OpenTelemetry
+                 (or cljs? (not enabled:otel-mode?))
+                 `[~'__otel-context1 nil
+                   ~'__uid  ~(auto-> uid-form `(taoensso.telemere/*uid-fn* (if ~'__root0 false true)))
+                   ~'__root1 (or ~'__root0 ~(when trace? `{:id ~'__id, :uid ~'__uid}))
+                   ~'__run-result
+                   ~(when run-form
+                      `(binding [*trace-root*   ~'__root1
+                                 *trace-parent* {:id ~'__id, :uid ~'__uid}]
+                         (let [t0# (enc/now-nano*)]
+                           (enc/try*
+                             (do            (RunResult. ~run-form nil (- (enc/now-nano*) t0#)))
+                             (catch :all t# (RunResult. nil       t#  (- (enc/now-nano*) t0#)))))))]
+
+                 ;; Trace with OpenTelemetry
+                 (and clj? enabled:otel-mode?)
+                 `[~'__otel-context0 ~(get opts :otel/context `(otel-context)) ; Context
+                   ~'__otel-context1 ~(if run-form `(otel-context+span ~'__id ~'__inst ~'__otel-context0) ~'__otel-context0)
+                   ~'__uid           ~(auto-> uid-form `(or (otel-span-id ~'__otel-context1) (com.taoensso.encore.Ids/genHexId16)))
+                   ~'__root1
+                   (or ~'__root0
+                     ~(when trace?
+                        `{:id ~'__id, :uid (or (otel-trace-id ~'__otel-context1) (com.taoensso.encore.Ids/genHexId32))}))
+
+                   ~'__run-result
+                   ~(when run-form
+                      `(binding [*otel-context* ~'__otel-context1
+                                 *trace-root*   ~'__root1
+                                 *trace-parent* {:id ~'__id, :uid ~'__uid}]
+                         (let [otel-scope# (.makeCurrent ~'__otel-context1)
+                               t0#         (enc/now-nano*)]
+                           (enc/try*
+                             (do            (RunResult. ~run-form nil (- (enc/now-nano*) t0#)))
+                             (catch :all t# (RunResult. nil       t#  (- (enc/now-nano*) t0#)))
+                             (finally (.close otel-scope#))))))])]
 
            ;; Could avoid double `run-form` expansion with a fn wrap (>0 cost)
            ;; (let [run-fn-form (when run-form `(fn [] (~run-form)))]
@@ -622,39 +709,25 @@
            `(enc/if-not ~allow? ; Allow to throw at call
               ~run-form
               (let [;;; Allow to throw at call
-                    ~'__inst  ~inst-form
-                    ~'__root0 ~root-form
-                    ~'__level ~level-form
-                    ~'__kind  ~kind-form
-                    ~'__id    ~id-form
-                    ~'__uid   ~uid-form
-                    ~'__ns    ~ns-form
-                    ~'__root
-                    (or ~'__root0
-                      (when ~trace? {:id ~'__id, :uid ~'__uid, :inst ~'__inst}))
+                    ~'__inst   ~inst-form
+                    ~'__level  ~level-form
+                    ~'__kind   ~kind-form
+                    ~'__id     ~id-form
+                    ~'__ns     ~ns-form
+                    ~'__thread ~thread-form
+                    ~'__root0  ~root-form0 ; ?{:keys [id uid]}
 
-                    ~'__thread   ~thread-form   ; Necessarily eager to get callsite value
-                    ~'__otel-ctx ~otel-ctx-form ; ''
-
-                    ~'__run-result ; Non-throwing (traps)
-                    ~(when run-form
-                       `(let [t0# (enc/now-nano*)]
-                          (cond-binding ~trace?
-                            [*trace-root*   ~'__root
-                             *trace-parent* {:id ~'__id, :uid ~'__uid, :inst ~'__inst}]
-                            (enc/try*
-                              (do            (RunResult. ~run-form nil (- (enc/now-nano*) t0#)))
-                              (catch :all t# (RunResult. nil       t#  (- (enc/now-nano*) t0#)))))))
-
-                    signal_# ~signal-delay-form]
+                    ~@into-let-form ; Inject conditional bindings
+                    signal# ~signal-delay-form]
 
                 (dispatch-signal! ; Runner preserves dynamic bindings when async.
-                  ;; Unconditionally send same wrapped signal to all handlers. Each handler will
-                  ;; use wrapper for handler filtering, unwrapping (realizing) only allowed signals.
-                  (WrappedSignal. ~'__ns ~'__kind ~'__id ~'__level signal_#))
+                  ;; Unconditionally send same wrapped signal to all handlers.
+                  ;; Each handler will use wrapper for handler filtering,
+                  ;; unwrapping (realizing) only allowed signals.
+                  (WrappedSignal. ~'__ns ~'__kind ~'__id ~'__level signal#))
 
-                (if    ~'__run-result
-                  (do (~'__run-result signal_#))
+                (if ~'__run-result
+                  ( ~'__run-result signal#)
                   true))))))))
 
 (comment
@@ -691,7 +764,7 @@
        (atom
          {:tools-logging  (fn [] {:present? present:tools-logging?, :enabled-by-env? enabled:tools-logging?})
           :slf4j          (fn [] {:present? present:slf4j?, :telemere-provider-present? present:slf4j-telemere?})
-          :open-telemetry (fn [] {:present? present:otel?})}))
+          :open-telemetry (fn [] {:present? present:otel?, :enabled-by-env? enabled:otel-mode?})}))
 
      (defn add-interop-check! [source-id check-fn] (swap! interop-checks_ assoc source-id check-fn))
 

@@ -29,7 +29,9 @@
     [[org.clojure/clojure                  "1.11.4"]
      [com.github.clj-easy/graal-build-time "1.0.5"]]}
 
-   :test {:aot [] #_[taoensso.telemere-tests]}
+   :test     {:aot [] #_[taoensso.telemere-tests]}
+   :otel-on  {:jvm-opts ["-Dtaoensso.telemere.open-telemetry-mode=true"]}
+   :otel-off {:jvm-opts ["-Dtaoensso.telemere.open-telemetry-mode=false"]}
    :dev
    {:jvm-opts
     ["-server"
@@ -50,10 +52,10 @@
      #_[org.slf4j/slf4j-nop             "2.0.14"]
 
      ;;; For optional handlers
-     [io.opentelemetry/opentelemetry-api                           "1.41.0"]
-     #_[io.opentelemetry/opentelemetry-sdk-extension-autoconfigure "1.41.0"]
-     #_[io.opentelemetry/opentelemetry-exporter-otlp               "1.41.0"]
-     #_[io.opentelemetry/opentelemetry-exporters-jaeger             "0.9.1"]
+     [io.opentelemetry/opentelemetry-api                         "1.41.0"]
+     [io.opentelemetry/opentelemetry-sdk-extension-autoconfigure "1.41.0"]
+     [io.opentelemetry/opentelemetry-exporter-otlp               "1.41.0"]
+     #_[io.opentelemetry/opentelemetry-exporters-jaeger           "0.9.1"]
      [metosin/jsonista       "0.3.10"]
      [com.draines/postal     "2.0.5"]
      [org.julienxx/clj-slack "0.8.3"]]
@@ -91,4 +93,6 @@
 
    "test-clj"  ["with-profile" "+c1.12:+c1.11:+c1.10" "test"]
    "test-cljs" ["with-profile" "+c1.12" "cljsbuild"   "test"]
-   "test-all"  ["do" ["clean"] ["test-clj"] ["test-cljs"]]})
+
+   "test-clj-no-otel" ["with-profile" "+otel-off" "test-clj"]
+   "test-all"  ["do" ["clean"] ["test-clj"] ["test-clj-no-otel"] ["test-cljs"]]})
