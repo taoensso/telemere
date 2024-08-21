@@ -11,66 +11,22 @@
    [taoensso.telemere       :as tel])
 
   (:import
-   [io.opentelemetry.context Context]
    [io.opentelemetry.api.common AttributesBuilder Attributes]
    [io.opentelemetry.api.logs  LoggerProvider Severity]
-   [io.opentelemetry.api.trace TracerProvider Tracer Span SpanContext]
-   [java.util.concurrent CountDownLatch]))
+   [io.opentelemetry.api.trace TracerProvider]))
 
 (comment
   (remove-ns 'taoensso.telemere.open-telemetry)
   (:api (enc/interns-overview)))
 
+(enc/declare-remote
+  ^:dynamic taoensso.telemere/*otel-tracer*
+  taoensso.telemere/otel-default-providers_
+  taoensso.telemere/add-handler!)
+
 ;;;; TODO
-;; - API for `remote-span-context`, trace state, span links?
-;; - Ability to actually set (compatible) traceId, spanId?
-;; - Consider actually establishing relevant OpenTelemetry Context when tracing?
-;;   Would allow a simpler OpenTelemetry handler, and allow low-level
-;;   manual/auto tracing *within* Telemere run forms.
-
-;;;; Providers
-
-(defn get-default-providers
-  "Experimental, subject to change. Feedback welcome!
-
-  Returns map with keys:
-    :logger-provider - default `io.opentelemetry.api.logs.LoggerProvider`
-    :tracer-provider - default `io.opentelemetry.api.trace.TracerProvider`
-    :via             - ∈ #{:sdk-extension-autoconfigure :global}
-
-  Uses `AutoConfiguredOpenTelemetrySdk` when possible, or
-  `GlobalOpenTelemetry` otherwise.
-
-  See the relevant `opentelemetry-java` docs for details."
-  []
-  (or
-    ;; Via SDK autoconfiguration extension (when available)
-    (enc/compile-when
-      io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk
-      (enc/catching :common
-        (let [builder (io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk/builder)
-              sdk    (.getOpenTelemetrySdk (.build builder))]
-          {:logger-provider (.getLogsBridge     sdk)
-           :tracer-provider (.getTracerProvider sdk)
-           :via :sdk-extension-autoconfigure})))
-
-    ;; Via Global (generally not recommended)
-    (let [g (io.opentelemetry.api.GlobalOpenTelemetry/get)]
-      {:logger-provider (.getLogsBridge     g)
-       :tracer-provider (.getTracerProvider g)
-       :via :global})))
-
-(def ^:no-doc default-providers_
-  (delay (get-default-providers)))
-
-(comment
-  (get-default-providers)
-  (let [{:keys [logger-provider tracer-provider]} (get-default-providers)]
-    (def ^LoggerProvider my-lp       logger-provider)
-    (def ^Tracer         my-tr (.get tracer-provider "Telemere")))
-
-  ;; Confirm that we have a real (not noop) SpanBuilder
-  (.spanBuilder my-tr "my-span"))
+;; - API for remote span context and trace state? (Ref. beta19)
+;; - API for span links?
 
 ;;;; Attributes
 
@@ -137,209 +93,7 @@
     (enc/run-kv! (fn [k v] (put-attr! attr-builder (attr-name name-or-prefix k) v)) x)
     (do                    (put-attr! attr-builder            name-or-prefix        x))))
 
-;;;; Spans
-
-#_
-(defn- remote-span-context
-  "Returns new remote `io.opentelemetry.api.trace.SpanContext`
-  for use as `start-span` parent."
-  ^SpanContext [^String trace-id ^String span-id sampled? ?trace-state]
-  (SpanContext/createFromRemoteParent trace-id span-id
-    (if sampled?
-      (io.opentelemetry.api.trace.TraceFlags/getSampled)
-      (io.opentelemetry.api.trace.TraceFlags/getDefault))
-
-    (enc/if-not [trace-state ?trace-state]
-      (io.opentelemetry.api.trace.TraceState/getDefault)
-      (cond
-        (map? trace-state)
-        (let [tsb (io.opentelemetry.api.trace.TraceState/builder)]
-          (enc/run-kv! (fn [k v] (.put tsb k v)) trace-state) ; NB only `a-zA-Z.-_` chars allowed
-          (.build tsb))
-
-        (instance? io.opentelemetry.api.trace.TraceState trace-state) trace-state
-        :else
-        (enc/unexpected-arg! trace-state
-          :context  `remote-span-context
-          :param    'trace-state
-          :expected '#{nil {string string} io.opentelemetry.api.trace.TraceState})))))
-
-(comment (enc/qb 1e6 (remote-span-context "c5b856d919f65e39a202bfb3034d65d8" "9740419096347616" false {"a" "A"}))) ; 111.13
-
-(defn- start-span
-  "Returns new `io.opentelemetry.api.trace.Span` with random `traceId` and `spanId`."
-  ^Span
-  [^Tracer tracer ^Context context ^String span-name ^java.time.Instant inst ?parent]
-  (let [sb (.spanBuilder tracer span-name)]
-    (enc/if-not [parent ?parent]
-      (.setParent sb context) ; Base (callsite) context
-      (cond
-        (instance? Span        parent) (.setParent sb (.with context ^Span                   parent))  ; Local  parent span,    etc.
-        (instance? SpanContext parent) (.setParent sb (.with context (Span/wrap ^SpanContext parent))) ; Remote parent context, etc.
-        :else
-        (enc/unexpected-arg! parent
-          {:context `start-span
-           :expected
-           #{io.opentelemetry.api.trace.Span
-             io.opentelemetry.api.trace.SpanContext}})))
-
-    (.setStartTimestamp sb inst)
-    (.startSpan         sb)))
-
-(comment
-  (let [inst (enc/now-inst)] (enc/qb 1e6                   (start-span my-tr (Context/current) "id1"          inst  nil))) ; 158.09
-  (start-span my-tr (Context/current) "id1" (enc/now-inst) (start-span my-tr (Context/current) "id2" (enc/now-inst) nil))
-  (start-span my-tr (Context/current) "id1" (enc/now-inst)
-    (remote-span-context "c5b856d919f65e39a202bfb3034d65d8" "1111111111111111" false nil)))
-
-(let [ak-uid  (io.opentelemetry.api.common.AttributeKey/stringKey "uid")
-      ak-ns   (io.opentelemetry.api.common.AttributeKey/stringKey "ns")
-      ak-line (io.opentelemetry.api.common.AttributeKey/longKey   "line")]
-
-  (defn- span-attrs
-    "Returns `io.opentelemetry.api.common.Attributes` or nil."
-    [uid signal]
-    (if uid
-      (if-let   [ns   (get signal :ns)]
-        (if-let [line (get signal :line)]
-          (Attributes/of ak-uid (str uid), ak-ns ns, ak-line (long line))
-          (Attributes/of ak-uid (str uid), ak-ns ns))
-        (Attributes/of   ak-uid (str uid)))
-
-      (if-let   [ns   (get signal :ns)]
-        (if-let [line (get signal :line)]
-          (Attributes/of ak-ns ns, ak-line (long line))
-          (Attributes/of ak-ns ns))
-        nil))))
-
-(comment (enc/qb 1e6 (span-attrs "uid1" {:ns "ns1" :line 495}))) ; 101.36
-
-(def ^:private ^String span-name (enc/fmemoize (fn [id] (if id (enc/as-qname id)  "telemere/nil-id"))))
-(comment (enc/qb 1e6  (span-name :foo/bar))) ; 46.09
-
-(defn- handle-tracing!
-  "Experimental! Takes care of relevant signal `Span` management.
-  Returns nil or `io.opentelemetry.api.trace.Span` for possible use as
-  `io.opentelemetry.api.logs.LogRecordBuilder` context.
-
-  Expect:
-    - `spans_`      - latom: {<uid> <Span_>}
-    - `end-buffer_` - latom: #{[<uid> <end-inst>]}
-    - `gc-buffer_`  - latom: #{<uid>}"
-
-  [tracer context spans_ end-buffer_ gc-buffer_ gc-latch_ signal]
-
-  ;; Notes:
-  ;; - Spans go to `SpanExporter` after `.end` call, ~random order okay
-  ;; - Span data: t1 of self, and name + id + t0 of #{self parent trace}
-  ;; - No API to directly create spans with needed data, so we ~simulate
-  ;;   typical usage
-
-  (when-let [^java.util.concurrent.CountDownLatch gc-latch (gc-latch_)]
-    (try (.await gc-latch) (catch InterruptedException _)))
-
-  (enc/when-let
-    [root     (get signal :root) ; Tracing iff root
-     root-uid (get root   :uid)
-     :let [curr-spans (spans_)]
-     root-span
-     (force
-       (or ; Fetch/ensure Span for root
-         (get curr-spans root-uid)
-         (when-let [root-inst (get root :inst)]
-           (let    [root-id   (get root :id)]
-             (spans_ root-uid
-               (fn  [old]
-                 (or old
-                   (delay
-                     ;; TODO Support remote-span-context parent and/or span links?
-                     (start-span tracer context (span-name root-id)
-                       root-inst nil)))))))))]
-
-    (let [?parent-span ; May be identical to root-span
-          (when-let   [parent     (get signal :parent)]
-            (when-let [parent-uid (get parent :uid)]
-              (if (= parent-uid root-uid)
-                root-span
-                (force
-                  (or ; Fetch/ensure Span for parent
-                    (get curr-spans parent-uid)
-                    (let [{parent-id :id, parent-inst :inst} parent]
-                      (spans_ parent-uid
-                        (fn  [old]
-                          (or old
-                            (delay
-                              (start-span tracer context (span-name parent-id)
-                                parent-inst root-span)))))))))))
-
-          {this-uid :uid, this-end-inst :end-inst} signal]
-
-      (enc/cond
-        ;; No end-inst => no run-form =>
-        ;; add `Event` (rather than child `Span`) to parent
-        :if-let [this-is-event? (not this-end-inst)]
-        (when-let [^Span parent-span ?parent-span]
-          (let [{this-id :id, this-inst :inst} signal]
-            (if-let [^Attributes attrs (span-attrs this-uid signal)]
-              (.addEvent parent-span (span-name this-id) attrs ^java.time.Instant this-inst)
-              (.addEvent parent-span (span-name this-id)       ^java.time.Instant this-inst)))
-          (do            parent-span))
-
-        :if-let
-        [^Span this-span
-         (if (= this-uid root-uid)
-           root-span
-           (force
-             (or ; Fetch/ensure Span for this (child)
-               (get curr-spans this-uid)
-               (let [{this-id :id, this-inst :inst} signal]
-                 (spans_ this-uid
-                   (fn  [old]
-                     (or old
-                       (delay
-                         (start-span tracer context (span-name this-id)
-                           this-inst (or ?parent-span root-span))))))))))]
-
-        (do
-          (if (utils/error-signal? signal)
-            (.setStatus this-span io.opentelemetry.api.trace.StatusCode/ERROR)
-            (.setStatus this-span io.opentelemetry.api.trace.StatusCode/OK))
-
-          (when-let [^Attributes attrs (span-attrs this-uid signal)]
-            (.setAllAttributes this-span attrs))
-
-          ;; Error stuff
-          (when-let [error (get signal :error)]
-            (when (instance? Throwable error)
-              (if-let [attrs
-                       (when-let [ex-data (ex-data error)]
-                         (when-not (empty? ex-data)
-                           (let [sb (Attributes/builder)]
-                             (enc/run-kv! (fn [k v] (put-attr! sb (attr-name k) v)) ex-data)
-                             (.build sb))))]
-                (.recordException this-span error attrs)
-                (.recordException this-span error))))
-
-          ;; (.end this-span this-end-inst) ; Ready for `SpanExporter`
-          (end-buffer_ (fn [old] (conj old [this-uid this-end-inst])))
-          (gc-buffer_  (fn [old] (conj old  this-uid)))
-
-          this-span)))))
-
-(comment
-  (do
-    (require '[taoensso.telemere :as t])
-    (def spans_       "{<uid> <Span_>}"      (enc/latom {}))
-    (def end-buffer_ "#{[<uid> <end-inst>]}" (enc/latom #{}))
-    (def gc-buffer_  "#{<uid>}"              (enc/latom #{}))
-    (let [[_ [s1 s2]] (t/with-signals (t/trace! ::id1 (t/trace! ::id2 "form2")))]
-      (def s1 s1)
-      (def s2 s2)))
-
-  [@gc-buffer_ @end-buffer_ @spans_]
-  (handle-tracing! my-tr spans_ end-buffer_ gc-buffer_ (enc/latom nil) s1))
-
-;;;; Logging
+;;;; Handler
 
 (defn- level->severity
   ^Severity [level]
@@ -367,7 +121,7 @@
       (str level))))
 
 (defn- signal->attrs
-  "Returns `io.opentelemetry.api.common.Attributes` for given signal.
+  "Returns `Attributes` for given signal.
   Ref. <https://opentelemetry.io/docs/specs/otel/logs/data-model/>."
   ^Attributes [signal]
   (let [ab (Attributes/builder)]
@@ -431,10 +185,23 @@
     (.build ab)))
 
 (comment
-  (enc/qb 1e6 ; 850.93
+  (enc/qb 1e6 ; 808.56
     (signal->attrs
       {:level :info :data {:ns/kw1 :v1 :ns/kw2 :v2}
        :otel/attrs {:longs [1 1 2 3] :strs ["a" "b" "c"]}})))
+
+(let [ak-ns   (io.opentelemetry.api.common.AttributeKey/stringKey "ns")
+      ak-line (io.opentelemetry.api.common.AttributeKey/longKey   "line")]
+
+  (defn- basic-span-attrs
+    "Returns `?Attributes`."
+    [signal]
+    (when-let [ns   (get signal :ns)]
+      (if-let [line (get signal :line)]
+        (Attributes/of ak-ns ns, ak-line (long line))
+        (Attributes/of ak-ns ns)))))
+
+(comment (enc/qb 1e6 (basic-span-attrs {:ns "ns1" :line 495}))) ; 52.4
 
 (defn handler:open-telemetry
   "Highly experimental, possibly buggy, and subject to change!!
@@ -447,154 +214,102 @@
 
   Returns a signal handler that:
     - Takes a Telemere signal (map).
-    - Emits signal  data to configured `io.opentelemetry.api.logs.Logger`
-    - Emits tracing data to configured `io.opentelemetry.api.logs.Tracer`
+    - Emits signal  data to configured `LogExporter`
+    - Emits tracing data to configured `SpanExporter`
+      iff `telemere/otel-tracing?` is true.
 
   Options:
-    `:logger-provider` - ∈ #{nil :default <io.opentelemetry.api.logs.LoggerProvider>}  [1]
-    `:tracer-provider` - ∈ #{nil :default <io.opentelemetry.api.trace.TracerProvider>} [1]
-    `:max-span-msecs`  - (Advanced) Longest tracing span to support in milliseconds
-                         (default 120 mins). If recorded spans exceed this max, emitted
-                         data will be inaccurate. Larger values use more memory.
-
-  [1] See `get-default-providers` for more info"
+    `:logger-provider` - nil or `io.opentelemetry.api.logs.LoggerProvider`,
+      (see `telemere/get-default-providers` for default)."
 
   ;; Notes:
   ;; - Multi-threaded handlers may see signals ~out of order
-  ;; - Sampling means that root/parent/child signals may never be handled
+  ;; - Sampling means that root/parent/child signals might not be handled
   ;; - `:otel/attrs`, `:otel/context` currently undocumented
 
   ([] (handler:open-telemetry nil))
-  ([{:keys [logger-provider tracer-provider max-span-msecs]
-     :or
-     {logger-provider :default
-      tracer-provider :default
-      max-span-msecs  (enc/msecs :mins 120)}}]
+  ([{:keys [emit-tracing? logger-provider]
+     :or   {emit-tracing? true}}]
 
-   (let [min-max-span-msecs (enc/msecs :mins 15)]
-    (when (< (long max-span-msecs) min-max-span-msecs)
-      (throw
-        (ex-info "`max-span-msecs` too small"
-          {:given max-span-msecs, :min min-max-span-msecs}))))
+   (let [?logger-provider
+         (if (not= logger-provider :default)
+           logger-provider
+           (:logger-provider (force taoensso.telemere/otel-default-providers_)))
 
-   (let [?logger-provider (if (= logger-provider :default) (:logger-provider (force default-providers_)) logger-provider)
-         ?tracer-provider (if (= tracer-provider :default) (:tracer-provider (force default-providers_)) tracer-provider)
-         ?tracer
-         (when-let [^io.opentelemetry.api.trace.TracerProvider p ?tracer-provider]
-           (.get p "Telemere"))
+         ;; Mechanism to end spans 3-6 secs *after* signal handling. The delay
+         ;; helps support out-of-order signals due to >1 handler threads, etc.
+         span-buffer1_ (enc/latom #{}) ; #{[<Span> <end-inst>]}
+         span-buffer2_ (enc/latom #{})
+         timer_
+         (delay
+           (let [t3s (java.util.Timer. "autoTelemereOpenTelemetryHandlerTimer3s" (boolean :daemon))]
+             (.schedule t3s
+               (proxy [java.util.TimerTask] []
+                 (run []
+                   ;; span2->end!
+                   (when-let [drained (enc/reset-in! span-buffer2_ #{})]
+                     (doseq [[span end-inst] drained]
+                       (.end
+                         ^io.opentelemetry.api.trace.Span span
+                         ^java.time.Instant end-inst)))
 
-         ;;; Tracing state
-         spans_       (when ?tracer (enc/latom  {})) ; {<uid> <Span_>}
-         end-buffer1_ (when ?tracer (enc/latom #{})) ; #{[<uid> <end-inst>]}
-         sgc-buffer1_ (when ?tracer (enc/latom #{})) ; #{<uid>} ; Slow GC
-         gc-latch_    (when ?tracer (enc/latom nil)) ; ?CountDownLatch
+                   ;; span1->span2
+                   (when-let [drained (enc/reset-in! span-buffer1_ #{})]
+                     (when-not (empty? drained)
+                       (span-buffer2_ (fn [old] (set/union old drained)))))))
+
+               3000 3000)))
 
          stop-tracing!
-         (if-not ?tracer
-           (fn stop-tracing! []) ; Noop
-           (let [end-buffer2_ (enc/latom #{})
-                 sgc-buffer2_ (enc/latom #{})
-                 fgc-buffer1_ (enc/latom #{})
-                 fgc-buffer2_ (enc/latom #{})
-
-                 tmax (java.util.Timer. "autoTelemereOpenTelemetryHandlerTimerMax" (boolean :daemon))
-                 t2m  (java.util.Timer. "autoTelemereOpenTelemetryHandlerTimer2m"  (boolean :daemon))
-                 t3s  (java.util.Timer. "autoTelemereOpenTelemetryHandlerTimer3s"  (boolean :daemon))
-                 schedule!
-                 (fn [^java.util.Timer timer ^long interval-msecs f]
-                   (.schedule timer (proxy [java.util.TimerTask] [] (run [] (f)))
-                     interval-msecs interval-msecs))
-
-                 gc-spans!
-                 (fn [uids-to-gc]
-                   (when-not (empty? uids-to-gc)
-                     (let [uids-to-gc (set/intersection uids-to-gc (set (keys (spans_))))]
-                       (when-not (empty? uids-to-gc)
-                         ;; ;; Update in small batches to minimize contention
-                         ;; (doseq [batch (partition-all 16 uids-to-gc)]
-                         ;;   (spans_ (fn [old] (reduce dissoc old batch))))
-                         (let [gc-latch (java.util.concurrent.CountDownLatch. 1)]
-                           (when (compare-and-set! gc-latch_ nil gc-latch)
-                             (try
-                               (spans_ (fn [old] (reduce dissoc old uids-to-gc)))
-                               (finally
-                                 (.countDown gc-latch)
-                                 (reset!     gc-latch_ nil)))))))))
-
-                 move-uids!
-                 (fn [src_ dst_]
-                   (let [drained (enc/reset-in! src_ #{})]
-                     (when-not (empty? drained)
-                       (dst_ (fn [old] (set/union old drained))))))]
-
-             ;; Notes:
-             ;; - Maintain local {<uid> <Span_>} state, creating spans as needed
-             ;; - A timer+buffer system is used to delay calling `.end` on
-             ;;   spans, allowing parents to linger in case they're handled
-             ;;   before children.
-             ;;
-             ;; Internal buffer flow:
-             ;;   1. handler->end1->end2->(end!)->fgc1->fgc2->(gc!) ; Fast GC path (span     ended)
-             ;;   2. handler                    ->sgc1->sgc2->(gc!) ; Slow GC path (span not ended)
-             ;;
-             ;; Properties:
-             ;;   - End spans 3-6   secs after trace handler ; Linger for possible out-of-order children
-             ;;   - GC  spans 2-4   mins after ending        ; '', children will noop
-             ;;   - GC  spans 90-92 mins after span first created
-             ;;     Final catch-all for spans that may have been created but
-             ;;     never ended (e.g. due to sampling or filtering).
-             ;;     => Max span runtime!
-
-             (schedule! tmax max-span-msecs ; sgc2->(gc!)
-               (fn [] (gc-spans! (enc/reset-in! sgc-buffer2_ #{}))))
-
-             (schedule! t2m (enc/msecs :mins 2)
-               (fn []
-                 (gc-spans! (enc/reset-in! fgc-buffer2_ #{})) ; fgc2->(gc!)
-                 (move-uids! fgc-buffer1_  fgc-buffer2_)      ; fgc1->fgc2
-                 (move-uids! sgc-buffer1_  sgc-buffer2_)      ; sgc1->sgc2
-                 ))
-
-             (schedule! t3s (enc/msecs :secs 3)
-               (fn []
-                 (let [drained (enc/reset-in! end-buffer2_ #{})]
-                   (when-not (empty? drained)
-
-                     ;; end2->(end!)
-                     (let [spans (spans_)]
-                       (doseq [[uid end-inst] drained]
-                         (when-let [span_ (get spans uid)]
-                           (.end ^Span (force span_) ^java.time.Instant end-inst))))
-
-                     ;; (end!)->fgc1
-                     (let [uids (into #{} (map (fn [[uid _]] uid)) drained)]
-                       (fgc-buffer1_ (fn [old] (set/union old uids))))))
-
-                 ;; end1->end2
-                 (move-uids! end-buffer1_ end-buffer2_)))
-
-             (fn stop-tracing! []
-               (loop [] (when-not (empty? (end-buffer1_)) (recur))) ; Block to drain `end1`
-               (loop [] (when-not (empty? (end-buffer2_)) (recur))) ; Block to drain `end2`
-               (.cancel t3s) (.cancel t2m) (.cancel tmax))))]
+         (fn stop-tracing! []
+           (when (realized? timer_)
+             (loop [] (when-not (empty? (span-buffer1_)) (recur))) ; Block to drain `span1`
+             (loop [] (when-not (empty? (span-buffer2_)) (recur))) ; Block to drain `span2`
+             (.cancel ^java.util.Timer @timer_)))]
 
      (fn a-handler:open-telemetry
        ([      ] (stop-tracing!))
        ([signal]
-        (let [?context
-              (enc/when-let
-                [^Tracer  tracer ?tracer
-                 ^Context context
-                 (enc/get* signal :otel/context ; Undocumented
-                   :_otel-context
-                   #_(io.opentelemetry.context.Context/root)
-                   (io.opentelemetry.context.Context/current))
+        (let [?tracing-context
+              (when emit-tracing?
+                (when-let [context (enc/get* signal :otel/context :_otel-context nil)]
+                  (let    [span (io.opentelemetry.api.trace.Span/fromContext context)]
+                    (when (.isRecording span)
+                      (enc/if-not [end-inst (get signal :end-inst)]
+                        ;; No end-inst => no run-form => add `Event` to span (parent)
+                        (let [{:keys [id ^java.time.Instant inst]} signal]
+                          (if-let [^Attributes attrs (basic-span-attrs signal)]
+                            (.addEvent span (impl/otel-name id) attrs inst)
+                            (.addEvent span (impl/otel-name id)       inst)))
 
-                 ^Span span
-                 (handle-tracing! tracer context
-                   spans_ end-buffer1_ sgc-buffer1_ gc-latch_ signal)]
+                        ;; Real span
+                        (do
+                          (if (utils/error-signal? signal)
+                            (.setStatus span io.opentelemetry.api.trace.StatusCode/ERROR)
+                            (.setStatus span io.opentelemetry.api.trace.StatusCode/OK))
 
-                (.storeInContext span context))]
+                          (when-let [^Attributes attrs (basic-span-attrs signal)]
+                            (.setAllAttributes span attrs))
+
+                          ;; Error stuff
+                          (when-let [error (get signal :error)]
+                            (when (instance? Throwable error)
+                              (if-let [attrs
+                                       (when-let [ex-data (ex-data error)]
+                                         (when-not (empty? ex-data)
+                                           (let [sb (Attributes/builder)]
+                                             (enc/run-kv! (fn [k v] (put-attr! sb (attr-name k) v)) ex-data)
+                                             (.build sb))))]
+                                (.recordException span error attrs)
+                                (.recordException span error))))
+
+                          ;; (.end span end-inst) ; Emit to `SpanExporter` now
+                          ;; Emit to `SpanExporter` after delay:
+                          (span-buffer1_ (fn [old] (conj old [span end-inst])))
+                          (.deref timer_) ; Ensure timer is running
+                          ))
+
+                      context))))]
 
           (when-let [^io.opentelemetry.api.logs.LoggerProvider logger-provider ?logger-provider]
             (let [{:keys [ns inst level msg_]} signal
@@ -605,8 +320,8 @@
               (.setSeverity      lrb (level->severity level))
               (.setAllAttributes lrb (signal->attrs   signal))
 
-              (when-let [^Context context ?context] ; Incl. traceId, SpanId, etc.
-                (.setContext lrb  context))
+              (when-let [^io.opentelemetry.context.Context tracing-context ?tracing-context]
+                (.setContext lrb tracing-context)) ; Incl. traceId, spanId, etc.
 
               (when-let [body
                          (or
@@ -616,7 +331,7 @@
                                (str (enc/ex-type error) ": " (enc/ex-message error)))))]
                 (.setBody lrb body))
 
-              ;; Ready for `LogRecordExporter`
+              ;; Emit to `LogRecordExporter`
               (.emit lrb)))))))))
 
 (enc/deprecated
@@ -633,3 +348,21 @@
       (def s2 s2)))
 
   (h1 s1))
+
+(defn check-interop
+  "Returns interop debug info map."
+  []
+  {:present?       true
+   :use-tracer?    impl/enabled:otel-tracing?
+   :viable-tracer? (boolean (impl/viable-tracer (force taoensso.telemere/*otel-tracer*)))})
+
+(impl/add-interop-check! :open-telemetry check-interop)
+
+(impl/on-init
+  (when impl/enabled:otel-tracing?
+    ;; (taoensso.telemere/add-handler! :default/open-telemetry (handler:open-telemetry))
+    (impl/signal!
+      {:kind  :event
+       :level :debug ; < :info since runs on init
+       :id    :taoensso.telemere/open-telemetry-tracing!
+       :msg   "Enabling interop: OpenTelemetry tracing"})))

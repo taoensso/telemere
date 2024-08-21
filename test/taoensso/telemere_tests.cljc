@@ -264,9 +264,8 @@
         (let [sv1 (dissoc (with-sig (sig! {:level :info, :run (+ 1 2), :my-k1 :my-v1})) :_otel-context)
               sv1 ; Ensure instants are printable
               (-> sv1
-                (update-in [:inst]       enc/inst->udt)
-                (update-in [:end-inst]   enc/inst->udt)
-                (update-in [:root :inst] enc/inst->udt))]
+                (update-in [:inst]     enc/inst->udt)
+                (update-in [:end-inst] enc/inst->udt))]
 
        [(is (= sv1 (read-string (pr-str sv1))))])))])
 
@@ -422,80 +421,98 @@
         (let [sv (with-sig (sig! {:level :info, :root   {:id   :id1, :foo :bar}}))] (is (sm? sv {:root   {:id :id1       :uid :submap/nx, :foo :bar}}) "Manual `:root/id`"))
         (let [sv (with-sig (sig! {:level :info, :root   {:uid :uid1, :foo :bar}}))] (is (sm? sv {:root   {:id :submap/nx :uid      :uid1, :foo :bar}}) "Manual `:root/uid`"))])
 
-     (testing "Auto trace {:keys [id uid inst]}s for parent and root"
-       [(testing "Tracing enabled"
-          (let [sv (with-sig (sig! {:level :info, :id :id1, :uid :uid1, :inst t1, :trace? true
-                                    :run  [impl/*trace-parent* impl/*trace-root*],
-                                    :data [impl/*trace-parent* impl/*trace-root*]}))]
+     (testing "Auto parent/root"
+       [(testing "Tracing disabled"
+          (let [sv (with-sig (sig! {:level :info, :id :id1, :uid :uid1, :trace? false
+                                    :run  {:parent impl/*trace-parent*, :root impl/*trace-root*}
+                                    :data {:parent impl/*trace-parent*, :root impl/*trace-root*}}))]
 
-            [(is (sm? sv {:parent nil, :root {:id :id1, :uid :uid1, :inst t1}}))
-             (let [[rv1 rv2] (:run-val sv)]
-               [(is (sm? rv1 {:id :id1, :uid :uid1, :inst t1}) "`*trace-parent*` visible to run-form")
-                (is (sm? rv2 {:id :id1, :uid :uid1, :inst t1}) "`*trace-root*`   visible to run-form")])
+            [(is (sm? sv           {:parent nil, :root nil}))
+             (is (sm? sv {:run-val {:parent nil, :root nil}}) "`*trace-x*`     visible to run-form")
+             (is (sm? sv {:data    {:parent nil, :root nil}}) "`*trace-x*` NOT visible to data-form")]))
 
-             (let [[dv1 dv2] (:data sv)]
-               [(is (= dv1 nil) "`*trace-parent*` NOT visible to data-form")
-                (is (= dv2 nil) "`*trace-root*`   NOT visible to data-form")])]))
+        (when #?(:cljs true :clj (not impl/enabled:otel-tracing?))
+          (testing "Tracing enabled"
+            (let [sv (with-sig (sig! {:level :info, :id :id1, :uid :uid1, :trace? true
+                                      :run  {:parent impl/*trace-parent*, :root impl/*trace-root*}
+                                      :data {:parent impl/*trace-parent*, :root impl/*trace-root*}}))]
 
-        (testing "Tracing disabled"
-          (let [sv (with-sig (sig! {:level :info, :id :id1, :uid :uid1, :inst t1, :trace? false
-                                    :run  [impl/*trace-parent* impl/*trace-root*],
-                                    :data [impl/*trace-parent* impl/*trace-root*]}))]
+              [(is (sm? sv {:parent nil, :root {:id :id1, :uid :uid1}}))
+               (is (sm? sv {:run-val  {:parent {:id :id1, :uid :uid1}, :root {:id :id1, :uid :uid1}}}) "`*trace-x*`     visible to run-form")
+               (is (sm? sv {:data     {:parent nil,                    :root nil}})                    "`*trace-x*` NOT visible to data-form")])))])
 
-            [(is (sm? sv {:parent nil, :root nil}))
-             (let [[rv1 rv2] (:run-val sv)]
-               [(is (= rv1 nil) "`*trace-parent*` visible to run-form")
-                (is (= rv2 nil) "`*trace-root*`   visible to run-form")])
+     (testing "Manual parent/root"
+       [(testing "Tracing disabled"
+          (let [sv (with-sig (sig! {:level :info, :id :id1, :uid :uid1, :trace? false,
+                                    :parent {:id :id2, :uid :uid2},
+                                    :root   {:id :id3, :uid :uid3}
+                                    :run    {:parent impl/*trace-parent*, :root impl/*trace-root*}
+                                    :data   {:parent impl/*trace-parent*, :root impl/*trace-root*}}))]
 
-             (let [[dv1 dv2] (:data sv)]
-               [(is (= dv1 nil) "`*trace-parent*` NOT visible to data-form")
-                (is (= dv2 nil) "`*trace-root*`   NOT visible to data-form")])]))])
+            [(is (sm? sv {:parent {:id :id2, :uid :uid2}, :root {:id :id3, :uid :uid3}}))
+             (is (sm? sv {:run-val {:parent nil, :root nil}}) "`*trace-x*`     visible to run-form")
+             (is (sm? sv {:data    {:parent nil, :root nil}}) "`*trace-x*` NOT visible to data-form")]))
 
-     (testing "Manual trace {:keys [id uid inst]}s for parent and root"
-       [(testing "Tracing enabled"
-          (let [sv (with-sig (sig! {:level :info, :id :id1, :uid :uid1, :inst t1, :trace? true,
-                                    :parent {:id :id2, :uid :uid2, :inst t2},
-                                    :root   {:id :id3, :uid :uid3, :inst t3}
-                                    :run  [impl/*trace-parent* impl/*trace-root*],
-                                    :data [impl/*trace-parent* impl/*trace-root*]}))]
+        (when #?(:cljs true :clj (not impl/enabled:otel-tracing?))
+          (testing "Tracing enabled"
+            (let [sv (with-sig (sig! {:level :info, :id :id1, :uid :uid1, :trace? true,
+                                      :parent {:id :id2, :uid :uid2},
+                                      :root   {:id :id3, :uid :uid3}
+                                      :run    {:parent impl/*trace-parent*, :root impl/*trace-root*}
+                                      :data   {:parent impl/*trace-parent*, :root impl/*trace-root*}}))]
 
-            [(is (sm? sv {:parent {:id :id2, :uid :uid2, :inst t2}, :root {:id :id3, :uid :uid3, :inst t3}}))
-             (let [[rv1 rv2] (:run-val sv)]
-               [(is (sm? rv1 {:id :id1, :uid :uid1, :inst t1}) "`*trace-parent*` visible to run-form")
-                (is (sm? rv2 {:id :id3, :uid :uid3, :inst t3}) "`*trace-root*`   visible to run-form")])
-
-             (let [[dv1 dv2] (:data sv)]
-               [(is (= dv1 nil) "`*trace-parent*` NOT visible to data-form")
-                (is (= dv2 nil) "`*trace-root*`   NOT visible to data-form")])]))
-
-        (testing "Tracing disabled"
-          (let [sv (with-sig (sig! {:level :info, :id :id1, :uid :uid1, :inst t1, :trace? false,
-                                    :parent {:id :id2, :uid :uid2, :inst t2},
-                                    :root   {:id :id3, :uid :uid3, :inst t3}
-                                    :run  [impl/*trace-parent* impl/*trace-root*],
-                                    :data [impl/*trace-parent* impl/*trace-root*]}))]
-
-            [(is (sm? sv {:parent {:id :id2, :uid :uid2, :inst t2}, :root {:id :id3, :uid :uid3, :inst t3}}))
-             (let [[rv1 rv2] (:run-val sv)]
-               [(is (= rv1 nil) "`*trace-parent*` visible to run-form")
-                (is (= rv2 nil) "`*trace-root*`   visible to run-form")])
-
-             (let [[dv1 dv2] (:data sv)]
-               [(is (= dv1 nil) "`*trace-parent*` NOT visible to data-form")
-                (is (= dv2 nil) "`*trace-root*`   NOT visible to data-form")])]))])
+              [(is (sm? sv {:parent {:id :id2, :uid :uid2}, :root {:id :id3, :uid :uid3}}))
+               (is (sm? sv {:run-val {:parent {:id :id1, :uid :uid1}, :root {:id :id3, :uid :uid3}}}) "`*trace-x*`     visible to run-form")
+               (is (sm? sv {:data    {:parent nil,                    :root nil}})                    "`*trace-x*` NOT visible to data-form")
+               ])))])
 
      (testing "Signal nesting"
-       (let [[[outer-rv _] [outer-sv]]
-             (with-sigs
-               (sig! {                       :level :info, :id :id1, :uid :uid1, :inst t1
-                      :run (with-sigs (sig! {:level :info, :id :id2, :uid :uid2, :inst t2, :run [impl/*trace-parent* impl/*trace-root*]}))}))
+       (when #?(:cljs true :clj (not impl/enabled:otel-tracing?))
+         (let [[[s1-rv _] [s1-sv]]
+               (with-sigs
+                 (sig! {                       :level :info, :id :id1, :uid :uid1
+                        :run (with-sigs (sig! {:level :info, :id :id2, :uid :uid2
+                                               :run
+                                               {:parent impl/*trace-parent*
+                                                :root   impl/*trace-root*}}))}))
+               [[s2-rv _] [s2-sv]] s1-rv]
 
-             [[inner-rv _] [inner-sv]] outer-rv]
+           [(is (sm? s1-sv           {:id :id1, :uid :uid1, :parent nil}))
+            (is (sm? s2-sv {:parent  {:id :id1, :uid :uid1}}))
 
-         [(is (sm? outer-sv            {:id :id1, :uid :uid1, :parent nil}))
-          (is (sm? inner-rv           [{:id :id2, :uid :uid2, :inst t2} {:id :id1, :uid :uid1, :inst t1}]))
-          (is (sm? inner-sv {:parent   {:id :id1, :uid :uid1, :inst t1}}))
-          (is (sm? inner-sv {:run-val [{:id :id2, :uid :uid2, :inst t2} {:id :id1, :uid :uid1, :inst t1}]}))]))]))
+            (is (sm? s2-rv           {:parent {:id :id2, :uid :uid2}, :root {:id :id1, :uid :uid1}}))
+            (is (sm? s2-sv {:run-val {:parent {:id :id2, :uid :uid2}, :root {:id :id1, :uid :uid1}}}))]))
+
+       #?(:clj
+          (enc/compile-when impl/enabled:otel-tracing?
+            (let [[[s1-rv _] [s1-sv]]
+                  (with-sigs
+                    (sig! {                       :level :info, :id :id1
+                           :run (with-sigs (sig! {:level :info, :id :id2
+                                                  :run
+                                                  {:parent impl/*trace-parent*
+                                                   :root   impl/*trace-root*}}))}))
+                  [[s2-rv _] [s2-sv]] s1-rv
+
+                  c1 (:_otel-context s1-sv)
+                  c2 (:_otel-context s2-sv)
+
+                  s1-trace-id (impl/otel-trace-id c1)
+                  s2-trace-id (impl/otel-trace-id c2)
+
+                  s1-span-id  (impl/otel-span-id  c1)
+                  s2-span-id  (impl/otel-span-id  c2)]
+
+              [(is (impl/viable-tracer (force tel/*otel-tracer*))                   "Viable tracer")
+               (is (every? string? [s1-trace-id s2-trace-id s1-span-id s2-span-id]) "Viable tracer produces spans with ids")
+               (is (=    s1-trace-id s2-trace-id))
+               (is (not= s1-span-id  s2-span-id))
+
+               (is (sm? s1-sv          {:id :id1, :uid s1-span-id, :parent nil, :root {:id :id1, :uid s1-trace-id}}))
+               (is (sm? s2-sv {:parent {:id :id1, :uid s1-span-id}}))
+
+               (is (sm? s2-rv           {:parent {:id :id2, :uid s2-span-id}, :root {:id :id1, :uid s1-trace-id}}))
+               (is (sm? s2-sv {:run-val {:parent {:id :id2, :uid s2-span-id}, :root {:id :id1, :uid s1-trace-id}}}))]))))]))
 
 (deftest _sampling
   ;; Capture combined (call * handler) sample rate in Signal when possible
