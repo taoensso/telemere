@@ -701,6 +701,9 @@
                        :thread   (if incl-thread?   (assoc!* m k v) m)
 
                        (clojure.core/into ()
+                         taoensso.telemere.impl/impl-signal-keys) m ; noop
+
+                       (clojure.core/into ()
                          (clojure.core/disj
                            taoensso.telemere.impl/standard-signal-keys
                            :msg_ :error :location :kvs :file :thread))

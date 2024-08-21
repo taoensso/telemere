@@ -14,7 +14,7 @@
    [io.opentelemetry.context Context]
    [io.opentelemetry.api.common AttributesBuilder Attributes]
    [io.opentelemetry.api.logs  LoggerProvider Severity]
-   [io.opentelemetry.api.trace TracerProvider Tracer Span]
+   [io.opentelemetry.api.trace TracerProvider Tracer Span SpanContext]
    [java.util.concurrent CountDownLatch]))
 
 (comment
@@ -139,13 +139,12 @@
 
 ;;;; Spans
 
+#_
 (defn- remote-span-context
   "Returns new remote `io.opentelemetry.api.trace.SpanContext`
   for use as `start-span` parent."
-  ^io.opentelemetry.api.trace.SpanContext
-  [^String trace-id ^String span-id sampled? ?trace-state]
-  (io.opentelemetry.api.trace.SpanContext/createFromRemoteParent
-    trace-id span-id
+  ^SpanContext [^String trace-id ^String span-id sampled? ?trace-state]
+  (SpanContext/createFromRemoteParent trace-id span-id
     (if sampled?
       (io.opentelemetry.api.trace.TraceFlags/getSampled)
       (io.opentelemetry.api.trace.TraceFlags/getDefault))
@@ -175,15 +174,8 @@
     (enc/if-not [parent ?parent]
       (.setParent sb context) ; Base (callsite) context
       (cond
-        ;; Local parent span, etc.
-        (instance? Span parent) (.setParent sb (.with context ^Span parent))
-
-        ;; Remote parent context, etc.
-        (instance? io.opentelemetry.api.trace.SpanContext parent)
-        (.setParent sb
-          (.with context
-            (Span/wrap ^io.opentelemetry.api.trace.SpanContext parent)))
-
+        (instance? Span        parent) (.setParent sb (.with context ^Span                   parent))  ; Local  parent span,    etc.
+        (instance? SpanContext parent) (.setParent sb (.with context (Span/wrap ^SpanContext parent))) ; Remote parent context, etc.
         :else
         (enc/unexpected-arg! parent
           {:context `start-span
@@ -222,13 +214,8 @@
 
 (comment (enc/qb 1e6 (span-attrs "uid1" {:ns "ns1" :line 495}))) ; 101.36
 
-(def ^:private ^String span-name
-  (enc/fmemoize
-    (fn [id]
-      #_(if id (str          id) ":telemere/nil-id")
-      (if   id (enc/as-qname id)  "telemere/nil-id"))))
-
-(comment (enc/qb 1e6 (span-name :foo/bar))) ; 46.09
+(def ^:private ^String span-name (enc/fmemoize (fn [id] (if id (enc/as-qname id)  "telemere/nil-id"))))
+(comment (enc/qb 1e6  (span-name :foo/bar))) ; 46.09
 
 (defn- handle-tracing!
   "Experimental! Takes care of relevant signal `Span` management.

@@ -3,6 +3,7 @@
   Signal design shared by: Telemere, Tufte, Timbre."
   (:refer-clojure :exclude [binding])
   (:require
+   [clojure.set             :as set]
    [taoensso.encore         :as enc :refer [binding have have?]]
    [taoensso.encore.signals :as sigs])
 
@@ -192,9 +193,10 @@
 (do     (enc/def-print-impl [sig Signal] (str "#" `Signal (pr-str (into {} sig)))))
 #?(:clj (enc/def-print-dup  [sig Signal] (str "#" `Signal (pr-str (into {} sig))))) ; NB intentionally verbose, to support extra keys
 
+(def     impl-signal-keys #{:_otel-context})
 (def standard-signal-keys
-  (disj (set (keys (map->Signal {:schema 0})))
-    :_otel-context))
+  (set/difference (set (keys (map->Signal {:schema 0})))
+    impl-signal-keys))
 
 (comment
   (def s1 (with-signal (signal! {:level :info, :my-k1 :my-v1})))
