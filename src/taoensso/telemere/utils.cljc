@@ -553,7 +553,7 @@
   Options:
     `:raw-error?`      - Retain unformatted error? (default false)
     `:incl-keys`       - Subset of signal keys to retain from those
-                         otherwise excluded by default: #{:kvs :thread}
+                         otherwise excluded by default: #{:kvs :host :thread}
     `:format-nsecs-fn` - (fn [nanosecs]) => string.
     `:format-error-fn` - (fn [error])    => string."
 
@@ -568,6 +568,7 @@
          err-start    (str nl "<<< error <<<" nl)
          err-stop     (str nl ">>> error >>>")
          incl-kvs?    (contains? incl-keys :kvs)
+         incl-host?   (contains? incl-keys :host)
          incl-thread? (contains? incl-keys :thread)]
 
      (fn signal-content
@@ -588,7 +589,7 @@
             (when              uid                  (af "    uid: " (vf uid)))
             (when              parent               (af " parent: " (vf (dissoc parent :inst)))) ; {:keys [id uid]}
             (when         (and parent root)         (af "   root: " (vf (dissoc root   :inst)))) ; {:keys [id uid]}
-            #?(:clj (when      host                 (af "   host: " (vf host))))   ; {:keys [      name ip]}
+            #?(:clj (when (and host   incl-host?)   (af "   host: " (vf host))))   ; {:keys [      name ip]}
             #?(:clj (when (and thread incl-thread?) (af " thread: " (vf thread)))) ; {:keys [group name id]}
             (when              data                 (af "   data: " (vf data)))
             (when         (and kvs incl-kvs?)       (af "    kvs: " (vf kvs)))
@@ -633,7 +634,7 @@
     `:incl-nils?`    - Include signal's keys with nil values?  (default false)
     `:incl-newline?` - Include terminating system newline?     (default true)
     `:incl-keys`     - Subset of signal keys to retain from those otherwise
-                       excluded by default: #{:location :kvs :file :thread}
+                       excluded by default: #{:location :kvs :file :host :thread}
 
   Examples:
     (pr-signal-fn {:pr-fn :edn  ...}) ; Outputs edn
@@ -682,6 +683,7 @@
          incl-location? (contains? incl-keys :location)
          incl-kvs-key?  (contains? incl-keys :kvs)
          incl-file?     (contains? incl-keys :file)
+         incl-host?     (contains? incl-keys :host)
          incl-thread?   (contains? incl-keys :thread)]
 
      (fn pr-signal [signal]
@@ -699,6 +701,7 @@
                        :kvs      (if incl-kvs-key?  (assoc!* m k v) m)
                        :file     (if incl-file?     (assoc!* m k v) m)
                        :thread   (if incl-thread?   (assoc!* m k v) m)
+                       :host     (if incl-host?     (assoc!* m k v) m)
 
                        (clojure.core/into ()
                          taoensso.telemere.impl/impl-signal-keys) m ; noop
@@ -706,7 +709,7 @@
                        (clojure.core/into ()
                          (clojure.core/disj
                            taoensso.telemere.impl/standard-signal-keys
-                           :msg_ :error :location :kvs :file :thread))
+                           :msg_ :error :location :kvs :file :host :thread))
                        (assoc!* m k v)
 
                        (if incl-kvs? (assoc!* m k v) m) ; As remove-signal-kvs
