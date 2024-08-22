@@ -1,5 +1,5 @@
-Signals are maps with {:keys [inst id ns level data msg_ ...]},
-though they can be modified by signal and/or handler middleware.
+Signals are maps with {:keys [inst id ns level data msg_ ...]}, though they
+can be modified by signal and/or handler middleware.
 
 Default signal keys:
 

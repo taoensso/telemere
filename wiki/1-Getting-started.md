@@ -9,6 +9,8 @@ Its key function is to help:
 1. **Capture data** in your running Clojure/Script programs, and
 2. **Facilitate processing** of that data into **useful information / insight**.
 
+> [Terminology] *Telemetry* derives from the Greek *tele* (remote) and *metron* (measure). It refers to the collection of *in situ* (in position) data, for transmission to other systems for monitoring/analysis. *Logs* are the most common form of software telemetry. So think of telemetry as the *superset of logging-like activities* that help monitor and understand (software) systems.
+
 ## Signals
 
 The basic unit of data in Telemere is the **signal**.
@@ -95,29 +97,30 @@ See section [3-Config](./3-Config) for customization.
 
 > Signal handlers process created signals to *do something with them* (analyse them, write them to console/file/queue/db, etc.)
 
-| Platform | Condition | Handler                                                                                                                                                     |
-| -------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Clj      | Always    | [Console handler](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console) that prints signals to `*out*` or `*err*`.      |
-| Cljs     | Always    | [Console handler](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console) that prints signals to the **browser console**. |
+| Platform | Condition | Handler                                                                                                                                                    |
+| -------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Clj      | Always    | [Console handler](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console) that prints signals to `*out*` or `*err*`      |
+| Cljs     | Always    | [Console handler](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console) that prints signals to the **browser console** |
 
 **Default interop**:
 
 > Telemere can create signals from relevant **external API calls**, etc.
 
-| Platform | Condition                                                                                                                                                                                                                                        | Signals from                                                             |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
-| Clj      | [SLF4J API](https://mvnrepository.com/artifact/org.slf4j/slf4j-api) and [Telemere SLF4J backend](https://clojars.org/com.taoensso/slf4j-telemere) present                                                                                        | [SLF4J](https://www.slf4j.org/) logging calls.                           |
-| Clj      | [tools.logging](https://mvnrepository.com/artifact/org.clojure/tools.logging) present and [`tools-logging->telemere!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.tools-logging#tools-logging-%3Etelemere!) called | [tools.logging](https://github.com/clojure/tools.logging) logging calls. |
-| Clj      | [`streams->telemere!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#streams-%3Etelemere!) called                                                                                                                     | Output to `System/out` and `System/err` streams.                         |
+| Platform | Condition                                                                                                                                                                                                                                        | Signals from                                                            |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| Clj      | [SLF4J API](https://mvnrepository.com/artifact/org.slf4j/slf4j-api) and [Telemere SLF4J backend](https://clojars.org/com.taoensso/slf4j-telemere) present                                                                                        | [SLF4J](https://www.slf4j.org/) logging calls                           |
+| Clj      | [tools.logging](https://mvnrepository.com/artifact/org.clojure/tools.logging) present and [`tools-logging->telemere!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.tools-logging#tools-logging-%3Etelemere!) called | [tools.logging](https://github.com/clojure/tools.logging) logging calls |
+| Clj      | [`streams->telemere!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#streams-%3Etelemere!) called                                                                                                                     | Output to `System/out` and `System/err` streams                         |
 
-Run [`check-interop`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#check-interop) to help verify/debug:
+Interop can be tough to get configured correctly so the [`check-interop`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#check-interop) util is provided to help verify for tests or debugging:
 
 ```clojure
 (check-interop) ; =>
-{:tools-logging {:present? false}
- :slf4j         {:sending->telemere? true,  :telemere-receiving? true}
- :system/out    {:sending->telemere? false, :telemere-receiving? false}
- :system/err    {:sending->telemere? false, :telemere-receiving? false}}
+{:tools-logging  {:present? false}
+ :slf4j          {:present? true, :telemere-receiving? true, ...}
+ :open-telemetry {:present? true, :use-tracer? false, ...}
+ :system/out     {:telemere-receiving? false, ...}
+ :system/err     {:telemere-receiving? false, ...}}
 ```
 
 #  Usage
@@ -197,12 +200,12 @@ Quick examples of some basic filtering:
 
 Telemere includes extensive internal help docstrings:
 
-| Var                                                                                                                                       | Help with                                                                 |
-| :---------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------ |
-| [`help:signal-creators`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-creators)                   | Creating signals                                                          |
-| [`help:signal-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options)                     | Options when creating signals                                             |
-| [`help:signal-content`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content)                     | Signal content (map given to middleware/handlers)                         |
-| [`help:filters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters)                                   | Signal filtering and transformation                                       |
-| [`help:handlers`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handlers)                                 | Signal handler management                                                 |
-| [`help:handler-dispatch-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) | Signal handler dispatch options                                           |
-| [`help:environmental-config`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:environmental-config)         | Config via JVM properties, environment variables, or classpath resources. |
+| Var                                                                                                                                       | Help with                                                                |
+| :---------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------- |
+| [`help:signal-creators`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-creators)                   | Creating signals                                                         |
+| [`help:signal-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options)                     | Options when creating signals                                            |
+| [`help:signal-content`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content)                     | Signal content (map given to middleware/handlers)                        |
+| [`help:filters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters)                                   | Signal filtering and transformation                                      |
+| [`help:handlers`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handlers)                                 | Signal handler management                                                |
+| [`help:handler-dispatch-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) | Signal handler dispatch options                                          |
+| [`help:environmental-config`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:environmental-config)         | Config via JVM properties, environment variables, or classpath resources |

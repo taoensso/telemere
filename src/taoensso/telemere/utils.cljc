@@ -646,6 +646,14 @@
       (require '[jsonista.core :as jsonista])
       (pr-signal-fn {:pr-fn jsonista/write-value-as-string ...})
 
+  Motivation:
+    Why use this util instead of just directly using the print function
+    given to `:pr-fn`? Signals are optimized for cheap creation and easy handling,
+    so may contain things like nil values and duplicated content.
+
+    This util efficiently clean signals of such noise, helping reduce
+    storage/transmission size, and making key info easier to see.
+
   See also `format-signal-fn` for human-readable output."
   ([] (pr-signal-fn nil))
   ([{:keys [pr-fn, incl-kvs? incl-nils? incl-newline? incl-keys] :as opts

@@ -2,86 +2,98 @@
   "Basic Telemere usage examples that appear in the Wiki or docstrings."
   (:require [taoensso.telemere :as t]))
 
-;;;; README "Quick example"
+(comment
+
+;;;; README "Quick examples"
 
 (require '[taoensso.telemere :as t])
 
-(t/log! {:id ::my-id, :data {:x1 :x2}} "My message") ; %>
-;; 2024-04-11T10:54:57.202869Z INFO LOG Schrebermann.local examples(56,1) ::my-id - My message
-;;    data: {:x1 :x2}
+;; Without structured data
+(t/log! :info "Hello world!") ; %> Basic log   signal (has message)
+(t/event! ::my-id :debug)     ; %> Basic event signal (just id)
 
-(t/log!       "This will send a `:log` signal to the Clj/s console")
-(t/log! :info "This will do the same, but only when the current level is >= `:info`")
+;; With structured data
+(t/log! {:level :info, :data {}} "Hello again!")
+(t/event! ::my-id {:level :debug, :data {}})
 
-;; Easily construct messages from parts
-(t/log! :info ["Here's a" "joined" "message!"])
+;; Trace (can interop with OpenTelemetry)
+(t/trace! {:id ::my-id :data {}}
+  (do-some-work))
 
-;; Attach an id
-(t/log! {:level :info, :id ::my-id} "This signal has an id")
+;; Check signal content for debug/tests
+(t/with-signal (t/event! ::my-id)) ; => {:keys [ns level id data msg_ ...]}
 
-;; Attach arb data
-(t/log! {:level :info, :data {:x :y}} "This signal has structured data")
+;; Transform signals
+(t/set-middleware! (fn [signal] (assoc signal :my-key "my-val")))
 
-;; Capture for debug/testing
-(t/with-signal (t/log! "This will be captured"))
-;; => {:keys [location level id data msg_ ...]}
+;; Filter signals by returning nil
+(t/set-middleware! (fn [signal] (when-not (-> signal :data :skip-me?) signal)))
 
-;; `:let` bindings are available to `:data` and message, but only paid
-;; for when allowed by minimum level and other filtering criteria
+;; Getting fancy (all costs are conditional!)
 (t/log!
-  {:level :info
-   :let [expensive-metric1 (last (for [x (range 100), y (range 100)] (* x y)))]
-   :data {:metric1 expensive-metric1}}
-  ["Message with metric value:" expensive-metric1])
+  {:level       :debug
+   :sample-rate (my-dynamic-sample-rate)
+   :when        (my-conditional)
+   :rate-limit  {"1 per sec" [1  1000]
+                 "5 per min" [5 60000]}
 
-;; With sampling 50% and 1/sec rate limiting
-(t/log!
-  {:sample-rate 0.5
-   :rate-limit  {"1 per sec" [1 1000]}}
-  "This signal will be sampled and rate limited")
+   :do (inc-my-metric!)
+   :let
+   [diagnostics (my-expensive-diagnostics)
+    formatted   (my-expensive-format diagnostics)]
 
-;; There are several signal creators available for convenience.
-;; All support the same options but each offer's a calling API
-;; optimized for a particular use case. Compare:
+   :data
+   {:diagnostics diagnostics
+    :formatted   formatted
+    :local-state *my-dynamic-context*}}
 
-;; `log!` - [msg] or [level-or-opts msg]
-(t/with-signal (t/log! {:level :info, :id ::my-id} "Hi!"))
+  ;; Message string or vector to join as string
+  ["Something interesting happened!" formatted])
 
-;; `event!` - [id] or [id level-or-opts]
-(t/with-signal (t/event! ::my-id {:level :info, :msg "Hi!"}))
+;;;; README "More examples"
 
-;; `signal!` - [opts]
-(t/with-signal (t/signal! {:level :info, :id ::my-id, :msg "Hi!"}))
+;; Set minimum level
+(t/set-min-level!       :warn) ; For all    signals
+(t/set-min-level! :log :debug) ; For `log!` signals only
 
-;; See `t/help:signal-creators` docstring for more
+;; Set namespace and id filters
+(t/set-ns-filter! {:disallow "taoensso.*" :allow "taoensso.sente.*"})
+(t/set-id-filter! {:allow #{::my-particular-id "my-app/*"}})
 
-;;; A quick taste of filtering
-
-(t/set-ns-filter! {:disallow "taoensso.*" :allow "taoensso.sente.*"}) ; Set namespace filter
-(t/set-id-filter! {:allow #{::my-particular-id "my-app/*"}})          ; Set id        filter
-
-(t/set-min-level!       :warn) ; Set minimum level for all    signals
-(t/set-min-level! :log :debug) ; Set minimul level for `log!` signals
-
-;; Set minimum level for `event!` signals originating in
-;; the "taoensso.sente.*" ns
+;; Set minimum level for `event!` signals for particular ns pattern
 (t/set-min-level! :event "taoensso.sente.*" :warn)
 
 ;; See `t/help:filters` docstring for more
 
-;;; Use middleware to transform signals and/or filter signals
-;;; by signal data/content/etc.
+;; Use middleware to:
+;;   - Transform signals
+;;   - Filter    signals by arb conditions (incl. data/content)
 
 (t/set-middleware!
   (fn [signal]
-    (if (get-in signal [:data :hide-me?])
-      nil ; Suppress signal (don't handle)
+    (if (-> signal :data :skip-me?)
+      nil ; Filter signal (don't handle)
       (assoc signal :passed-through-middleware? true))))
 
-(t/with-signal (t/event! ::my-id {:data {:hide-me? true}}))  ; => nil
-(t/with-signal (t/event! ::my-id {:data {:hide-me? false}})) ; => {...}
+(t/with-signal (t/event! ::my-id {:data {:skip-me? true}}))  ; => nil
+(t/with-signal (t/event! ::my-id {:data {:skip-me? false}})) ; => {...}
 
-;;;; Docstring snippets
+;; Signal handlers
+
+(t/get-handlers) ; => {<handler-id> {:keys [handler-fn handler-stats_ dispatch-opts]}}
+
+(t/add-handler! :my-console-handler
+  (t/handler:console {}) ; Returns handler fn, has many opts
+  {:async {:mode :dropping, :buffer-size 1024, :n-threads 1}
+   :priority    100
+   :sample-rate 0.5
+   :min-level   :info
+   :ns-filter   {:disallow "taoensso.*"}
+   :rate-limit  {"1 per sec" [1 1000]}
+   ;; See `t/help:handler-dispatch-options` for more
+   })
+
+;;;; Docstring examples
 
 (t/with-signal (t/event! ::my-id))
 (t/with-signal (t/event! ::my-id :warn))
@@ -162,7 +174,7 @@
 
 ;; Test handler, remember it's just a (fn [signal])
 (my-handler my-signal) ; %>
-;; 2024-04-11T10:54:57.202869Z INFO LOG Schrebermann.local examples(56,1) ::my-id - My message
+;; 2024-04-11T10:54:57.202869Z INFO LOG MyHost examples(56,1) ::my-id - My message
 ;;     data: {:x1 :x2}
 
 ;; Create console handler which writes signals as edn
@@ -306,3 +318,33 @@
 ;;  {:my-middleware-data "foo"
 ;;   :my-handler-data    "bar"}
 ;;  ... }
+
+;;;; Misc extra examples
+
+(t/log! {:id ::my-id, :data {:x1 :x2}} ["My 2-part" "message"]) ; %>
+;; 2024-04-11T10:54:57.202869Z INFO LOG MyHost examples(56,1) ::my-id - My 2-part message
+;;    data: {:x1 :x2}
+
+;; `:let` bindings are available to `:data` and message, but only paid
+;; for when allowed by minimum level and other filtering criteria
+(t/log!
+  {:level :info
+   :let   [expensive (reduce * (range 1 12))] ; 12 factorial
+   :data  {:my-metric expensive}}
+  ["Message with metric:" expensive])
+
+;; With sampling 50% and 1/sec rate limiting
+(t/log!
+  {:sample-rate 0.5
+   :rate-limit  {"1 per sec" [1 1000]}}
+  "This signal will be sampled and rate limited")
+
+;; Several signal creators are available for convenience.
+;; All offer the same options, but each has an API optimized
+;; for a particular use case:
+
+(t/log! {:level :info, :id ::my-id} "Hi!")          ; [msg] or [level-or-opts msg]
+(t/event! ::my-id {:level :info, :msg "Hi!"})       ; [id]  or [id level-or-opts]
+(t/signal! {:level :info, :id ::my-id, :msg "Hi!"}) ; [opts]
+
+)

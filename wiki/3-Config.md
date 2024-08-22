@@ -87,6 +87,8 @@ Verify successful interop with [`check-interop`](https://cljdoc.org/d/com.taoens
 ## OpenTelemetry
 
 > [OpenTelemetry](https://opentelemetry.io/) is a popular open-source observability framework that provides tools for collecting, processing, and exporting telemetry data like traces, metrics, and logs from software systems.
+> 
+> Telemere's OpenTelemetry interop is **experimental** - I'm looking for [feedback](https://www.taoensso.com/telemere/slack) on this feature please! 🙏
 
 Telemere can send signals as [`LogRecords`](https://opentelemetry.io/docs/specs/otel/logs/data-model/) with correlated tracing data to configured [OpenTelemetry Java](https://github.com/open-telemetry/opentelemetry-java) [exporters](https://opentelemetry.io/docs/languages/java/exporters/).
 
@@ -94,13 +96,12 @@ This allows output to go (via configured exporters) to a wide variety of targets
 
 To do this:
 
-1. Ensure that you have the [OpenTelemetry Java](https://github.com/open-telemetry/opentelemetry-java) dependency.
+1. Ensure that you have the necessary [OpenTelemetry Java](https://github.com/open-telemetry/opentelemetry-java) dependencies.
 2. Ensure that the relevant exporters are [appropriately configured](https://opentelemetry.io/docs/languages/java/configuration/) (this is the trickiest part, but not at all specific to Telemere).
 3. Create a Telemere signal handler using [`handler:open-telemetry`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.open-telemetry#handler:open-telemetry), and register it using [`add-handler!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#add-handler!).
+4. Ensure that [`otel-tracing?`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#otel-tracing?) is enabled if you want tracing interop.
 
 Aside from configuring the exporters (2), Telemere's OpenTelemetry interop **does not require** any use of or familiarity with the OpenTelemetry Java API or concepts. Just use Telemere as you normally would, and the handler (3) will automatically emit detailed log and trace data to your configured exporters (2).
-
-> **OpenTelemetry interop is experimental** - I'm looking for feedback on this feature please! 🙏
 
 ## Tufte
 

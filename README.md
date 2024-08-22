@@ -9,7 +9,7 @@
 
 It helps enable Clojure/Script systems that are **observable**, **robust**, and **debuggable** - and it represents the refinement and culmination of ideas brewing over 12+ years in [Timbre](https://www.taoensso.com/timbre), [Tufte](https://www.taoensso.com/tufte), [Truss](https://www.taoensso.com/truss), etc.
 
-> [Terminology] *Telemetry* derives from the Greek *tele* (remote) and *metron* (measure). It refers to the collection of *in situ* (in position) data, for transmission to other systems for monitoring/analysis. *Logs* are the most common form of software telemetry. So think of telemetry as the *superset of logging-like activities* that help monitor and understand (software) systems.
+See [here](../../wiki/1-Getting-started) for **full introduction**.
 
 ## Latest release/s
 
@@ -20,27 +20,75 @@ It helps enable Clojure/Script systems that are **observable**, **robust**, and 
 
 See [here][GitHub releases] for earlier releases.
 
+## Quick examples
+
+```clojure
+(require '[taoensso.telemere :as t])
+
+;; Without structured data
+(t/log! :info "Hello world!") ; %> Basic log   signal (has message)
+(t/event! ::my-id :debug)     ; %> Basic event signal (just id)
+
+;; With structured data
+(t/log! {:level :info, :data {...}} "Hello again!")
+(t/event! ::my-id {:level :debug, :data {...}})
+
+;; Trace (can interop with OpenTelemetry)
+(t/trace! {:id ::my-id :data {...}}
+  (do-some-work))
+
+;; Check signal content for debug/tests
+(t/with-signal (t/event! ::my-id)) ; => {:keys [ns level id data msg_ ...]}
+
+;; Transform signals
+(t/set-middleware! (fn [signal] (assoc signal :my-key "my-val")))
+
+;; Filter signals by returning nil
+(t/set-middleware! (fn [signal] (when-not (-> signal :data :skip-me?) signal)))
+
+;; Getting fancy (all costs are conditional!)
+(t/log!
+  {:level       :debug
+   :sample-rate (my-dynamic-sample-rate)
+   :when        (my-conditional)
+   :rate-limit  {"1 per sec" [1  1000]
+                 "5 per min" [5 60000]}
+
+   :do (inc-my-metric!)
+   :let
+   [diagnostics (my-expensive-diagnostics)
+    formatted   (my-expensive-format diagnostics)]
+
+   :data
+   {:diagnostics diagnostics
+    :formatted   formatted
+    :local-state *my-dynamic-context*}}
+
+  ;; Message string or vector to join as string
+  ["Something interesting happened!" formatted])
+```
+
 ## Why Telemere?
 
-#### Ergonomics
+### Ergonomics
 
 - Elegant, lightweight API that's **easy to use**, **easy to configure**, and **deeply flexible**.
 - **Sensible defaults** to make getting started **fast and easy**.
 - Extensive **beginner-oriented** [documentation][GitHub wiki], [docstrings](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso), and error messages.
 
-#### Interop
+### Interop
 
 - 1st-class **out-the-box interop** with [SLF4J v2](../../wiki/3-Config#java-logging), [tools.logging](../../wiki/3-Config#toolslogging), [OpenTelemetry](../../wiki/3-Config#opentelemetry), and [Tufte](../../wiki/3-Config#tufte).
 - Included [shim](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.timbre) for easy/gradual [migration from Timbre](../../wiki/5-Migrating).
 - Extensive set of [handlers](../../wiki/4-Handlers#included-handlers) included out-the-box.
 
-#### Scaling
+### Scaling
 
 - Hyper-optimized and **blazing fast**, see [benchmarks](#benchmarks).
 - An API that **scales comfortably** from the smallest disposable code, to the most massive and complex real-world production environments.
 - Auto [handler stats](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-handlers-stats) for debugging performance and other issues at scale.
 
-#### Flexibility
+### Flexibility
 
 - Config via plain **Clojure vals and fns** for easy customization, composition, and REPL debugging.
 - Unmatched [environmental config](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:environmental-config) support: JVM properties, environment variables, or classpath resources. Per platform, or cross-platform.
@@ -48,10 +96,24 @@ See [here][GitHub releases] for earlier releases.
 - Fully [configurable](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) **a/sync dispatch support**: blocking, dropping, sliding, etc.
 - Turn-key **sampling**, **rate-limiting**, and **back-pressure monitoring** with sensible defaults.
 
-#### Comparisons
+## Comparisons
 
-- Telemere [compared](../../wiki/5-Migrating#from-timbre) to [Timbre](https://www.taoensso.com/timbre)
-- Telemere [compared](../../wiki/6-FAQ#how-does-telemere-compare-to-mulog) to [Mulog](https://github.com/BrunoBonacci/mulog)
+- Telemere [compared](../../wiki/5-Migrating#from-timbre) to [Timbre](https://www.taoensso.com/timbre) (Telemere's predecessor)
+- Telemere [compared](../../wiki/6-FAQ#how-does-telemere-compare-to-mulog) to [Mulog](https://github.com/BrunoBonacci/mulog) (Structured micro-logging library)
+
+## Next-gen observability
+
+A key hurdle in building **observable systems** is that it's often inconvenient and costly to get out the kind of **detailed info** that we need when debugging.
+
+Telemere's strategy to address this is to:
+
+1. Provide **lean, low-fuss syntax** to let you conveniently convey program state.
+2. Use the unique power of **Lisp macros** to let you **dynamically filter costs as you filter signals** (pay only for what you need, when you need it).
+3. For those signals that *do* pass filtering: move costs from the callsite to a/sync handlers with explicit [threading and back-pressure semantics](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) and  [performance monitoring](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-handlers-stats).
+
+The effect is more than impressive micro-benchmarks. This approach enables a fundamental (qualitative) change in one's approach to observability.
+
+It enables you to write code that is **information-verbose by default**.
 
 ## Video demo
 
@@ -61,89 +123,52 @@ See for intro and basic usage:
  <img src="https://img.youtube.com/vi/-L9irDG8ysM/maxresdefault.jpg" alt="Telemere demo video" width="480" border="0" />
 </a>
 
-## Quick examples
+## More examples
 
 ```clojure
-(require '[taoensso.telemere :as t])
+;; Set minimum level
+(t/set-min-level!       :warn) ; For all    signals
+(t/set-min-level! :log :debug) ; For `log!` signals only
 
-(t/log! {:id ::my-id, :data {:x1 :x2}} "My message") %>
-
-;; 2024-04-11T10:54:57.202869Z INFO LOG Schrebermann.local examples(56,1) ::my-id - My message
-;;    data: {:x1 :x2}
-
-(t/log!       "This will send a `:log` signal to the Clj/s console")
-(t/log! :info "This will do the same, but only when the current level is >= `:info`")
-
-;; Easily construct messages from parts
-(t/log! :info ["Here's a" "joined" "message!"])
-
-;; Attach an id
-(t/log! {:level :info, :id ::my-id} "This signal has an id")
-
-;; Attach arb user data
-(t/log! {:level :info, :data {:x :y}} "This signal has structured data")
-
-;; Capture for debug/testing
-(t/with-signal (t/log! "This will be captured"))
-;; => {:keys [location level id data msg_ ...]}
-
-;; `:let` bindings are available to `:data` and message, but only paid
-;; for when allowed by minimum level and other filtering criteria
-(t/log!
-  {:level :info
-   :let [expensive-metric1 (last (for [x (range 100), y (range 100)] (* x y)))]
-   :data {:metric1 expensive-metric1}}
-  ["Message with metric value:" expensive-metric1])
-
-;; With sampling 50% and 1/sec rate limiting
-(t/log!
-  {:sample-rate 0.5
-   :rate-limit  {"1 per sec" [1 1000]}}
-  "This signal will be sampled and rate limited")
-
-;; There are several signal creators available for convenience.
-;; All support the same options but each offer's a calling API
-;; optimized for a particular use case. Compare:
-
-;; `log!` - [msg] or [level-or-opts msg]
-(t/with-signal (t/log! {:level :info, :id ::my-id} "Hi!"))
-
-;; `event!` - [id] or [id level-or-opts]
-(t/with-signal (t/event! ::my-id {:level :info, :msg "Hi!"}))
-
-;; `signal!` - [opts]
-(t/with-signal (t/signal! {:level :info, :id ::my-id, :msg "Hi!"}))
-
-;; See `t/help:signal-creators` docstring for more
-
-;;; A quick taste of filtering
-
+;; Set namespace and id filters
 (t/set-ns-filter! {:disallow "taoensso.*" :allow "taoensso.sente.*"})
 (t/set-id-filter! {:allow #{::my-particular-id "my-app/*"}})
 
-(t/set-min-level!       :warn) ; Set minimum level for all    signals
-(t/set-min-level! :log :debug) ; Set minimul level for `log!` signals
-
-;; Set minimum level for `event!` signals originating in
-;; the "taoensso.sente.*" ns
+;; Set minimum level for `event!` signals for particular ns pattern
 (t/set-min-level! :event "taoensso.sente.*" :warn)
 
 ;; See `t/help:filters` docstring for more
 
-;;; Use middleware to transform signals and/or filter signals
-;;; by signal data/content/etc.
+;; Use middleware to:
+;;   - Transform signals
+;;   - Filter    signals by arb conditions (incl. data/content)
 
 (t/set-middleware!
   (fn [signal]
-    (if (get-in signal [:data :hide-me?])
-      nil ; Suppress signal (don't handle)
+    (if (-> signal :data :skip-me?)
+      nil ; Filter signal (don't handle)
       (assoc signal :passed-through-middleware? true))))
 
-(t/with-signal (t/event! ::my-id {:data {:hide-me? true}}))  ; => nil
-(t/with-signal (t/event! ::my-id {:data {:hide-me? false}})) ; => {...}
+(t/with-signal (t/event! ::my-id {:data {:skip-me? true}}))  ; => nil
+(t/with-signal (t/event! ::my-id {:data {:skip-me? false}})) ; => {...}
+
+;; Signal handlers
+
+(t/get-handlers) ; => {<handler-id> {:keys [handler-fn handler-stats_ dispatch-opts]}}
+
+(t/add-handler! :my-console-handler
+  (t/handler:console {}) ; Returns handler fn, has many opts
+  {:async {:mode :dropping, :buffer-size 1024, :n-threads 1}
+   :priority    100
+   :sample-rate 0.5
+   :min-level   :info
+   :ns-filter   {:disallow "taoensso.*"}
+   :rate-limit  {"1 per sec" [1 1000]}
+   ;; See `t/help:handler-dispatch-options` for more
+   })
 ```
 
-See [examples.cljc](https://github.com/taoensso/telemere/blob/master/examples.cljc) for more REPL-ready snippets!
+See [examples.cljc](https://github.com/taoensso/telemere/blob/master/examples.cljc) for REPL-ready snippets!
 
 ## API overview
 
@@ -165,20 +190,20 @@ See relevant docstrings (links below) for usage info-
 
 Detailed help is available without leaving your IDE:
 
-| Var                                                                                                                                       | Help with                                                                 |
-| :---------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------ |
-| [`help:signal-creators`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-creators)                   | Creating signals                                                          |
-| [`help:signal-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options)                     | Options when creating signals                                             |
-| [`help:signal-content`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content)                     | Signal content (map given to middleware/handlers)                         |
-| [`help:filters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters)                                   | Signal filtering and transformation                                       |
-| [`help:handlers`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handlers)                                 | Signal handler management                                                 |
-| [`help:handler-dispatch-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) | Signal handler dispatch options                                           |
-| [`help:environmental-config`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:environmental-config)         | Config via JVM properties, environment variables, or classpath resources. |
+| Var                                                                                                                                       | Help with                                                                |
+| :---------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------- |
+| [`help:signal-creators`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-creators)                   | Creating signals                                                         |
+| [`help:signal-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options)                     | Options when creating signals                                            |
+| [`help:signal-content`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content)                     | Signal content (map given to middleware/handlers)                        |
+| [`help:filters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters)                                   | Signal filtering and transformation                                      |
+| [`help:handlers`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handlers)                                 | Signal handler management                                                |
+| [`help:handler-dispatch-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) | Signal handler dispatch options                                          |
+| [`help:environmental-config`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:environmental-config)         | Config via JVM properties, environment variables, or classpath resources |
 
 ### Included handlers
 
-> See ✅ links for **features and usage**  
-> See 👍 links to **vote on handler** for future addition
+See ✅ links below for **features and usage**,  
+See 👍 links below to **vote on future handlers**:
 
 | Target (↓)                                     |                                                            Clj                                                             |                                               Cljs                                                |
 | :--------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------: |
@@ -234,7 +259,7 @@ Measurements:
 
 ### Performance philosophy
 
-Telemere is optimized for *real-world* performance. This means **prioritizing flexibility** and realistic usage over synthetic micro benchmarks.
+Telemere is optimized for *real-world* performance. This means **prioritizing flexibility** and realistic usage over synthetic micro-benchmarks.
 
 Large applications can produce absolute *heaps* of data, not all equally valuable. Quickly processing infinite streams of unmanageable junk is an anti-pattern. As scale and complexity increase, it becomes more important to **strategically plan** what data to collect, when, in what quantities, and how to manage it.
 
