@@ -1,5 +1,5 @@
 (ns taoensso.telemere.slf4j
-  "Intake support for SLF4J -> Telemere.
+  "Interop support for SLF4J -> Telemere.
   Telemere will attempt to load this ns automatically when possible.
 
   To use Telemere as your SLF4J backend/provider, just include the
@@ -97,7 +97,7 @@
       (marker-names cm)
       (marker-names ms))))
 
-;;;; Intake fns (called by `TelemereLogger`)
+;;;; Interop fns (called by `TelemereLogger`)
 
 (defn- allowed?
   "Private, don't use.
@@ -176,25 +176,26 @@
 
 ;;;;
 
-(defn check-intake
-  "Returns {:keys [present? sending->telemere? telemere-receiving?]}."
+(defn check-interop
+  "Returns interop debug info map."
   []
   (let [^org.slf4j.Logger sl
-        (org.slf4j.LoggerFactory/getLogger   "IntakeTestTelemereLogger")
+        (org.slf4j.LoggerFactory/getLogger  "InteropTestTelemereLogger")
         sending? (instance? com.taoensso.telemere.slf4j.TelemereLogger sl)
         receiving?
         (and sending?
-          (impl/test-intake! "SLF4J -> Telemere" #(.info sl %)))]
+          (impl/test-interop! "SLF4J -> Telemere" #(.info sl %)))]
 
-    {:present?            true
+    {:present?                   true
+     :telemere-provider-present? true
      :sending->telemere?  sending?
      :telemere-receiving? receiving?}))
 
-(impl/add-intake-check! :slf4j check-intake)
+(impl/add-interop-check! :slf4j check-interop)
 
 (impl/on-init
   (impl/signal!
     {:kind  :event
      :level :debug ; < :info since runs on init
      :id    :taoensso.telemere/slf4j->telemere!
-     :msg   "Enabling intake: SLF4J -> Telemere"}))
+     :msg   "Enabling interop: SLF4J -> Telemere"}))

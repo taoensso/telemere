@@ -1,5 +1,5 @@
 (ns taoensso.telemere.tools-logging
-  "Intake support for `tools.logging` -> Telemere.
+  "Interop support for `tools.logging` -> Telemere.
   Telemere will attempt to load this ns automatically when possible.
 
   Naming conventions:
@@ -53,7 +53,7 @@
     {:kind  :event
      :level :debug ; < :info since runs on init
      :id    :taoensso.telemere/tools-logging->telemere!
-     :msg   "Enabling intake: `tools.logging` -> Telemere"})
+     :msg   "Enabling interop: `tools.logging` -> Telemere"})
 
   (alter-var-root #'clojure.tools.logging/*logger-factory*
     (fn [_] (TelemereLoggerFactory.))))
@@ -67,21 +67,22 @@
 
 ;;;;
 
-(defn check-intake
-  "Returns {:keys [present? sending->telemere? telemere-receiving?]}."
+(defn check-interop
+  "Returns interop debug info map."
   []
   (let [sending? (tools-logging->telemere?)
         receiving?
         (and sending?
-          (impl/test-intake! "`tools.logging` -> Telemere"
+          (impl/test-interop! "`tools.logging` -> Telemere"
             #(clojure.tools.logging/info %)))]
 
     {:present?            true
+     :enabled-by-env?     impl/enabled:tools-logging?
      :sending->telemere?  sending?
      :telemere-receiving? receiving?}))
 
-(impl/add-intake-check! :tools-logging check-intake)
+(impl/add-interop-check! :tools-logging check-interop)
 
 (impl/on-init
-  (when (enc/get-env {:as :bool} :clojure.tools.logging/to-telemere)
+  (when impl/enabled:tools-logging?
     (tools-logging->telemere!)))

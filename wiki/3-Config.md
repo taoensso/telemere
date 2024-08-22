@@ -32,10 +32,10 @@ To do this:
 1. Ensure that you have the `tools.logging` dependency, and
 2. Call [`tools-logging->telemere!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.tools-logging#tools-logging-%3Etelemere!), or set the relevant environmental config as described in its docstring.
 
-Verify successful intake with [`check-intakes`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#check-intakes):
+Verify successful interop with [`check-interop`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#check-interop):
 
 ```clojure
-(check-intakes) ; =>
+(check-interop) ; =>
 {:tools-logging {:sending->telemere? true, :telemere-receiving? true}}
 ```
 
@@ -54,10 +54,10 @@ To do this, ensure that you have the following dependencies:
 
 When `com.taoensso/slf4j-telemere` is on your classpath AND no other SLF4J backends are, SLF4J will direct all its logging calls to Telemere.
 
-Verify successful intake with [`check-intakes`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#check-intakes):
+Verify successful interop with [`check-interop`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#check-interop):
 
 ```clojure
-(check-intakes) ; =>
+(check-interop) ; =>
 {:slf4j {:sending->telemere? true, :telemere-receiving? true}}
 ```
 
@@ -76,10 +76,10 @@ To do this, call [`streams->telemere!`](https://cljdoc.org/d/com.taoensso/teleme
 
 Note that Clojure's `*out*`, `*err*` are **not** necessarily automatically affected.
 
-Verify successful intake with [`check-intakes`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#check-intakes):
+Verify successful interop with [`check-interop`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#check-interop):
 
 ```clojure
-(check-intakes) ; =>
+(check-interop) ; =>
 {:system/out {:sending->telemere? true, :telemere-receiving? true}
  :system/err {:sending->telemere? true, :telemere-receiving? true}}
 ```

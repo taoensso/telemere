@@ -100,7 +100,7 @@ See section [3-Config](./3-Config) for customization.
 | Clj      | Always    | [Console handler](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console) that prints signals to `*out*` or `*err*`.      |
 | Cljs     | Always    | [Console handler](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console) that prints signals to the **browser console**. |
 
-**Default signal intakes**:
+**Default interop**:
 
 > Telemere can create signals from relevant **external API calls**, etc.
 
@@ -110,10 +110,10 @@ See section [3-Config](./3-Config) for customization.
 | Clj      | [tools.logging](https://mvnrepository.com/artifact/org.clojure/tools.logging) present and [`tools-logging->telemere!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.tools-logging#tools-logging-%3Etelemere!) called | [tools.logging](https://github.com/clojure/tools.logging) logging calls. |
 | Clj      | [`streams->telemere!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#streams-%3Etelemere!) called                                                                                                                     | Output to `System/out` and `System/err` streams.                         |
 
-Run [`check-intakes`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#check-intakes) to help verify/debug:
+Run [`check-interop`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#check-interop) to help verify/debug:
 
 ```clojure
-(check-intakes) ; =>
+(check-interop) ; =>
 {:tools-logging {:present? false}
  :slf4j         {:sending->telemere? true,  :telemere-receiving? true}
  :system/out    {:sending->telemere? false, :telemere-receiving? false}

@@ -626,35 +626,35 @@
            ;;
            (do (enc/set-var-root! impl/*sig-handlers* nil) :unset-handler)])))])
 
-;;;; Intake
+;;;; Interop
 
 (comment (def ^org.slf4j.Logger sl (org.slf4j.LoggerFactory/getLogger "my.class")))
 
 #?(:clj
-   (deftest _intake
+   (deftest _interop
      [(testing "`tools.logging` -> Telemere"
-        [(is (sm? (tel/check-intakes) {:tools-logging {:present? true, :sending->telemere? true, :telemere-receiving? true}}))
+        [(is (sm? (tel/check-interop) {:tools-logging {:present? true, :sending->telemere? true, :telemere-receiving? true}}))
          (is (sm? (with-sig (ctl/info "Hello" "x" "y")) {:level :info, :ns "taoensso.telemere-tests", :kind :tools-logging, :msg_ "Hello x y", :inst pinst?}))
          (is (sm? (with-sig (ctl/warn "Hello" "x" "y")) {:level :warn, :ns "taoensso.telemere-tests", :kind :tools-logging, :msg_ "Hello x y", :inst pinst?}))
          (is (sm? (with-sig (ctl/error ex1 "An error")) {:level :error, :error pex1?, :inst pinst?}) "Errors")])
 
       (testing "Standard out/err streams -> Telemere"
-        [(is (sm?   (tel/check-intakes) {:system/out {:sending->telemere? false, :telemere-receiving? false},
+        [(is (sm?   (tel/check-interop) {:system/out {:sending->telemere? false, :telemere-receiving? false},
                                          :system/err {:sending->telemere? false, :telemere-receiving? false}}))
 
          (is (true? (tel/streams->telemere!)))
-         (is (sm?   (tel/check-intakes) {:system/out {:sending->telemere? true,  :telemere-receiving? true},
+         (is (sm?   (tel/check-interop) {:system/out {:sending->telemere? true,  :telemere-receiving? true},
                                          :system/err {:sending->telemere? true,  :telemere-receiving? true}}))
 
          (is (true? (tel/streams->reset!)))
-         (is (sm?   (tel/check-intakes) {:system/out {:sending->telemere? false, :telemere-receiving? false},
+         (is (sm?   (tel/check-interop) {:system/out {:sending->telemere? false, :telemere-receiving? false},
                                          :system/err {:sending->telemere? false, :telemere-receiving? false}}))
 
          (is (sm? (with-sig (tel/with-out->telemere (println "Hello" "x" "y")))
                {:level :info, :location nil, :ns nil, :kind :system/out, :msg_ "Hello x y"}))])
 
       (testing "SLF4J -> Telemere"
-        [(is (sm? (tel/check-intakes) {:slf4j {:present? true, :sending->telemere? true, :telemere-receiving? true}}))
+        [(is (sm? (tel/check-interop) {:slf4j {:present? true, :sending->telemere? true, :telemere-receiving? true}}))
          (let [^org.slf4j.Logger sl (org.slf4j.LoggerFactory/getLogger "my.class")]
            [(testing "Basics"
               [(is (sm? (with-sig (.info sl "Hello"))               {:level :info, :ns "my.class", :kind :slf4j, :msg_ "Hello", :inst pinst?}) "Legacy API: info basics")
