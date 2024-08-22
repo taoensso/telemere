@@ -359,6 +359,7 @@
 
 (impl/on-init
   (when impl/enabled:otel-mode?
+    (taoensso.telemere/add-handler! :default/open-telemetry (handler:open-telemetry))
     (impl/signal!
       {:kind  :event
        :level :debug ; < :info since runs on init
