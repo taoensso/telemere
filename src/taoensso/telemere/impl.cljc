@@ -21,17 +21,18 @@
      ^:dynamic taoensso.telemere/*middleware*
      ^:dynamic taoensso.telemere/*uid-fn*))
 
-;;;; Utils
+;;;; Config
 
 #?(:clj
-   (defmacro on-init [& body]
-     (let [sym        (with-meta '__on-init {:private true})
-           compiling? (if (:ns &env) false `*compile-files*)]
-       `(defonce ~sym (when-not ~compiling? ~@body nil)))))
+   (do
+     (def present:tools-logging?  (enc/have-resource? "clojure/tools/logging.clj"))
+     (def present:slf4j?          (enc/compile-if org.slf4j.Logger                           true false))
+     (def present:slf4j-telemere? (enc/compile-if com.taoensso.telemere.slf4j.TelemereLogger true false))
+     (def present:otel?           (enc/compile-if io.opentelemetry.context.Context           true false))
 
-(comment (macroexpand-1 '(on-init (println "foo"))))
-
-;;;; Config
+     (def enabled:tools-logging?
+       "Documented at `taoensso.telemere.tools-logging/tools-logging->telemere!`."
+       (enc/get-env {:as :bool} :clojure.tools.logging/to-telemere))))
 
 #?(:clj
    (let [base        (enc/get-env {:as :edn} :taoensso.telemere/ct-filters<.platform><.edn>)
@@ -63,6 +64,16 @@
        :min-level   (or min-level   (get base :min-level))})))
 
 (comment (enc/get-env {:as :edn, :return :explain} :taoensso.telemere/rt-filters<.platform><.edn>))
+
+;;;; Utils
+
+#?(:clj
+   (defmacro on-init [& body]
+     (let [sym        (with-meta '__on-init {:private true})
+           compiling? (if (:ns &env) false `*compile-files*)]
+       `(defonce ~sym (when-not ~compiling? ~@body nil)))))
+
+(comment (macroexpand-1 '(on-init (println "foo"))))
 
 ;;;; Messages
 
@@ -657,7 +668,7 @@
 
 #?(:clj
    (defmacro signal-allowed?
-     "Used only for intake (SLF4J, `tools.logging`, etc.)."
+     "Used only for interop (SLF4J, `tools.logging`, etc.)."
      {:arglists (signal-arglists :signal!)}
      [opts]
      (let [{:keys [#_expansion-id #_location elide? allow?]}
@@ -671,30 +682,35 @@
 
        (and (not elide?) allow?))))
 
-;;;; Intakes
+;;;; Interop
 
 #?(:clj
    (do
-     (enc/defonce ^:private intake-checks_
+     (enc/defonce ^:private interop-checks_
        "{<source-id> (fn check [])}"
        (atom
-         {:tools-logging (fn [] {:present? (enc/have-resource? "clojure/tools/logging.clj")})
-          :slf4j         (fn [] {:present? (enc/compile-when org.slf4j.Logger true false)})}))
+         {:tools-logging  (fn [] {:present? present:tools-logging?, :enabled-by-env? enabled:tools-logging?})
+          :slf4j          (fn [] {:present? present:slf4j?, :telemere-provider-present? present:slf4j-telemere?})
+          :open-telemetry (fn [] {:present? present:otel?})}))
 
-     (defn add-intake-check! [source-id check-fn] (swap! intake-checks_ assoc source-id check-fn))
+     (defn add-interop-check! [source-id check-fn] (swap! interop-checks_ assoc source-id check-fn))
 
-     (defn ^:public check-intakes
+     (defn ^:public check-interop
        "Experimental, subject to change.
-       Runs Telemere's registered intake checks and returns
-       {<source-id> {:keys [sending->telemere? telemere-receiving? ...]}}.
+       Runs Telemere's registered interop checks and returns info useful
+       for tests/debugging, e.g.:
 
-       Useful for tests/debugging."
+         {:tools-logging {:present? false}
+          :slf4j         {:present? true
+                          :sending->telemere?  true
+                          :telemere-receiving? true}
+          ...}"
        []
        (enc/map-vals (fn [check-fn] (check-fn))
-         @intake-checks_))
+         @interop-checks_))
 
-     (defn test-intake! [msg test-fn]
-       (let [msg (str "Intake test: " msg " (" (enc/uuid-str) ")")
+     (defn test-interop! [msg test-fn]
+       (let [msg (str "Interop test: " msg " (" (enc/uuid-str) ")")
              signal
              (binding [*rt-sig-filter* nil] ; Without runtime filters
                (with-signal :raw :trap (test-fn msg)))]

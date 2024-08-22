@@ -263,18 +263,18 @@
            (handler            thread throwable))))
      nil))
 
-;;;; Intake
+;;;; Interop
 
 #?(:clj
    (enc/defaliases
-     impl/check-intakes
+     impl/check-interop
      streams/with-out->telemere
      streams/with-err->telemere
      streams/with-streams->telemere
      streams/streams->telemere!
      streams/streams->reset!))
 
-(comment (check-intakes))
+(comment (check-interop))
 
 ;;;; Handlers
 
