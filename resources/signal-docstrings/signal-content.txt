@@ -1,5 +1,5 @@
-Signals are maps with {:keys [inst id ns level data msg_ ...]},
-though they can be modified by signal and/or handler middleware.
+Signals are maps with {:keys [inst id ns level data msg_ ...]}, though they
+can be modified by signal and/or handler middleware (see end for examples).
 
 Default signal keys:
 
@@ -37,6 +37,21 @@ Default signal keys:
 <kvs> ---------- Other arb app-level ?kvs given to signal creator. Typically NOT included
                  in handler output, so a great way to provide custom data/opts for use
                  (only) by custom middleware/handlers.
+
+--
+
+Middleware examples:
+
+  Remove key/s from all signals:
+
+    (t/set-middleware! (fn [signal] (dissoc signal :unwanted-key1 ...)))
+
+  Remove key/s from signals to specific handler:
+
+    (t/add-handler! ::my-handler my-handler
+      {:middleware (fn [signal] (dissoc signal :unwanted-key1 ...))})
+
+--
 
 If anything is unclear, please ping me (@ptaoussanis) so that I can improve these docs!
 
