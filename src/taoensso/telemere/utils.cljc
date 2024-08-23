@@ -626,7 +626,7 @@
   "Experimental, subject to change.
   Returns a (fn pr [signal]) that:
     - Takes a Telemere signal (map).
-    - Returns a machine-readable signal ?string.
+    - Returns a machine-readable signal string.
 
   Options:
     `:pr-fn`         - ∈ #{<unary-fn> :edn (default) :json (Cljs only)}
