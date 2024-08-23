@@ -13,7 +13,7 @@ See [here](../../wiki/1-Getting-started) for **full introduction**.
 
 ## Latest release/s
 
-- `2024-08-20` `v1.0.0-beta19`: [release info](../../releases/tag/v1.0.0-beta19) (for early adopters/feedback)
+- `2024-08-23` `v1.0.0-beta20`: [release info](../../releases/tag/v1.0.0-beta20) (for early adopters/feedback)
 
 [![Main tests][Main tests SVG]][Main tests URL]
 [![Graal tests][Graal tests SVG]][Graal tests URL]
