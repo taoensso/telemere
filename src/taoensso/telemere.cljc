@@ -43,7 +43,10 @@
   {:sf-arity 4
    :ct-sig-filter   impl/ct-sig-filter
    :*rt-sig-filter* impl/*rt-sig-filter*
-   :*sig-handlers*  impl/*sig-handlers*})
+   :*sig-handlers*  impl/*sig-handlers*
+   :lib-dispatch-opts
+   (assoc sigs/default-handler-dispatch-opts
+     :convey-bindings? false)})
 
 ;;;; Aliases
 

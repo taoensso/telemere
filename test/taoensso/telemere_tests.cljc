@@ -228,12 +228,16 @@
             (is (= rv6 13)) (is (= (force (get sv6 dk)) [:n 12, :c6 15]))
             (is (= @c  16)  "6x run + 6x let (0x suppressed) + 4x data (2x suppressed)")]))))
 
-   (testing "Binding conveyance"
-     (binding [*dynamic-var* :foo]
-       (is (sm? (with-sig (sig! {:level :info, :data {:dynamic-var *dynamic-var*}})) {:data {:dynamic-var :foo}}))))
+   (testing "Dynamic bindings, etc."
+     [(binding[#?@(:clj [impl/*sig-spy-off-thread?* true])
+               *dynamic-var* "foo"
+               tel/*ctx*     "bar"]
+        (let [sv (with-sig (sig! {:level :info, :data {:*dynamic-var* *dynamic-var*, :*ctx* tel/*ctx*}}))]
+          (is (sm? sv                          {:data {:*dynamic-var* "foo",         :*ctx* "bar"}})
+            "Retain dynamic bindings in place at time of signal call")))
 
-   (testing "Dynamic context (`*ctx*`)"
-     (let [sv (with-sig (sig! {:level :info, :ctx "my-ctx"}))] (is (sm? sv {:ctx "my-ctx"}) "Can be set via call opt")))
+      (let [sv (with-sig (sig! {:level :info, :ctx "my-ctx"}))]
+        (is (sm? sv {:ctx "my-ctx"}) "`*ctx*` can be overridden via call opt"))])
 
    (testing "Dynamic middleware (`*middleware*`)"
      [(is (sm? (tel/with-middleware nil               (with-sig (sig! {:level :info                 })))               {:level :info                 }) "nil middleware ~ identity")

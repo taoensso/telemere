@@ -279,8 +279,10 @@
 
 ;;;; Handlers
 
-(enc/defonce ^:dynamic *sig-spy*      "To support `with-signals`, etc." nil)
-(enc/defonce ^:dynamic *sig-handlers* "?[<wrapped-handler-fn>]"         nil)
+(enc/defonce ^:dynamic *sig-handlers* "?[<wrapped-handler-fn>]" nil)
+
+(defrecord SpyOpts [vol_ last-only? trap?])
+(def ^:dynamic *sig-spy* "?SpyOpts" nil)
 
 (defn force-msg-in-sig [sig]
   (if-not (map? sig)
@@ -309,7 +311,7 @@
      ([         trap-signals? form] `(with-signal false ~trap-signals? ~form))
      ([raw-msg? trap-signals? form]
       `(let [sig_# (volatile! nil)]
-         (binding [*sig-spy* [sig_# :last-only ~trap-signals?]]
+         (binding [*sig-spy* (SpyOpts. sig_# true ~trap-signals?)]
            (enc/try* ~form (catch :all _#)))
 
          (if ~raw-msg?
@@ -326,7 +328,7 @@
      ([raw-msgs? trap-signals? form]
       `(let [sigs_# (volatile! nil)
              form-result#
-             (binding [*sig-spy* [sigs_# (not :last-only) ~trap-signals?]]
+             (binding [*sig-spy* (SpyOpts. sigs_# false ~trap-signals?)]
                (enc/try*
                  (do            [~form nil])
                  (catch :all t# [nil    t#])))
@@ -338,16 +340,23 @@
 
          [form-result# (not-empty sigs#)]))))
 
+#?(:clj (def ^:dynamic *sig-spy-off-thread?* false))
 (defn dispatch-signal!
   "Dispatches given signal to registered handlers, supports `with-signal/s`."
   [signal]
   (or
-    (when-let [[v_ last-only? trap-signals?] *sig-spy*]
-      (let [sv (sigs/signal-value signal nil)]
+    (when-let [{:keys [vol_ last-only? trap?]} *sig-spy*]
+      (let [sv
+            #?(:cljs (sigs/signal-value signal nil)
+               :clj
+               (if *sig-spy-off-thread?* ; Simulate async handler
+                 (deref (enc/promised :user (sigs/signal-value signal nil)))
+                 (do                        (sigs/signal-value signal nil))))]
+
         (if last-only?
-          (vreset! v_                  sv)
-          (vswap!  v_ #(conj (or % []) sv))))
-      (when trap-signals? :stop))
+          (vreset! vol_                  sv)
+          (vswap!  vol_ #(conj (or % []) sv))))
+      (when trap? :stop))
 
     (sigs/call-handlers! *sig-handlers* signal)))
 
@@ -639,9 +648,9 @@
                          `(let [signal# ~record-form]
                             (reduce-kv assoc signal# (.-kvs signal#)))))]
 
-                 `(delay
-                    ;; Delay (cache) shared by all handlers. Covers signal `:let` eval, signal construction,
-                    ;; middleware (possibly expensive), etc. Throws here will be caught by handler.
+                 `(enc/bound-delay
+                    ;; Delay (cache) shared by all handlers, incl. `:let` eval,
+                    ;; signal construction, middleware, etc. Throws caught by handler.
                     ~do-form
                     (let [~@let-form ; Allow to throw, eval BEFORE data, msg, etc.
                           signal# ~signal-form]
@@ -721,7 +730,7 @@
                     ~@into-let-form ; Inject conditional bindings
                     signal# ~signal-delay-form]
 
-                (dispatch-signal! ; Runner preserves dynamic bindings when async.
+                (dispatch-signal!
                   ;; Unconditionally send same wrapped signal to all handlers.
                   ;; Each handler will use wrapper for handler filtering,
                   ;; unwrapping (realizing) only allowed signals.
