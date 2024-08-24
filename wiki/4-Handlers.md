@@ -7,26 +7,26 @@ You can also easily [write your own handlers](#writing-handlers) for any output 
 # Included handlers
 
 See ✅ links below for **features and usage**,  
-See 👍 links below to **vote on future handlers**:
+See ❤️ links below to **vote on future handlers**:
 
 | Target (↓)                                     |                                                         Clj                                                         |                                               Cljs                                                |
 | :--------------------------------------------- | :-----------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------: |
-| [Apache Kafka](https://kafka.apache.org/)      |                                 [👍](https://github.com/taoensso/roadmap/issues/12)                                 |                                                 -                                                 |
-| [AWS Kinesis](https://aws.amazon.com/kinesis/) |                                 [👍](https://github.com/taoensso/roadmap/issues/12)                                 |                                                 -                                                 |
+| [Apache Kafka](https://kafka.apache.org/)      |                                 [❤️](https://github.com/taoensso/roadmap/issues/12)                                 |                                                 -                                                 |
+| [AWS Kinesis](https://aws.amazon.com/kinesis/) |                                 [❤️](https://github.com/taoensso/roadmap/issues/12)                                 |                                                 -                                                 |
 | Console                                        |            [✅](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console)            |   [✅](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console)   |
 | Console (raw)                                  |                                                          -                                                          | [✅](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console-raw) |
-| [Datadog](https://www.datadoghq.com/)          |                                 [👍](https://github.com/taoensso/roadmap/issues/12)                                 |                        [👍](https://github.com/taoensso/roadmap/issues/12)                        |
+| [Datadog](https://www.datadoghq.com/)          |                                 [❤️](https://github.com/taoensso/roadmap/issues/12)                                 |                        [❤️](https://github.com/taoensso/roadmap/issues/12)                        |
 | Email                                          |         [✅](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.postal#handler:postal)         |                                                 -                                                 |
-| [Graylog](https://graylog.org/)                |                                 [👍](https://github.com/taoensso/roadmap/issues/12)                                 |                                                 -                                                 |
-| [Jaeger](https://www.jaegertracing.io/)        |                                 [👍](https://github.com/taoensso/roadmap/issues/12)                                 |                                                 -                                                 |
-| [Logstash](https://www.elastic.co/logstash)    |                                 [👍](https://github.com/taoensso/roadmap/issues/12)                                 |                                                 -                                                 |
-| [OpenTelemetry](https://opentelemetry.io/)     | [✅](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.open-telemetry#handler:open-telemetry) |                        [👍](https://github.com/taoensso/roadmap/issues/12)                        |
-| [Redis](https://redis.io/)                     |                                 [👍](https://github.com/taoensso/roadmap/issues/12)                                 |                                                 -                                                 |
-| SQL                                            |                                 [👍](https://github.com/taoensso/roadmap/issues/12)                                 |                                                 -                                                 |
+| [Graylog](https://graylog.org/)                |                                 [❤️](https://github.com/taoensso/roadmap/issues/12)                                 |                                                 -                                                 |
+| [Jaeger](https://www.jaegertracing.io/)        |                                 [❤️](https://github.com/taoensso/roadmap/issues/12)                                 |                                                 -                                                 |
+| [Logstash](https://www.elastic.co/logstash)    |                                 [❤️](https://github.com/taoensso/roadmap/issues/12)                                 |                                                 -                                                 |
+| [OpenTelemetry](https://opentelemetry.io/)     | [✅](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.open-telemetry#handler:open-telemetry) |                        [❤️](https://github.com/taoensso/roadmap/issues/12)                        |
+| [Redis](https://redis.io/)                     |                                 [❤️](https://github.com/taoensso/roadmap/issues/12)                                 |                                                 -                                                 |
+| SQL                                            |                                 [❤️](https://github.com/taoensso/roadmap/issues/12)                                 |                                                 -                                                 |
 | [Slack](https://slack.com/)                    |          [✅](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.slack#handler:slack)          |                                                 -                                                 |
 | TCP socket                                     |      [✅](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.sockets#handler:tcp-socket)       |                                                 -                                                 |
 | UDP socket                                     |      [✅](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.sockets#handler:udp-socket)       |                                                 -                                                 |
-| [Zipkin](https://zipkin.io/)                   |                                 [👍](https://github.com/taoensso/roadmap/issues/12)                                 |                                                 -                                                 |
+| [Zipkin](https://zipkin.io/)                   |                                 [❤️](https://github.com/taoensso/roadmap/issues/12)                                 |                                                 -                                                 |
 
 # Configuring handlers
 
@@ -51,7 +51,7 @@ Note that it's common for Telemere handlers to be customized by providing *Cloju
 
 See the [utils namespace](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils) for tools useful for customizing and writing signal handlers.
 
-### Example
+### Console handler
 
 The standard Clj/s console handler ([`handler:console`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console)) writes signals **as strings** to `*out*`/`*err` or browser console.
 
@@ -64,7 +64,7 @@ By default it writes formatted strings intended for human consumption:
     (t/log! {:id ::my-id, :data {:x1 :x2}} "My message")))
 
 ;; Create console handler with default opts (writes formatted string)
-(def my-handler (t/handler:console))
+(def my-handler (t/handler:console {}))
 
 ;; Test handler, remember it's just a (fn [signal])
 (my-handler my-signal) ; %>
@@ -72,10 +72,12 @@ By default it writes formatted strings intended for human consumption:
 ;;     data: {:x1 :x2}
 ```
 
-To instead writes signals as edn:
+#### edn output
+
+To instead writes signals as [edn](https://github.com/edn-format/edn):
 
 ```clojure
-;; Create console which writes edn
+;; Create console handler which writes signals as edn
 (def my-handler
   (t/handler:console
     {:output-fn (t/pr-signal-fn {:pr-fn :edn})}))
@@ -84,18 +86,20 @@ To instead writes signals as edn:
 ;; {:inst #inst "2024-04-11T10:54:57.202869Z", :msg_ "My message", :ns "examples", ...}
 ```
 
+#### JSON output
+
 To instead writes signals as JSON:
 
 ```clojure
-;; Create console which writes signals as JSON
+;; Ref.  <https://github.com/metosin/jsonista> (or any alt JSON lib)
 #?(:clj (require '[jsonista.core :as jsonista]))
 (def my-handler
   (t/handler:console
     {:output-fn
      (t/pr-signal-fn
        {:pr-fn
-        #?(:cljs :json
-           :clj  jsonista.core/write-value-as-string)})}))
+        #?(:cljs :json ; Use js/JSON.stringify
+           :clj  jsonista/write-value-as-string)})}))
 
 (my-handler my-signal) ; %>
 ;; {"inst":"2024-04-11T10:54:57.202869Z","msg_":"My message","ns":"examples", ...}

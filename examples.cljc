@@ -8,6 +8,8 @@
 
 (require '[taoensso.telemere :as t])
 
+;; (Just works / no config necessary for typical use cases)
+
 ;; Without structured data
 (t/log! :info "Hello world!") ; %> Basic log   signal (has message)
 (t/event! ::my-id :debug)     ; %> Basic event signal (just id)
@@ -16,11 +18,12 @@
 (t/log! {:level :info, :data {}} "Hello again!")
 (t/event! ::my-id {:level :debug, :data {}})
 
-;; Trace (can interop with OpenTelemetry)
+;; Trace (auto interops with OpenTelemetry)
+;; Tracks form runtime, return value, and (nested) parent tree
 (t/trace! {:id ::my-id :data {}}
   (do-some-work))
 
-;; Check signal content for debug/tests
+;; Check resulting signal content for debug/tests
 (t/with-signal (t/event! ::my-id)) ; => {:keys [ns level id data msg_ ...]}
 
 ;; Transform signals
@@ -92,6 +95,25 @@
    :rate-limit  {"1 per sec" [1 1000]}
    ;; See `t/help:handler-dispatch-options` for more
    })
+
+;; Print human-readable output to console
+(t/add-handler! :my-console-handler
+  (t/handler:console
+    {:output-fn (t/format-signal-fn {})}))
+
+;; Print edn to console
+(t/add-handler! :my-console-handler
+  (t/handler:console
+    {:output-fn (t/pr-signal-fn {:pr-fn :edn})}))
+
+;; Print JSON to console
+;; Ref.  <https://github.com/metosin/jsonista> (or any alt JSON lib)
+#?(:clj (require '[jsonista.core :as jsonista]))
+(t/add-handler! :my-console-handler
+  (t/handler:console
+    {:output-fn
+     #?(:cljs :json ; Use js/JSON.stringify
+        :clj  jsonista/write-value-as-string)}))
 
 ;;;; Docstring examples
 
@@ -170,7 +192,7 @@
     (t/log! {:id ::my-id, :data {:x1 :x2}} "My message")))
 
 ;; Create console handler with default opts (writes formatted string)
-(def my-handler (t/handler:console))
+(def my-handler (t/handler:console {}))
 
 ;; Test handler, remember it's just a (fn [signal])
 (my-handler my-signal) ; %>
@@ -186,14 +208,15 @@
 ;; {:inst #inst "2024-04-11T10:54:57.202869Z", :msg_ "My message", :ns "examples", ...}
 
 ;; Create console handler which writes signals as JSON
+;; Ref.  <https://github.com/metosin/jsonista> (or any alt JSON lib)
 #?(:clj (require '[jsonista.core :as jsonista]))
 (def my-handler
   (t/handler:console
     {:output-fn
      (t/pr-signal-fn
        {:pr-fn
-        #?(:cljs :json
-           :clj  jsonista.core/write-value-as-string)})}))
+        #?(:cljs :json ; Use js/JSON.stringify
+           :clj  jsonista/write-value-as-string)})}))
 
 (my-handler my-signal) ; %>
 ;; {"inst":"2024-04-11T10:54:57.202869Z","msg_":"My message","ns":"examples", ...}

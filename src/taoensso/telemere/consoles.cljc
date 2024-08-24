@@ -97,8 +97,10 @@
      Ref. <https://github.com/binaryage/cljs-devtools>.
 
      Options:
-       `:preamble-fn`     - (fn [signal])   => string.
-       `:format-nsecs-fn` - (fn [nanosecs]) => string."
+       `:preamble-fn`     - (fn [signal])   => string, see [1].
+       `:format-nsecs-fn` - (fn [nanosecs]) => string.
+
+     [1] `taoensso.telemere.utils/signal-preamble-fn`, etc."
 
      ([] (handler:console-raw nil))
      ([{:keys [preamble-fn format-nsecs-fn] :as opts

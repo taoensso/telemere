@@ -637,14 +637,17 @@
                        excluded by default: #{:location :kvs :file :host :thread}
 
   Examples:
-    (pr-signal-fn {:pr-fn :edn  ...}) ; Outputs edn
-    (pr-signal-fn {:pr-fn :json ...}) ; Outputs JSON (Cljs only)
 
-    To output JSON for Clj, you must provide an appropriate `:pr-fn`.
-    `jsonista` offers one good option, Ref. <https://github.com/metosin/jsonista>:
+    ;; To print as edn:
+    (pr-signal-fn {:pr-fn :edn})
 
-      (require '[jsonista.core :as jsonista])
-      (pr-signal-fn {:pr-fn jsonista/write-value-as-string ...})
+    ;; To print as JSON:
+    ;; Ref.  <https://github.com/metosin/jsonista> (or any alt JSON lib)
+    #?(:clj (require '[jsonista.core :as jsonista]))
+    (pr-signal-fn
+      {:pr-fn
+        #?(:cljs :json ; Use js/JSON.stringify
+           :clj  jsonista/write-value-as-string)})
 
   Motivation:
     Why use this util instead of just directly using the print function
@@ -654,7 +657,8 @@
     This util efficiently clean signals of such noise, helping reduce
     storage/transmission size, and making key info easier to see.
 
-  See also `format-signal-fn` for human-readable output."
+  See also `format-signal-fn` for an alternative to `pr-signal-fn`
+  that produces human-readable output."
   ([] (pr-signal-fn nil))
   ([{:keys [pr-fn, incl-kvs? incl-nils? incl-newline? incl-keys] :as opts
      :or
@@ -750,10 +754,15 @@
 
   Options:
     `:incl-newline?` - Include terminating system newline? (default true)
-    `:preamble-fn`   - (fn [signal]) => signal preamble string.
-    `:content-fn`    - (fn [signal]) => signal content  string.
+    `:preamble-fn`   - (fn [signal]) => signal preamble string, see [1].
+    `:content-fn`    - (fn [signal]) => signal content  string, see [2].
 
-  See also `pr-signal-fn` for machine-readable output."
+  [1] `taoensso.telemere.utils/signal-preamble-fn`, etc.
+  [2] `taoensso.telemere.utils/signal-content-fn`,  etc.
+
+  See also `pr-signal-fn` for an alternative to `format-signal-fn`
+  that produces machine-readable output (edn, JSON, etc.)."
+
   ([] (format-signal-fn nil))
   ([{:keys [incl-newline? preamble-fn content-fn]
      :or
