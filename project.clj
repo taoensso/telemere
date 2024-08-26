@@ -1,4 +1,4 @@
-(defproject com.taoensso/telemere "1.0.0-SNAPSHOT"
+(defproject com.taoensso/telemere "1.0.0-beta21"
   :author "Peter Taoussanis <https://www.taoensso.com>"
   :description "Structured telemetry library for Clojure/Script"
   :url "https://www.taoensso.com/telemere"
@@ -8,7 +8,7 @@
    :url  "https://www.eclipse.org/legal/epl-v10.html"}
 
   :dependencies
-  [[com.taoensso/encore "3.116.0-SNAPSHOT"]]
+  [[com.taoensso/encore "3.116.0"]]
 
   :test-paths ["test" #_"src"]
 
@@ -46,10 +46,10 @@
     :dependencies
     [[org.clojure/test.check             "1.1.1"]
      [org.clojure/tools.logging          "1.3.0"]
-     [org.slf4j/slf4j-api               "2.0.14"]
-     [com.taoensso/slf4j-telemere "1.0.0-SNAPSHOT"]
-     #_[org.slf4j/slf4j-simple          "2.0.14"]
-     #_[org.slf4j/slf4j-nop             "2.0.14"]
+     [org.slf4j/slf4j-api               "2.0.16"]
+     [com.taoensso/slf4j-telemere "1.0.0-beta21"]
+     #_[org.slf4j/slf4j-simple          "2.0.16"]
+     #_[org.slf4j/slf4j-nop             "2.0.16"]
 
      ;;; For optional handlers
      [io.opentelemetry/opentelemetry-api                         "1.41.0"]

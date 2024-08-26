@@ -2,10 +2,12 @@ This project uses [**Break Versioning**](https://www.taoensso.com/break-versioni
 
 ---
 
-# `v1.0.0-beta20` (2024-08-23)
+# `v1.0.0-beta21` (2024-08-26)
 
-> **Dep/s**: [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta20) and [Telemere SLF4J provider](https://clojars.org/com.taoensso/slf4j-telemere/versions/1.0.0-beta20) are on Clojars.  
-> **Versioning**: Telemere uses [Break Versioning](https://www.taoensso.com/break-versioning).
+**Available on Clojars**: [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta21) and [SLF4J provider](https://clojars.org/com.taoensso/slf4j-telemere/versions/1.0.0-beta21).  
+Uses [Break Versioning](https://www.taoensso.com/break-versioning).
+
+--
 
 This is a **pre-release** intended for **early adopters** and those who'd like to give feedback. New betas will be released frequently, while I continue to fix issues and make other improvements/additions.
 
@@ -17,10 +19,10 @@ Please **report any unexpected problems** on [GitHub](https://github.com/taoenss
 
 ## Recent changes
 
-Beta 20:
+Beta 21, 20:
 
-* **\[mod]** Generalize "intake", rename -> "interop" \[ef678bcc]
-* **\[mod]** Make `:host` output opt-in for default signal handlers \[88eb5211]
+* **\[mod]** Generalize "intake", rename -> "interop" \[ef678bcc] (beta 20)
+* **\[mod]** Make `:host` output opt-in for default signal handlers \[88eb5211] (beta 20)
 
 Earlier:
 
@@ -43,9 +45,10 @@ Earlier:
 
 ## Recent additions
 
-Beta 20:
+Beta 21, 20:
 
-* **\[new]** OpenTelemetry handler: improve span interop \[84957c6d]
+* **\[new]** Internal and doc improvements: \[8066776a8], \[b4b06f324], \[3068ccf8d] (beta 21)
+* **\[new]** OpenTelemetry handler: improve span interop \[84957c6d] (beta 20)
 
 Earlier:
 
@@ -71,7 +74,7 @@ Earlier:
 
 ## Recent fixes
 
-Beta 20:
+Beta 21, 20:
 
 * None
 
