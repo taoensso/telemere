@@ -4,10 +4,10 @@ This project uses [**Break Versioning**](https://www.taoensso.com/break-versioni
 
 # `v1.0.0-beta21` (2024-08-26)
 
-**Available on Clojars**: [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta21) and [SLF4J provider](https://clojars.org/com.taoensso/slf4j-telemere/versions/1.0.0-beta21).  
+📦 **Available on Clojars**: [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta21) and [SLF4J provider](https://clojars.org/com.taoensso/slf4j-telemere/versions/1.0.0-beta21).  
 Uses [Break Versioning](https://www.taoensso.com/break-versioning).
 
---
+---
 
 This is a **pre-release** intended for **early adopters** and those who'd like to give feedback. New betas will be released frequently, while I continue to fix issues and make other improvements/additions.
 
