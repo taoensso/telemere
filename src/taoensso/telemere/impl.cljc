@@ -550,7 +550,12 @@
               :sf-arity   4
               :ct-sig-filter     ct-sig-filter
               :*rt-sig-filter* `*rt-sig-filter*}
-             opts)]
+
+             (assoc opts :bound-forms
+               {:kind  '__kind
+                :ns    '__ns
+                :id    '__id
+                :level '__level}))]
 
        (if elide?
          run-form
@@ -716,33 +721,35 @@
            ;;        (run-fn-form)
            ;;        (let [...]))))
 
-           `(enc/if-not ~allow? ; Allow to throw at call
-              ~run-form
-              (let [;;; Allow to throw at call
-                    ~'__inst   ~inst-form
-                    ~'__level  ~level-form
-                    ~'__kind   ~kind-form
-                    ~'__id     ~id-form
-                    ~'__ns     ~ns-form
-                    ~'__thread ~thread-form
-                    ~'__root0  ~root-form0 ; ?{:keys [id uid]}
+           ;; Unless otherwise specified, allow errors to throw on call
+           `(let [~'__kind  ~kind-form
+                  ~'__ns    ~ns-form
+                  ~'__id    ~id-form
+                  ~'__level ~level-form]
 
-                    ~@into-let-form ; Inject conditional bindings
-                    signal# ~signal-delay-form]
+              (enc/if-not ~allow?
+                ~run-form
+                (let [~'__inst   ~inst-form
+                      ~'__thread ~thread-form
+                      ~'__root0  ~root-form0 ; ?{:keys [id uid]}
 
-                (dispatch-signal!
-                  ;; Unconditionally send same wrapped signal to all handlers.
-                  ;; Each handler will use wrapper for handler filtering,
-                  ;; unwrapping (realizing) only allowed signals.
-                  (WrappedSignal. ~'__ns ~'__kind ~'__id ~'__level signal#))
+                      ~@into-let-form ; Inject conditional bindings
+                      signal# ~signal-delay-form]
 
-                (if ~'__run-result
-                  ( ~'__run-result signal#)
-                  true))))))))
+                  (dispatch-signal!
+                    ;; Unconditionally send same wrapped signal to all handlers.
+                    ;; Each handler will use wrapper for handler filtering,
+                    ;; unwrapping (realizing) only allowed signals.
+                    (WrappedSignal. ~'__ns ~'__kind ~'__id ~'__level signal#))
+
+                  (if ~'__run-result
+                    ( ~'__run-result signal#)
+                    true)))))))))
 
 (comment
   (with-signal  (signal! {:level :warn :let [x :x] :msg ["Test" "message" x] :data {:a :A :x x} :run (+ 1 2)}))
   (macroexpand '(signal! {:level :warn :let [x :x] :msg ["Test" "message" x] :data {:a :A :x x} :run (+ 1 2)}))
+  (macroexpand '(signal! {:level :info}))
 
   (do
     (println "---")
