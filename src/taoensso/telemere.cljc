@@ -436,7 +436,25 @@
        (signal! {:level :info                           }) ; 348
        (signal! {:level :info, :run "run", :trace? false}) ; 448
        (signal! {:level :info, :run "run"               }) ; 1087
-       ))])
+       ))
+
+   ;; Full bench to handled signals
+   ;;   Sync           => 4240.6846 (~4.2m/sec)
+   ;;   Async dropping => 2421.9176 (~2.4m/sec)
+   (let [runtime-msecs 5000
+         n-procs (.availableProcessors (Runtime/getRuntime))
+         fp (enc/future-pool n-procs)
+         c  (java.util.concurrent.atomic.AtomicLong. 0)
+         p  (promise)]
+
+     (with-handler ::bench (fn [_] (.incrementAndGet c))
+       {:async nil} ; Sync
+       #_{:async {:mode :dropping, :n-threads n-procs}}
+       (let [t (enc/after-timeout runtime-msecs (deliver p (.get c)))]
+         (dotimes [_ n-procs]
+           (fp (fn [] (dotimes [_ 6e6] (signal! {:level :info})))))
+
+         (/ (double @p) (double runtime-msecs)))))])
 
 ;;;;
 
