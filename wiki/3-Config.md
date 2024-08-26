@@ -25,7 +25,7 @@ See section [4-Handlers](./4-Handlers).
 
 ## tools.logging
 
-[`tools.logging`](https://github.com/clojure/tools.logging) can use Telemere as its logging implementation (backend).
+[`tools.logging`](https://github.com/clojure/tools.logging) can use Telemere as its logging implementation (backend). This'll let `tools.logging` calls create Telemere signals.
 
 To do this:
 
@@ -41,7 +41,7 @@ Verify successful interop with [`check-interop`](https://cljdoc.org/d/com.taoens
 
 ## Java logging
 
-[`SLF4Jv2`](https://www.slf4j.org/) can use Telemere as its logging backend.
+[`SLF4Jv2`](https://www.slf4j.org/) can use Telemere as its logging backend. This'll let SLF4J logging calls create Telemere signals.
 
 To do this, ensure that you have the following dependencies:
 
@@ -70,7 +70,7 @@ In this case logging will be forwarded:
 
 ## System streams
 
-The JVM's `System/out` and/or `System/err` streams can be set to flush to Telemere signals.
+The JVM's `System/out` and/or `System/err` streams can be set so that they'll create Telemere signals when flushed.
 
 To do this, call [`streams->telemere!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#streams-%3Etelemere!).
 

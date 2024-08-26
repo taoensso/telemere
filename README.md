@@ -81,7 +81,7 @@ See [here][GitHub releases] for earlier releases.
 
 - Elegant, lightweight API that's **easy to use**, **easy to configure**, and **deeply flexible**.
 - **Sensible defaults** to make getting started **fast and easy**.
-- Extensive **beginner-oriented** [documentation][GitHub wiki], [docstrings](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso), and error messages.
+- Extensive **beginner-oriented** [documentation][GitHub wiki], [docstrings](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere), and error messages.
 
 ### Interop
 

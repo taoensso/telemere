@@ -790,10 +790,11 @@
        Runs Telemere's registered interop checks and returns info useful
        for tests/debugging, e.g.:
 
-         {:tools-logging {:present? false}
-          :slf4j         {:present? true
-                          :sending->telemere?  true
-                          :telemere-receiving? true}
+         {:open-telemetry {:present? false}
+          :tools-logging  {:present? false}
+          :slf4j          {:present? true
+                           :sending->telemere?  true
+                           :telemere-receiving? true}
           ...}"
        []
        (enc/map-vals (fn [check-fn] (check-fn))

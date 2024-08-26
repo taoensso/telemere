@@ -241,8 +241,8 @@
 ;; Handlers are just fns of 2 arities
 
 (defn my-basic-handler
-  ([signal] (println signal)) ; Arity-1 called when handling a signal
   ([])                        ; Arity-0 called when stopping the handler
+  ([signal] (println signal)) ; Arity-1 called when handling a signal
   )
 
 ;; If you're making a customizable handler for use by others, it's often
@@ -272,14 +272,14 @@
    (let [handler-fn ; Fn of exactly 2 arities
          (fn a-handler:my-fancy-handler ; Note fn naming convention
 
-           ([signal] ; Arity-1 called when handling a signal
-            ;; Do something useful with the given signal (write to
-            ;; console/file/queue/db, etc.). Return value is ignored.
-            )
-
            ([] ; Arity-0 called when stopping the handler
             ;; Flush buffers, close files, etc. May just noop.
             ;; Return value is ignored.
+            )
+
+           ([signal] ; Arity-1 called when handling a signal
+            ;; Do something useful with the given signal (write to
+            ;; console/file/queue/db, etc.). Return value is ignored.
             ))]
 
      ;; (Advanced, optional) You can use metadata to provide default
