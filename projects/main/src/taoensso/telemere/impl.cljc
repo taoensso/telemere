@@ -372,7 +372,7 @@
        :signal! ; [opts] => allowed? / run result (value or throw)
        '([{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id, ; Undocumented
-            elidable? location inst uid middleware,
+            elidable? location #_location* inst uid middleware,
             sample-rate kind ns id level when rate-limit,
             ctx parent root trace?, do let data msg error run & kvs]}])
 
@@ -382,7 +382,7 @@
          [id
           {:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
-            elidable? location inst uid middleware,
+            elidable? location #_location* inst uid middleware,
             sample-rate kind ns id level when rate-limit,
             ctx parent root trace?, do let data msg error #_run & kvs]}])
 
@@ -391,7 +391,7 @@
          [level msg]
          [{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
-            elidable? location inst uid middleware,
+            elidable? location #_location* inst uid middleware,
             sample-rate kind ns id level when rate-limit,
             ctx parent root trace?, do let data msg error #_run & kvs]}
           msg])
@@ -401,7 +401,7 @@
          [id error]
          [{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
-            elidable? location inst uid middleware,
+            elidable? location #_location* inst uid middleware,
             sample-rate kind ns id level when rate-limit,
             ctx parent root trace?, do let data msg error #_run & kvs]}
           error])
@@ -411,7 +411,7 @@
          [id form]
          [{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
-            elidable? location inst uid middleware,
+            elidable? location #_location* inst uid middleware,
             sample-rate kind ns id level when rate-limit,
             ctx parent root trace?, do let data msg error run & kvs]}
           form])
@@ -421,7 +421,7 @@
          [id form]
          [{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id, rethrow? catch-val,
-            elidable? location inst uid middleware,
+            elidable? location #_location* inst uid middleware,
             sample-rate kind ns id level when rate-limit,
             ctx parent root trace?, do let data msg error #_run & kvs]}
           form])
@@ -431,7 +431,7 @@
          [id]
          [{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
-            elidable? location inst uid middleware,
+            elidable? location #_location* inst uid middleware,
             sample-rate kind ns id level when rate-limit,
             ctx parent root trace?, do let data msg error #_run & kvs]}])
 
@@ -440,8 +440,7 @@
 #?(:clj
    (defn signal-opts
      "Util to help write common signal wrapper macros."
-     [context defaults main-key extra-key arg-order args]
-
+     [context location* defaults main-key extra-key arg-order args]
      (enc/cond
        :let [context-name (str "`" (name context) "`")
              num-args (count args)
@@ -476,11 +475,12 @@
          (and extra-opts? (contains? extra-arg main-key))
          (bad-args! (str "given opts should not contain `" main-key "`.") {}))
 
-       extra-opts? (merge defaults {main-key main-arg}           extra-arg)
-       extra-arg?  (merge defaults {main-key main-arg, extra-key extra-arg})
-       :else       (merge defaults {main-key main-arg}))))
+       :let [base  (merge defaults {:location* location*, main-key main-arg})]
+       extra-opts? (merge base            extra-arg)
+       extra-arg?  (merge base {extra-key extra-arg})
+       :else              base)))
 
-(comment (signal-opts `foo! {:level :info} :id :level :dsc [::my-id {:level :warn}]))
+(comment (signal-opts `foo! :loc* {:level :info} :id :level :dsc [::my-id {:level :warn}]))
 
 #?(:clj
    (defn signal-catch-opts
@@ -492,8 +492,8 @@
            (when catch-id-or-opts
              (let [base ; Inherit some opts from main
                    (enc/assoc-some {}
-                     :location (get main-opts :location)
-                     :id       (get main-opts :id))]
+                     :location* (get main-opts :location*)
+                     :id        (get main-opts :id))]
                (cond
                  (true? catch-id-or-opts) (do   base)
                  (map?  catch-id-or-opts) (conj base catch-id-or-opts)
@@ -545,13 +545,13 @@
 
            {:keys [#_expansion-id location elide? allow?]}
            (sigs/filterable-expansion
-             {:macro-form &form
-              :macro-env  &env
-              :sf-arity   4
+             {:sf-arity 4
               :ct-sig-filter     ct-sig-filter
               :*rt-sig-filter* `*rt-sig-filter*}
 
-             (assoc opts :bound-forms
+             (assoc opts
+               :location* (get opts :location* (enc/get-source &form &env))
+               :bound-forms
                {:kind  '__kind
                 :ns    '__ns
                 :id    '__id
@@ -603,9 +603,9 @@
                      kvs-form
                      (not-empty
                        (dissoc opts
-                         :elidable? :location :inst :uid :middleware,
+                         :elidable? :location :location* :inst :uid :middleware,
                          :sample-rate :ns :kind :id :level :filter :when #_:rate-limit,
-                         :ctx :parent #_:trace?, :do :let :data :msg :error :run
+                         :ctx :parent #_:trace?, :do :let :data :msg :error :run,
                          :elide? :allow? #_:expansion-id :otel/context))
 
                      _ ; Compile-time validation
@@ -763,12 +763,11 @@
      [opts]
      (let [{:keys [#_expansion-id #_location elide? allow?]}
            (sigs/filterable-expansion
-             {:macro-form &form
-              :macro-env  &env
-              :sf-arity   4
+             {:sf-arity 4
               :ct-sig-filter     ct-sig-filter
               :*rt-sig-filter* `*rt-sig-filter*}
-             opts)]
+             (assoc opts :location*
+               (get opts :location* (enc/get-source &form &env))))]
 
        (and (not elide?) allow?))))
 

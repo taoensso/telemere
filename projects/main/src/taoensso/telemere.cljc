@@ -213,8 +213,10 @@
      {:doc      (impl/signal-docstring :event!)
       :arglists (impl/signal-arglists  :event!)}
      [& args]
-     (let [opts (impl/signal-opts `event! {:kind :event, :level :info} :id :level :dsc args)]
-       (enc/keep-callsite `(impl/signal! ~opts)))))
+     (let [opts
+           (impl/signal-opts `event! (enc/get-source &form &env)
+             {:kind :event, :level :info} :id :level :dsc args)]
+       `(impl/signal! ~opts))))
 
 (comment (with-signal (event! ::my-id :info)))
 
@@ -224,8 +226,10 @@
      {:doc      (impl/signal-docstring :log!)
       :arglists (impl/signal-arglists  :log!)}
      [& args]
-     (let [opts (impl/signal-opts `log! {:kind :log, :level :info} :msg :level :asc args)]
-       (enc/keep-callsite `(impl/signal! ~opts)))))
+     (let [opts
+           (impl/signal-opts `log! (enc/get-source &form &env)
+             {:kind :log, :level :info} :msg :level :asc args)]
+       `(impl/signal! ~opts))))
 
 (comment (with-signal (log! :info "My msg")))
 
@@ -235,14 +239,15 @@
      {:doc      (impl/signal-docstring :error!)
       :arglists (impl/signal-arglists  :error!)}
      [& args]
-     (let [opts (impl/signal-opts `error! {:kind :error, :level :error} :error :id :asc args)
+     (let [opts
+           (impl/signal-opts `error! (enc/get-source &form &env)
+             {:kind :error, :level :error} :error :id :asc args)
            error-form (get opts :error)]
 
-       (enc/keep-callsite
-         `(let [~'__error ~error-form]
-            (impl/signal! ~(assoc opts :error '__error))
-            ~'__error ; Unconditional!
-            )))))
+       `(let [~'__error ~error-form]
+          (impl/signal! ~(assoc opts :error '__error))
+          ~'__error ; Unconditional!
+          ))))
 
 (comment (with-signal (throw (error! ::my-id (ex-info "MyEx" {})))))
 
@@ -252,18 +257,20 @@
      {:doc      (impl/signal-docstring :catch-to-error!)
       :arglists (impl/signal-arglists  :catch->error!)}
      [& args]
-     (let [opts     (impl/signal-opts `catch->error! {:kind :error, :level :error} ::__form :id :asc args)
+     (let [opts
+           (impl/signal-opts `catch->error! (enc/get-source &form &env)
+             {:kind :error, :level :error} ::__form :id :asc args)
+
            rethrow? (if (contains? opts :catch-val) false (get opts :rethrow? true))
            catch-val    (get       opts :catch-val)
            catch-sym    (get       opts :catch-sym '__caught-error) ; Undocumented
            form         (get       opts ::__form)
            opts         (dissoc    opts ::__form :catch-val :catch-sym :rethrow?)]
 
-       (enc/keep-callsite
-         `(enc/try* ~form
-            (catch :all ~catch-sym
-              (impl/signal! ~(assoc opts :error catch-sym))
-              (if ~rethrow? (throw ~catch-sym) ~catch-val)))))))
+       `(enc/try* ~form
+          (catch :all ~catch-sym
+            (impl/signal! ~(assoc opts :error catch-sym))
+            (if ~rethrow? (throw ~catch-sym) ~catch-val))))))
 
 (comment
   (with-signal (catch->error! ::my-id (/ 1 0)))
@@ -277,17 +284,16 @@
       :arglists (impl/signal-arglists  :trace!)}
      [& args]
      (let [opts
-           (impl/signal-opts `trace!
-             {:location (enc/get-source &form &env) ; For catch-opts
-              :kind :trace, :level :info, :msg `impl/default-trace-msg}
+           (impl/signal-opts `trace! (enc/get-source &form &env)
+             {:kind :trace, :level :info, :msg `impl/default-trace-msg}
              :run :id :asc args)
 
            ;; :catch->error <id-or-opts> currently undocumented
            [opts catch-opts] (impl/signal-catch-opts opts)]
 
        (if catch-opts
-         (enc/keep-callsite `(catch->error! ~catch-opts (impl/signal! ~opts)))
-         (enc/keep-callsite                            `(impl/signal! ~opts))))))
+         `(catch->error! ~catch-opts (impl/signal! ~opts))
+         (do                        `(impl/signal! ~opts))))))
 
 (comment
   (with-signal (trace! ::my-id (+ 1 2)))
@@ -304,17 +310,16 @@
       :arglists (impl/signal-arglists  :spy!)}
      [& args]
      (let [opts
-           (impl/signal-opts `spy!
-             {:location (enc/get-source &form &env) ; For catch-opts
-              :kind :spy, :level :info, :msg `impl/default-trace-msg}
+           (impl/signal-opts `spy! (enc/get-source &form &env)
+             {:kind :spy, :level :info, :msg `impl/default-trace-msg}
              :run :level :asc args)
 
            ;; :catch->error <id-or-opts> currently undocumented
            [opts catch-opts] (impl/signal-catch-opts opts)]
 
        (if catch-opts
-         (enc/keep-callsite `(catch->error! ~catch-opts (impl/signal! ~opts)))
-         (enc/keep-callsite                            `(impl/signal! ~opts))))))
+         `(catch->error! ~catch-opts (impl/signal! ~opts))
+         (do                        `(impl/signal! ~opts))))))
 
 (comment (with-signal :force (spy! :info (+ 1 2))))
 
@@ -328,14 +333,13 @@
      [& args]
      (let [msg-form ["Uncaught Throwable on thread: " `(.getName ~(with-meta '__thread {:tag 'java.lang.Thread}))]
            opts
-           (impl/signal-opts `uncaught->error!
+           (impl/signal-opts `uncaught->error! (enc/get-source &form &env)
              {:kind :error, :level :error, :msg msg-form}
              :error :id :dsc (into ['__throwable] args))]
 
-       (enc/keep-callsite
-         `(uncaught->handler!
-            (fn [~'__thread ~'__throwable]
-              (impl/signal! ~opts)))))))
+       `(uncaught->handler!
+          (fn [~'__thread ~'__throwable]
+            (impl/signal! ~opts))))))
 
 (comment (macroexpand '(uncaught->error! ::my-id)))
 
