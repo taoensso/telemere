@@ -7,6 +7,8 @@
   {:name "Eclipse Public License - v 1.0"
    :url  "https://www.eclipse.org/legal/epl-v10.html"}
 
+  :scm {:name "git" :url "https://github.com/taoensso/telemere"}
+
   :java-source-paths ["src/java"]
   :javac-options     ["--release" "8" "-g"] ; Support Java >= v8
   :dependencies      []

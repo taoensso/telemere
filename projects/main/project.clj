@@ -7,6 +7,8 @@
   {:name "Eclipse Public License - v 1.0"
    :url  "https://www.eclipse.org/legal/epl-v10.html"}
 
+  :scm {:name "git" :url "https://github.com/taoensso/telemere"}
+
   :dependencies
   [[com.taoensso/encore "3.117.0-SNAPSHOT"]]
 
