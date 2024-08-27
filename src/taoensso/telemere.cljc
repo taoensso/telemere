@@ -370,7 +370,7 @@
 (enc/defaliases
   #?(:default consoles/handler:console)
   #?(:cljs    consoles/handler:console-raw)
-  #?(:clj     files/handler:file))
+  #?(:clj        files/handler:file))
 
 ;;;; Init
 
