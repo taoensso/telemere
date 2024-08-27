@@ -49,6 +49,7 @@
     [[org.clojure/test.check             "1.1.1"]
      [org.clojure/tools.logging          "1.3.0"]
      [org.slf4j/slf4j-api               "2.0.16"]
+     [com.taoensso/telemere-api   "1.0.0-SNAPSHOT"]
      [com.taoensso/slf4j-telemere "1.0.0-SNAPSHOT"]
      #_[org.slf4j/slf4j-simple          "2.0.16"]
      #_[org.slf4j/slf4j-nop             "2.0.16"]

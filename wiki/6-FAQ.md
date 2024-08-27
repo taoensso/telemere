@@ -113,7 +113,7 @@ See also [`msg-skip`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/tao
 
 # How to use Telemere from a library?
 
-See section [9-Maintainers](./9-Maintainers).
+See section [9-Authors](./9-Authors.md).
 
 # How does Telemere compare to Mulog?
 
