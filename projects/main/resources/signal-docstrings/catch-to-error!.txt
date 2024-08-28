@@ -27,7 +27,8 @@ Tips:
   - Test using `with-signal`: (with-signal (catch->error! ...)).
   - Supports the same options [2] as other signals [1].
 
-  - Useful for recording errors in forms, futures, callbacks, etc.
+  - Useful for preventing errors from going unnoticed in futures, callbacks,
+    agent actions, etc.!: (future (catch->error ::my-future (do-something)))
 
 See also `error!`.
 

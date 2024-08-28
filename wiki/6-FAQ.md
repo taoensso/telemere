@@ -34,7 +34,7 @@ This will eventually ease long-term maintenance, increase reliability, and help 
 
 > [Tufte](https:/www.taoensso.com/tufte) is a simple performance monitoring library for Clojure/Script by the author of Telemere.
 
-**No**, Telemere does **not** replace [Tufte](https:/www.taoensso.com/tufte). They work great together, and the [upcoming](https:/www.taoensso.com/roadmap) Tufte v4 will share the same core as Telemere and offer an **identical API** for managing filters and handlers.
+**No**, Telemere does **not** replace [Tufte](https:/www.taoensso.com/tufte). They work great together, and the [upcoming](https:/www.taoensso.com/roadmap) Tufte v3 will share the same core as Telemere and offer an **identical API** for managing filters and handlers.
 
 There is **some feature overlap** though since Telemere offers basic performance measurement as part of its tracing features.
 
@@ -54,13 +54,13 @@ They're focused on complementary things. When both are in use:
 
 > [GraalVM](https://en.wikipedia.org/wiki/GraalVM) is a JDK alternative with ahead-of-time compilation for faster app initialization and improved runtime performance, etc.
 
-Yes, this shouldn't be a problem.
+**Yes**, this shouldn't be a problem.
 
 # Does Telemere work with Babashka?
 
 > [Babashka](https://github.com/babashka/babashka) is a native Clojure interpreter for scripting with fast startup.
 
-Not currently, though support should be possible with a little work. The current bottleneck is a dependency on [Encore](https://github.com/taoensso/encore), though that could actually be removed (also offering benefits re: library size).
+**No**, not currently - though support should be possible with a little work. The current bottleneck is a dependency on [Encore](https://github.com/taoensso/encore), though that could actually be removed (also offering benefits re: library size).
 
 If there's interest in this, please [upvote](https://github.com/taoensso/roadmap/issues/22) on my open source roadmap.
 

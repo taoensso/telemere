@@ -1,5 +1,5 @@
 (ns taoensso.telemere.tools-logging
-  "Interop support for `tools.logging` -> Telemere.
+  "Interop support for tools.logging -> Telemere.
   Telemere will attempt to load this ns automatically when possible.
 
   Naming conventions:
@@ -41,7 +41,7 @@
   (get-logger [_ logger-name] (TelemereLogger. (str logger-name))))
 
 (defn tools-logging->telemere!
-  "Configures `tools.logging` to use Telemere as its logging
+  "Configures tools.logging to use Telemere as its logging
   implementation (backend).
 
   Called automatically if one of the following is \"true\":
@@ -53,13 +53,13 @@
     {:kind  :event
      :level :debug ; < :info since runs on init
      :id    :taoensso.telemere/tools-logging->telemere!
-     :msg   "Enabling interop: `tools.logging` -> Telemere"})
+     :msg   "Enabling interop: tools.logging -> Telemere"})
 
   (alter-var-root #'clojure.tools.logging/*logger-factory*
     (fn [_] (TelemereLoggerFactory.))))
 
 (defn tools-logging->telemere?
-  "Returns true iff `tools.logging` is configured to use Telemere
+  "Returns true iff tools.logging is configured to use Telemere
   as its logging implementation (backend)."
   []
   (when-let [lf clojure.tools.logging/*logger-factory*]
@@ -73,7 +73,7 @@
   (let [sending? (tools-logging->telemere?)
         receiving?
         (and sending?
-          (impl/test-interop! "`tools.logging` -> Telemere"
+          (impl/test-interop! "tools.logging -> Telemere"
             #(clojure.tools.logging/info %)))]
 
     {:present?            true

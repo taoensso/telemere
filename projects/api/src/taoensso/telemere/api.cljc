@@ -2,35 +2,7 @@
   "Experimental, subject to change.
   Minimal Telemere facade API for library authors, etc.
   Allows library code to use Telemere if it's present, or fall back to
-  something like `tools.logging` otherwise.
-
-  (ns my-lib
-    (:require
-      [taoensso.telemere.api :as t]   ; `com.taoensso/telemere-api` dependency
-      [clojure.tools.logging :as ctl] ; `org.clojure/tools.logging` dependency
-      ))
-
-  (t/require-telemere-if-present) ; Just below `ns` form
-
-  ;; Optional convenience for library users
-  (defn set-min-level!
-    \"If using Telemere, sets Telemere's minimum level for <library> namespaces.
-    Possible levels: #{:trace :debug :info :warn :error :fatal :report}.
-    Default level: `:warn`.
-    [min-level]
-    (t/if-telemere
-      (do (t/set-min-level! nil \"my-lib(.*)\" min-level) true)
-      false))
-
-  (defonce ^:private __set-default-min-level (set-min-level! :warn))
-
-  (signal!
-    {:kind :log, :id :my-id, :level :warn,
-     :let  [x :x]
-     :msg  [\"Hello\" \"world\" x]
-     :data {:a :A :x x}
-     :fallback (ctl/warn (str \"Hello world\" x))})"
-
+  something like tools.logging otherwise."
   {:author "Peter Taoussanis (@ptaoussanis)"}
   #?(:clj  (:require [clojure.java.io :as jio])
      :cljs (:require-macros [taoensso.telemere.api :refer [compile-if]])))
@@ -87,7 +59,7 @@
      Otherwise expands to arbitrary `fallback` opt form.
 
      Allows library code to use Telemere if it's present, or fall back to
-     something like `tools.logging` otherwise.
+     something like tools.logging otherwise.
 
      MUST be used with `require-telemere-if-present`, example:
 

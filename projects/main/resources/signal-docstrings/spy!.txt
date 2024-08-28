@@ -8,6 +8,9 @@ When filtering conditions are met [4], creates a Telemere signal [3] and
 dispatches it to registered handlers for processing (e.g. writing to
 console/file/queue/db, etc.).
 
+`form` is generally expected to be synchronous and eager (not a lazy seq,
+async call, or IOT code like a core.async `go` block, etc.).
+
 Examples:
 
   (spy! (+ 1 2))         ; %> {:kind :trace, :level :info, :run-form '(+ 1 2),

@@ -758,7 +758,7 @@
 
 #?(:clj
    (defmacro signal-allowed?
-     "Used only for interop (SLF4J, `tools.logging`, etc.)."
+     "Used only for interop (tools.logging, SLF4J, etc.)."
      {:arglists (signal-arglists :signal!)}
      [opts]
      (let [{:keys [#_expansion-id #_location elide? allow?]}

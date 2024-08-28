@@ -5,15 +5,20 @@
 
 ### Structured telemetry library for Clojure/Script
 
-**Telemere** is a next-generation replacement for [Timbre](https://www.taoensso.com/timbre) that offers one simple **unified API** for **traditional logging**, **structured logging**, **tracing**, and **basic performance monitoring**.
+**Telemere** is a **pure Clojure/Script library** that offers an elegant and simple **unified API** to cover:
 
-Friendly enough for complete beginners, but flexible enough for the most complex and performance-sensitive real-world projects.
+- **Traditional logging** (string messages)
+- **Structured logging** (rich Clojure data types and structures)
+- **Events** (named thing happened, with optional data)
+- **Tracing** (nested flow tracking, with optional data)
+- Basic **performance monitoring** (nested form runtimes)
+- Any combination of the above
 
-It helps enable Clojure/Script systems that are easily **observable**, **robust**, and **debuggable** - and it represents the refinement and culmination of ideas brewing over 12+ years in [Timbre](https://www.taoensso.com/timbre), [Tufte](https://www.taoensso.com/tufte), [Truss](https://www.taoensso.com/truss), etc.
+It's small, *super* fast, easy to learn, easy to use, and **absurdly flexible**.
 
-Supports Clojure, ClojureScript, [GraalVM](https://en.wikipedia.org/wiki/GraalVM), but not ([yet](../../wiki/6-FAQ#does-telemere-work-with-babashka)) [Babashka](https://github.com/babashka/babashka).
+It helps enable Clojure/Script systems that are easily **observable**, **robust**, and **debuggable** - and it represents the refinement and culmination of ideas brewing over 12+ years in [Timbre](https://www.taoensso.com/timbre), [Tufte](https://www.taoensso.com/tufte) and [Truss](https://www.taoensso.com/truss).
 
-See [here](../../wiki/1-Getting-started) for **full introduction**.
+See [here](../../wiki/1-Getting-started) for **full introduction** (concepts, terminology, getting started).
 
 ## Latest release/s
 
@@ -22,7 +27,21 @@ See [here](../../wiki/1-Getting-started) for **full introduction**.
 [![Main tests][Main tests SVG]][Main tests URL]
 [![Graal tests][Graal tests SVG]][Graal tests URL]
 
-See [here][GitHub releases] for earlier releases.
+<!--See [here][GitHub releases] for earlier releases.-->
+
+## Next-gen observability
+
+A key hurdle in building **observable systems** is that it's often inconvenient and costly to get out the kind of **detailed info** that we need when debugging.
+
+Telemere's strategy to address this is to:
+
+1. Provide **lean, low-fuss syntax** to let you conveniently convey program state.
+2. Use the unique power of **Lisp macros** to let you **dynamically filter costs as you filter signals** (pay only for what you need, when you need it).
+3. For those signals that *do* pass filtering: move costs from the callsite to a/sync handlers with explicit [threading and back-pressure semantics](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) and  [performance monitoring](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-handlers-stats).
+
+The effect is more than impressive micro-benchmarks. This approach enables a fundamental (qualitative) change in one's approach to observability.
+
+It enables you to write code that is **information-verbose by default**.
 
 ## Quick examples
 
@@ -39,7 +58,7 @@ See [here][GitHub releases] for earlier releases.
 (t/log! {:level :info, :data {...}} "Hello again!")
 (t/event! ::my-id {:level :debug, :data {...}})
 
-;; Trace (auto interops with OpenTelemetry)
+;; Trace (can interop with OpenTelemetry)
 ;; Tracks form runtime, return value, and (nested) parent tree
 (t/trace! {:id ::my-id :data {...}}
   (do-some-work))
@@ -56,7 +75,7 @@ See [here][GitHub releases] for earlier releases.
 ;; Getting fancy (all costs are conditional!)
 (t/log!
   {:level       :debug
-   :sample-rate (my-dynamic-sample-rate)
+   :sample-rate 0.75 ; 75% sampling (noop 25% of the time)
    :when        (my-conditional)
    :rate-limit  {"1 per sec" [1  1000]
                  "5 per min" [5 60000]}
@@ -85,13 +104,13 @@ See [here][GitHub releases] for earlier releases.
 
 ### Interop
 
-- 1st-class **out-the-box interop** with [SLF4J v2](../../wiki/3-Config#java-logging), [tools.logging](../../wiki/3-Config#toolslogging), [OpenTelemetry](../../wiki/3-Config#opentelemetry), and [Tufte](../../wiki/3-Config#tufte).
+- 1st-class **out-the-box interop** with [tools.logging](../../wiki/3-Config#toolslogging), [Java logging via SLF4J v2](../../wiki/3-Config#java-logging), [OpenTelemetry](../../wiki/3-Config#opentelemetry), and [Tufte](../../wiki/3-Config#tufte).
 - Included [shim](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.timbre) for easy/gradual [migration from Timbre](../../wiki/5-Migrating).
 - Extensive set of [handlers](../../wiki/4-Handlers#included-handlers) included out-the-box.
 
 ### Scaling
 
-- Hyper-optimized and **blazing fast**, see [benchmarks](#benchmarks).
+- Hyper-optimized and **blazing fast**, see [performance](#performance).
 - An API that **scales comfortably** from the smallest disposable code, to the most massive and complex real-world production environments.
 - Auto [handler stats](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-handlers-stats) for debugging performance and other issues at scale.
 
@@ -107,20 +126,6 @@ See [here][GitHub releases] for earlier releases.
 
 - Telemere [compared](../../wiki/5-Migrating#from-timbre) to [Timbre](https://www.taoensso.com/timbre) (Telemere's predecessor)
 - Telemere [compared](../../wiki/6-FAQ#how-does-telemere-compare-to-mulog) to [Mulog](https://github.com/BrunoBonacci/mulog) (Structured micro-logging library)
-
-## Next-gen observability
-
-A key hurdle in building **observable systems** is that it's often inconvenient and costly to get out the kind of **detailed info** that we need when debugging.
-
-Telemere's strategy to address this is to:
-
-1. Provide **lean, low-fuss syntax** to let you conveniently convey program state.
-2. Use the unique power of **Lisp macros** to let you **dynamically filter costs as you filter signals** (pay only for what you need, when you need it).
-3. For those signals that *do* pass filtering: move costs from the callsite to a/sync handlers with explicit [threading and back-pressure semantics](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) and  [performance monitoring](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-handlers-stats).
-
-The effect is more than impressive micro-benchmarks. This approach enables a fundamental (qualitative) change in one's approach to observability.
-
-It enables you to write code that is **information-verbose by default**.
 
 ## Video demo
 
@@ -226,7 +231,36 @@ Detailed help is available without leaving your IDE:
 | [`help:handler-dispatch-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) | Signal handler dispatch options                                          |
 | [`help:environmental-config`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:environmental-config)         | Config via JVM properties, environment variables, or classpath resources |
 
-### Included handlers
+## Performance
+
+Telemere is **highly optimized** and offers great performance at any scale, handling up to **4.2 million filtered signals/sec** on a 2020 Macbook Pro M1.
+
+Signal call benchmarks (per thread):
+
+| Compile-time filtering? | Runtime filtering? | Profile? | Trace? | nsecs / call |
+| :---------------------: | :----------------: | :------: | :----: | -----------: |
+|        ✓ (elide)        |         -          |    -     |   -    |            0 |
+|            -            |         ✓          |    -     |   -    |          350 |
+|            -            |         ✓          |    ✓     |   -    |          450 |
+|            -            |         ✓          |    ✓     |   ✓    |         1000 |
+
+- Nanoseconds per signal call ~ **milliseconds per 1e6 calls**
+- Times exclude [handler runtime](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-handlers-stats) (which depends on handler/s, is usually async)
+- Benched on a 2020 Macbook Pro M1, running Clojure v1.12 and OpenJDK v22
+
+### Performance philosophy
+
+Telemere is optimized for *real-world* performance. This means **prioritizing flexibility** and realistic usage over synthetic micro-benchmarks.
+
+Large applications can produce absolute *heaps* of data, not all equally valuable. Quickly processing infinite streams of unmanageable junk is an anti-pattern. As scale and complexity increase, it becomes more important to **strategically plan** what data to collect, when, in what quantities, and how to manage it.
+
+Telemere is designed to help with all that. It offers [rich data](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content) and unmatched [filtering](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters) support - including per-signal and per-handler **sampling** and **rate-limiting**, and zero cost compile-time filtering.
+
+Use these to ensure that you're not capturing useless/low-value/high-noise information in production! With appropriate planning, Telemere is designed to scale to systems of any size and complexity. 
+
+See [here](../../wiki/7-Tips) for detailed tips on real-world usage.
+
+## Included handlers
 
 See ✅ links below for **features and usage**,  
 See ❤️ links below to **vote on future handlers**:
@@ -265,35 +299,6 @@ See [here](../../wiki/8-Community) for community resources.
 - Extensive [internal help](#internal-help) (no need to leave your IDE)
 - Support via [Slack channel][] or [GitHub issues][]
 - [General observability tips](../../wiki/7-Tips) (advice on building and maintaining observable Clojure/Script systems, and getting the most out of Telemere)
-
-## Benchmarks
-
-Telemere is **highly optimized** and offers great performance at any scale:
-
-| Compile-time filtering? | Runtime filtering? | Profile? | Trace? | nsecs |
-| :---------------------: | :----------------: | :------: | :----: | ----: |
-|        ✓ (elide)        |         -          |    -     |   -    |     0 |
-|            -            |         ✓          |    -     |   -    |   350 |
-|            -            |         ✓          |    ✓     |   -    |   450 |
-|            -            |         ✓          |    ✓     |   ✓    |  1000 |
-
-Measurements:
-
-- Are **~nanoseconds per signal call** (= milliseconds per 1e6 calls)
-- Exclude [handler runtime](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-handlers-stats) (which depends on handler/s, is usually async)
-- Taken on a 2020 Macbook Pro M1, running Clojure v1.12 and OpenJDK v22
-
-### Performance philosophy
-
-Telemere is optimized for *real-world* performance. This means **prioritizing flexibility** and realistic usage over synthetic micro-benchmarks.
-
-Large applications can produce absolute *heaps* of data, not all equally valuable. Quickly processing infinite streams of unmanageable junk is an anti-pattern. As scale and complexity increase, it becomes more important to **strategically plan** what data to collect, when, in what quantities, and how to manage it.
-
-Telemere is designed to help with all that. It offers [rich data](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content) and unmatched [filtering](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters) support - including per-signal and per-handler **sampling** and **rate-limiting**.
-
-Use these to ensure that you're not capturing useless/low-value/high-noise information in production! With appropriate planning, Telemere is designed to scale to systems of any size and complexity. 
-
-See [here](../../wiki/7-Tips) for detailed tips on real-world usage.
 
 ## Funding
 

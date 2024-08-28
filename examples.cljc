@@ -35,7 +35,7 @@
 ;; Getting fancy (all costs are conditional!)
 (t/log!
   {:level       :debug
-   :sample-rate (my-dynamic-sample-rate)
+   :sample-rate 0.75 ; 75% sampling (noop 25% of the time)
    :when        (my-conditional)
    :rate-limit  {"1 per sec" [1  1000]
                  "5 per min" [5 60000]}

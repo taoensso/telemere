@@ -657,7 +657,7 @@
 
 #?(:clj
    (deftest _interop
-     [(testing "`tools.logging` -> Telemere"
+     [(testing "tools.logging -> Telemere"
         [(is (sm? (tel/check-interop) {:tools-logging {:present? true, :sending->telemere? true, :telemere-receiving? true}}))
          (is (sm? (with-sig (ctl/info "Hello" "x" "y")) {:level :info, :ns "taoensso.telemere-tests", :kind :tools-logging, :msg_ "Hello x y", :inst pinst?}))
          (is (sm? (with-sig (ctl/warn "Hello" "x" "y")) {:level :warn, :ns "taoensso.telemere-tests", :kind :tools-logging, :msg_ "Hello x y", :inst pinst?}))

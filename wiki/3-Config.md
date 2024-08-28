@@ -25,11 +25,11 @@ See section [4-Handlers](./4-Handlers).
 
 ## tools.logging
 
-[`tools.logging`](https://github.com/clojure/tools.logging) can use Telemere as its logging implementation (backend). This'll let `tools.logging` calls create Telemere signals.
+[tools.logging](https://github.com/clojure/tools.logging) can use Telemere as its logging implementation (backend). This'll let tools.logging calls create Telemere signals.
 
 To do this:
 
-1. Ensure that you have the `tools.logging` dependency, and
+1. Ensure that you have the tools.logging [dependency](https://mvnrepository.com/artifact/org.clojure/tools.logging), and
 2. Call [`tools-logging->telemere!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.tools-logging#tools-logging-%3Etelemere!), or set the relevant environmental config as described in its docstring.
 
 Verify successful interop with [`check-interop`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#check-interop):
@@ -41,18 +41,14 @@ Verify successful interop with [`check-interop`](https://cljdoc.org/d/com.taoens
 
 ## Java logging
 
-[`SLF4Jv2`](https://www.slf4j.org/) can use Telemere as its logging backend. This'll let SLF4J logging calls create Telemere signals.
+[SLF4Jv2](https://www.slf4j.org/) can use Telemere as its logging backend. This'll let SLF4J logging calls create Telemere signals.
 
-To do this, ensure that you have the following dependencies:
+To do this:
 
-```clojure
-[org.slf4j/slf4j-api          "x.y.z"] ; >= 2.0.0 only!
-[com.taoensso/telemere-slf4j  "x.y.z"]
-```
+1. Ensure that you have the SLF4J [dependency](https://mvnrepository.com/artifact/org.slf4j/slf4j-api) ( v2+ **only**), and
+2. Ensure that you have the Telemere SLF4J backend [dependency](https://clojars.org/com.taoensso/telemere-slf4j)
 
-> Telemere needs SLF4J API **version 2 or newer**. If you're seeing `Failed to load class "org.slf4j.impl.StaticLoggerBinder"` it could be that your project is importing the older v1 API, check with `lein deps :tree` or equivalent.
-
-When `com.taoensso/telemere-slf4j` is on your classpath AND no other SLF4J backends are, SLF4J will direct all its logging calls to Telemere.
+When `com.taoensso/telemere-slf4j` (2) is on your classpath AND no other SLF4J backends are, SLF4J will automatically direct all its logging calls to Telemere.
 
 Verify successful interop with [`check-interop`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#check-interop):
 
@@ -61,7 +57,9 @@ Verify successful interop with [`check-interop`](https://cljdoc.org/d/com.taoens
 {:slf4j {:sending->telemere? true, :telemere-receiving? true}}
 ```
 
-For other (non-SLF4J) logging like [Log4j](https://logging.apache.org/log4j/2.x/), [`java.util.logging`](https://docs.oracle.com/javase/8/docs/api/java/util/logging/package-summary.html) (JUL), and [Apache Commons Logging](https://commons.apache.org/proper/commons-logging/) (JCL), use an appropriate [SLF4J bridge](https://www.slf4j.org/legacy.html) and the normal SLF4J config as above.
+> Telemere needs SLF4J API **version 2 or newer**. If you're seeing `Failed to load class "org.slf4j.impl.StaticLoggerBinder"` it could be that your project is importing the older v1 API, check with `lein deps :tree` or equivalent.
+
+For other (non-SLF4J) logging like [Log4j](https://logging.apache.org/log4j/2.x/), [java.util.logging](https://docs.oracle.com/javase/8/docs/api/java/util/logging/package-summary.html) (JUL), and [Apache Commons Logging](https://commons.apache.org/proper/commons-logging/) (JCL), use an appropriate [SLF4J bridge](https://www.slf4j.org/legacy.html) and the normal SLF4J config as above.
 
 In this case logging will be forwarded:
 
@@ -96,7 +94,7 @@ This allows output to go (via configured exporters) to a wide variety of targets
 
 To do this:
 
-1. Ensure that you have the necessary [OpenTelemetry Java](https://github.com/open-telemetry/opentelemetry-java) dependencies.
+1. Ensure that you have the necessary [OpenTelemetry Java](https://github.com/open-telemetry/opentelemetry-java) [dependency](https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-api).
 2. Ensure that the relevant exporters are [appropriately configured](https://opentelemetry.io/docs/languages/java/configuration/) (this is the trickiest part, but not at all specific to Telemere).
 3. Create a Telemere signal handler using [`handler:open-telemetry`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.open-telemetry#handler:open-telemetry), and register it using [`add-handler!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#add-handler!).
 4. Ensure that [`otel-tracing?`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#otel-tracing?) is enabled if you want tracing interop.
@@ -117,7 +115,7 @@ Telemere can easily incorporate Tufte performance data in its signals, just like
 Telemere and Tufte work great together:
 
 - Their functionality is complementary.
-- The [upcoming](https:/www.taoensso.com/roadmap) Tufte v4 will share the same core as Telemere and offer an **identical API** for managing filters and handlers.
+- The [upcoming](https:/www.taoensso.com/roadmap) Tufte v3 will share the same core as Telemere and offer an **identical API** for managing filters and handlers.
 
 ## Truss
 
