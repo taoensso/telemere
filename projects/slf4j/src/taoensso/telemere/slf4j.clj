@@ -3,7 +3,7 @@
   Telemere will attempt to load this ns automatically when possible.
 
   To use Telemere as your SLF4J backend/provider, just include the
-  `com.taoensso/slf4j-telemere` dependency on your classpath.
+  `com.taoensso/telemere-slf4j` dependency on your classpath.
 
   Implementation details,
   Ref. <https://www.slf4j.org/faq.html#slf4j_compatible>:
@@ -11,7 +11,7 @@
     - Libs  must include `org.slf4j/slf4j-api` dependency, but NO backend.
 
     - Users must include a single backend dependency of their choice
-      (e.g. `com.taoensso/slf4j-telemere` or `org.slf4j/slf4j-simple`).
+      (e.g. `com.taoensso/telemere-slf4j` or `org.slf4j/slf4j-simple`).
 
     - SLF4J uses standard `ServiceLoader` mechanism to find its logging backend,
       searches for `SLF4JServiceProvider` provider on classpath."

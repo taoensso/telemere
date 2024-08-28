@@ -47,12 +47,12 @@ To do this, ensure that you have the following dependencies:
 
 ```clojure
 [org.slf4j/slf4j-api          "x.y.z"] ; >= 2.0.0 only!
-[com.taoensso/slf4j-telemere  "x.y.z"]
+[com.taoensso/telemere-slf4j  "x.y.z"]
 ```
 
 > Telemere needs SLF4J API **version 2 or newer**. If you're seeing `Failed to load class "org.slf4j.impl.StaticLoggerBinder"` it could be that your project is importing the older v1 API, check with `lein deps :tree` or equivalent.
 
-When `com.taoensso/slf4j-telemere` is on your classpath AND no other SLF4J backends are, SLF4J will direct all its logging calls to Telemere.
+When `com.taoensso/telemere-slf4j` is on your classpath AND no other SLF4J backends are, SLF4J will direct all its logging calls to Telemere.
 
 Verify successful interop with [`check-interop`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#check-interop):
 

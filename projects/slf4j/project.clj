@@ -1,4 +1,4 @@
-(defproject com.taoensso/slf4j-telemere "1.0.0-SNAPSHOT"
+(defproject com.taoensso/telemere-slf4j "1.0.0-SNAPSHOT"
   :author "Peter Taoussanis <https://www.taoensso.com>"
   :description "Telemere backend/provider for SLF4J API v2"
   :url "https://www.taoensso.com/telemere"

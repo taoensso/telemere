@@ -28,7 +28,7 @@
    (do
      (def present:tools-logging?  (enc/have-resource? "clojure/tools/logging.clj"))
      (def present:slf4j?          (enc/compile-if org.slf4j.Logger                           true false))
-     (def present:slf4j-telemere? (enc/compile-if com.taoensso.telemere.slf4j.TelemereLogger true false))
+     (def present:telemere-slf4j? (enc/compile-if com.taoensso.telemere.slf4j.TelemereLogger true false))
      (def present:otel?           (enc/compile-if io.opentelemetry.context.Context           true false))
 
      (def enabled:tools-logging?
@@ -779,7 +779,7 @@
        "{<source-id> (fn check [])}"
        (atom
          {:tools-logging  (fn [] {:present? present:tools-logging?, :enabled-by-env? enabled:tools-logging?})
-          :slf4j          (fn [] {:present? present:slf4j?, :telemere-provider-present? present:slf4j-telemere?})
+          :slf4j          (fn [] {:present? present:slf4j?, :telemere-provider-present? present:telemere-slf4j?})
           :open-telemetry (fn [] {:present? present:otel?, :use-tracer? enabled:otel-tracing?})}))
 
      (defn add-interop-check! [source-id check-fn] (swap! interop-checks_ assoc source-id check-fn))
