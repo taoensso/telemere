@@ -2,9 +2,9 @@ This project uses [**Break Versioning**](https://www.taoensso.com/break-versioni
 
 ---
 
-# `v1.0.0-beta21` (2024-08-26)
+# `v1.0.0-beta22` (2024-08-28)
 
-📦 **Available on Clojars**: [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta21) and [SLF4J provider](https://clojars.org/com.taoensso/slf4j-telemere/versions/1.0.0-beta21).  
+📦 **Available on Clojars**: [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta22) | [SLF4J provider](https://clojars.org/com.taoensso/telemere-slf4j/versions/1.0.0-beta22) | [Facade API for library authors](https://clojars.org/com.taoensso/telemere-api/versions/1.0.0-beta22)  
 Uses [Break Versioning](https://www.taoensso.com/break-versioning).
 
 ---
@@ -19,8 +19,9 @@ Please **report any unexpected problems** on [GitHub](https://github.com/taoenss
 
 ## Recent changes
 
-Beta 21, 20:
+Beta 22, 21, 20:
 
+* **\[mod]** Move dep: `com.taoensso/slf4j-telemere` -> [com.taoensso/telemere-slf4j](https://clojars.org/com.taoensso/telemere-slf4j) \[77ed27cfd] (beta 22)
 * **\[mod]** Generalize "intake", rename -> "interop" \[ef678bcc] (beta 20)
 * **\[mod]** Make `:host` output opt-in for default signal handlers \[88eb5211] (beta 20)
 
@@ -45,8 +46,11 @@ Earlier:
 
 ## Recent additions
 
-Beta 21, 20:
+Beta 22, 21, 20:
 
+* **\[new]** Added experimental [facade API](https://cljdoc.org/d/com.taoensso/telemere-api/CURRENT/api/taoensso.telemere.api) for library authors \[ece51b2ef] (beta 22)
+* **\[new]** Auto stop existing handler when replacing it (beta 22)
+* **\[new]** Added `"(.*)"` wildcard syntax to kind/ns/id filters (beta 22)
 * **\[new]** Internal and doc improvements: \[8066776a8], \[b4b06f324], \[3068ccf8d] (beta 21)
 * **\[new]** OpenTelemetry handler: improve span interop \[84957c6d] (beta 20)
 
@@ -74,9 +78,9 @@ Earlier:
 
 ## Recent fixes
 
-Beta 21, 20:
+Beta 22, 21, 20:
 
-* None
+* **\[fix]** Signal `:line` info missing for some wrapped-macro cases \[0f09b797e] (beta 22)
 
 Earlier:
 
