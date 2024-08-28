@@ -1,4 +1,4 @@
-(defproject com.taoensso/telemere-api "1.0.0-beta22"
+(defproject com.taoensso/telemere-api "1.0.0-SNAPSHOT"
   :author "Peter Taoussanis <https://www.taoensso.com>"
   :description "Minimal Telemere facade API for library authors, etc."
   :url "https://www.taoensso.com/telemere"
@@ -15,7 +15,7 @@
    {:dependencies
     [[org.clojure/clojurescript "1.11.132"]
      [org.clojure/clojure       "1.11.4"]
-     [com.taoensso/telemere     "1.0.0-beta22"]]}
+     [com.taoensso/telemere     "1.0.0-SNAPSHOT"]]}
 
    :dev
    {:plugins
