@@ -1,5 +1,5 @@
 (ns taoensso.telemere.slf4j
-  "Interop support for SLF4J -> Telemere.
+  "Interop support for SLF4Jv2 -> Telemere.
   Telemere will attempt to load this ns automatically when possible.
 
   To use Telemere as your SLF4J backend/provider, just include the
@@ -16,6 +16,7 @@
     - SLF4J uses standard `ServiceLoader` mechanism to find its logging backend,
       searches for `SLF4JServiceProvider` provider on classpath."
 
+  {:author "Peter Taoussanis (@ptaoussanis)"}
   (:require
    [taoensso.encore        :as enc :refer [have have?]]
    [taoensso.telemere.impl :as impl])
@@ -40,7 +41,7 @@
     org.slf4j.event.EventConstants/ERROR_INT :error
     (throw
       (ex-info "Unexpected `org.slf4j.event.Level`"
-        {:level {:value level, :type (type level)}}))))
+        {:level (enc/typed-val level)}))))
 
 (comment (enc/qb 1e6 (sig-level org.slf4j.event.Level/INFO))) ; 36.47
 
@@ -100,8 +101,7 @@
 ;;;; Interop fns (called by `TelemereLogger`)
 
 (defn- allowed?
-  "Private, don't use.
-  Called by `com.taoensso.telemere.slf4j.TelemereLogger`."
+  "Called by `com.taoensso.telemere.slf4j.TelemereLogger`."
   [logger-name level]
   (when-debug (println [:slf4j/allowed? (sig-level level) logger-name]))
   (impl/signal-allowed?
@@ -137,8 +137,7 @@
   nil)
 
 (defn- log!
-  "Private, don't use.
-  Called by `com.taoensso.telemere.slf4j.TelemereLogger`."
+  "Called by `com.taoensso.telemere.slf4j.TelemereLogger`."
 
   ;; Modern "fluent" API calls
   ([logger-name ^org.slf4j.event.LoggingEvent event]

@@ -15,12 +15,12 @@
 (defmacro ^:private when-debug [& body] (when #_true false `(do ~@body)))
 
 (deftype TelemereLogger [logger-name]
-
+  ;; `logger-name` is typically ns string
   clojure.tools.logging.impl/Logger
   (enabled? [_ level]
     (when-debug (println [:tools-logging/enabled? level logger-name]))
     (impl/signal-allowed?
-      {:location {:ns logger-name} ; Typically *ns* string
+      {:location {:ns logger-name}
        :kind     :tools-logging
        :level    level}))
 
@@ -28,7 +28,7 @@
     (when-debug (println [:tools-logging/write! level logger-name]))
     (impl/signal!
       {:allow?   true ; Pre-filtered by `enabled?` call
-       :location {:ns logger-name} ; Typically *ns* string
+       :location {:ns logger-name}
        :kind     :tools-logging
        :level    level
        :error    throwable

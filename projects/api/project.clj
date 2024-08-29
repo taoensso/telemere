@@ -14,7 +14,7 @@
   {:provided
    {:dependencies
     [[org.clojure/clojurescript "1.11.132"]
-     [org.clojure/clojure       "1.11.4"]
+     [org.clojure/clojure       "1.12.0"]
      [com.taoensso/telemere     "1.0.0-SNAPSHOT"]]}
 
    :dev

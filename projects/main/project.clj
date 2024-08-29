@@ -10,7 +10,7 @@
   :scm {:name "git" :url "https://github.com/taoensso/telemere"}
 
   :dependencies
-  [[com.taoensso/encore "3.117.0"]]
+  [[com.taoensso/encore "3.120.0-SNAPSHOT"]]
 
   :test-paths ["test" #_"src"]
 
@@ -18,7 +18,7 @@
   {;; :default [:base :system :user :provided :dev]
    :provided {:dependencies [[org.clojure/clojurescript "1.11.132"]
                              [org.clojure/clojure       "1.11.4"]]}
-   :c1.12    {:dependencies [[org.clojure/clojure       "1.12.0-rc1"]]}
+   :c1.12    {:dependencies [[org.clojure/clojure       "1.12.0"]]}
    :c1.11    {:dependencies [[org.clojure/clojure       "1.11.4"]]}
    :c1.10    {:dependencies [[org.clojure/clojure       "1.10.3"]]}
 
@@ -55,9 +55,9 @@
      #_[org.slf4j/slf4j-nop             "2.0.16"]
 
      ;;; For optional handlers
-     [io.opentelemetry/opentelemetry-api                         "1.41.0"]
-     [io.opentelemetry/opentelemetry-sdk-extension-autoconfigure "1.41.0"]
-     [io.opentelemetry/opentelemetry-exporter-otlp               "1.41.0"]
+     [io.opentelemetry/opentelemetry-api                         "1.42.1"]
+     [io.opentelemetry/opentelemetry-sdk-extension-autoconfigure "1.42.1"]
+     [io.opentelemetry/opentelemetry-exporter-otlp               "1.42.1"]
      #_[io.opentelemetry/opentelemetry-exporters-jaeger           "0.9.1"]
      [metosin/jsonista       "0.3.10"]
      [com.draines/postal     "2.0.5"]

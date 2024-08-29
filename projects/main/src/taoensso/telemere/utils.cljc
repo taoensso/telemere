@@ -754,8 +754,8 @@
 
   Options:
     `:incl-newline?` - Include terminating system newline? (default true)
-    `:preamble-fn`   - (fn [signal]) => signal preamble string, see [1].
-    `:content-fn`    - (fn [signal]) => signal content  string, see [2].
+    `:preamble-fn`   - (fn [signal]) => signal preamble string, see [1]
+    `:content-fn`    - (fn [signal]) => signal content  string, see [2]
 
   [1] `taoensso.telemere.utils/signal-preamble-fn`, etc.
   [2] `taoensso.telemere.utils/signal-content-fn`,  etc.

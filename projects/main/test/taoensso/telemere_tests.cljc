@@ -8,15 +8,16 @@
     :refer  [signal!       with-signal           with-signals]
     :rename {signal! sig!, with-signal with-sig, with-signals with-sigs}]
 
-   [taoensso.telemere.api                    :as api]
-   [taoensso.telemere.utils                  :as utils]
-   [taoensso.telemere.timbre                 :as timbre]
-   #_[taoensso.telemere.tools-logging        :as tools-logging]
-   #_[taoensso.telemere.streams              :as streams]
-   #?(:clj [taoensso.telemere.slf4j          :as slf4j])
-   #?(:clj [taoensso.telemere.open-telemetry :as otel])
-   #?(:clj [taoensso.telemere.files          :as files])
-   #?(:clj [clojure.tools.logging            :as ctl])))
+   [taoensso.telemere.api             :as api]
+   [taoensso.telemere.utils           :as utils]
+   [taoensso.telemere.timbre          :as timbre]
+   #_[taoensso.telemere.tools-logging :as tools-logging]
+   #_[taoensso.telemere.streams       :as streams]
+   #?@(:clj
+       [[taoensso.telemere.slf4j          :as slf4j]
+        [taoensso.telemere.open-telemetry :as otel]
+        [taoensso.telemere.files          :as files]
+        [clojure.tools.logging            :as ctl]])))
 
 (comment
   (remove-ns      'taoensso.telemere-tests)
@@ -687,9 +688,9 @@
                (is (sm? (with-sig (-> (.atWarn sl) (.log "Hello"))) {:level :warn, :ns "my.class", :kind :slf4j, :msg_ "Hello", :inst pinst?}) "Fluent API: warn basics")])
 
             (testing "Message formatting"
-              (let [msgp "X is {} and Y is {}", expected {:msg_ "X is x and Y is y", :data {:slf4j/args ["x" "y"]}}]
-                [(is (sm? (with-sig (.info sl msgp "x" "y"))                                                           expected) "Legacy API: formatted message, raw args")
-                 (is (sm? (with-sig (-> (.atInfo sl) (.setMessage msgp) (.addArgument "x") (.addArgument "y") (.log))) expected) "Fluent API: formatted message, raw args")]))
+             (let [msgp "x={},y={}", expected {:msg_ "x=1,y=2", :data {:slf4j/args ["1" "2"]}}]
+               [(is (sm? (with-sig (.info sl msgp "1" "2"))                                                           expected) "Legacy API: formatted message, raw args")
+                (is (sm? (with-sig (-> (.atInfo sl) (.setMessage msgp) (.addArgument "1") (.addArgument "2") (.log))) expected) "Fluent API: formatted message, raw args")]))
 
             (is (sm? (with-sig (-> (.atInfo sl) (.addKeyValue "k1" "v1") (.addKeyValue "k2" "v2") (.log))) {:data {:slf4j/kvs {"k1" "v1", "k2" "v2"}}}) "Fluent API: kvs")
 
@@ -698,8 +699,8 @@
                     m2 (#'slf4j/est-marker! "M2")
                     cm (#'slf4j/est-marker! "Compound" "M1" "M2")]
 
-                [(is (sm? (with-sig (.info sl cm "Hello"))                                    {:data #:slf4j{:marker-names #{"Compound" "M1" "M2"}}}) "Legacy API: markers")
-                 (is (sm? (with-sig (-> (.atInfo sl) (.addMarker m1) (.addMarker cm) (.log))) {:data #:slf4j{:marker-names #{"Compound" "M1" "M2"}}}) "Fluent API: markers")]))
+                [(is (sm? (with-sig (.info sl cm "Hello"))                                    {:data {:slf4j/marker-names #{"Compound" "M1" "M2"}}}) "Legacy API: markers")
+                 (is (sm? (with-sig (-> (.atInfo sl) (.addMarker m1) (.addMarker cm) (.log))) {:data {:slf4j/marker-names #{"Compound" "M1" "M2"}}}) "Fluent API: markers")]))
 
             (testing "Errors"
               [(is (sm? (with-sig (.warn sl "An error" ^Throwable ex1))     {:level :warn, :error pex1?}) "Legacy API: errors")

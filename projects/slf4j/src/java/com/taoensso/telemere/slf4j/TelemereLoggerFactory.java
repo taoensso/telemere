@@ -40,15 +40,7 @@ public class TelemereLoggerFactory implements ILoggerFactory {
         TelemereLogger.lazyInit();
     }
 
-    public Logger getLogger(String name) {
-        return loggerMap.computeIfAbsent(name, this::createLogger);
-    }
-
-    protected Logger createLogger(String name) {
-        return new TelemereLogger(name);
-    }
-
-    protected void reset() {
-        loggerMap.clear();
-    }
+    public    Logger    getLogger(String name) { return loggerMap.computeIfAbsent(name, this::createLogger); }
+    protected Logger createLogger(String name) { return new TelemereLogger(name); }
+    protected void reset() { loggerMap.clear(); }
 }

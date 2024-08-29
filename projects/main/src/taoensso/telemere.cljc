@@ -30,7 +30,7 @@
   (remove-ns 'taoensso.telemere)
   (:api (enc/interns-overview)))
 
-(enc/assert-min-encore-version [3 117 0])
+(enc/assert-min-encore-version [3 120 0])
 
 ;;;; TODO
 ;; - Solution and docs for lib authors
@@ -112,7 +112,13 @@
 
   (utils/nano-uid-fn {:secure? false}))
 
-(comment (enc/qb 1e6 (enc/uuid) (*uid-fn* true) (*uid-fn* false))) ; [168.83 79.02 62.95]
+(comment
+  ((utils/nano-uid-fn) true) ; "vdh0bL0YHOXYKWn4sM88e"
+  ((utils/hex-uid-fn)  true) ; "62c0f80d3fb15fb4e356bdd84bae223e"
+  (let [nuid (utils/nano-uid-fn)
+        huid (utils/hex-uid-fn)]
+    (enc/qb 1e6 ; [168.29 21.85 68.6 46.63]
+      (enc/uuid) *uid-fn* (nuid true) (huid true))))
 
 ;;;; OpenTelemetry
 
@@ -185,7 +191,7 @@
      (when impl/present:otel? (delay (otel-get-default-providers)))))
 
 #?(:clj
-   (def ^:dynamic *otel-tracer*
+   (def ^:dynamic ^:no-doc *otel-tracer*
      "OpenTelemetry `Tracer` to use for Telemere's tracing signal creators
      (`trace!`, `span!`, etc.), ∈ #{nil io.opentelemetry.api.trace.Tracer Delay}.
      See also `otel-tracing?`, `otel-get-default-providers`."

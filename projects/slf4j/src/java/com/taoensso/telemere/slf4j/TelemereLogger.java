@@ -52,10 +52,10 @@ public class TelemereLogger extends LegacyAbstractLogger implements LoggingEvent
     private static IFn isAllowedFn;
 
     static void init() {
-	IFn requireFn =   Clojure.var("clojure.core", "require");
-	requireFn.invoke(Clojure.read("taoensso.telemere.slf4j"));
-	isAllowedFn =     Clojure.var("taoensso.telemere.slf4j", "allowed?");
-	logFn =           Clojure.var("taoensso.telemere.slf4j", "log!");
+        IFn requireFn =   Clojure.var("clojure.core", "require");
+        requireFn.invoke(Clojure.read("taoensso.telemere.slf4j"));
+        isAllowedFn =     Clojure.var("taoensso.telemere.slf4j", "allowed?");
+        logFn =           Clojure.var("taoensso.telemere.slf4j", "log!");
     }
 
     protected TelemereLogger(String name) { this.name = name; }
@@ -72,7 +72,7 @@ public class TelemereLogger extends LegacyAbstractLogger implements LoggingEvent
     @Override protected String getFullyQualifiedCallerName() { return null; }
     @Override
     protected void handleNormalizedLoggingCall(Level level, Marker marker, String messagePattern, Object[] arguments, Throwable throwable) {
-	logFn.invoke(this.name, level, throwable, messagePattern, arguments, marker); // Legacy API, called after level check
+        logFn.invoke(this.name, level, throwable, messagePattern, arguments, marker); // Legacy API, called after level check
     }
 
 }
