@@ -5,6 +5,7 @@ Signal options (shared by all signal creators):
 `:kind` -------- Signal ?kind ∈ #{nil :event :error :log :trace :spy <app-val> ...}
 `:id` ---------- ?id of signal          (common to all  signals created at callsite, contrast with `:uid`)
 `:uid` --------- ?id of signal instance (unique to each signal  created at callsite, contrast with  `:id`)
+                 Defaults to `:auto` for tracing signals, and nil otherwise
 
 `:msg` --------- Arb app-level ?message to incl. in signal: str or vec of strs to join (with `\space`)
 `:data` -------- Arb app-level ?data    to incl. in signal: usu. a map

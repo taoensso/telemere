@@ -669,7 +669,7 @@
                (enc/cond!
                  (not trace?) ; Don't trace
                  `[~'__otel-context1 nil
-                   ~'__uid   ~uid-form ; Given or nil
+                   ~'__uid   ~(auto-> uid-form `(taoensso.telemere/*uid-fn* (if ~'__root0 false true)))
                    ~'__root1 ~'__root0 ; Retain, but don't establish
                    ~'__run-result
                    ~(when run-form

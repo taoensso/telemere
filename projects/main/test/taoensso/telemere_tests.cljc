@@ -427,7 +427,11 @@
         (let [sv (with-sig (sig! {:level :info, :parent {:id   :id1, :foo :bar}}))] (is (sm? sv {:parent {:id :id1       :uid :submap/nx, :foo :bar}}) "Manual `:parent/id`"))
         (let [sv (with-sig (sig! {:level :info, :parent {:uid :uid1, :foo :bar}}))] (is (sm? sv {:parent {:id :submap/nx :uid      :uid1, :foo :bar}}) "Manual `:parent/uid`"))
         (let [sv (with-sig (sig! {:level :info, :root   {:id   :id1, :foo :bar}}))] (is (sm? sv {:root   {:id :id1       :uid :submap/nx, :foo :bar}}) "Manual `:root/id`"))
-        (let [sv (with-sig (sig! {:level :info, :root   {:uid :uid1, :foo :bar}}))] (is (sm? sv {:root   {:id :submap/nx :uid      :uid1, :foo :bar}}) "Manual `:root/uid`"))])
+        (let [sv (with-sig (sig! {:level :info, :root   {:uid :uid1, :foo :bar}}))] (is (sm? sv {:root   {:id :submap/nx :uid      :uid1, :foo :bar}}) "Manual `:root/uid`"))
+        (let [sv (with-sig (sig! {:level :info}))                                 ] (is (sm? sv {:uid nil})))
+        (let [sv (with-sig (sig! {:level :info, :uid :auto}))                     ] (is (sm? sv {:uid (enc/pred string?)})))
+        (let [sv (binding [tel/*uid-fn* (fn [_] "my-uid")]
+                   (with-sig (sig! {:level :info, :uid :auto})))                  ] (is (sm? sv {:uid "my-uid"})))])
 
      (testing "Auto parent/root"
        [(testing "Tracing disabled"
