@@ -9,7 +9,7 @@
 
   #?(:cljs
      (:require-macros
-      [taoensso.telemere.impl :refer [with-signal]])))
+      [taoensso.telemere.impl :refer [with-signal def-signal-record]])))
 
 (comment
   (remove-ns 'taoensso.telemere.impl)
@@ -231,14 +231,27 @@
 
 ;;;; Main types
 
-(defrecord Signal
-  ;; Telemere's main public data type, we avoid nesting and duplication
-  [^long schema inst uid,
-   location ns line column file, #?@(:clj [host thread _otel-context]),
-   sample-rate, kind id level, ctx parent root, data kvs msg_,
-   error run-form run-val end-inst run-nsecs]
+#?(:clj
+   (defmacro def-signal-record
+     "Defines Telemere's main public data type, we avoid nesting and duplication."
+     []
+     (let [fields
+           (if (:ns &env)
+             '[schema inst uid,
+               location ns line column file,
+               ;; host thread _otel-context,
+               sample-rate, kind id level, ctx parent root, data kvs msg_,
+               error run-form run-val end-inst run-nsecs]
+             '[schema inst uid,
+               location ns line column file,
+               host thread _otel-context,
+               sample-rate, kind id level, ctx parent root, data kvs msg_,
+               error run-form run-val end-inst run-nsecs])]
 
-  Object (toString [sig] (str "#" `Signal (into {} sig))))
+       `(defrecord ~'Signal ~fields
+          ~'Object (~'toString [sig#] (str "#taoensso.telemere.impl.Signal" (into {} sig#)))))))
+
+(defonce __def-signal-record (def-signal-record))
 
 (do     (enc/def-print-impl [sig Signal] (str "#" `Signal (pr-str (into {} sig)))))
 #?(:clj (enc/def-print-dup  [sig Signal] (str "#" `Signal (pr-str (into {} sig))))) ; NB intentionally verbose, to support extra keys
