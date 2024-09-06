@@ -40,6 +40,11 @@
        (enc/get-env {:as :bool, :default present:otel?}
          :taoensso.telemere/otel-tracing<.platform>))))
 
+(def uid-kind
+  "Documented at `taoensso.telemere/*uid-fn*`."
+  (enc/get-env {:as :edn, :default :default}
+    :taoensso.telemere/uid-kind<.platform><.edn>))
+
 #?(:clj
    (let [base        (enc/get-env {:as :edn} :taoensso.telemere/ct-filters<.platform><.edn>)
          kind-filter (enc/get-env {:as :edn} :taoensso.telemere/ct-kind-filter<.platform><.edn>)

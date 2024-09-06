@@ -125,9 +125,43 @@
 
 (comment ((hex-uid-fn) true))
 (comment
-  ;; [170.47 180.18 53.87 60.68]
-  (let [nano-uid-fn (nano-uid-fn), hex-uid-fn (hex-uid-fn)]
+  ;; [168.74 180.83 65.28 47.3]
+  (let [nano-uid (nano-uid-fn), hex-uid (hex-uid-fn)]
     (enc/qb 1e6 (enc/uuid) (enc/uuid-str) (nano-uid true) (hex-uid true))))
+
+(defn ^:no-doc parse-uid-fn
+  "Private, don't use.
+  Returns (fn uid [root?]) for given uid kind."
+  [kind]
+  (case kind
+    :uuid          (fn [_root?] (enc/uuid))
+    :uuid-str      (fn [_root?] (enc/uuid-str))
+    :default       (nano-uid-fn {:secure? false})
+    :nano/insecure (nano-uid-fn {:secure? false})
+    :nano/secure   (nano-uid-fn {:secure? true})
+    :hex/insecure  (hex-uid-fn  {:secure? false})
+    :hex/secure    (hex-uid-fn  {:secure? true})
+
+    (or
+      (when (vector? kind)
+        (let [[kind root-len child-len] kind]
+          (case kind
+            :nano/insecure (nano-uid-fn {:secure? false, :root-len root-len, :child-len child-len})
+            :nano/secure   (nano-uid-fn {:secure? true,  :root-len root-len, :child-len child-len})
+            :hex/insecure  (hex-uid-fn  {:secure? false, :root-len root-len, :child-len child-len})
+            :hex/secure    (hex-uid-fn  {:secure? true,  :root-len root-len, :child-len child-len})
+            nil)))
+
+      (enc/unexpected-arg! kind
+        {:context  `uid-fn
+         :expected
+         '#{:uuid :uuid-str :default,
+            :nano/secure   [:nano/secure   <root-len> <child-len>]
+            :nano/insecure [:nano/insecure <root-len> <child-len>]
+            :hex/secure    [:hex/secure    <root-len> <child-len>]
+            :hex/insecure  [:hex/insecure  <root-len> <child-len>]}}))))
+
+(comment ((parse-uid-fn [:hex/insecure 32 16]) true))
 
 ;;;; Misc
 
