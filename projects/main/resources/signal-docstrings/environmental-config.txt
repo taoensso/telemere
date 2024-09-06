@@ -4,31 +4,31 @@ environment variables, or classpath resources.
 Environmental filter config includes:
 
   Kind filter:
-          JVM property: `taoensso.telemere.rt-kind-filter.edn`
-          Env variable: `TAOENSSO_TELEMERE_RT_KIND_FILTER_EDN`
-    Classpath resource: `taoensso.telemere.rt-kind-filter.edn`
+          JVM property: `taoensso.telemere.rt-kind-filter`
+          Env variable: `TAOENSSO_TELEMERE_RT_KIND_FILTER`
+    Classpath resource: `taoensso.telemere.rt-kind-filter`
 
   Namespace filter:
-          JVM property: `taoensso.telemere.rt-ns-filter.edn`
-          Env variable: `TAOENSSO_TELEMERE_RT_NS_FILTER_EDN`
-    Classpath resource: `taoensso.telemere.rt-ns-filter.edn`
+          JVM property: `taoensso.telemere.rt-ns-filter`
+          Env variable: `TAOENSSO_TELEMERE_RT_NS_FILTER`
+    Classpath resource: `taoensso.telemere.rt-ns-filter`
 
   Id filter:
-          JVM property: `taoensso.telemere.rt-id-filter.edn`
-          Env variable: `TAOENSSO_TELEMERE_RT_ID_FILTER_EDN`
-    Classpath resource: `taoensso.telemere.rt-id-filter.edn`
+          JVM property: `taoensso.telemere.rt-id-filter`
+          Env variable: `TAOENSSO_TELEMERE_RT_ID_FILTER`
+    Classpath resource: `taoensso.telemere.rt-id-filter`
 
   Minimum level:
-          JVM property: `taoensso.telemere.rt-min-level.edn`
-          Env variable: `TAOENSSO_TELEMERE_RT_MIN_LEVEL_EDN`
-    Classpath resource: `taoensso.telemere.rt-min-level.edn`
+          JVM property: `taoensso.telemere.rt-min-level`
+          Env variable: `TAOENSSO_TELEMERE_RT_MIN_LEVEL`
+    Classpath resource: `taoensso.telemere.rt-min-level`
 
-Examples:
+Values are edn, examples:
 
-  `taoensso.telemere.rt-min-level.edn`       -> ":info"
-  `TAOENSSO_TELEMERE_RT_NS_FILTER_EDN`       -> "{:disallow \"taoensso.*\"}"
-  `taoensso.telemere.rt-id-filter.cljs.edn`  -> "#{:my-id1 :my-id2}"
-  `TAOENSSO_TELEMERE_RT_KIND_FILTER_CLJ_EDN` -> "nil"
+  `taoensso.telemere.rt-min-level`       -> ":info"
+  `TAOENSSO_TELEMERE_RT_NS_FILTER`       -> "{:disallow \"taoensso.*\"}"
+  `taoensso.telemere.rt-id-filter.cljs`  -> "#{:my-id1 :my-id2}"
+  `TAOENSSO_TELEMERE_RT_KIND_FILTER_CLJ` -> "nil"
 
 For other (non-filter) environmental config, see the relevant docstrings.
 
@@ -42,12 +42,11 @@ Tips:
       ".clj.edn"  / "_CLJ_EDN"  or
       ".cljs.edn" / "_CLJS_EDN" suffixes instead.
 
-  - ".edn" / "_EDN" suffixes are optional.
+  - Optional ".edn" / "_EDN" suffixes may be added for clarity.
 
-  - Config values should be edn. To get the right syntax, first set
-    your runtime filters using the standard utils (`set-min-level!`,
-    etc.). Then call `get-filters` and serialize the relevant parts
-    to edn with `pr-str`.
+  - To get the right edn syntax, first set your runtime filters using the
+    standard utils (`set-min-level!`, etc.). Then call `get-filters` and
+    serialize the relevant parts to edn with `pr-str`.
 
   - All environmental config uses `get-env` underneath.
     See the `get-env` docstring for more/advanced details.
