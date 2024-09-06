@@ -9,7 +9,7 @@
 
   #?(:cljs
      (:require-macros
-      [taoensso.telemere.impl :refer [with-signal def-signal-record]])))
+      [taoensso.telemere.impl :refer [with-signal]])))
 
 (comment
   (remove-ns 'taoensso.telemere.impl)
@@ -231,27 +231,14 @@
 
 ;;;; Main types
 
-#?(:clj
-   (defmacro def-signal-record
-     "Defines Telemere's main public data type, we avoid nesting and duplication."
-     []
-     (let [fields
-           (if (:ns &env)
-             '[schema inst uid,
-               location ns line column file,
-               ;; host thread _otel-context,
-               sample-rate, kind id level, ctx parent root, data kvs msg_,
-               error run-form run-val end-inst run-nsecs]
-             '[schema inst uid,
-               location ns line column file,
-               host thread _otel-context,
-               sample-rate, kind id level, ctx parent root, data kvs msg_,
-               error run-form run-val end-inst run-nsecs])]
-
-       `(defrecord ~'Signal ~fields
-          ~'Object (~'toString [sig#] (str "#taoensso.telemere.impl.Signal" (into {} sig#)))))))
-
-(defonce __def-signal-record (def-signal-record))
+(defrecord Signal
+  ;; Telemere's main public data type, we avoid nesting and duplication
+  [schema inst uid,
+   location ns line column file, host thread _otel-context,
+   sample-rate, kind id level, ctx parent root, data kvs msg_,
+   error run-form run-val end-inst run-nsecs]
+ 
+  Object (toString [sig] (str "#" `Signal (into {} sig))))
 
 (do     (enc/def-print-impl [sig Signal] (str "#" `Signal (pr-str (into {} sig)))))
 #?(:clj (enc/def-print-dup  [sig Signal] (str "#" `Signal (pr-str (into {} sig))))) ; NB intentionally verbose, to support extra keys
@@ -641,9 +628,9 @@
                            (let   [clause [(if run-form :run :no-run) (if clj? :clj :cljs)]]
                              (case clause
                                [:run    :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form, (enc/host-info) ~'__thread ~'__otel-context1, ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~run-form ~'_run-val ~'_end-inst ~'_run-nsecs)
-                               [:run    :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form,                                               ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~run-form ~'_run-val ~'_end-inst ~'_run-nsecs)
+                               [:run    :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form, nil             nil        nil                ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~run-form ~'_run-val ~'_end-inst ~'_run-nsecs)
                                [:no-run :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form, (enc/host-info) ~'__thread ~'__otel-context1, ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil        nil        nil         nil)
-                               [:no-run :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form,                                               ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil        nil        nil         nil)
+                               [:no-run :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form, nil             nil        nil                ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil        nil        nil         nil)
                                (enc/unexpected-arg! clause {:context :signal-constructor-args})))
 
                            record-form
