@@ -1,6 +1,6 @@
-(defproject com.taoensso/telemere-api "1.0.0-SNAPSHOT"
+(defproject com.taoensso/telemere-shell "1.0.0-SNAPSHOT"
   :author "Peter Taoussanis <https://www.taoensso.com>"
-  :description "Minimal Telemere facade API for library authors, etc."
+  :description "Minimal Telemere shell API for library authors, etc."
   :url "https://www.taoensso.com/telemere"
 
   :license

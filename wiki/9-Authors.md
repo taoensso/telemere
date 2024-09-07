@@ -35,7 +35,7 @@ This way your users can easily disable, decrease, or increase signal output from
 
 ## 3. Telemere as an optional dependency
 
-Include the (super lightweight) [Telemere facade API](https://clojars.org/com.taoensso/telemere-api) in your **library's dependencies**.
+Include the (super lightweight) [Telemere shell API](https://clojars.org/com.taoensso/telemere-shell) in your **library's dependencies**.
 
 Your library will then be able to emit structured logs/telemetry **when Telemere is present**, or fall back to something like [tools.logging](https://github.com/clojure/tools.logging) otherwise.
 
@@ -44,7 +44,7 @@ The main trade-off is that your signal calls will be more verbose:
 ```clojure
 (ns my-lib
   (:require
-    [taoensso.telemere.api :as t]   ; `com.taoensso/telemere-api` dependency
+    [taoensso.telemere.shell :as t] ; `com.taoensso/telemere-shell` dependency
     [clojure.tools.logging :as ctl] ; `org.clojure/tools.logging` dependency
     ))
 
@@ -76,4 +76,4 @@ The main trade-off is that your signal calls will be more verbose:
    :fallback (ctl/warn (str \"Hello world\" x))})
 ```
 
-See [here](https://cljdoc.org/d/com.taoensso/telemere-api/CURRENT/api/taoensso.telemere.api) for more info.
+See [here](https://cljdoc.org/d/com.taoensso/telemere-shell/CURRENT/api/taoensso.telemere.shell) for more info.

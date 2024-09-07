@@ -8,7 +8,7 @@
     :refer  [signal!       with-signal           with-signals]
     :rename {signal! sig!, with-signal with-sig, with-signals with-sigs}]
 
-   [taoensso.telemere.api             :as api]
+   [taoensso.telemere.shell           :as shell]
    [taoensso.telemere.utils           :as utils]
    [taoensso.telemere.timbre          :as timbre]
    #_[taoensso.telemere.tools-logging :as tools-logging]
@@ -275,7 +275,7 @@
 
           [(is (= sv1 (read-string (pr-str sv1))))])))
 
-   (is (sm? (with-sig (api/signal! {:level :info})) {:level :info, :ns "taoensso.telemere-tests", :line :submap/some}) "API")])
+   (is (sm? (with-sig (shell/signal! {:level :info})) {:level :info, :ns "taoensso.telemere-tests", :line :submap/some}) "Shell API")])
 
 (deftest _handlers
   ;; Basic handler tests are in Encore

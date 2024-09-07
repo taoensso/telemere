@@ -1,15 +1,15 @@
-(ns taoensso.telemere.api
+(ns taoensso.telemere.shell
   "Experimental, subject to change.
-  Minimal Telemere facade API for library authors, etc.
+  Minimal Telemere shell API for library authors, etc.
   Allows library code to use Telemere if it's present, or fall back to
   something like tools.logging otherwise."
   {:author "Peter Taoussanis (@ptaoussanis)"}
   #?(:clj  (:require [clojure.java.io :as jio])
-     :cljs (:require-macros [taoensso.telemere.api :refer [compile-if]])))
+     :cljs (:require-macros [taoensso.telemere.shell :refer [compile-if]])))
 
 (comment
   (require  '[taoensso.telemere :as t] '[taoensso.encore :as enc])
-  (remove-ns 'taoensso.telemere.api)
+  (remove-ns 'taoensso.telemere.shell)
   (:api (enc/interns-overview)))
 
 #?(:clj
@@ -53,7 +53,7 @@
 #?(:clj
    (defmacro signal!
      "Experimental, subject to change.
-     Telemere facade API for library authors, etc.
+     Telemere shell API for library authors, etc.
 
      Expands to `taoensso.telemere/signal!` call if Telemere is present.
      Otherwise expands to arbitrary `fallback` opt form.
@@ -65,8 +65,8 @@
 
       (ns my-lib
         (:require
-          [taoensso.telemere.api :as t]   ; `com.taoensso/telemere-api` dependency
-          [clojure.tools.logging :as ctl] ; `org.clojure/tools.logging` dependency
+          [taoensso.telemere.shell :as t] ; `com.taoensso/telemere-shell` dependency
+          [clojure.tools.logging :as ctl] ; `org.clojure/tools.logging`   dependency
           ))
 
        (t/require-telemere-if-present) ; Just below `ns` form!
@@ -85,7 +85,7 @@
      {:arglists #_(taoensso.telemere.impl/signal-arglists :signal!) ; + fallback
       '([{:as opts
           :keys
-          [fallback, ; Unique to facade
+          [fallback, ; Unique to shell
            #_defaults #_elide? #_allow? #_expansion-id, ; Undocumented
            elidable? location #_location* inst uid middleware,
            sample-rate kind ns id level when rate-limit,
