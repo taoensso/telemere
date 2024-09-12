@@ -275,7 +275,10 @@
 
           [(is (= sv1 (read-string (pr-str sv1))))])))
 
-   (is (sm? (with-sig (shell/signal! {:level :info})) {:level :info, :ns "taoensso.telemere-tests", :line :submap/some}) "Shell API")])
+   (testing "Shell API"
+     [(is (sm? (with-sig (shell/signal! {:level :info})) {:level :info, :ns "taoensso.telemere-tests", :line :submap/some}))
+      (is (true?  (tel/with-min-level :debug (shell/signal-allowed? {:level :debug}))))
+      (is (false? (tel/with-min-level :debug (shell/signal-allowed? {:level :trace}))))])])
 
 (deftest _handlers
   ;; Basic handler tests are in Encore

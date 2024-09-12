@@ -68,6 +68,7 @@
   #?(:clj impl/with-signal)
   #?(:clj impl/with-signals)
   #?(:clj impl/signal!)
+  #?(:clj impl/signal-allowed?)
 
   ;; Utils
   utils/format-signal-fn

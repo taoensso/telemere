@@ -381,6 +381,13 @@
             sample-rate kind ns id level when rate-limit,
             ctx parent root trace?, do let data msg error run & kvs]}])
 
+       :signal-allowed?
+       '([{:as opts :keys
+           [#_defaults #_elide? #_allow? #_expansion-id, ; Undocumented
+            elidable? location #_location* #_inst #_uid #_middleware,
+            sample-rate kind ns id level when rate-limit,
+            #_ctx #_parent #_root #_trace?, #_do #_let #_data #_msg #_error #_run #_& #_kvs]}])
+
        :event! ; [id] [id level-or-opts] => allowed?
        '([id      ]
          [id level]
@@ -762,11 +769,27 @@
       (signal! {:level :info, :run "run"}))))
 
 #?(:clj
-   (defmacro signal-allowed?
-     "Used only for interop (tools.logging, SLF4J, etc.)."
-     {:arglists (signal-arglists :signal!)}
+   (defmacro ^:public signal-allowed?
+     "Returns true iff signal with given opts would meet filtering conditions:
+       (when (signal-allowed? {:level :warn, <...>}) (my-custom-code))
+
+      Allows you to use Telemere's rich filtering system for conditionally
+      executing arbitrary code. Also handy for batching multiple signals
+      under a single set of conditions (incl. rate-limiting, sampling, etc.):
+
+        ;; Logs exactly 2 or 0 messages (never 1):
+        (when (signal-allowed? {:level :info, :sample-rate 0.5})
+          (log! {:allow? true} \"Message 1\")
+          (log! {:allow? true} \"Message 2\"))"
+
+     ;; Used also for interop (tools.logging, SLF4J), etc.
+     {:arglists (signal-arglists :signal-allowed?)}
      [opts]
-     (let [{:keys [#_expansion-id #_location elide? allow?]}
+     (have? map? opts)
+     (let [defaults             (get    opts :defaults)
+           opts (merge defaults (dissoc opts :defaults))
+
+           {:keys [#_expansion-id #_location elide? allow?]}
            (sigs/filterable-expansion
              {:sf-arity 4
               :ct-sig-filter     ct-sig-filter
@@ -774,7 +797,9 @@
              (assoc opts :location*
                (get opts :location* (enc/get-source &form &env))))]
 
-       (and (not elide?) allow?))))
+       (if elide? false `(if ~allow? true false)))))
+
+(comment (macroexpand '(signal-allowed? {:level :info})))
 
 ;;;; Interop
 
