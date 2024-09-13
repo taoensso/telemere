@@ -733,11 +733,8 @@
 
   Options:
     `:pr-fn`         - ∈ #{<unary-fn> :edn (default) :json (Cljs only)}
-    `:incl-kvs?`     - Include signal's app-level kvs?         (default false)
-    `:incl-nils?`    - Include signal's keys with nil values?  (default false)
-    `:incl-newline?` - Include terminating system newline?     (default true)
-    `:incl-keys`     - Subset of signal keys to retain from those otherwise
-                       excluded by default: #{:location :kvs :file :host :thread}
+    `:clean-fn`      - (fn [signal]) => clean signal map, see [1]
+    `:incl-newline?` - Include terminating system newline? (default true)
 
   Examples:
 
@@ -752,20 +749,22 @@
         #?(:cljs :json ; Use js/JSON.stringify
            :clj  jsonista/write-value-as-string)})
 
+  [1] `taoensso.telemere.utils/clean-signal-fn`, etc.
+
   See also `format-signal-fn` for an alternative to `pr-signal-fn`
   that produces human-readable output."
   ([] (pr-signal-fn nil))
-  ([{:keys [pr-fn, incl-kvs? incl-nils? incl-newline? incl-keys] :as opts
+  ([{:keys [pr-fn clean-fn incl-newline?] :as opts
      :or
-     {pr-fn         :edn
+     {pr-fn    :edn
+      clean-fn (clean-signal-fn)
       incl-newline? true}}]
 
    (let [nl newline
-         clean-fn (clean-signal-fn opts)
          pr-fn
          (or
            (case pr-fn
-             :edn  pr-edn
+             :edn pr-edn
              :json
              #?(:cljs pr-json
                 :clj
@@ -789,14 +788,8 @@
            (do  (pr-fn (clean-fn signal)))))))))
 
 (comment
-  (def s1 (tel/with-signal (tel/event! ::ev-id {:kvs {:k1 "v1"}})))
-  ((pr-signal-fn {:pr-fn :edn})           s1)
-  ((pr-signal-fn {:pr-fn (fn [_] "str")}) s1)
-  ((pr-signal-fn {:pr-fn :none})          s1)
-
-  (let [pr-fn (pr-signal-fn {:pr-fn :none})]
-    (enc/qb 1e6 ; 817.78
-      (pr-fn s1))))
+  ((pr-signal-fn {:pr-fn :edn})
+   (tel/with-signal (tel/event! ::ev-id {:kvs {:k1 "v1"}}))))
 
 (defn format-signal-fn
   "Experimental, subject to change.
