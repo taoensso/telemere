@@ -71,6 +71,7 @@
   #?(:clj impl/signal-allowed?)
 
   ;; Utils
+  utils/clean-signal-fn
   utils/format-signal-fn
   utils/pr-signal-fn
   utils/error-signal?)

@@ -760,6 +760,28 @@
       (is (= (utils/error-signal? {:level :fatal}) true))
       (is (= (utils/error-signal? {:error?  true}) true))])
 
+   (testing "clean-signal-fn"
+     (let [sig
+           {:level    :info
+            :id       nil
+            :msg_     (delay "msg")
+            :error    ex2
+            :location "loc"
+            :kvs      "kvs"
+            :file     "file"
+            :thread   "thread"
+            :a        "a"
+            :b        "b"}]
+
+       [(is (= ((utils/clean-signal-fn)                      sig) {:level :info, :msg_ "msg", :error ex2-chain}))
+        (is (= ((utils/clean-signal-fn {:incl-kvs?  true})   sig) {:level :info, :msg_ "msg", :error ex2-chain, :a "a", :b "b"}))
+        (is (= ((utils/clean-signal-fn {:incl-nils? true})   sig) {:level :info, :msg_ "msg", :error ex2-chain, :id nil}))
+        (is (= ((utils/clean-signal-fn {:incl-keys #{:kvs}}) sig) {:level :info, :msg_ "msg", :error ex2-chain, :kvs "kvs"}))
+        (is (= ((utils/clean-signal-fn {:incl-keys #{:a}})   sig) {:level :info, :msg_ "msg", :error ex2-chain, :a "a"}))
+        (is (= ((utils/clean-signal-fn {:incl-keys
+                                        #{:location :kvs :file :thread}}) sig) {:level :info, :msg_ "msg", :error ex2-chain,
+                                                                                :location "loc", :kvs "kvs", :file "file", :thread "thread"}))]))
+
    (testing "Misc utils"
      [(is (= (utils/remove-signal-kvs   {:a :A, :b :B, :kvs {:b :B}}) {:a :A}))
       (is (= (utils/remove-signal-nils  {:a :A, :b nil}) {:a :A}))
@@ -836,27 +858,8 @@
                        "line"    pnat-int?
                        "column"  pnat-int?})))))
 
-           (testing "User pr-fn"
-             (is (= ((tel/pr-signal-fn {:pr-fn (fn [_] "str")}) sig) (str "str" utils/newline))))
-
-           (testing "Other options"
-             (let [sig
-                   {:msg_     (delay "msg")
-                    :error    ex2
-                    :id       nil
-                    :location "loc"
-                    :kvs      "kvs"
-                    :file     "file"
-                    :thread   "thread"
-                    :user-key "user-val"}]
-
-               [(is (= ((tel/pr-signal-fn {:pr-fn :none})                     sig) {:msg_ "msg", :error ex2-chain}))
-                (is (= ((tel/pr-signal-fn {:pr-fn :none, :incl-kvs?  true})   sig) {:msg_ "msg", :error ex2-chain, :user-key "user-val"}))
-                (is (= ((tel/pr-signal-fn {:pr-fn :none, :incl-nils? true})   sig) {:msg_ "msg", :error ex2-chain, :id nil}))
-                (is (= ((tel/pr-signal-fn {:pr-fn :none, :incl-keys #{:kvs}}) sig) {:msg_ "msg", :error ex2-chain, :kvs "kvs"}))
-                (is (= ((tel/pr-signal-fn {:pr-fn :none, :incl-keys
-                                           #{:location :kvs :file :thread}})  sig) {:msg_ "msg", :error ex2-chain,
-                                                                                    :location "loc", :kvs "kvs", :file "file", :thread "thread"}))]))]))
+           (testing "Custom pr-fn"
+             (is (= ((tel/pr-signal-fn {:pr-fn (fn [_] "str")}) sig) (str "str" utils/newline))))]))
 
       (testing "format-signal-fn"
         (let [sig (with-sig :raw :trap (tel/event! ::ev-id {:inst t1, :msg ["a" "b"]}))]

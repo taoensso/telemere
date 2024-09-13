@@ -656,6 +656,75 @@
   ((signal-content-fn) (tel/with-signal (tel/event! ::ev-id)))
   ((signal-content-fn) (tel/with-signal (tel/event! ::ev-id {:data {:k1 "v1"}}))))
 
+(defn clean-signal-fn
+  "Experimental, subject to change.
+  Returns a (fn clean [signal]) that:
+    - Takes a Telemere  signal (map).
+    - Returns a minimal signal (map) ready for printing, etc.
+
+  Signals are optimized for cheap creation and easy handling, so tend to be
+  verbose and may contain things like nil values and duplicated content.
+
+  This util efficiently cleans signals of such noise, helping reduce
+  storage/transmission size, and making key info easier to see.
+
+  Options:
+    `:incl-nils?` - Include signal's keys with nil values? (default false)
+    `:incl-kvs?`  - Include signal's app-level root kvs?   (default false)
+    `:incl-keys`  - Subset of signal keys to retain from those otherwise
+                    excluded by default: #{:location :kvs :file :host :thread}"
+  ([] (clean-signal-fn nil))
+  ([{:keys [incl-kvs? incl-nils? incl-keys] :as opts}]
+   (let [assoc!*
+         (if-not incl-nils?
+           (fn [m k v] (if (nil? v) m (assoc! m k v))) ; As `remove-signal-nils`
+           (do                         assoc!))
+
+         incl-location? (contains? incl-keys :location)
+         incl-kvs-key?  (contains? incl-keys :kvs)
+         incl-file?     (contains? incl-keys :file)
+         incl-host?     (contains? incl-keys :host)
+         incl-thread?   (contains? incl-keys :thread)]
+
+     (fn clean-signal [signal]
+       (when (map?     signal)
+         (persistent!
+           (reduce-kv
+             (fn [m k v]
+               (enc/case-eval k
+                 ;; Main keys to always include as-is
+                 (clojure.core/into ()
+                   (clojure.core/disj
+                     taoensso.telemere.impl/standard-signal-keys
+                     :msg_ :error :location :kvs :file :host :thread))
+                 (assoc!* m k v)
+
+                 ;; Main keys to include with modified val
+                 :error (if-let [chain (enc/ex-chain :as-map v)] (assoc!  m k chain) m)  ; As `expand-signal-error`
+                 :msg_                                           (assoc!* m k (force v)) ; As  `force-signal-msg`
+
+                 ;; Implementation keys to always exclude
+                 (clojure.core/into ()
+                   taoensso.telemere.impl/impl-signal-keys) m ; noop
+
+                 ;;; Other keys to exclude by default
+                 :location (if incl-location? (assoc!* m k v) m)
+                 :kvs      (if incl-kvs-key?  (assoc!* m k v) m)
+                 :file     (if incl-file?     (assoc!* m k v) m)
+                 :thread   (if incl-thread?   (assoc!* m k v) m)
+                 :host     (if incl-host?     (assoc!* m k v) m)
+
+                 ;; Other (app-level) keys
+                 (enc/cond
+                   incl-kvs?               (assoc!* m k v) ; Incl. all      kvs
+                   (contains? incl-keys k) (assoc!* m k v) ; Incl. specific kvs
+                   :else                            m      ; As `remove-signal-kvs`
+                   )))
+
+             (transient {}) signal)))))))
+
+(comment ((clean-signal-fn {:incl-keys #{:a}}) {:level :info, :id nil, :a "a", :b "b", :msg_ (delay "hi")}))
+
 (defn pr-signal-fn
   "Experimental, subject to change.
   Returns a (fn pr [signal]) that:
@@ -683,14 +752,6 @@
         #?(:cljs :json ; Use js/JSON.stringify
            :clj  jsonista/write-value-as-string)})
 
-  Motivation:
-    Why use this util instead of just directly using the print function
-    given to `:pr-fn`? Signals are optimized for cheap creation and easy handling,
-    so may contain things like nil values and duplicated content.
-
-    This util efficiently clean signals of such noise, helping reduce
-    storage/transmission size, and making key info easier to see.
-
   See also `format-signal-fn` for an alternative to `pr-signal-fn`
   that produces human-readable output."
   ([] (pr-signal-fn nil))
@@ -700,10 +761,10 @@
       incl-newline? true}}]
 
    (let [nl newline
+         clean-fn (clean-signal-fn opts)
          pr-fn
          (or
            (case pr-fn
-             :none nil ; Undocumented, used for unit tests
              :edn  pr-edn
              :json
              #?(:cljs pr-json
@@ -719,56 +780,13 @@
                   :param    'pr-fn
                   :expected
                   #?(:clj  '#{:edn       unary-fn}
-                     :cljs '#{:edn :json unary-fn})}))))
-
-         assoc!*
-         (if-not incl-nils?
-           (fn [m k v] (if (nil? v) m (assoc! m k v))) ; As `remove-signal-nils`
-           (do                         assoc!))
-
-         incl-location? (contains? incl-keys :location)
-         incl-kvs-key?  (contains? incl-keys :kvs)
-         incl-file?     (contains? incl-keys :file)
-         incl-host?     (contains? incl-keys :host)
-         incl-thread?   (contains? incl-keys :thread)]
+                     :cljs '#{:edn :json unary-fn})}))))]
 
      (fn pr-signal [signal]
        (when (map?  signal)
-         (let [signal
-               (persistent!
-                 (reduce-kv
-                   (fn [m k v]
-                     (enc/case-eval k
-                       :msg_                                           (assoc!* m k (force v)) ; As  force-signal-msg
-                       :error (if-let [chain (enc/ex-chain :as-map v)] (assoc!  m k chain) m)  ; As expand-signal-error
-
-                       ;;; Keys excluded by default
-                       :location (if incl-location? (assoc!* m k v) m)
-                       :kvs      (if incl-kvs-key?  (assoc!* m k v) m)
-                       :file     (if incl-file?     (assoc!* m k v) m)
-                       :thread   (if incl-thread?   (assoc!* m k v) m)
-                       :host     (if incl-host?     (assoc!* m k v) m)
-
-                       (clojure.core/into ()
-                         taoensso.telemere.impl/impl-signal-keys) m ; noop
-
-                       (clojure.core/into ()
-                         (clojure.core/disj
-                           taoensso.telemere.impl/standard-signal-keys
-                           :msg_ :error :location :kvs :file :host :thread))
-                       (assoc!* m k v)
-
-                       (if incl-kvs? (assoc!* m k v) m) ; As remove-signal-kvs
-                       ))
-
-                   (transient {}) signal))]
-
-           (if-not pr-fn
-             signal
-             (let [output (pr-fn signal)]
-               (if incl-newline?
-                 (str output nl)
-                 (do  output))))))))))
+         (if incl-newline?
+           (str (pr-fn (clean-fn signal)) nl)
+           (do  (pr-fn (clean-fn signal)))))))))
 
 (comment
   (def s1 (tel/with-signal (tel/event! ::ev-id {:kvs {:k1 "v1"}})))
