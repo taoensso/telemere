@@ -378,14 +378,14 @@
        '([{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id, ; Undocumented
             elidable? location #_location* inst uid middleware,
-            sample-rate kind ns id level when rate-limit,
+            sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx parent root trace?, do let data msg error run & kvs]}])
 
        :signal-allowed?
        '([{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id, ; Undocumented
             elidable? location #_location* #_inst #_uid #_middleware,
-            sample-rate kind ns id level when rate-limit,
+            sample-rate kind ns id level when rate-limit rate-limit-by,
             #_ctx #_parent #_root #_trace?, #_do #_let #_data #_msg #_error #_run #_& #_kvs]}])
 
        :event! ; [id] [id level-or-opts] => allowed?
@@ -395,7 +395,7 @@
           {:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location #_location* inst uid middleware,
-            sample-rate kind ns id level when rate-limit,
+            sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx parent root trace?, do let data msg error #_run & kvs]}])
 
        :log! ; [msg] [level-or-opts msg] => allowed?
@@ -404,7 +404,7 @@
          [{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location #_location* inst uid middleware,
-            sample-rate kind ns id level when rate-limit,
+            sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx parent root trace?, do let data msg error #_run & kvs]}
           msg])
 
@@ -414,7 +414,7 @@
          [{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location #_location* inst uid middleware,
-            sample-rate kind ns id level when rate-limit,
+            sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx parent root trace?, do let data msg error #_run & kvs]}
           error])
 
@@ -424,7 +424,7 @@
          [{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location #_location* inst uid middleware,
-            sample-rate kind ns id level when rate-limit,
+            sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx parent root trace?, do let data msg error run & kvs]}
           form])
 
@@ -434,7 +434,7 @@
          [{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id, rethrow? catch-val,
             elidable? location #_location* inst uid middleware,
-            sample-rate kind ns id level when rate-limit,
+            sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx parent root trace?, do let data msg error #_run & kvs]}
           form])
 
@@ -444,7 +444,7 @@
          [{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location #_location* inst uid middleware,
-            sample-rate kind ns id level when rate-limit,
+            sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx parent root trace?, do let data msg error #_run & kvs]}])
 
        (enc/unexpected-arg! macro-id))))
@@ -616,7 +616,7 @@
                      (not-empty
                        (dissoc opts
                          :elidable? :location :location* :inst :uid :middleware,
-                         :sample-rate :ns :kind :id :level :filter :when #_:rate-limit,
+                         :sample-rate :ns :kind :id :level :filter :when #_:rate-limit #_:rate-limit-by,
                          :ctx :parent #_:trace?, :do :let :data :msg :error :run,
                          :elide? :allow? #_:expansion-id :otel/context))
 

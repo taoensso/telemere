@@ -34,11 +34,12 @@
 
 ;; Getting fancy (all costs are conditional!)
 (t/log!
-  {:level       :debug
-   :sample-rate 0.75 ; 75% sampling (noop 25% of the time)
-   :when        (my-conditional)
-   :rate-limit  {"1 per sec" [1  1000]
-                 "5 per min" [5 60000]}
+  {:level         :debug
+   :sample-rate   0.75 ; 75% sampling (noop 25% of the time)
+   :when          (my-conditional)
+   :rate-limit    {"1 per sec" [1  1000]
+                   "5 per min" [5 60000]}
+   :rate-limit-by my-user-ip-address ; Optional rate-limit scope
 
    :do (inc-my-metric!)
    :let

@@ -133,7 +133,7 @@
           [fallback, ; Unique to shell
            #_defaults #_elide? #_allow? #_expansion-id, ; Undocumented
            elidable? location #_location* inst uid middleware,
-           sample-rate kind ns id level when rate-limit,
+           sample-rate kind ns id level when rate-limit rate-limit-by,
            ctx parent root trace?, do let data msg error run & kvs]}])}
 
      [opts]
@@ -172,7 +172,7 @@
           [#_fallback, ; Unique to shell
            #_defaults #_elide? #_allow? #_expansion-id, ; Undocumented
            elidable? location #_location* #_inst #_uid #_middleware,
-           sample-rate kind ns id level when rate-limit,
+           sample-rate kind ns id level when rate-limit rate-limit-by,
            #_ctx #_parent #_root #_trace?, #_do #_let #_data #_msg #_error #_run #_& #_kvs]}])}
 
      [opts]
