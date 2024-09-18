@@ -418,9 +418,19 @@
             ctx parent root trace?, do let data msg error #_run & kvs]}
           error])
 
-       (:trace! :spy!) ; [form] [id-or-opts form] => run result (value or throw)
+       :trace! ; [form] [id-or-opts form] => run result (value or throw)
        '([   form]
          [id form]
+         [{:as opts :keys
+           [#_defaults #_elide? #_allow? #_expansion-id,
+            elidable? location #_location* inst uid middleware,
+            sample-rate kind ns id level when rate-limit rate-limit-by,
+            ctx parent root trace?, do let data msg error run & kvs]}
+          form])
+
+       :spy! ; [form] [level-or-opts form] => run result (value or throw)
+       '([      form]
+         [level form]
          [{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location #_location* inst uid middleware,
