@@ -2,31 +2,38 @@ This project uses [**Break Versioning**](https://www.taoensso.com/break-versioni
 
 ---
 
-# `v1.0.0-beta22` (2024-08-28)
+# `v1.0.0-beta23` (2024-09-22)
 
-📦 **Available on Clojars**: [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta22) | [SLF4J provider](https://clojars.org/com.taoensso/telemere-slf4j/versions/1.0.0-beta22) | [Facade API for library authors](https://clojars.org/com.taoensso/telemere-api/versions/1.0.0-beta22)  
-Uses [Break Versioning](https://www.taoensso.com/break-versioning).
+## 📦 Dependencies
 
----
+Available on Clojars:
 
-This is a **pre-release** intended for **early adopters** and those who'd like to give feedback. New betas will be released frequently, while I continue to fix issues and make other improvements/additions.
+1. [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta23) - main dep for most users
+2. [Shell API](https://clojars.org/com.taoensso/telemere-shell/versions/1.0.0-beta23) - alternative minimal dep [for library authors](https://github.com/taoensso/telemere/wiki/9-Authors#3-telemere-as-an-optional-dependency), etc.
+3. [SLF4J provider](https://clojars.org/com.taoensso/telemere-slf4j/versions/1.0.0-beta23) - additional dep for users that want to [interop with Java logging](https://github.com/taoensso/telemere/wiki/3-Config#java-logging)
 
-The included handlers and utils are **still undergoing changes**, though the [signal creator](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-creators) and [signal content](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content) APIs should already be mostly stable.
+This project uses [Break Versioning](https://www.taoensso.com/break-versioning).
 
-Please **report any unexpected problems** on [GitHub](https://github.com/taoensso/telemere/issues) or the [Slack channel](https://www.taoensso.com/telemere/slack), thank you! 🙏 
+## Release notes
+
+- This is a **pre-release** intended for **early adopters** and those who'd like to give feedback.
+- This is expected to be the **last beta** before RC1.
+- Please **report any unexpected problems** on [GitHub](https://github.com/taoensso/telemere/issues) or the [Slack channel](https://www.taoensso.com/telemere/slack), thank you! 🙏
 
 \- [Peter Taoussanis](https://www.taoensso.com)
 
 ## Recent changes
 
-Beta 22, 21, 20:
+### Beta 23
 
-* **\[mod]** Move dep: `com.taoensso/slf4j-telemere` -> [com.taoensso/telemere-slf4j](https://clojars.org/com.taoensso/telemere-slf4j) \[77ed27cfd] (beta 22)
-* **\[mod]** Generalize "intake", rename -> "interop" \[ef678bcc] (beta 20)
-* **\[mod]** Make `:host` output opt-in for default signal handlers \[88eb5211] (beta 20)
+* **\[mod]** Update `pr-signal-fn` to use `clean-signal-fn` \[f70363091] (beta 23)
+* **\[mod]** Rename `taoensso.telemere.api` -> `taoensso.telemere.shell` \[a9005e7f1] (beta 23)
 
-Earlier:
+### Earlier
 
+* \[mod] Move dep: `com.taoensso/slf4j-telemere` -> [com.taoensso/telemere-slf4j](https://clojars.org/com.taoensso/telemere-slf4j) \[77ed27cfd] (beta 22)
+* \[mod] Generalize "intake", rename -> "interop" \[ef678bcc] (beta 20)
+* \[mod] Make `:host` output opt-in for default signal handlers \[88eb5211] (beta 20)
 * \[mod] OpenTelemetry handler: rename (generalize) \[064ef323] (beta 19)
 * \[mod] OpenTelemetry handler: revert #10 \[599236f4] (beta 18)
 * \[mod] Decrease level of :on-init signals \[4d2b5d46] (beta 18)
@@ -46,16 +53,23 @@ Earlier:
 
 ## Recent additions
 
-Beta 22, 21, 20:
+### Beta 23
 
-* **\[new]** Added experimental [facade API](https://cljdoc.org/d/com.taoensso/telemere-api/CURRENT/api/taoensso.telemere.api) for library authors \[ece51b2ef] (beta 22)
-* **\[new]** Auto stop existing handler when replacing it (beta 22)
-* **\[new]** Added `"(.*)"` wildcard syntax to kind/ns/id filters (beta 22)
-* **\[new]** Internal and doc improvements: \[8066776a8], \[b4b06f324], \[3068ccf8d] (beta 21)
-* **\[new]** OpenTelemetry handler: improve span interop \[84957c6d] (beta 20)
+* **\[new]** Add `:rate-limit-by` option to all signal creators \[d9c358363] (beta 23)
+* **\[new]** Add `clean-signal-fn` util \[be55f44a8] (beta 23)
+* **\[new]** Add `signal-allowed?` util \[d12b0b145] (beta 23)
+* **\[new]** Allow compile-time config of uid kind \[965c2277f] (beta 23)
+* **\[new]** Avoid duplicated trace bodies \[c9e84e8b3] (beta 23)
+* **\[new]** Cap length of displayed run-form when tracing \[85772f733] (beta 23)
+* Updated [Encore](https://www.taoensso.com/encore) to v3.120.0 (2024-09-22) (beta 23)
 
-Earlier:
+### Earlier
 
+* \[new] Added experimental [shell API](https://cljdoc.org/d/com.taoensso/telemere-shell/CURRENT/api/taoensso.telemere.api) for library authors \[ece51b2ef] (beta 22)
+* \[new] Auto stop existing handler when replacing it (beta 22)
+* \[new] Added `"(.*)"` wildcard syntax to kind/ns/id filters (beta 22)
+* \[new] Internal and doc improvements: \[8066776a8], \[b4b06f324], \[3068ccf8d] (beta 21)
+* \[new] OpenTelemetry handler: improve span interop \[84957c6d] (beta 20)
 * \[new] OpenTelemetry handler: add experimental trace output \[67cb4941] (beta 18)
 * \[new] Improve uid control, switch to nano-style by default \[5ab2736c] (beta 18)
 * \[new] Add host info to signal content \[1cef1957] (beta 18)
@@ -78,12 +92,16 @@ Earlier:
 
 ## Recent fixes
 
-Beta 22, 21, 20:
+### Beta 23
 
-* **\[fix]** Signal `:line` info missing for some wrapped-macro cases \[0f09b797e] (beta 22)
+* **\[fix]** [#21] Work around issue with use in Cljs `core.async/go` bodies \[cbab57be6] (beta 23)
+* **\[fix]** [#20] Wrong :arglists meta on `spy!` \[568906c96] (beta 23)
+* **\[fix]** [#18] Support `{:uid :auto}` for non-tracing signal creators \[f52a04b4d] (beta 23)
+* **\[fix]** Runtime Clj env config now works correctly in uberjars (beta 23)
 
-Earlier:
+### Earlier
 
+* \[fix] Signal `:line` info missing for some wrapped-macro cases \[0f09b797e] (beta 22)
 * \[fix] OpenTelemetry handler: use signal callsite Context as root span parent \[a8e92303] (beta 19)
 * \[fix] [#16] OpenTelemetry handler: coerce line attrs (@flyingmachine) \[17349a08] (beta 19)
 * \[fix] Decrease min Java version (11->8) (@flyingmachine) \[a1c50f10] (beta 19)
