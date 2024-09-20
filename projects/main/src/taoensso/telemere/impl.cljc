@@ -687,12 +687,9 @@
                         (sig-middleware# signal#) ; Apply signal middleware, can throw
                         (do              signal#)))))
 
-               ;; Could avoid double `run-form` expansion with a fn wrap (>0 cost)
-               ;; (let [run-fn-form (when run-form `(fn [] (~run-form)))]
-               ;;   `(let [~'run-fn-form ~run-fn-form]
-               ;;      (if-not ~allow?
-               ;;        (run-fn-form)
-               ;;        (let [...]))))
+               ;; Trade-off: avoid double `run-form` expansion
+               run-fn-form (when run-form `(fn [] ~run-form))
+               run-form*   (when run-form `(~'__run-fn-form))
 
                into-let-form
                (enc/cond!
@@ -704,8 +701,8 @@
                    ~(when run-form
                       `(let [t0# (enc/now-nano*)]
                          (enc/try*
-                           (do            (RunResult. ~run-form nil (- (enc/now-nano*) t0#)))
-                           (catch :all t# (RunResult. nil       t#  (- (enc/now-nano*) t0#))))))]
+                           (do            (RunResult. ~run-form* nil (- (enc/now-nano*) t0#)))
+                           (catch :all t# (RunResult. nil        t#  (- (enc/now-nano*) t0#))))))]
 
                  ;; Trace without OpenTelemetry
                  (or cljs? (not enabled:otel-tracing?))
@@ -718,8 +715,8 @@
                                  *trace-parent* {:id ~'__id, :uid ~'__uid}]
                          (let [t0# (enc/now-nano*)]
                            (enc/try*
-                             (do            (RunResult. ~run-form nil (- (enc/now-nano*) t0#)))
-                             (catch :all t# (RunResult. nil       t#  (- (enc/now-nano*) t0#)))))))]
+                             (do            (RunResult. ~run-form* nil (- (enc/now-nano*) t0#)))
+                             (catch :all t# (RunResult. nil        t#  (- (enc/now-nano*) t0#)))))))]
 
                  ;; Trace with OpenTelemetry
                  (and clj? enabled:otel-tracing?)
@@ -739,19 +736,20 @@
                          (let [otel-scope# (.makeCurrent ~'__otel-context1)
                                t0#         (enc/now-nano*)]
                            (enc/try*
-                             (do            (RunResult. ~run-form nil (- (enc/now-nano*) t0#)))
-                             (catch :all t# (RunResult. nil       t#  (- (enc/now-nano*) t0#)))
+                             (do            (RunResult. ~run-form* nil (- (enc/now-nano*) t0#)))
+                             (catch :all t# (RunResult. nil        t#  (- (enc/now-nano*) t0#)))
                              (finally (.close otel-scope#))))))])
 
                final-form
                ;; Unless otherwise specified, allow errors to throw on call
-               `(let [~'__kind  ~kind-form
-                      ~'__ns    ~ns-form
-                      ~'__id    ~id-form
-                      ~'__level ~level-form]
+               `(let [~'__run-fn-form ~run-fn-form
+                      ~'__kind        ~kind-form
+                      ~'__ns          ~ns-form
+                      ~'__id          ~id-form
+                      ~'__level       ~level-form]
 
                   (enc/if-not ~allow?
-                    ~run-form
+                    ~run-form*
                     (let [~'__inst   ~inst-form
                           ~'__thread ~thread-form
                           ~'__root0  ~root-form0 ; ?{:keys [id uid]}
