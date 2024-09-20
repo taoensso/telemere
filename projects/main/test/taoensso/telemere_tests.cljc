@@ -1,6 +1,7 @@
 (ns taoensso.telemere-tests
   (:require
    [clojure.test            :as test :refer [deftest testing is]]
+   [clojure.core.async      :as async]
    [taoensso.encore         :as enc  :refer [throws? submap?] :rename {submap? sm?}]
    [taoensso.encore.signals :as sigs]
    [taoensso.telemere       :as tel]
@@ -657,6 +658,12 @@
            (is (do (.join (enc/threaded :user (ex1!))) (sm? @sv_ {:kind :error, :line :submap/some, :level :error, :error pex1?, :id :id1})))
            ;;
            (do (enc/set-var-root! impl/*sig-handlers* nil) :unset-handler)])))])
+
+;;;;
+
+(deftest _core-async
+  (testing "Signals in go macros"
+    [(async/go (tel/log! "hello"))]))
 
 ;;;; Interop
 

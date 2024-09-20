@@ -46,7 +46,8 @@
      *unchecked-math*     false #_:warn-on-boxed}
 
     :dependencies
-    [[org.clojure/test.check             "1.1.1"]
+    [[org.clojure/core.async           "1.6.681"]
+     [org.clojure/test.check             "1.1.1"]
      [org.clojure/tools.logging          "1.3.0"]
      [org.slf4j/slf4j-api               "2.0.16"]
      [com.taoensso/telemere-shell "1.0.0-SNAPSHOT"]

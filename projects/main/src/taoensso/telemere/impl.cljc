@@ -687,6 +687,13 @@
                         (sig-middleware# signal#) ; Apply signal middleware, can throw
                         (do              signal#)))))
 
+               ;; Could avoid double `run-form` expansion with a fn wrap (>0 cost)
+               ;; (let [run-fn-form (when run-form `(fn [] (~run-form)))]
+               ;;   `(let [~'run-fn-form ~run-fn-form]
+               ;;      (if-not ~allow?
+               ;;        (run-fn-form)
+               ;;        (let [...]))))
+
                into-let-form
                (enc/cond!
                  (not trace?) ; Don't trace
@@ -734,39 +741,37 @@
                            (enc/try*
                              (do            (RunResult. ~run-form nil (- (enc/now-nano*) t0#)))
                              (catch :all t# (RunResult. nil       t#  (- (enc/now-nano*) t0#)))
-                             (finally (.close otel-scope#))))))])]
+                             (finally (.close otel-scope#))))))])
 
-           ;; Could avoid double `run-form` expansion with a fn wrap (>0 cost)
-           ;; (let [run-fn-form (when run-form `(fn [] (~run-form)))]
-           ;;   `(let [~'run-fn-form ~run-fn-form]
-           ;;      (if-not ~allow?
-           ;;        (run-fn-form)
-           ;;        (let [...]))))
+               final-form
+               ;; Unless otherwise specified, allow errors to throw on call
+               `(let [~'__kind  ~kind-form
+                      ~'__ns    ~ns-form
+                      ~'__id    ~id-form
+                      ~'__level ~level-form]
 
-           ;; Unless otherwise specified, allow errors to throw on call
-           `(let [~'__kind  ~kind-form
-                  ~'__ns    ~ns-form
-                  ~'__id    ~id-form
-                  ~'__level ~level-form]
+                  (enc/if-not ~allow?
+                    ~run-form
+                    (let [~'__inst   ~inst-form
+                          ~'__thread ~thread-form
+                          ~'__root0  ~root-form0 ; ?{:keys [id uid]}
 
-              (enc/if-not ~allow?
-                ~run-form
-                (let [~'__inst   ~inst-form
-                      ~'__thread ~thread-form
-                      ~'__root0  ~root-form0 ; ?{:keys [id uid]}
+                          ~@into-let-form ; Inject conditional bindings
+                          signal# ~signal-delay-form]
 
-                      ~@into-let-form ; Inject conditional bindings
-                      signal# ~signal-delay-form]
+                      (dispatch-signal!
+                        ;; Unconditionally send same wrapped signal to all handlers.
+                        ;; Each handler will use wrapper for handler filtering,
+                        ;; unwrapping (realizing) only allowed signals.
+                        (WrappedSignal. ~'__ns ~'__kind ~'__id ~'__level signal#))
 
-                  (dispatch-signal!
-                    ;; Unconditionally send same wrapped signal to all handlers.
-                    ;; Each handler will use wrapper for handler filtering,
-                    ;; unwrapping (realizing) only allowed signals.
-                    (WrappedSignal. ~'__ns ~'__kind ~'__id ~'__level signal#))
+                      (if ~'__run-result
+                        ( ~'__run-result signal#)
+                        true))))]
 
-                  (if ~'__run-result
-                    ( ~'__run-result signal#)
-                    true)))))))))
+           (if cljs?
+             `((fn [] ~final-form)) ; IIFE wrap for use in `go` and other IOC-style bodies
+             (do       final-form)))))))
 
 (comment
   (with-signal  (signal! {:level :warn :let [x :x] :msg ["Test" "message" x] :data {:a :A :x x} :run (+ 1 2)}))
