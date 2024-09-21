@@ -565,6 +565,14 @@
            clj?  (not cljs?)
            {run-form :run} opts
 
+           show-run-form
+           (when run-form
+             (get opts :run-form
+               (if (and (> (count      run-form)  1)
+                        (> (count (str run-form)) 32))
+                 (list (first run-form) '...)
+                 (do          run-form))))
+
            {:keys [#_expansion-id location elide? allow?]}
            (sigs/filterable-expansion
              {:sf-arity 4
@@ -649,10 +657,10 @@
                      (let [record-form
                            (let   [clause [(if run-form :run :no-run) (if clj? :clj :cljs)]]
                              (case clause
-                               [:run    :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form, (enc/host-info) ~'__thread ~'__otel-context1, ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~run-form ~'_run-val ~'_end-inst ~'_run-nsecs)
-                               [:run    :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form,                                               ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~run-form ~'_run-val ~'_end-inst ~'_run-nsecs)
-                               [:no-run :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form, (enc/host-info) ~'__thread ~'__otel-context1, ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil        nil        nil         nil)
-                               [:no-run :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form,                                               ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil        nil        nil         nil)
+                               [:run    :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form, (enc/host-info) ~'__thread ~'__otel-context1, ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~show-run-form ~'_run-val ~'_end-inst ~'_run-nsecs)
+                               [:run    :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form,                                               ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~show-run-form ~'_run-val ~'_end-inst ~'_run-nsecs)
+                               [:no-run :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form, (enc/host-info) ~'__thread ~'__otel-context1, ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil             nil        nil         nil)
+                               [:no-run :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form,                                               ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil             nil        nil         nil)
                                (enc/unexpected-arg! clause {:context :signal-constructor-args})))
 
                            record-form
@@ -666,7 +674,7 @@
                                     ~'_msg_
                                     (let [mf# ~msg-form]
                                       (if (fn? mf#) ; Undocumented, handy for `trace!`/`spy!`, etc.
-                                        (delay (mf# '~run-form ~'_run-val ~'_run-err ~'_run-nsecs))
+                                        (delay (mf# '~show-run-form ~'_run-val ~'_run-err ~'_run-nsecs))
                                         mf#))]
                                 ~record-form))]
 
