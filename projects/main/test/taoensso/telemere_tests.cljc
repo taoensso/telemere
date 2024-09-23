@@ -626,7 +626,13 @@
             (with-sigs (tel/trace! {:id :id1, :catch->error :id2} (ex1!)))]
         [(is (sm? sv1 {:kind :trace, :line :submap/some, :level :info,  :id :id1}))
          (is (sm? sv2 {:kind :error, :line :submap/some, :level :error, :id :id2}))
-         (is (= (:location sv1) (:location sv2)) "Error inherits exact same location")])])
+         (is (= (:location sv1) (:location sv2)) "Error inherits exact same location")])
+
+      (testing  ":run-form"
+        [(is (= (:run-form (with-sig (tel/trace! :non-list)))    :non-list))
+         (is (= (:run-form (with-sig (tel/trace! (+ 1 2 3 4))))  '(+ 1 2 3 4)))
+         (is (= (:run-form (with-sig (tel/trace! (+ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16)))) '(+ ...)))
+         (is (= (:run-form (with-sig (tel/trace! {:run-form 'my-run-form} (+ 1 2 3 4))))       'my-run-form))])])
 
    (testing "spy" ; run + ?level => run result (value or throw)
      [(let [[[rv]   [sv]] (with-sigs (tel/spy!                (+ 1 2)))] [(is (= rv 3))  (is (sm?  sv {:kind :spy, :line :submap/some, :level :info, :msg_ "(+ 1 2) => 3"}))])

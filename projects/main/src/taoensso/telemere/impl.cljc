@@ -568,8 +568,10 @@
            show-run-form
            (when run-form
              (get opts :run-form
-               (if (and (> (count      run-form)  1)
-                        (> (count (str run-form)) 32))
+               (if (and
+                     (enc/list-form? run-form)
+                     (> (count       run-form)  1)
+                     (> (count (str  run-form)) 32))
                  (list (first run-form) '...)
                  (do          run-form))))
 
