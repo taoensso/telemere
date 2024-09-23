@@ -1,4 +1,4 @@
-(defproject com.taoensso/telemere "1.0.0-SNAPSHOT"
+(defproject com.taoensso/telemere "1.0.0-beta24"
   :author "Peter Taoussanis <https://www.taoensso.com>"
   :description "Structured telemetry library for Clojure/Script"
   :url "https://www.taoensso.com/telemere"
@@ -10,7 +10,7 @@
   :scm {:name "git" :url "https://github.com/taoensso/telemere"}
 
   :dependencies
-  [[com.taoensso/encore "3.121.0-SNAPSHOT"]]
+  [[com.taoensso/encore "3.120.0"]]
 
   :test-paths ["test" #_"src"]
 
@@ -50,8 +50,8 @@
      [org.clojure/test.check             "1.1.1"]
      [org.clojure/tools.logging          "1.3.0"]
      [org.slf4j/slf4j-api               "2.0.16"]
-     [com.taoensso/telemere-shell "1.0.0-SNAPSHOT"]
-     [com.taoensso/telemere-slf4j "1.0.0-SNAPSHOT"]
+     [com.taoensso/telemere-shell "1.0.0-beta24"]
+     [com.taoensso/telemere-slf4j "1.0.0-beta24"]
      #_[org.slf4j/slf4j-simple          "2.0.16"]
      #_[org.slf4j/slf4j-nop             "2.0.16"]
 

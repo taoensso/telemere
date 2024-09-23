@@ -2,15 +2,15 @@ This project uses [**Break Versioning**](https://www.taoensso.com/break-versioni
 
 ---
 
-# `v1.0.0-beta23` (2024-09-22)
+# `v1.0.0-beta24` (2024-09-23)
 
 ## 📦 Dependencies
 
 Available on Clojars:
 
-1. [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta23) - main dep for most users
-2. [Shell API](https://clojars.org/com.taoensso/telemere-shell/versions/1.0.0-beta23) - alternative minimal dep [for library authors](https://github.com/taoensso/telemere/wiki/9-Authors#3-telemere-as-an-optional-dependency), etc.
-3. [SLF4J provider](https://clojars.org/com.taoensso/telemere-slf4j/versions/1.0.0-beta23) - additional dep for users that want to [interop with Java logging](https://github.com/taoensso/telemere/wiki/3-Config#java-logging)
+1. [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-beta24) - main dep for most users
+2. [Shell API](https://clojars.org/com.taoensso/telemere-shell/versions/1.0.0-beta24) - alternative minimal dep [for library authors](https://github.com/taoensso/telemere/wiki/9-Authors#3-telemere-as-an-optional-dependency), etc.
+3. [SLF4J provider](https://clojars.org/com.taoensso/telemere-slf4j/versions/1.0.0-beta24) - additional dep for users that want to [interop with Java logging](https://github.com/taoensso/telemere/wiki/3-Config#java-logging)
 
 This project uses [Break Versioning](https://www.taoensso.com/break-versioning).
 
@@ -24,7 +24,7 @@ This project uses [Break Versioning](https://www.taoensso.com/break-versioning).
 
 ## Recent changes
 
-### Beta 23
+### Beta 24, 23
 
 * **\[mod]** Update `pr-signal-fn` to use `clean-signal-fn` \[f70363091] (beta 23)
 * **\[mod]** Rename `taoensso.telemere.api` -> `taoensso.telemere.shell` \[a9005e7f1] (beta 23)
@@ -53,7 +53,7 @@ This project uses [Break Versioning](https://www.taoensso.com/break-versioning).
 
 ## Recent additions
 
-### Beta 23
+### Beta 24, 23
 
 * **\[new]** Add `:rate-limit-by` option to all signal creators \[d9c358363] (beta 23)
 * **\[new]** Add `clean-signal-fn` util \[be55f44a8] (beta 23)
@@ -92,8 +92,9 @@ This project uses [Break Versioning](https://www.taoensso.com/break-versioning).
 
 ## Recent fixes
 
-### Beta 23
+### Beta 24, 23
 
+* **\[fix]** Don't try count non-list tracing bodies \[88f7a3c7d] (beta 24)
 * **\[fix]** [#21] Work around issue with use in Cljs `core.async/go` bodies \[cbab57be6] (beta 23)
 * **\[fix]** [#20] Wrong :arglists meta on `spy!` \[568906c96] (beta 23)
 * **\[fix]** [#18] Support `{:uid :auto}` for non-tracing signal creators \[f52a04b4d] (beta 23)
