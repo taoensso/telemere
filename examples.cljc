@@ -26,12 +26,6 @@
 ;; Check resulting signal content for debug/tests
 (t/with-signal (t/event! ::my-id)) ; => {:keys [ns level id data msg_ ...]}
 
-;; Transform signals
-(t/set-middleware! (fn [signal] (assoc signal :my-key "my-val")))
-
-;; Filter signals by returning nil
-(t/set-middleware! (fn [signal] (when-not (-> signal :data :skip-me?) signal)))
-
 ;; Getting fancy (all costs are conditional!)
 (t/log!
   {:level         :debug
@@ -54,8 +48,6 @@
   ;; Message string or vector to join as string
   ["Something interesting happened!" formatted])
 
-;;;; README "More examples"
-
 ;; Set minimum level
 (t/set-min-level!       :warn) ; For all    signals
 (t/set-min-level! :log :debug) ; For `log!` signals only
@@ -66,8 +58,6 @@
 
 ;; Set minimum level for `event!` signals for particular ns pattern
 (t/set-min-level! :event "taoensso.sente.*" :warn)
-
-;; See `t/help:filters` docstring for more
 
 ;; Use middleware to:
 ;;   - Transform signals
@@ -82,12 +72,22 @@
 (t/with-signal (t/event! ::my-id {:data {:skip-me? true}}))  ; => nil
 (t/with-signal (t/event! ::my-id {:data {:skip-me? false}})) ; => {...}
 
-;; Signal handlers
+;; See `t/help:filters` docstring for more filtering options
 
-(t/get-handlers) ; => {<handler-id> {:keys [handler-fn handler-stats_ dispatch-opts]}}
+;;;; README "More examples"
 
-(t/add-handler! :my-console-handler
-  (t/handler:console {}) ; Returns handler fn, has many opts
+;; Add your own signal handler
+(t/add-handler! :my-handler
+  (fn
+    ([signal] (println signal))
+    ([] (println "Shut down handler"))))
+
+;; Use `add-handler!` to set handler-level filtering and back-pressure
+(t/add-handler! :my-handler
+  (fn
+    ([signal] (println signal))
+    ([] (println "Shut down handler")))
+
   {:async {:mode :dropping, :buffer-size 1024, :n-threads 1}
    :priority    100
    :sample-rate 0.5
@@ -97,24 +97,27 @@
    ;; See `t/help:handler-dispatch-options` for more
    })
 
-;; Print human-readable output to console
-(t/add-handler! :my-console-handler
+;; See current handlers
+(t/get-handlers) ; => {<handler-id> {:keys [handler-fn handler-stats_ dispatch-opts]}}
+
+;; Add built-in console handler to print human-readable output
+(t/add-handler! :my-handler
   (t/handler:console
     {:output-fn (t/format-signal-fn {})}))
 
-;; Print edn to console
-(t/add-handler! :my-console-handler
+;; Add built-in console handler to print edn output
+(t/add-handler! :my-handler
   (t/handler:console
     {:output-fn (t/pr-signal-fn {:pr-fn :edn})}))
 
-;; Print JSON to console
+;; Add built-in console handler to print JSON output
 ;; Ref.  <https://github.com/metosin/jsonista> (or any alt JSON lib)
 #?(:clj (require '[jsonista.core :as jsonista]))
-(t/add-handler! :my-console-handler
+(t/add-handler! :my-handler
   (t/handler:console
     {:output-fn
      #?(:cljs :json ; Use js/JSON.stringify
-        :clj  jsonista/write-value-as-string)}))
+        :clj   jsonista/write-value-as-string)}))
 
 ;;;; Docstring examples
 

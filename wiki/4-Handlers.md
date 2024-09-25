@@ -1,4 +1,10 @@
-Signal handlers process created signals to **do something with them** (analyse them, write them to console/file/queue/db, etc.).
+Telemere's signal handlers are just **plain functions** that take a signal (map) to **do something with them** (analyse them, write them to console/file/queue/db/etc.).
+
+Here's a simple handler: `(fn [signal] (println signal))`.
+
+A second 0-arg arity will be called when stopping the handler. This is handy for stateful handlers or handlers that need to release resources, e.g.:
+
+`(fn my-handler ([] (my-stop-code)) ([signal] (println signal))`
 
 Telemere includes a number of signal handlers out-the-box, and more may be available via the [community](./8-Community#handlers-and-tools).
 

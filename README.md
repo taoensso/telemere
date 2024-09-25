@@ -66,12 +66,6 @@ It enables you to write code that is **information-verbose by default**.
 ;; Check resulting signal content for debug/tests
 (t/with-signal (t/event! ::my-id)) ; => {:keys [ns level id data msg_ ...]}
 
-;; Transform signals
-(t/set-middleware! (fn [signal] (assoc signal :my-key "my-val")))
-
-;; Filter signals by returning nil
-(t/set-middleware! (fn [signal] (when-not (-> signal :data :skip-me?) signal)))
-
 ;; Getting fancy (all costs are conditional!)
 (t/log!
   {:level         :debug
@@ -93,6 +87,32 @@ It enables you to write code that is **information-verbose by default**.
 
   ;; Message string or vector to join as string
   ["Something interesting happened!" formatted])
+
+;; Set minimum level
+(t/set-min-level!       :warn) ; For all    signals
+(t/set-min-level! :log :debug) ; For `log!` signals only
+
+;; Set namespace and id filters
+(t/set-ns-filter! {:disallow "taoensso.*" :allow "taoensso.sente.*"})
+(t/set-id-filter! {:allow #{::my-particular-id "my-app/*"}})
+
+;; Set minimum level for `event!` signals for particular ns pattern
+(t/set-min-level! :event "taoensso.sente.*" :warn)
+
+;; Use middleware to:
+;;   - Transform signals
+;;   - Filter    signals by arb conditions (incl. data/content)
+
+(t/set-middleware!
+  (fn [signal]
+    (if (-> signal :data :skip-me?)
+      nil ; Filter signal (don't handle)
+      (assoc signal :passed-through-middleware? true))))
+
+(t/with-signal (t/event! ::my-id {:data {:skip-me? true}}))  ; => nil
+(t/with-signal (t/event! ::my-id {:data {:skip-me? false}})) ; => {...}
+
+;; See `t/help:filters` docstring for more filtering options
 ```
 
 ## Why Telemere?
@@ -139,38 +159,18 @@ See for intro and basic usage:
 ## More examples
 
 ```clojure
-;; Set minimum level
-(t/set-min-level!       :warn) ; For all    signals
-(t/set-min-level! :log :debug) ; For `log!` signals only
+;; Add your own signal handler
+(t/add-handler! :my-handler
+  (fn
+    ([signal] (println signal))
+    ([] (println "Shut down handler"))))
 
-;; Set namespace and id filters
-(t/set-ns-filter! {:disallow "taoensso.*" :allow "taoensso.sente.*"})
-(t/set-id-filter! {:allow #{::my-particular-id "my-app/*"}})
+;; Use `add-handler!` to set handler-level filtering and back-pressure
+(t/add-handler! :my-handler
+  (fn
+    ([signal] (println signal))
+    ([] (println "Shut down handler")))
 
-;; Set minimum level for `event!` signals for particular ns pattern
-(t/set-min-level! :event "taoensso.sente.*" :warn)
-
-;; See `t/help:filters` docstring for more
-
-;; Use middleware to:
-;;   - Transform signals
-;;   - Filter    signals by arb conditions (incl. data/content)
-
-(t/set-middleware!
-  (fn [signal]
-    (if (-> signal :data :skip-me?)
-      nil ; Filter signal (don't handle)
-      (assoc signal :passed-through-middleware? true))))
-
-(t/with-signal (t/event! ::my-id {:data {:skip-me? true}}))  ; => nil
-(t/with-signal (t/event! ::my-id {:data {:skip-me? false}})) ; => {...}
-
-;; Signal handlers
-
-(t/get-handlers) ; => {<handler-id> {:keys [handler-fn handler-stats_ dispatch-opts]}}
-
-(t/add-handler! :my-console-handler
-  (t/handler:console {}) ; Returns handler fn, has many opts
   {:async {:mode :dropping, :buffer-size 1024, :n-threads 1}
    :priority    100
    :sample-rate 0.5
@@ -180,24 +180,27 @@ See for intro and basic usage:
    ;; See `t/help:handler-dispatch-options` for more
    })
 
-;; Print human-readable output to console
-(t/add-handler! :my-console-handler
-  (t/handler:console
-    {:output-fn (t/format-signal-fn {...})}))
+;; See current handlers
+(t/get-handlers) ; => {<handler-id> {:keys [handler-fn handler-stats_ dispatch-opts]}}
 
-;; Print edn to console
-(t/add-handler! :my-console-handler
+;; Add built-in console handler to print human-readable output
+(t/add-handler! :my-handler
+  (t/handler:console
+    {:output-fn (t/format-signal-fn {})}))
+
+;; Add built-in console handler to print edn output
+(t/add-handler! :my-handler
   (t/handler:console
     {:output-fn (t/pr-signal-fn {:pr-fn :edn})}))
 
-;; Print JSON to console
+;; Add built-in console handler to print JSON output
 ;; Ref.  <https://github.com/metosin/jsonista> (or any alt JSON lib)
 #?(:clj (require '[jsonista.core :as jsonista]))
-(t/add-handler! :my-console-handler
+(t/add-handler! :my-handler
   (t/handler:console
     {:output-fn
      #?(:cljs :json ; Use js/JSON.stringify
-        :clj  jsonista/write-value-as-string)}))
+        :clj   jsonista/write-value-as-string)}))
 ```
 
 See [examples.cljc](https://github.com/taoensso/telemere/blob/master/examples.cljc) for REPL-ready snippets!
