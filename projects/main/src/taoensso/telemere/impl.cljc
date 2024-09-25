@@ -492,7 +492,7 @@
        :do
        (cond
          (map? main-arg)
-         (bad-args! "single map arg is USUALLY a mistake, so isn't allowed. Please use 2 arg call if this is intentional." {})
+         (bad-args! "single map arg is USUALLY a mistake, so isn't allowed. Please use 2 arg arity instead, or `signal!`." {})
 
          (and extra-opts? (contains? extra-arg main-key))
          (bad-args! (str "given opts should not contain `" main-key "`.") {}))
