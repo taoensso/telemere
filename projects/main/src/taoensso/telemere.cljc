@@ -30,7 +30,7 @@
   (remove-ns 'taoensso.telemere)
   (:api (enc/interns-overview)))
 
-(enc/assert-min-encore-version [3 120 0])
+(enc/assert-min-encore-version [3 121 0])
 
 ;;;; TODO
 ;; - Solution and docs for lib authors
