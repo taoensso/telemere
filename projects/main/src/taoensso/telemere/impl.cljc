@@ -777,8 +777,9 @@
                         ( ~'__run-result signal#)
                         true))))]
 
-           (if cljs?
-             `((fn [] ~final-form)) ; IIFE wrap for use in `go` and other IOC-style bodies
+           (if-let [iife-wrap? true #_cljs?]
+             ;; Small perf hit to improve compatibility within `go` and other IOC-style bodies
+             `((fn [] ~final-form))
              (do       final-form)))))))
 
 (comment
