@@ -671,6 +671,16 @@
   (testing "Signals in go macros"
     [(async/go (tel/log! "hello"))]))
 
+#?(:clj
+   (deftest _uncaught->handler!
+     (let [p (promise)]
+       [(do (tel/add-handler! ::p (fn ([]) ([sig] (p sig))) {}) :add-handler)
+        (is (nil? (tel/uncaught->error! ::uncaught)))
+        (do (enc/threaded :user (throw ex1)) :run-thread)
+        (is (sm? (deref p 2000 nil) {:kind :error, :level :error, :id ::uncaught, :error ex1}))
+        (is (nil? (tel/uncaught->error! nil)))
+        (do (tel/remove-handler! ::p) :remove-handler)])))
+
 ;;;; Interop
 
 (comment (def ^org.slf4j.Logger sl (org.slf4j.LoggerFactory/getLogger "my.class")))
