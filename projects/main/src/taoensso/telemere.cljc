@@ -332,17 +332,21 @@
      See `uncaught->handler!` and `error!` for details."
      {:arglists (impl/signal-arglists :uncaught->error!)}
      [& args]
-     (let [msg-form ["Uncaught Throwable on thread: " `(.getName ~(with-meta '__thread {:tag 'java.lang.Thread}))]
+     (let [msg-form ["Uncaught Throwable on thread:" `(.getName ~(with-meta '__thread-arg {:tag 'java.lang.Thread}))]
            opts
            (impl/signal-opts `uncaught->error! (enc/get-source &form &env)
              {:kind :error, :level :error, :msg msg-form}
-             :error :id :dsc (into ['__throwable] args))]
+             :error :id :dsc (into ['__throwable-arg] args))]
 
        `(uncaught->handler!
-          (fn [~'__thread ~'__throwable]
+          (fn [~'__thread-arg ~'__throwable-arg]
             (impl/signal! ~opts))))))
 
-(comment (macroexpand '(uncaught->error! ::my-id)))
+(comment
+  (macroexpand '(uncaught->error! ::uncaught))
+  (do
+    (uncaught->error! ::uncaught)
+    (enc/threaded :user (/ 1 0))))
 
 #?(:clj
    (defn uncaught->handler!
@@ -352,9 +356,10 @@
      See also `uncaught->error!`."
      [handler]
      (Thread/setDefaultUncaughtExceptionHandler
-       (reify   Thread$UncaughtExceptionHandler
-         (uncaughtException [_ thread throwable]
-           (handler            thread throwable))))
+       (when handler ; falsey to remove
+         (reify   Thread$UncaughtExceptionHandler
+           (uncaughtException [_ thread throwable]
+             (handler            thread throwable)))))
      nil))
 
 ;;;; Interop
