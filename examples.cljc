@@ -80,13 +80,13 @@
 (t/add-handler! :my-handler
   (fn
     ([signal] (println signal))
-    ([] (println "Shut down handler"))))
+    ([] (println "Handler has shut down"))))
 
 ;; Use `add-handler!` to set handler-level filtering and back-pressure
 (t/add-handler! :my-handler
   (fn
     ([signal] (println signal))
-    ([] (println "Shut down handler")))
+    ([] (println "Handler has shut down")))
 
   {:async {:mode :dropping, :buffer-size 1024, :n-threads 1}
    :priority    100
