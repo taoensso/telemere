@@ -45,6 +45,10 @@ It enables you to write code that is **information-verbose by default**.
 
 ## Quick examples
 
+> (Or see [examples.cljc](https://github.com/taoensso/telemere/blob/master/examples.cljc) for REPL-ready snippets)
+
+<details open><summary>Create signals</summary><br/>
+
 ```clojure
 (require '[taoensso.telemere :as t])
 
@@ -87,7 +91,13 @@ It enables you to write code that is **information-verbose by default**.
 
   ;; Message string or vector to join as string
   ["Something interesting happened!" formatted])
+```
 
+</details>
+
+<details><summary>Filter signals</summary><br/>
+
+```clojure
 ;; Set minimum level
 (t/set-min-level!       :warn) ; For all    signals
 (t/set-min-level! :log :debug) ; For `log!` signals only
@@ -114,6 +124,57 @@ It enables you to write code that is **information-verbose by default**.
 
 ;; See `t/help:filters` docstring for more filtering options
 ```
+
+</details>
+
+<details><summary>Add handlers</summary><br/>
+
+```clojure
+;; Add your own signal handler
+(t/add-handler! :my-handler
+  (fn
+    ([signal] (println signal))
+    ([] (println "Handler has shut down"))))
+
+;; Use `add-handler!` to set handler-level filtering and back-pressure
+(t/add-handler! :my-handler
+  (fn
+    ([signal] (println signal))
+    ([] (println "Handler has shut down")))
+
+  {:async {:mode :dropping, :buffer-size 1024, :n-threads 1}
+   :priority    100
+   :sample-rate 0.5
+   :min-level   :info
+   :ns-filter   {:disallow "taoensso.*"}
+   :rate-limit  {"1 per sec" [1 1000]}
+   ;; See `t/help:handler-dispatch-options` for more
+   })
+
+;; See current handlers
+(t/get-handlers) ; => {<handler-id> {:keys [handler-fn handler-stats_ dispatch-opts]}}
+
+;; Add built-in console handler to print human-readable output
+(t/add-handler! :my-handler
+  (t/handler:console
+    {:output-fn (t/format-signal-fn {})}))
+
+;; Add built-in console handler to print edn output
+(t/add-handler! :my-handler
+  (t/handler:console
+    {:output-fn (t/pr-signal-fn {:pr-fn :edn})}))
+
+;; Add built-in console handler to print JSON output
+;; Ref.  <https://github.com/metosin/jsonista> (or any alt JSON lib)
+#?(:clj (require '[jsonista.core :as jsonista]))
+(t/add-handler! :my-handler
+  (t/handler:console
+    {:output-fn
+     #?(:cljs :json ; Use js/JSON.stringify
+        :clj   jsonista/write-value-as-string)}))
+```
+
+</details>
 
 ## Why Telemere?
 
@@ -155,55 +216,6 @@ See for intro and basic usage:
 <a href="https://www.youtube.com/watch?v=-L9irDG8ysM" target="_blank">
  <img src="https://img.youtube.com/vi/-L9irDG8ysM/maxresdefault.jpg" alt="Telemere demo video" width="480" border="0" />
 </a>
-
-## More examples
-
-```clojure
-;; Add your own signal handler
-(t/add-handler! :my-handler
-  (fn
-    ([signal] (println signal))
-    ([] (println "Shut down handler"))))
-
-;; Use `add-handler!` to set handler-level filtering and back-pressure
-(t/add-handler! :my-handler
-  (fn
-    ([signal] (println signal))
-    ([] (println "Shut down handler")))
-
-  {:async {:mode :dropping, :buffer-size 1024, :n-threads 1}
-   :priority    100
-   :sample-rate 0.5
-   :min-level   :info
-   :ns-filter   {:disallow "taoensso.*"}
-   :rate-limit  {"1 per sec" [1 1000]}
-   ;; See `t/help:handler-dispatch-options` for more
-   })
-
-;; See current handlers
-(t/get-handlers) ; => {<handler-id> {:keys [handler-fn handler-stats_ dispatch-opts]}}
-
-;; Add built-in console handler to print human-readable output
-(t/add-handler! :my-handler
-  (t/handler:console
-    {:output-fn (t/format-signal-fn {})}))
-
-;; Add built-in console handler to print edn output
-(t/add-handler! :my-handler
-  (t/handler:console
-    {:output-fn (t/pr-signal-fn {:pr-fn :edn})}))
-
-;; Add built-in console handler to print JSON output
-;; Ref.  <https://github.com/metosin/jsonista> (or any alt JSON lib)
-#?(:clj (require '[jsonista.core :as jsonista]))
-(t/add-handler! :my-handler
-  (t/handler:console
-    {:output-fn
-     #?(:cljs :json ; Use js/JSON.stringify
-        :clj   jsonista/write-value-as-string)}))
-```
-
-See [examples.cljc](https://github.com/taoensso/telemere/blob/master/examples.cljc) for REPL-ready snippets!
 
 ## API overview
 
