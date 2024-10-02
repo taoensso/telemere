@@ -10,7 +10,7 @@
   :scm {:name "git" :url "https://github.com/taoensso/telemere"}
 
   :dependencies
-  [[com.taoensso/encore "3.122.0-SNAPSHOT"]]
+  [[com.taoensso/encore "3.127.0"]]
 
   :test-paths ["test" #_"src"]
 
@@ -56,11 +56,11 @@
      #_[org.slf4j/slf4j-nop             "2.0.16"]
 
      ;;; For optional handlers
-     [io.opentelemetry/opentelemetry-api                         "1.42.1"]
-     [io.opentelemetry/opentelemetry-sdk-extension-autoconfigure "1.42.1"]
-     [io.opentelemetry/opentelemetry-exporter-otlp               "1.42.1"]
+     [io.opentelemetry/opentelemetry-api                         "1.43.0"]
+     [io.opentelemetry/opentelemetry-sdk-extension-autoconfigure "1.43.0"]
+     [io.opentelemetry/opentelemetry-exporter-otlp               "1.43.0"]
      #_[io.opentelemetry/opentelemetry-exporters-jaeger           "0.9.1"]
-     [metosin/jsonista       "0.3.10"]
+     [metosin/jsonista       "0.3.11"]
      [com.draines/postal     "2.0.5"]
      [org.julienxx/clj-slack "0.8.3"]]
 

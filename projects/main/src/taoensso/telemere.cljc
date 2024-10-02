@@ -24,13 +24,13 @@
         ;; Via `sigs/def-api`
         without-filters with-kind-filter with-ns-filter with-id-filter
         with-min-level with-handler with-handler+
-        with-ctx with-ctx+ with-middleware]])))
+        with-ctx with-ctx+ with-middleware with-middleware+]])))
 
 (comment
   (remove-ns 'taoensso.telemere)
   (:api (enc/interns-overview)))
 
-(enc/assert-min-encore-version [3 121 0])
+(enc/assert-min-encore-version [3 127 0])
 
 ;;;; TODO
 ;; - Solution and docs for lib authors
