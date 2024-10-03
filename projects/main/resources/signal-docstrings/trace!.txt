@@ -8,7 +8,7 @@ When filtering conditions are met [4], creates a Telemere signal [3] and
 dispatches it to registered handlers for processing (e.g. writing to
 console/file/queue/db, etc.).
 
-`form` is generally expected to be synchronous and eager (not a lazy seq,
+`form` arg is generally expected to be synchronous and eager (not a lazy seq,
 async call, or IOT code like a core.async `go` block, etc.).
 
 Examples:
@@ -40,6 +40,17 @@ Tips:
   - Default level is `:info`, not `:trace`! The name "trace" in "trace signal"
     refers to the general action of tracing program flow rather than to the
     common logging level of the same name.
+
+  - Runtime of async or lazy code in `form` will intentionally NOT be included
+    in resulting signal's `:run-nsecs` value. If you want to measure such
+    runtimes, make sure that your form wraps where the relevant costs are
+    actually realized. Compare:
+      (trace!  (delay (my-slow-code))) ; Doesn't measure slow code
+      (trace! @(delay (my-slow-code))) ; Does    measure slow code
+
+  - See also Tufte (https://www.taoensso.com/tufte) for a complementary/partner
+    Clj/s library that offers more advanced performance measurment and shares
+    the same signal engine (filtering and handler API) as Telemere.
 
 ----------------------------------------------------------------------
 [1] See `help:signal-creators` - (`signal!`, `log!`, `event!`, ...)
