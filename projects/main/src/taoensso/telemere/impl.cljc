@@ -490,8 +490,8 @@
              extra-opts? (and extra-arg? (map? extra-arg))]
 
        :do
-       (cond
-         (map? main-arg)
+       (enc/cond
+         (and (map? main-arg) (not extra-arg?))
          (bad-args! "single map arg is USUALLY a mistake, so isn't allowed. Please use 2 arg arity instead, or `signal!`." {})
 
          (and extra-opts? (contains? extra-arg main-key))
