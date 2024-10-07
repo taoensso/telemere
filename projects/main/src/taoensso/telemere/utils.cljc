@@ -253,7 +253,7 @@
      ^java.io.File [file]
      (let [file (as-file  file)]
        (when-not (.exists file)
-         (when-let [parent (.getParentFile file)] (.mkdirs parent))
+         (when-let [parent (.getParentFile (.getCanonicalFile file))] (.mkdirs parent))
          (.createNewFile file))
 
        (if (.canWrite file)
