@@ -51,7 +51,7 @@ Note that handler middleware in particular is an often overlooked but powerful f
 
 ## Handler-specific opts
 
-Handler-specific opts are specified when calling a particular **handler constructor** (like [`handler:console`](https://cljdoc.org/d/com.taoensso/telemere/CONSOLE/api/taoensso.telemere#handler:console)) - and documented by the constructor.
+Handler-specific opts are specified when calling a particular **handler constructor** (like [`handler:console`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#handler:console)) - and documented by the constructor.
 
 Note that it's common for Telemere handlers to be customized by providing *Clojure/Script functions* to the relevant handler constructor call.
 
