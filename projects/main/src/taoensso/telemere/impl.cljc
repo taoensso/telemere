@@ -271,7 +271,7 @@
   sigs/IFilterableSignal
   (allow-signal? [_ sig-filter] (sig-filter kind ns id level))
   (signal-value  [_ handler-sample-rate]
-    (let [sig-val @signal-value_]
+    (let [sig-val (force signal-value_)]
       (or
         (when handler-sample-rate
           (when (map? sig-val)
@@ -281,6 +281,13 @@
                 (double handler-sample-rate)
                 (double (or (get sig-val :sample-rate) 1.0))))))
         sig-val))))
+
+(defn wrap-signal
+  "Used by `taoensso.telemere/dispatch-signal!`."
+  [signal]
+  (when (map? signal)
+    (let [{:keys     [ns kind id level]} signal]
+      (WrappedSignal. ns kind id level   signal))))
 
 ;;;; Handlers
 
@@ -361,9 +368,10 @@
         (if last-only?
           (vreset! vol_                  sv)
           (vswap!  vol_ #(conj (or % []) sv))))
-      (when trap? :stop))
+      (when trap? :trapped))
 
-    (sigs/call-handlers! *sig-handlers* signal)))
+    (sigs/call-handlers! *sig-handlers* signal)
+    :dispatched))
 
 ;;;; Signal API helpers
 

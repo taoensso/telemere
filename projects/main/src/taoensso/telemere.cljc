@@ -362,6 +362,25 @@
              (handler            thread throwable)))))
      nil))
 
+;;;;
+
+(defn dispatch-signal!
+  "Dispatches given signal to registered handlers, supports `with-signal/s`.
+  Normally called automatically (internally) by signal creators, this util
+  is provided publicly since it's also handy for manually re/dispatching
+  custom/modified signals, etc.:
+
+    (let [original-signal (with-signal :trap (event! ::my-id1))
+          modified-signal (assoc original-signal :id ::my-id2)]
+      (dispatch-signal! modified-signal))"
+
+  [signal]
+  (when-let [wrapped-signal (impl/wrap-signal signal)]
+    (impl/dispatch-signal! wrapped-signal)))
+
+(comment (dispatch-signal! (assoc (with-signal :trap (log! "hello")) :level :warn)))
+
+
 ;;;; Interop
 
 #?(:clj
