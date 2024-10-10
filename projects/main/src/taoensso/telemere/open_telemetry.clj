@@ -30,7 +30,7 @@
 
 ;;;; Attributes
 
-(def ^:private ^String attr-name
+(def ^String attr-name
   "Returns cached OpenTelemetry-style name: `:a.b/c-d` -> \"a.b.c_d\", etc.
   Ref. <https://opentelemetry.io/docs/specs/semconv/general/attribute-naming/>."
   (enc/fmemoize
@@ -82,10 +82,10 @@
     (when-let [^String s (enc/catching :common (enc/pr-edn* v))]
       (.put ab k s))))
 
-(defmacro ^:private put-attr! [attr-builder attr-name attr-val]
+(defmacro put-attr! [attr-builder attr-name attr-val]
   `(-put-attr! ~attr-val ~attr-name ~attr-builder)) ; Fix arg order
 
-(defn- merge-attrs!
+(defn merge-attrs!
   "If given a map, merges prefixed key/values (~like `into`).
   Otherwise just puts single named value."
   [attr-builder name-or-prefix x]
@@ -120,7 +120,7 @@
       :report "INFO4"
       (str level))))
 
-(defn- signal->attrs
+(defn signal->attrs
   "Returns `Attributes` for given signal.
   Ref. <https://opentelemetry.io/docs/specs/otel/logs/data-model/>."
   ^Attributes [signal]
