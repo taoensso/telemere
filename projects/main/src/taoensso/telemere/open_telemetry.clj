@@ -46,7 +46,7 @@
 (comment (enc/qb 1e6 (attr-name :a.b/c-d) (attr-name :x.y/z :a.b/c-d))) ; [44.13 63.19]
 
 ;; AttributeTypes: String, Long, Double, Boolean, and arrays
-(defprotocol     ^:private IAttributesBuilder (^:private -put-attr! ^AttributesBuilder [attr-val attr-name attr-builder]))
+(defprotocol     ^:private IAttributesBuilder (^:private -put-attr! ^AttributesBuilder [attr-val attr-name attrs-builder]))
 (extend-protocol           IAttributesBuilder
   ;; nil             (-put-attr! [v ^String k ^AttributesBuilder ab] (.put ab k     "nil"))  ; As pr-edn*
   nil                (-put-attr! [v ^String k ^AttributesBuilder ab]       ab             )  ; Noop
@@ -66,6 +66,7 @@
   clojure.lang.IPersistentCollection
   (-put-attr! [v ^String k ^AttributesBuilder ab]
     (when-some [v1 (if (indexed? v) (nth v 0 nil) (first v))]
+      ;; Ignores nested maps
       (or
         (cond
           (string?  v1) (enc/catching :common (.put ab k ^"[Ljava.lang.String;" (into-array String v)))
@@ -82,16 +83,26 @@
     (when-let [^String s (enc/catching :common (enc/pr-edn* v))]
       (.put ab k s))))
 
-(defmacro ^:private put-attr! [attr-builder attr-name attr-val]
-  `(-put-attr! ~attr-val ~attr-name ~attr-builder)) ; Fix arg order
+(defmacro ^:private put-attr! [attrs-builder attr-name attr-val]
+  `(-put-attr! ~attr-val ~attr-name ~attrs-builder)) ; Fix arg order
+
+(defn- put-attrs!
+  [^AttributesBuilder attrs-builder attrs]
+  (cond
+    (map?                 attrs) (enc/run-kv! (fn [k v] (put-attr! attrs-builder (attr-name k) v)) attrs) ; Unprefixed
+    (instance? Attributes attrs)                        (.putAll   attrs-builder ^Attributes       attrs) ; Unprefixed
+    :else
+    (enc/unexpected-arg! attrs
+      {:context `put-attrs!
+       :expected #{nil map io.opentelemetry.api.common.Attributes}})))
 
 (defn- merge-attrs!
   "If given a map, merges prefixed key/values (~like `into`).
   Otherwise just puts single named value."
-  [attr-builder name-or-prefix x]
+  [attrs-builder name-or-prefix x]
   (if (map? x)
-    (enc/run-kv! (fn [k v] (put-attr! attr-builder (attr-name name-or-prefix k) v)) x)
-    (do                    (put-attr! attr-builder            name-or-prefix        x))))
+    (enc/run-kv! (fn [k v] (put-attr! attrs-builder (attr-name name-or-prefix k) v)) x)
+    (do                    (put-attr! attrs-builder            name-or-prefix        x))))
 
 ;;;; Handler
 
@@ -171,16 +182,10 @@
       (put-attr! ab "root.id"  id)
       (put-attr! ab "root.uid" uid))
 
-    (when-let [ctx   (get signal :ctx)]  (merge-attrs! ab "ctx"  ctx))
-    (when-let [data  (get signal :data)] (merge-attrs! ab "data" data))
-    (when-let [attrs (get signal :otel/attrs)] ; Undocumented
-      (cond
-        (map? attrs) (enc/run-kv! (fn [k v] (put-attr! ab (attr-name k) v)) attrs) ; Unprefixed
-        (instance? Attributes attrs) (.putAll ab ^Attributes attrs)                ; Unprefixed
-        :else
-        (enc/unexpected-arg! attrs
-          {:context `signal->attrs!
-           :expected #{nil map io.opentelemetry.api.common.Attributes}})))
+    (when-let [ctx   (get signal :ctx)]            (merge-attrs! ab "ctx"  ctx))
+    (when-let [data  (get signal :data)]           (merge-attrs! ab "data" data))
+    (when-let [attrs (get signal :otel/attrs)]     (put-attrs!   ab attrs))
+    (when-let [attrs (get signal :otel/log-attrs)] (put-attrs!   ab attrs))
 
     (.build ab)))
 
@@ -193,15 +198,30 @@
 (let [ak-ns   (io.opentelemetry.api.common.AttributeKey/stringKey "ns")
       ak-line (io.opentelemetry.api.common.AttributeKey/longKey   "line")]
 
-  (defn- basic-span-attrs
+  (defn- span-attrs
     "Returns `?Attributes`."
     [signal]
-    (when-let [ns   (get signal :ns)]
-      (if-let [line (get signal :line)]
-        (Attributes/of ak-ns ns, ak-line (long line))
-        (Attributes/of ak-ns ns)))))
+    (let [common-attrs (get signal :otel/attrs)
+          trace-attrs  (get signal :otel/trace-attrs)]
 
-(comment (enc/qb 1e6 (basic-span-attrs {:ns "ns1" :line 495}))) ; 52.4
+      (if (or common-attrs trace-attrs)
+        (let [ab (Attributes/builder)]
+          (when-let [ns   (get signal :ns)]    (.put ab "ns"   (str  ns)))
+          (when-let [line (get signal :line)]  (.put ab "line" (long line)))
+          (when-let [attrs common-attrs] (put-attrs! ab attrs))
+          (when-let [attrs  trace-attrs] (put-attrs! ab attrs))
+          (.build ab))
+
+        ;; Common case
+        (when-let [ns   (get signal :ns)]
+          (if-let [line (get signal :line)]
+            (Attributes/of ak-ns ns, ak-line (long line))
+            (Attributes/of ak-ns ns)))))))
+
+(comment
+  (enc/qb 1e6 (span-attrs {:ns "ns1" :line 495})) ; 54.31
+  (span-attrs {:ns "ns1", :otel/attrs {:foo :bar}})
+  (span-attrs {:ns "ns1", :otel/attrs {:foo [5 :a :b]}}))
 
 (defn handler:open-telemetry
   "Highly experimental, possibly buggy, and subject to change!!
@@ -220,7 +240,16 @@
 
   Options:
     `:logger-provider` - nil or `io.opentelemetry.api.logs.LoggerProvider`,
-      (see `telemere/otel-default-providers_` for default)."
+      (see `telemere/otel-default-providers_` for default).
+
+  Optional signal keys:
+    `:otel/attrs`       - Attributes [1] to add to log records AND tracing spans/events
+    `:otel/log-attrs`   - Attributes [1] to add to log records ONLY
+    `:otel/trace-attrs` - Attributes [1] to add to tracing spans/events ONLY
+
+  [1] `io.opentelemetry.api.common.Attributes` or Clojure map with str/kw keys and vals ∈
+      #{nil boolean keyword string UUID long double string-vec long-vec double-vec boolean-vec}.
+      (Nested) map vals will be ignored!"
 
   ;; Notes:
   ;; - Multi-threaded handlers may see signals ~out of order
@@ -278,7 +307,7 @@
                       (enc/if-not [end-inst (get signal :end-inst)]
                         ;; No end-inst => no run-form => add `Event` to span (parent)
                         (let [{:keys [id ^java.time.Instant inst]} signal]
-                          (if-let [^Attributes attrs (basic-span-attrs signal)]
+                          (if-let [^Attributes attrs (span-attrs signal)]
                             (.addEvent span (impl/otel-name id) attrs inst)
                             (.addEvent span (impl/otel-name id)       inst)))
 
@@ -288,7 +317,7 @@
                             (.setStatus span io.opentelemetry.api.trace.StatusCode/ERROR)
                             (.setStatus span io.opentelemetry.api.trace.StatusCode/OK))
 
-                          (when-let [^Attributes attrs (basic-span-attrs signal)]
+                          (when-let [^Attributes attrs (span-attrs signal)]
                             (.setAllAttributes span attrs))
 
                           ;; Error stuff
