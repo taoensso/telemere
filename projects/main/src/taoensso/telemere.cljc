@@ -141,20 +141,22 @@
              Env variable: `TAOENSSO_TELEMERE_otel-tracing`
        Classpath resource: `taoensso.telemere.otel-tracing`
 
-     See also: `otel-get-default-providers`, `*otel-tracer*`,
+     See also: `otel-default-providers_`, `*otel-tracer*`,
        `taoensso.telemere.open-telemere/handler:open-telemetry`.
 
      [1] Ref. <https://github.com/open-telemetry/opentelemetry-java>"
      impl/enabled:otel-tracing?))
 
 #?(:clj
-   (defn otel-get-default-providers
+   (def otel-default-providers_
      "Experimental, subject to change. Feedback welcome!
 
-     When OpenTelemetry Java API [1] is present, returns map with keys:
-       :logger-provider - default `io.opentelemetry.api.logs.LoggerProvider`
-       :tracer-provider - default `io.opentelemetry.api.trace.TracerProvider`
-       :via             - ∈ #{:sdk-extension-autoconfigure :global}
+     When OpenTelemetry Java API [1] is present, value will be a delayed map
+     with keys:
+       :logger-provider     - default `io.opentelemetry.api.logs.LoggerProvider`
+       :tracer-provider     - default `io.opentelemetry.api.trace.TracerProvider`
+       :via                 - ∈ #{:sdk-extension-autoconfigure :global}
+       :auto-configured-sdk - `io.opentelemetry.sdk.OpenTelemetrySdk` or nil
 
      Uses `AutoConfiguredOpenTelemetrySdk` when possible, or
      `GlobalOpenTelemetry` otherwise.
@@ -162,34 +164,33 @@
      See the relevant OpenTelemetry Java docs for details.
 
      [1] Ref. <https://github.com/open-telemetry/opentelemetry-java>"
-     []
      (enc/compile-when impl/present:otel?
-       (or
-         ;; Via SDK autoconfiguration extension (when available)
-         (enc/compile-when
-           io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk
-           (enc/catching :common
-             (let [builder (io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk/builder)
-                   sdk    (.getOpenTelemetrySdk (.build builder))]
-               {:logger-provider (.getLogsBridge     sdk)
-                :tracer-provider (.getTracerProvider sdk)
-                :via :sdk-extension-autoconfigure})))
+       (delay
+         (or
+           ;; Via SDK autoconfiguration extension (when available)
+           (enc/compile-when
+             io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk
+             (enc/catching :common
+               (let [builder (io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk/builder)
+                     sdk    (.getOpenTelemetrySdk (.build builder))]
+                 {:logger-provider (.getLogsBridge     sdk)
+                  :tracer-provider (.getTracerProvider sdk)
+                  :via :sdk-extension-autoconfigure
+                  :auto-configured-sdk sdk})))
 
-         ;; Via Global (generally not recommended)
-         (let [g (io.opentelemetry.api.GlobalOpenTelemetry/get)]
-           {:logger-provider (.getLogsBridge     g)
-            :tracer-provider (.getTracerProvider g)
-            :via :global})))))
-
-#?(:clj
-   (def ^:no-doc otel-default-providers_
-     (when impl/present:otel? (delay (otel-get-default-providers)))))
+           ;; Via Global (generally not recommended)
+           (let [g (io.opentelemetry.api.GlobalOpenTelemetry/get)]
+             {:logger-provider (.getLogsBridge     g)
+              :tracer-provider (.getTracerProvider g)
+              :via :global}))))))
 
 #?(:clj
    (def ^:dynamic ^:no-doc *otel-tracer*
      "OpenTelemetry `Tracer` to use for Telemere's tracing signal creators
      (`trace!`, `span!`, etc.), ∈ #{nil io.opentelemetry.api.trace.Tracer Delay}.
-     See also `otel-tracing?`, `otel-get-default-providers`."
+
+     Defaults to the provider in `otel-default-providers_`.
+     See also `otel-tracing?`."
      (enc/compile-when impl/enabled:otel-tracing?
        (delay
          (when-let [^io.opentelemetry.api.trace.TracerProvider p
