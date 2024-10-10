@@ -30,7 +30,7 @@
 
 ;;;; Attributes
 
-(def ^:private ^String attr-name
+(def ^String attr-name
   "Returns cached OpenTelemetry-style name: `:a.b/c-d` -> \"a.b.c_d\", etc.
   Ref. <https://opentelemetry.io/docs/specs/semconv/general/attribute-naming/>."
   (enc/fmemoize
@@ -82,10 +82,10 @@
     (when-let [^String s (enc/catching :common (enc/pr-edn* v))]
       (.put ab k s))))
 
-(defmacro ^:private put-attr! [attr-builder attr-name attr-val]
+(defmacro put-attr! [attr-builder attr-name attr-val]
   `(-put-attr! ~attr-val ~attr-name ~attr-builder)) ; Fix arg order
 
-(defn- merge-attrs!
+(defn merge-attrs!
   "If given a map, merges prefixed key/values (~like `into`).
   Otherwise just puts single named value."
   [attr-builder name-or-prefix x]
@@ -120,7 +120,7 @@
       :report "INFO4"
       (str level))))
 
-(defn- signal->attrs
+(defn signal->attrs
   "Returns `Attributes` for given signal.
   Ref. <https://opentelemetry.io/docs/specs/otel/logs/data-model/>."
   ^Attributes [signal]
@@ -220,7 +220,10 @@
 
   Options:
     `:logger-provider` - nil or `io.opentelemetry.api.logs.LoggerProvider`,
-      (see `telemere/otel-default-providers_` for default)."
+      (see `telemere/otel-default-providers_` for default).
+    `:emit-tracing?` - set to `false` to disable tracing.
+    `:signal->span-attrs-fn` - fn of signal -> `io.opentelemetry.api.common.Attributes`,
+      adds the returned `Attributes` to a span."
 
   ;; Notes:
   ;; - Multi-threaded handlers may see signals ~out of order
@@ -228,8 +231,9 @@
   ;; - `:otel/attrs`, `:otel/context` currently undocumented
 
   ([] (handler:open-telemetry nil))
-  ([{:keys [emit-tracing? logger-provider]
-     :or   {emit-tracing? true}}]
+  ([{:keys [emit-tracing? logger-provider signal->span-attrs-fn]
+     :or   {emit-tracing? true
+            signal->span-attrs-fn (constantly nil)}}]
 
    (let [?logger-provider
          (if (not= logger-provider :default)
@@ -289,6 +293,9 @@
                             (.setStatus span io.opentelemetry.api.trace.StatusCode/OK))
 
                           (when-let [^Attributes attrs (basic-span-attrs signal)]
+                            (.setAllAttributes span attrs))
+
+                          (when-let [^Attributes attrs (signal->span-attrs-fn signal)]
                             (.setAllAttributes span attrs))
 
                           ;; Error stuff
