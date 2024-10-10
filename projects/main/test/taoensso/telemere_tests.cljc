@@ -671,6 +671,10 @@
   (testing "Signals in go macros"
     [(async/go (tel/log! "hello"))]))
 
+(deftest _dispatch-signal!
+  [(sm? (tel/with-signal (tel/dispatch-signal! (assoc (tel/with-signal :trap (tel/log! "hello")) :level :warn)))
+     {:kind :log, :level :warn, :line :submap/some})])
+
 #?(:clj
    (deftest _uncaught->handler!
      (let [p (promise)]
