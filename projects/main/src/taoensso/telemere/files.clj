@@ -7,7 +7,7 @@
 
 (comment
   (require  '[taoensso.telemere :as tel])
-  (remove-ns 'taoensso.telemere.files)
+  (remove-ns (symbol (str *ns*)))
   (:api (enc/interns-overview)))
 
 ;;;; Implementation

@@ -9,7 +9,7 @@
 
 (comment
   (require  '[taoensso.telemere :as t] '[taoensso.encore :as enc])
-  (remove-ns 'taoensso.telemere.shell)
+  (remove-ns (symbol (str *ns*)))
   (:api (enc/interns-overview)))
 
 ;;;; Private

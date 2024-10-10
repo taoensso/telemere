@@ -12,7 +12,7 @@
       [taoensso.telemere.impl :refer [with-signal]])))
 
 (comment
-  (remove-ns 'taoensso.telemere.impl)
+  (remove-ns (symbol (str *ns*)))
   (:api (enc/interns-overview)))
 
 #?(:clj

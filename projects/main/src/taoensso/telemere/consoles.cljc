@@ -7,7 +7,7 @@
 
 (comment
   (require  '[taoensso.telemere :as tel])
-  (remove-ns 'taoensso.telemere.consoles)
+  (remove-ns (symbol (str *ns*)))
   (:api (enc/interns-overview)))
 
 #?(:clj

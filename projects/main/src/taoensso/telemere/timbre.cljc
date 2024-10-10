@@ -8,7 +8,7 @@
    [taoensso.telemere      :as tel]))
 
 (comment
-  (remove-ns 'taoensso.telemere.timbre)
+  (remove-ns (symbol (str *ns*)))
   (:api (enc/interns-overview)))
 
 (let [arg-str

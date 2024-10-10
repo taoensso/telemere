@@ -8,7 +8,7 @@
 
 (comment
   (require  '[taoensso.telemere :as tel])
-  (remove-ns 'taoensso.telemere.postal)
+  (remove-ns (symbol (str *ns*)))
   (:api (enc/interns-overview)))
 
 (defn signal-subject-fn
@@ -37,7 +37,7 @@
          (when id    (s+spc (utils/format-id nil id)))
          (when-let [msg (force msg_)] (s+spc "- " msg))
 
-         (enc/get-substr-by-len (str sb) 0 max-len))))))
+         (enc/substr (str sb) 0 max-len))))))
 
 (comment ((signal-subject-fn) (tel/with-signal (tel/event! ::ev-id1 #_{:postal/subject "My subject"}))))
 

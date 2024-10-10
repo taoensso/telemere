@@ -27,13 +27,12 @@
         with-ctx with-ctx+ with-middleware with-middleware+]])))
 
 (comment
-  (remove-ns 'taoensso.telemere)
+  (remove-ns (symbol (str *ns*)))
   (:api (enc/interns-overview)))
 
 (enc/assert-min-encore-version [3 127 0])
 
 ;;;; TODO
-;; - Solution and docs for lib authors
 ;; - Update Tufte  (signal API, config API, signal keys, etc.)
 ;; - Update Timbre (signal API, config API, signal keys, backport improvements)
 
@@ -46,7 +45,8 @@
    :*sig-handlers*  impl/*sig-handlers*
    :lib-dispatch-opts
    (assoc sigs/default-handler-dispatch-opts
-     :convey-bindings? false)})
+     :convey-bindings? false ; Handled manually
+     )})
 
 ;;;; Aliases
 
@@ -87,7 +87,7 @@
 ;;;; Unique ids
 
 (def ^:dynamic *uid-fn*
-  "Experimental, subject to change.
+  "Experimental, subject to change. Feedback welcome!
   (fn [root?]) used to generate signal `:uid` values (unique instance ids)
   when tracing.
 
@@ -186,7 +186,9 @@
 
 #?(:clj
    (def ^:dynamic ^:no-doc *otel-tracer*
-     "OpenTelemetry `Tracer` to use for Telemere's tracing signal creators
+     "Experimental, subject to change. Feedback welcome!
+
+     OpenTelemetry `Tracer` to use for Telemere's tracing signal creators
      (`trace!`, `span!`, etc.), ∈ #{nil io.opentelemetry.api.trace.Tracer Delay}.
 
      Defaults to the provider in `otel-default-providers_`.

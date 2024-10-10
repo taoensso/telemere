@@ -16,7 +16,7 @@
    [io.opentelemetry.api.trace TracerProvider]))
 
 (comment
-  (remove-ns 'taoensso.telemere.open-telemetry)
+  (remove-ns (symbol (str *ns*)))
   (:api (enc/interns-overview)))
 
 (enc/declare-remote
@@ -355,7 +355,7 @@
               (when-let [^io.opentelemetry.context.Context tracing-context ?tracing-context]
                 (.setContext lrb tracing-context)) ; Incl. traceId, spanId, etc.
 
-              (when-let [body
+              (when-let [^String body
                          (or
                            (force msg_)
                            (when-let [error (get signal :error)]

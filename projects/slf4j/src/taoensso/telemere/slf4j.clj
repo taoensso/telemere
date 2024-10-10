@@ -25,6 +25,8 @@
    [org.slf4j Logger]
    [com.taoensso.telemere.slf4j TelemereLogger]))
 
+(comment (remove-ns (symbol (str *ns*))))
+
 ;;;; Utils
 
 (defmacro ^:private when-debug [& body] (when #_true false `(do ~@body)))

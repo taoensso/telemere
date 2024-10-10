@@ -11,7 +11,7 @@
 
 (comment
   (require  '[taoensso.telemere :as tel])
-  (remove-ns 'taoensso.telemere.sockets)
+  (remove-ns (symbol (str *ns*)))
   (:api (enc/interns-overview)))
 
 (defn handler:tcp-socket
