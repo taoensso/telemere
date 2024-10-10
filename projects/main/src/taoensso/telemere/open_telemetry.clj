@@ -222,6 +222,8 @@
     `:logger-provider` - nil or `io.opentelemetry.api.logs.LoggerProvider`,
       (see `telemere/otel-default-providers_` for default).
     `:emit-tracing?` - set to `false` to disable tracing.
+    `:signal->span-attrs-fn` - fn of signal -> `io.opentelemetry.api.common.Attributes`,
+      adds the returned `Attributes` to a span."
 
   ;; Notes:
   ;; - Multi-threaded handlers may see signals ~out of order
@@ -229,8 +231,9 @@
   ;; - `:otel/attrs`, `:otel/context` currently undocumented
 
   ([] (handler:open-telemetry nil))
-  ([{:keys [emit-tracing? logger-provider]
-     :or   {emit-tracing? true}}]
+  ([{:keys [emit-tracing? logger-provider signal->span-attrs-fn]
+     :or   {emit-tracing? true
+            signal->span-attrs-fn (constantly nil)}}]
 
    (let [?logger-provider
          (if (not= logger-provider :default)
@@ -290,6 +293,9 @@
                             (.setStatus span io.opentelemetry.api.trace.StatusCode/OK))
 
                           (when-let [^Attributes attrs (basic-span-attrs signal)]
+                            (.setAllAttributes span attrs))
+
+                          (when-let [^Attributes attrs (signal->span-attrs-fn signal)]
                             (.setAllAttributes span attrs))
 
                           ;; Error stuff
