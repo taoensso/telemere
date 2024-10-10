@@ -220,7 +220,7 @@
 
   Options:
     `:logger-provider` - nil or `io.opentelemetry.api.logs.LoggerProvider`,
-      (see `telemere/get-default-providers` for default)."
+      (see `telemere/otel-default-providers_` for default)."
 
   ;; Notes:
   ;; - Multi-threaded handlers may see signals ~out of order
