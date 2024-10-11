@@ -232,39 +232,51 @@
             (is (= @c  16)  "6x run + 6x let (0x suppressed) + 4x data (2x suppressed)")]))))
 
    (testing "Dynamic bindings, etc."
-     [(binding[#?@(:clj [impl/*sig-spy-off-thread?* true])
-               *dynamic-var* "foo"
-               tel/*ctx*     "bar"]
-        (let [sv (with-sig (sig! {:level :info, :data {:*dynamic-var* *dynamic-var*, :*ctx* tel/*ctx*}}))]
-          (is (sm? sv                          {:data {:*dynamic-var* "foo",         :*ctx* "bar"}})
-            "Retain dynamic bindings in place at time of signal call")))
+     [(let [sv
+            (binding[#?@(:clj [impl/*sig-spy-off-thread?* true])
+                     *dynamic-var* "dynamic-val"
+                     tel/*ctx*     "ctx-val"]
+              (with-sig (sig! {:level :info, :data {:*dynamic-var* *dynamic-var*, :*ctx* tel/*ctx*}})))]
+        (is (sm? sv                         {:data {:*dynamic-var* "dynamic-val", :*ctx* "ctx-val"}})
+          "Retain dynamic bindings in place at time of signal call"))
 
       (let [sv (with-sig (sig! {:level :info, :ctx "my-ctx"}))]
-        (is (sm? sv {:ctx "my-ctx"}) "`*ctx*` can be overridden via call opt"))])
+        (is (sm? sv {:ctx "my-ctx"}) "`*ctx*` can be overridden via call opt"))
 
-   (testing "Dynamic middleware (`*middleware*`)"
-     [(is (sm? (tel/with-middleware nil               (with-sig (sig! {:level :info                 })))               {:level :info                 }) "nil middleware ~ identity")
-      (is (sm? (tel/with-middleware identity          (with-sig (sig! {:level :info                 })))               {:level :info                 }) "nil middleware ~ identity")
-      (is (sm? (tel/with-middleware #(assoc % :foo 1) (with-sig (sig! {:level :info                 })))               {:level :info, :foo 1         }))
-      (is (sm? (tel/with-middleware #(assoc % :foo 1) (with-sig (sig! {:level :info, :middleware #(assoc % :foo 2)}))) {:level :info, :foo 2         }) "call > dynamic")
-      (is (sm? (tel/with-middleware #(assoc % :foo 1) (with-sig (sig! {:level :info, :middleware nil})))               {:level :info, :foo :submap/nx}) "call > dynamic")
-      (is (=   (tel/with-middleware #(do nil)         (with-sig (sig! {:level :info                 })))               nil)                             "return nil => suppress")
-      (is (sm? (tel/with-middleware #(do nil)         (with-sig (sig! {:level :info, :middleware nil})))               {:level :info})                  "call > dynamic")])
+      (let [sv (binding [tel/*ctx* {:foo :bar}]
+                 (with-sig (sig! {:level :info, :ctx+ {:baz :qux}})))]
+        (is (sm? sv {:ctx {:foo :bar, :baz :qux}}) "`*ctx*` can be updated via call opt"))])
 
-   (testing "Call middleware"
-     (let [c               (enc/counter)
-           [[rv1 _] [sv1]] (with-sigs :raw nil (sig! {:level :info, :run (c), :middleware (tel/comp-middleware #(assoc % :m1 (c)) #(assoc % :m2 (c)))}))
-           [[rv2 _] [sv2]] (with-sigs :raw nil (sig! {:level :info, :run (c), :middleware (tel/comp-middleware #(assoc % :m1 (c)) #(assoc % :m2 (c))), :allow? false}))
-           [[rv3 _] [sv3]] (with-sigs :raw nil (sig! {:level :info, :run (c), :middleware (tel/comp-middleware #(assoc % :m1 (c)) #(assoc % :m2 (c)))}))
-           [[rv4 _] [sv4]] (with-sigs :raw nil (sig! {:level :info,           :middleware (fn [_] "signal-value")}))
-           [[rv5 _] [sv5]] (with-sigs :raw nil (sig! {:level :info,           :middleware (fn [_] nil)}))]
+   (testing "Middleware"
+     [(testing "Dynamic middleware (`*middleware*`)"
+        [(is (sm? (tel/with-middleware nil               (with-sig (sig! {:level :info                 })))               {:level :info                 }) "nil middleware ~ identity")
+         (is (sm? (tel/with-middleware identity          (with-sig (sig! {:level :info                 })))               {:level :info                 }) "nil middleware ~ identity")
+         (is (sm? (tel/with-middleware #(assoc % :foo 1) (with-sig (sig! {:level :info                 })))               {:level :info, :foo 1         }))
+         (is (sm? (tel/with-middleware #(assoc % :foo 1) (with-sig (sig! {:level :info, :middleware #(assoc % :foo 2)}))) {:level :info, :foo 2         }) "call > dynamic")
+         (is (sm? (tel/with-middleware #(assoc % :foo 1) (with-sig (sig! {:level :info, :middleware nil})))               {:level :info, :foo :submap/nx}) "call > dynamic")
+         (is (=   (tel/with-middleware #(do nil)         (with-sig (sig! {:level :info                 })))               nil)                             "return nil => suppress")
+         (is (sm? (tel/with-middleware #(do nil)         (with-sig (sig! {:level :info, :middleware nil})))               {:level :info})                  "call > dynamic")])
 
-       [(is (= rv1 0))    (is (sm? sv1 {:m1 1 :m2 2}))
-        (is (= rv2 3))    (is (nil?    sv2))
-        (is (= rv3 4))    (is (sm? sv3 {:m1 5 :m2 6}))
-        (is (= rv4 true)) (is (=       sv4 "signal-value"))
-        (is (= rv5 true)) (is (nil?    sv5))
-        (is (= @c  7)     "3x run + 4x middleware")]))
+      (testing "Call middleware"
+        (let [c               (enc/counter)
+              [[rv1 _] [sv1]] (with-sigs :raw nil (sig! {:level :info, :run (c), :middleware (tel/comp-middleware #(assoc % :m1 (c)) #(assoc % :m2 (c)))}))
+              [[rv2 _] [sv2]] (with-sigs :raw nil (sig! {:level :info, :run (c), :middleware (tel/comp-middleware #(assoc % :m1 (c)) #(assoc % :m2 (c))), :allow? false}))
+              [[rv3 _] [sv3]] (with-sigs :raw nil (sig! {:level :info, :run (c), :middleware (tel/comp-middleware #(assoc % :m1 (c)) #(assoc % :m2 (c)))}))
+              [[rv4 _] [sv4]] (with-sigs :raw nil (sig! {:level :info,           :middleware (fn [_] "signal-value")}))
+              [[rv5 _] [sv5]] (with-sigs :raw nil (sig! {:level :info,           :middleware (fn [_] nil)}))]
+
+          [(is (= rv1 0))    (is (sm? sv1 {:m1 1 :m2 2}))
+           (is (= rv2 3))    (is (nil?    sv2))
+           (is (= rv3 4))    (is (sm? sv3 {:m1 5 :m2 6}))
+           (is (= rv4 true)) (is (=       sv4 "signal-value"))
+           (is (= rv5 true)) (is (nil?    sv5))
+           (is (= @c  7)     "3x run + 4x middleware")]))
+
+      (testing "Mixed middleware"
+        [(let [sv
+               (binding [tel/*middleware* #(assoc % :foo true)]
+                 (with-sig (sig! {:level :info, :middleware+ #(assoc % :bar true)})))]
+           (is (sm? sv {:foo true, :bar true})))])])
 
    #?(:clj
       (testing "Printing"

@@ -385,16 +385,16 @@
        :signal! ; [opts] => allowed? / run result (value or throw)
        '([{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id, ; Undocumented
-            elidable? location #_location* inst uid middleware,
+            elidable? location #_location* inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
-            ctx parent root trace?, do let data msg error run & kvs]}])
+            ctx ctx+ parent root trace?, do let data msg error run & kvs]}])
 
        :signal-allowed?
        '([{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id, ; Undocumented
-            elidable? location #_location* #_inst #_uid #_middleware,
+            elidable? location #_location* #_inst #_uid #_middleware #_middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
-            #_ctx #_parent #_root #_trace?, #_do #_let #_data #_msg #_error #_run #_& #_kvs]}])
+            #_ctx #_ctx+ #_parent #_root #_trace?, #_do #_let #_data #_msg #_error #_run #_& #_kvs]}])
 
        :event! ; [id] [id level-or-opts] => allowed?
        '([id      ]
@@ -402,18 +402,18 @@
          [id
           {:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
-            elidable? location #_location* inst uid middleware,
+            elidable? location #_location* inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
-            ctx parent root trace?, do let data msg error #_run & kvs]}])
+            ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}])
 
        :log! ; [msg] [level-or-opts msg] => allowed?
        '([      msg]
          [level msg]
          [{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
-            elidable? location #_location* inst uid middleware,
+            elidable? location #_location* inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
-            ctx parent root trace?, do let data msg error #_run & kvs]}
+            ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}
           msg])
 
        :error! ; [error] [id-or-opts error] => given error
@@ -421,9 +421,9 @@
          [id error]
          [{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
-            elidable? location #_location* inst uid middleware,
+            elidable? location #_location* inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
-            ctx parent root trace?, do let data msg error #_run & kvs]}
+            ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}
           error])
 
        :trace! ; [form] [id-or-opts form] => run result (value or throw)
@@ -431,9 +431,9 @@
          [id form]
          [{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
-            elidable? location #_location* inst uid middleware,
+            elidable? location #_location* inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
-            ctx parent root trace?, do let data msg error run & kvs]}
+            ctx ctx+ parent root trace?, do let data msg error run & kvs]}
           form])
 
        :spy! ; [form] [level-or-opts form] => run result (value or throw)
@@ -441,9 +441,9 @@
          [level form]
          [{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
-            elidable? location #_location* inst uid middleware,
+            elidable? location #_location* inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
-            ctx parent root trace?, do let data msg error run & kvs]}
+            ctx ctx+ parent root trace?, do let data msg error run & kvs]}
           form])
 
        :catch->error! ; [form] [id-or-opts form] => run result (value or throw)
@@ -451,9 +451,9 @@
          [id form]
          [{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id, rethrow? catch-val,
-            elidable? location #_location* inst uid middleware,
+            elidable? location #_location* inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
-            ctx parent root trace?, do let data msg error #_run & kvs]}
+            ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}
           form])
 
        :uncaught->error! ; [] [id-or-opts] => nil
@@ -461,9 +461,9 @@
          [id]
          [{:as opts :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
-            elidable? location #_location* inst uid middleware,
+            elidable? location #_location* inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
-            ctx parent root trace?, do let data msg error #_run & kvs]}])
+            ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}])
 
        (enc/unexpected-arg! macro-id))))
 
@@ -637,15 +637,22 @@
                      let-form (or let-form '[])
                      msg-form (parse-msg-form msg-form)
 
-                     ctx-form        (get opts :ctx        `taoensso.telemere/*ctx*)
-                     middleware-form (get opts :middleware `taoensso.telemere/*middleware*)
+                     ctx-form
+                     (if-let [ctx+ (get opts :ctx+)]
+                       `(taoensso.encore.signals/update-ctx taoensso.telemere/*ctx* ~ctx+)
+                       (get opts :ctx                      `taoensso.telemere/*ctx*))
+
+                     middleware-form
+                     (if-let [middleware+ (get opts :middleware+)]
+                       `(taoensso.telemere/comp-middleware taoensso.telemere/*middleware* ~middleware+)
+                       (get opts :middleware              `taoensso.telemere/*middleware*))
 
                      kvs-form
                      (not-empty
                        (dissoc opts
-                         :elidable? :location :location* :inst :uid :middleware,
+                         :elidable? :location :location* :inst :uid :middleware :middleware+,
                          :sample-rate :ns :kind :id :level :filter :when #_:rate-limit #_:rate-limit-by,
-                         :ctx :parent #_:trace?, :do :let :data :msg :error :run,
+                         :ctx :ctx+ :parent #_:trace?, :do :let :data :msg :error :run,
                          :elide? :allow? #_:expansion-id :otel/context))
 
                      _ ; Compile-time validation
