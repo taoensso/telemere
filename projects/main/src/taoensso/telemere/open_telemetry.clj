@@ -65,8 +65,11 @@
 
   clojure.lang.IPersistentCollection
   (-put-attr! [v ^String k ^AttributesBuilder ab]
-    (when-some [v1 (if (indexed? v) (nth v 0 nil) (first v))]
-      ;; Ignores nested maps
+    (if (map? v)
+      (when-let [^String s (enc/catching :common (enc/pr-edn* v))]
+        (.put ab k s))
+
+      (when-some [v1 (if (indexed? v) (nth v 0 nil) (first v))]
       (or
         (cond
           (string?  v1) (enc/catching :common (.put ab k ^"[Ljava.lang.String;" (into-array String v)))
@@ -75,7 +78,7 @@
           (boolean? v1) (enc/catching :common (.put ab k                        (boolean-array     v))))
 
         (when-let [^String s (enc/catching :common (enc/pr-edn* v))]
-          (.put ab k s))))
+          (.put ab k s)))))
     ab)
 
   Object
@@ -221,7 +224,7 @@
 (comment
   (enc/qb 1e6 (span-attrs {:ns "ns1" :line 495})) ; 54.31
   (span-attrs {:ns "ns1", :otel/attrs {:foo :bar}})
-  (span-attrs {:ns "ns1", :otel/attrs {:foo [5 :a :b]}}))
+  (span-attrs {:ns "ns1", :otel/attrs {:foo {:a :b}}}))
 
 (defn handler:open-telemetry
   "Highly experimental, possibly buggy, and subject to change!!
@@ -249,7 +252,7 @@
 
   [1] `io.opentelemetry.api.common.Attributes` or Clojure map with str/kw keys and vals ∈
       #{nil boolean keyword string UUID long double string-vec long-vec double-vec boolean-vec}.
-      (Nested) map vals will be ignored!"
+      Other val types (incl. maps) will be printed as EDN if possible, or skipped otherwise."
 
   ;; Notes:
   ;; - Multi-threaded handlers may see signals ~out of order
