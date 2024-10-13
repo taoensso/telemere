@@ -13,6 +13,7 @@ Includes videos, tutorials, demo projects, etc.
 | ------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Support | [Official Slack channel](https://www.taoensso.com/telemere/slack) for questions, help, etc.                                                                                                    |
 | Support | [Official GitHub issues](https://github.com/taoensso/telemere/issues) for questions, help, bug reports, PRs, etc.                                                                              |
+| Example | [Gist](https://gist.github.com/xlfe/e9e2cf23bd1dddcbb2fbd77ce31dcc8b) showing use with **Google Cloud Platform** (GCP) (2024-10-13)                                                            |
 | Study   | [YouTube learning session](https://www.youtube.com/watch?v=uyApiNg6h7Y) by [Los Angeles Clojure Users Group](https://www.meetup.com/los-angeles-clojure-users-group/)  (107 mins) (2024-06-12) |
 | Demo    | [Official YouTube demo](https://www.youtube.com/watch?v=-L9irDG8ysM) for Telemere's launch (24 mins) (2024-04-18)                                                                              |
 
