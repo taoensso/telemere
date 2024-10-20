@@ -154,17 +154,17 @@ It enables you to write code that is **information-verbose by default**.
 ;; See current handlers
 (t/get-handlers) ; => {<handler-id> {:keys [handler-fn handler-stats_ dispatch-opts]}}
 
-;; Add built-in console handler to print human-readable output
+;; Add console handler to print signals as human-readable text
 (t/add-handler! :my-handler
   (t/handler:console
     {:output-fn (t/format-signal-fn {})}))
 
-;; Add built-in console handler to print edn output
+;; Add console handler to print signals as edn
 (t/add-handler! :my-handler
   (t/handler:console
     {:output-fn (t/pr-signal-fn {:pr-fn :edn})}))
 
-;; Add built-in console handler to print JSON output
+;; Add console handler to print signals as JSON
 ;; Ref.  <https://github.com/metosin/jsonista> (or any alt JSON lib)
 #?(:clj (require '[jsonista.core :as jsonista]))
 (t/add-handler! :my-handler
@@ -337,8 +337,8 @@ Licensed under [EPL 1.0](LICENSE.txt) (same as Clojure).
 
 <!-- Project -->
 
-[Codox docs]:   https://taoensso.github.io/telemere/
-[cljdoc docs]: https://cljdoc.org/d/com.taoensso/telemere/
+[Codox docs]:  https://taoensso.github.io/telemere/
+[cljdoc docs]: https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere
 
 [Clojars SVG]: https://img.shields.io/clojars/v/com.taoensso/telemere.svg
 [Clojars URL]: https://clojars.org/com.taoensso/telemere
