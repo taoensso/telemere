@@ -8,8 +8,26 @@ When filtering conditions are met [4], creates a Telemere signal [3] and
 dispatches it to registered handlers for processing (e.g. writing to
 console/file/queue/db, etc.).
 
-`form` arg is generally expected to be synchronous and eager (not a lazy seq,
-async call, or IOT code like a core.async `go` block, etc.).
+Enables tracing of given `form` arg:
+
+  - Resulting signal  will include {:keys [run-form run-val run-nsecs]}.
+  - Nested    signals will include this signal's id and uid under `:parent`.
+
+Limitations:
+
+  1. Traced code (`form` arg) is usually expected to be synchronous and eager.
+     So no lazy seqs, async calls, or inversion of flow control (IoC) macros like
+     core.async `go` blocks, etc.
+
+  2. Tracing call (`trace!`) is usually expected to occur *within* normally flowing code.
+     IoC macros can arbitrarily (and often opaquely) alter program flow and tracing
+     across flow boundaries can be fragile or even fundamentally illogical.
+
+     So use within IoC macro bodies might not make conceptual sense, or could produce
+     errors or unreliable/confusing results.
+
+     Basically- if possible, prefer tracing normal Clojure fns running within normal
+     Clojure fns unless you deeply understand what your IoC macros are up to.
 
 Examples:
 
