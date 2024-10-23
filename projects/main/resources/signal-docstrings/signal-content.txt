@@ -10,7 +10,7 @@ Default signal keys:
 `:id` ---------- ?id of signal          (common to all  signals created at callsite,              contrast with `:uid`)
 `:uid` --------- ?id of signal instance (unique to each signal  created at callsite when tracing, contrast with  `:id`)
 
-`:msg` --------- Arb app-level message  ?str              given to signal creator
+`:msg_` -------- Arb app-level message  ?str              given to signal creator - may be a delay, always use `force` to unwrap!
 `:data` -------- Arb app-level data     ?val (usu. a map) given to signal creator
 `:error` ------- Arb app-level platform ?error [2]        given to signal creator
 
