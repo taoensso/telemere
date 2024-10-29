@@ -1,4 +1,4 @@
-(defproject com.taoensso/telemere "1.0.0-SNAPSHOT"
+(defproject com.taoensso/telemere "1.0.0-RC1"
   :author "Peter Taoussanis <https://www.taoensso.com>"
   :description "Structured telemetry library for Clojure/Script"
   :url "https://www.taoensso.com/telemere"
@@ -46,14 +46,14 @@
      *unchecked-math*     false #_:warn-on-boxed}
 
     :dependencies
-    [[org.clojure/core.async           "1.6.681"]
-     [org.clojure/test.check             "1.1.1"]
-     [org.clojure/tools.logging          "1.3.0"]
-     [org.slf4j/slf4j-api               "2.0.16"]
-     [com.taoensso/telemere-shell "1.0.0-SNAPSHOT"]
-     [com.taoensso/telemere-slf4j "1.0.0-SNAPSHOT"]
-     #_[org.slf4j/slf4j-simple          "2.0.16"]
-     #_[org.slf4j/slf4j-nop             "2.0.16"]
+    [[org.clojure/core.async      "1.6.681"]
+     [org.clojure/test.check      "1.1.1"]
+     [org.clojure/tools.logging   "1.3.0"]
+     [org.slf4j/slf4j-api         "2.0.16"]
+     [com.taoensso/telemere-shell "1.0.0-RC1"]
+     [com.taoensso/telemere-slf4j "1.0.0-RC1"]
+     #_[org.slf4j/slf4j-simple    "2.0.16"]
+     #_[org.slf4j/slf4j-nop       "2.0.16"]
 
      ;;; For optional handlers
      [io.opentelemetry/opentelemetry-api                         "1.43.0"]
