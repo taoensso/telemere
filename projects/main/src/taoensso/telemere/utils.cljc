@@ -51,6 +51,23 @@
   (format-id (str *ns*) ::id1)
   (format-id nil ::id1))
 
+(enc/def* ^:private format-location
+  "Private, don't use.
+  Returns \"<ns/file>(<line>,<column>)\", etc."
+  {:tag #?(:clj 'String :cljs 'string)}
+  (enc/fmemoize
+    (fn [ns line column file]
+      (when-let [base (or ns file)]
+        (if line
+          (if column
+            (str base "(" line "," column ")")
+            (str base "(" line            ")"))
+          base)))))
+
+(comment
+  (format-location "my-ns" 120 8 nil)
+  (format-location nil     120 8 *file*))
+
 ;;;; Unique IDs (UIDs)
 
 (defn nano-uid-fn
@@ -561,7 +578,7 @@
        (if kind (s+spc (upper-qn kind)) (s+spc "DEFAULT"))
        #?(:clj  (s+spc (hostname)))
 
-       ;; "<ns>(<line>,<column>)"
+       ;; As `format-location`
        (when-let [base (or ns (get signal :file))]
          (let [s+ (partial enc/sb-append sb)] ; Without separator
            (s+ " " base)
