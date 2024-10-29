@@ -243,10 +243,11 @@
    sample-rate, kind id level, ctx parent root, data kvs msg_,
    error run-form run-val end-inst run-nsecs]
  
-  Object (toString [sig] (str "#" `Signal (into {} sig))))
+  Object (toString [sig] (str "taoensso.telemere.Signal" (into {} sig))))
 
-(do     (enc/def-print-impl [sig Signal] (str "#" `Signal (pr-str (into {} sig)))))
-#?(:clj (enc/def-print-dup  [sig Signal] (str "#" `Signal (pr-str (into {} sig))))) ; NB intentionally verbose, to support extra keys
+;; NB intentionally verbose constructors for readability, to support extra keys
+(do     (enc/def-print-impl [sig Signal] (str "#taoensso.telemere.Signal"      (pr-str (into {} sig)))))
+#?(:clj (enc/def-print-dup  [sig Signal] (str "#taoensso.telemere.impl.Signal" (pr-str (into {} sig)))))
 
 (def     impl-signal-keys #{:_otel-context})
 (def standard-signal-keys
