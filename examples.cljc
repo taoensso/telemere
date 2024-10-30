@@ -327,7 +327,7 @@
 (t/log! (str "This message " "was built " "by `str`"))
 ;; %> {:msg "This message was built by `str`"}
 
-(t/log! (format "This message was built by `%s`" "format"))
+(t/log! (enc/format "This message was built by `%s`" "format"))
 ;; %> {:msg "This message was built by `format`"}
 
 ;;; App-level kvs

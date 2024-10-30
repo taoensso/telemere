@@ -272,16 +272,8 @@
   sigs/IFilterableSignal
   (allow-signal? [_ sig-filter] (sig-filter kind ns id level))
   (signal-value  [_ handler-sample-rate]
-    (let [sig-val (force signal-value_)]
-      (or
-        (when handler-sample-rate
-          (when (map? sig-val)
-            ;; Replace call sample rate with combined (call * handler) sample rate
-            (assoc    sig-val :sample-rate
-              (*
-                (double handler-sample-rate)
-                (double (or (get sig-val :sample-rate) 1.0))))))
-        sig-val))))
+    (sigs/signal-with-combined-sample-rate handler-sample-rate
+      (force signal-value_))))
 
 (defn wrap-signal
   "Used by `taoensso.telemere/dispatch-signal!`."
@@ -645,8 +637,8 @@
 
                      middleware-form
                      (if-let [middleware+ (get opts :middleware+)]
-                       `(taoensso.telemere/comp-middleware taoensso.telemere/*middleware* ~middleware+)
-                       (get opts :middleware              `taoensso.telemere/*middleware*))
+                       `(taoensso.encore/comp-middleware taoensso.telemere/*middleware* ~middleware+)
+                       (get opts :middleware            `taoensso.telemere/*middleware*))
 
                      kvs-form
                      (not-empty
