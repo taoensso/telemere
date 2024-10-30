@@ -595,6 +595,8 @@
 
 (comment ((signal-preamble-fn) (tel/with-signal (tel/event! ::ev-id))))
 
+(defn- not-empty-coll [x] (when x (if (coll? x) (not-empty x) x)))
+
 (defn signal-content-fn
   "Experimental, subject to change.
   Returns a (fn content [signal]) that:
@@ -642,9 +644,9 @@
             (when         (and parent root)         (af "   root: " (vf (dissoc root   :inst)))) ; {:keys [id uid]}
             #?(:clj (when (and host   incl-host?)   (af "   host: " (vf host))))   ; {:keys [      name ip]}
             #?(:clj (when (and thread incl-thread?) (af " thread: " (vf thread)))) ; {:keys [group name id]}
-            (when              data                 (af "   data: " (vf data)))
+            (when         (not-empty-coll data)     (af "   data: " (vf data)))
             (when         (and kvs incl-kvs?)       (af "    kvs: " (vf kvs)))
-            (when              ctx                  (af "    ctx: " (vf ctx))))
+            (when         (not-empty-coll ctx)      (af "    ctx: " (vf ctx))))
 
           (let [{:keys [run-form error]} signal]
             (when run-form
