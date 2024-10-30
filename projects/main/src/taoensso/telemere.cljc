@@ -30,7 +30,7 @@
   (remove-ns (symbol (str *ns*)))
   (:api (enc/interns-overview)))
 
-(enc/assert-min-encore-version [3 127 0])
+(enc/assert-min-encore-version [3 132 0])
 
 ;;;; TODO
 ;; - Update Tufte  (signal API, config API, signal keys, etc.)
