@@ -574,6 +574,7 @@
            clj?  (not cljs?)
            {run-form :run} opts
 
+           show-run-val (get opts :run-val '_run-val)
            show-run-form
            (when run-form
              (get opts :run-form
@@ -653,8 +654,8 @@
                        (dissoc opts
                          :elidable? :location :location* :inst :uid :middleware :middleware+,
                          :sample-rate :ns :kind :id :level :filter :when #_:rate-limit #_:rate-limit-by,
-                         :ctx :ctx+ :parent #_:trace?, :do :let :data :msg :error :run,
-                         :elide? :allow? #_:expansion-id :otel/context))
+                         :ctx :ctx+ :parent #_:trace?, :do :let :data :msg :error,
+                         :run :run-form :run-val, :elide? :allow? #_:expansion-id :otel/context))
 
                      _ ; Compile-time validation
                      (do
@@ -675,10 +676,10 @@
                      (let [record-form
                            (let   [clause [(if run-form :run :no-run) (if clj? :clj :cljs)]]
                              (case clause
-                               [:run    :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form, (enc/host-info) ~'__thread ~'__otel-context1, ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~show-run-form ~'_run-val ~'_end-inst ~'_run-nsecs)
-                               [:run    :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form,                                               ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~show-run-form ~'_run-val ~'_end-inst ~'_run-nsecs)
-                               [:no-run :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form, (enc/host-info) ~'__thread ~'__otel-context1, ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil             nil        nil         nil)
-                               [:no-run :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form,                                               ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil             nil        nil         nil)
+                               [:run    :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form, (enc/host-info) ~'__thread ~'__otel-context1, ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~show-run-form ~show-run-val ~'_end-inst ~'_run-nsecs)
+                               [:run    :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form,                                               ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~show-run-form ~show-run-val ~'_end-inst ~'_run-nsecs)
+                               [:no-run :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form, (enc/host-info) ~'__thread ~'__otel-context1, ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil             nil           nil         nil)
+                               [:no-run :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form,                                               ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil             nil           nil         nil)
                                (enc/unexpected-arg! clause {:context :signal-constructor-args})))
 
                            record-form
@@ -692,7 +693,7 @@
                                     ~'_msg_
                                     (let [mf# ~msg-form]
                                       (if (fn? mf#) ; Undocumented, handy for `trace!`/`spy!`, etc.
-                                        (delay (mf# '~show-run-form ~'_run-val ~'_run-err ~'_run-nsecs))
+                                        (delay (mf# '~show-run-form ~show-run-val ~'_run-err ~'_run-nsecs))
                                         mf#))]
                                 ~record-form))]
 
