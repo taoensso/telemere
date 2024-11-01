@@ -640,11 +640,15 @@
          (is (sm? sv2 {:kind :error, :line :submap/some, :level :error, :id :id2}))
          (is (= (:location sv1) (:location sv2)) "Error inherits exact same location")])
 
-      (testing  ":run-form"
-        [(is (= (:run-form (with-sig (tel/trace! :non-list)))    :non-list))
-         (is (= (:run-form (with-sig (tel/trace! (+ 1 2 3 4))))  '(+ 1 2 3 4)))
-         (is (= (:run-form (with-sig (tel/trace! (+ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16)))) '(+ ...)))
-         (is (= (:run-form (with-sig (tel/trace! {:run-form 'my-run-form} (+ 1 2 3 4))))       'my-run-form))])])
+      (testing  ":run-form" ; Undocumented, experimental
+        [(is (sm? (with-sig (tel/trace! :non-list))    {:run-form :non-list}))
+         (is (sm? (with-sig (tel/trace! (+ 1 2 3 4)))  {:run-form '(+ 1 2 3 4)}))
+         (is (sm? (with-sig (tel/trace! (+ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16))) {:run-form '(+ ...)}))
+         (is (sm? (with-sig (tel/trace! {:run-form my-run-form} (+ 1 2 3 4)))        {:run-form 'my-run-form :kvs nil}))])
+
+      (testing ":run-val" ; Undocumented, experimental
+        [(is (sm? (with-sig (tel/trace!                     (+ 2 2))) {:run-val 4,        :msg_ "(+ 2 2) => 4"}))
+         (is (sm? (with-sig (tel/trace! {:run-val "custom"} (+ 2 2))) {:run-val "custom", :msg_ "(+ 2 2) => custom", :kvs nil}))])])
 
    (testing "spy" ; run + ?level => run result (value or throw)
      [(let [[[rv]   [sv]] (with-sigs (tel/spy!                (+ 1 2)))] [(is (= rv 3))  (is (sm?  sv {:kind :spy, :line :submap/some, :level :info, :msg_ "(+ 1 2) => 3"}))])
