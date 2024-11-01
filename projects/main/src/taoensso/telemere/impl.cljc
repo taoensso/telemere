@@ -560,8 +560,8 @@
       :arglists (signal-arglists  :signal!)}
      [opts]
      (have? map? opts) ; We require const map keys, but vals may require eval
-     (let [defaults              (get    opts :defaults)
-           opts  (merge defaults (dissoc opts :defaults))
+     (let [defaults (enc/merge {:kind :default, :level :info} (get opts :defaults))
+           opts     (enc/merge defaults (dissoc opts :defaults))
            cljs? (boolean (:ns &env))
            clj?  (not cljs?)
            {run-form :run} opts
