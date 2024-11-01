@@ -1,8 +1,8 @@
 Low-level generic signal creator.
 
 API: [opts] => depends on options [2]
-Default  kind: none (optional)
-Default level: none (must be provided)
+Default  kind: `:default`
+Default level: `:info`
 
 When filtering conditions are met [4], creates a Telemere signal [3] and
 dispatches it to registered handlers for processing (e.g. writing to
