@@ -159,6 +159,36 @@ Ultimately I wrote Telemere because:
 3. I wanted something that integrated particularly well with [Tufte](https://taoensso.com/tufte) and could share an identical API for filtering, handlers, etc.
 4. I wanted a modern replacement for [Timbre](https://www.taoensso.com/timbre) users that offered a superset of its functionality and an [easy migration path](./5-Migrating#from-timbre).
 
+# Why the unusual arg order for `event!`?
+
+For their 2 arg arities, every standard signal creator _except_ [event!](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#event!) takes an opts map as its _first_ argument.
+
+Why the apparent inconsistency?
+
+It's an intentional trade-off. `event!` is unique in 3x ways:
+
+1. Its primary argument is typically very short (just an id keyword).
+2. Its primary argument never depends on `:let` bindings.
+3. Its opts typically include long or even multi-lined `:data`.
+
+If `event!` shared the same arg order as other signal creators, the common case would be something like `(event! {:data <multi-line>} ::dangling-id)` which gets unnecessarily awkward and doesn’t read well IMO. I want to know what event we’re talking about, before you tell me about the associated data.
+
+In contrast, creators like `log!` both tend to have a large/r primary argument (message) - and their primary argument often depends on `:let` bindings - e.g. `(log! {:id ::my-id, :let […]} <message depending on let bindings>)`. In these cases it reads much clearer to go left->right. We start with an id, specify some data, then use that data to construct a message.
+
+So basically the choice in trade-off was:
+
+1. Prefer **consistency**, or
+2. Prefer **ergonomics** of the common case usage
+
+I went with option 2 for several reasons:
+
+- There _is_ actually consistency, it’s just not as obvious - the typically-larger argument always goes _last_.
+- Most IDEs generally do a good job of reminding about the arg order.
+- The same trade-off may come up again in future for other new signal kinds, and I prefer that we adopt the pattern of optimising for common-case ergonomics.
+- One can always easily call `signal!` directly - this takes a single map arg, so lets you easily specify all args in preferred order. (I tend to exclusively use `signal!` myself since I prefer this flexibility).
+
+If there’s popular demand, I’d also be happy to add something like `ev!` which could choose the alternative trade-off. Though I’d recommend folks try `event!` as-is first, since I think the initial aversion/surprise might wear off with use.
+
 # Other questions?
 
 Please [open a Github issue](https://github.com/taoensso/telemere/issues) or ping on Telemere's [Slack channel](https://www.taoensso.com/telemere/slack). I'll regularly update the FAQ to add common questions. - [Peter](https://www.taoensso.com)
