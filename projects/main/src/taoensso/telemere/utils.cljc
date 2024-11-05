@@ -597,8 +597,8 @@
             #?(:clj (when (enc/and* host   incl-host?)   (af "   host: " (vf host))))    ; {:keys [      name ip]}
             #?(:clj (when (enc/and* thread incl-thread?) (af " thread: " (vf thread))))  ; {:keys [group name id]}
             (when         (enc/not-empty-coll data)      (af "   data: " (vf data)))
-            (when         (enc/and* kvs incl-kvs?)       (af "    kvs: " (vf kvs)))
-            (when         (enc/not-empty-coll ctx)       (af "    ctx: " (vf ctx))))
+            (when         (enc/not-empty-coll ctx)       (af "    ctx: " (vf ctx)))
+            (when         (enc/and* kvs incl-kvs?)       (af "    kvs: " (vf kvs))))
 
           (let [{:keys [run-form error]} signal]
             (when run-form
