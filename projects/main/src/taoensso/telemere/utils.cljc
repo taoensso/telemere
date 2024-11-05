@@ -585,15 +585,20 @@
               vf    val-fn]
 
           (let [{:keys [uid parent root data kvs ctx #?@(:clj [host thread]) sample-rate]} signal]
-            (when              sample-rate          (af " sample: " (vf sample-rate)))
-            (when              uid                  (af "    uid: " (vf uid)))
-            (when              parent               (af " parent: " (vf (dissoc parent :inst)))) ; {:keys [id uid]}
-            (when         (and parent root)         (af "   root: " (vf (dissoc root   :inst)))) ; {:keys [id uid]}
-            #?(:clj (when (and host   incl-host?)   (af "   host: " (vf host))))   ; {:keys [      name ip]}
-            #?(:clj (when (and thread incl-thread?) (af " thread: " (vf thread)))) ; {:keys [group name id]}
-            (when         (enc/not-empty-coll data) (af "   data: " (vf data)))
-            (when         (and kvs incl-kvs?)       (af "    kvs: " (vf kvs)))
-            (when         (enc/not-empty-coll ctx)  (af "    ctx: " (vf ctx))))
+            (when sample-rate (af " sample: " (vf sample-rate)))
+            (when uid         (af "    uid: " (vf uid)))
+            (when parent
+              (if (= parent root)
+                (do          (af " parent: " (vf (dissoc parent :inst)) " (also root)")) ; {:keys [id uid]}
+                (do
+                  (do        (af " parent: " (vf (dissoc parent :inst))))                ; {:keys [id uid]}
+                  (when root (af "   root: " (vf (dissoc root   :inst)))))))             ; {:keys [id uid]}
+
+            #?(:clj (when (enc/and* host   incl-host?)   (af "   host: " (vf host))))    ; {:keys [      name ip]}
+            #?(:clj (when (enc/and* thread incl-thread?) (af " thread: " (vf thread))))  ; {:keys [group name id]}
+            (when         (enc/not-empty-coll data)      (af "   data: " (vf data)))
+            (when         (enc/and* kvs incl-kvs?)       (af "    kvs: " (vf kvs)))
+            (when         (enc/not-empty-coll ctx)       (af "    ctx: " (vf ctx))))
 
           (let [{:keys [run-form error]} signal]
             (when run-form
