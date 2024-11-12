@@ -544,6 +544,11 @@
 
 (comment ((signal-preamble-fn) (tel/with-signal (tel/event! ::ev-id))))
 
+(defn- format-parent [ns {:keys [id uid]}]
+  {:id (symbol (sigs/format-id ns id)) :uid uid})
+
+(comment (str (format-parent (str *ns*) {:id ::foo})))
+
 (defn signal-content-fn
   "Experimental, subject to change.
   Returns a (fn content [signal]) that:
@@ -584,15 +589,15 @@
         (let [af append-fn
               vf    val-fn]
 
-          (let [{:keys [uid parent root data kvs ctx #?@(:clj [host thread]) sample-rate]} signal]
+          (let [{:keys [ns uid parent root data kvs ctx #?@(:clj [host thread]) sample-rate]} signal]
             (when sample-rate (af " sample: " (vf sample-rate)))
             (when uid         (af "    uid: " (vf uid)))
             (when parent
               (if (= parent root)
-                (do          (af " parent: " (vf (dissoc parent :inst)) " (also root)")) ; {:keys [id uid]}
+                (do          (af " parent: " (vf (format-parent ns parent)) " (also root)")) ; {:keys [id uid]}
                 (do
-                  (do        (af " parent: " (vf (dissoc parent :inst))))                ; {:keys [id uid]}
-                  (when root (af "   root: " (vf (dissoc root   :inst)))))))             ; {:keys [id uid]}
+                  (do        (af " parent: " (vf (format-parent ns parent))))                ; {:keys [id uid]}
+                  (when root (af "   root: " (vf (format-parent ns root)))))))               ; {:keys [id uid]}
 
             #?(:clj (when (enc/and* host   incl-host?)   (af "   host: " (vf host))))    ; {:keys [      name ip]}
             #?(:clj (when (enc/and* thread incl-thread?) (af " thread: " (vf thread))))  ; {:keys [group name id]}
