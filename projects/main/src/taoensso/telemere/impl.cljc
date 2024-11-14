@@ -268,9 +268,10 @@
 (deftype #_defrecord WrappedSignal
   ;; Internal type to implement `sigs/IFilterableSignal`,
   ;; incl. lazy + cached `signal-value_` field.
-  [ns kind id level signal-value_]
+  [kind ns id level signal-value_]
   sigs/IFilterableSignal
   (allow-signal? [_ sig-filter] (sig-filter kind ns id level))
+  ;; (signal-debug  [_] {:kind kind, :ns ns, :id id, :level level})
   (signal-value  [_ handler-sample-rate]
     (sigs/signal-with-combined-sample-rate handler-sample-rate
       (force signal-value_))))
@@ -279,8 +280,8 @@
   "Used by `taoensso.telemere/dispatch-signal!`."
   [signal]
   (when (map? signal)
-    (let [{:keys     [ns kind id level]} signal]
-      (WrappedSignal. ns kind id level   signal))))
+    (let [{:keys     [kind ns id level]} signal]
+      (WrappedSignal. kind ns id level   signal))))
 
 ;;;; Handlers
 
@@ -784,7 +785,7 @@
                          ;; Unconditionally send same wrapped signal to all handlers.
                          ;; Each handler will use wrapper for handler filtering,
                          ;; unwrapping (realizing) only allowed signals.
-                         (WrappedSignal. ~'__ns ~'__kind ~'__id ~'__level signal#))
+                         (WrappedSignal. ~'__kind ~'__ns ~'__id ~'__level signal#))
 
                        (if ~'__run-result
                          ( ~'__run-result signal#)
