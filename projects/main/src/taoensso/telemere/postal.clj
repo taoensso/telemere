@@ -12,36 +12,6 @@
   (remove-ns (symbol (str *ns*)))
   (:api (enc/interns-overview)))
 
-(defn signal-subject-fn
-  "Experimental, subject to change.
-  Returns a (fn format [signal]) that:
-    - Takes a Telemere signal (map).
-    - Returns an email subject string like:
-      \"INFO EVENT :taoensso.telemere.postal/ev-id1 - msg\""
-  ([] (signal-subject-fn nil))
-  ([{:keys [max-len subject-signal-key]
-     :or
-     {max-len 128
-      subject-signal-key :postal/subject}}]
-
-   (fn signal-subject [signal]
-     (or
-       (get signal subject-signal-key) ; Custom subject
-
-       ;; Simplified `utils/signal-preamble-fn`
-       (let [{:keys [level kind #_ns id msg_]} signal
-             sb    (enc/str-builder)
-             s+spc (enc/sb-appender sb " ")]
-
-         (when level (s+spc (sigs/format-level level)))
-         (when kind  (s+spc (sigs/upper-qn     kind)))
-         (when id    (s+spc (sigs/format-id nil id)))
-         (when-let [msg (force msg_)] (s+spc "- " msg))
-
-         (enc/substr (str sb) 0 max-len))))))
-
-(comment ((signal-subject-fn) (tel/with-signal (tel/event! ::ev-id1 #_{:postal/subject "My subject"}))))
-
 (def default-dispatch-opts
   {:min-level :info
    :rate-limit
@@ -88,9 +58,11 @@
          :cc \"engineering@example.com\"
          :X-MyHeader \"A custom header\"}
 
-    `:subject-fn` - (fn [signal]) => email subject string
-    `:body-fn`    - (fn [signal]) => email body content string,
-                      see `format-signal-fn` or `pr-signal-fn`
+    `:subject-fn`      - (fn [signal]) => email subject string
+    `:subject-max-len` - Truncate subjects beyond this length (default 90)
+
+    `:body-fn` - (fn [signal]) => email body content string,
+                   see `format-signal-fn` or `pr-signal-fn`
 
   Tips:
     - Ref. <https://github.com/drewr/postal> for more info on `postal` options.
@@ -98,15 +70,22 @@
       Use appropriate handler dispatch options for async handling and rate limiting, etc."
 
   ;; ([] (handler:postal nil))
-  ([{:keys [conn-opts msg-opts, subject-fn body-fn]
+  ([{:keys [conn-opts msg-opts, subject-fn subject-max-len body-fn]
      :or
-     {subject-fn (signal-subject-fn)
-      body-fn    (utils/format-signal-fn)}}]
+     {body-fn    (utils/format-signal-fn)
+      subject-fn (utils/signal-preamble-fn {:format-inst-fn nil})
+      subject-max-len 128}}]
 
    (when-not (map? conn-opts) (throw (ex-info "Expected `:conn-opts` map" (enc/typed-val conn-opts))))
    (when-not (map? msg-opts)  (throw (ex-info "Expected `:msg-opts` map"  (enc/typed-val msg-opts))))
 
-   (let [handler-fn
+   (let [subject-fn
+         (if-let [n subject-max-len]
+           (comp
+             (fn [s] (when s (enc/substr (str s) 0 n)))
+             subject-fn))
+
+         handler-fn
          (fn a-handler:postal
            ([      ]) ; Stop => noop
            ([signal]
