@@ -511,10 +511,14 @@
       \"2024-03-26T11:14:51.806Z INFO EVENT Hostname taoensso.telemere(2,21) ::ev-id - msg\"
 
   Options:
-    `:format-inst-fn` - (fn format [instant]) => string."
+    `:format-inst-fn` - (fn format [instant]) => string.
+    `:format-id-fn` - (fn format [id]) => string.
+    `:format-msg-fn` - (fn format [msg]) => string."
   ([] (signal-preamble-fn nil))
-  ([{:keys [format-inst-fn]
-     :or   {format-inst-fn (format-inst-fn)}}]
+  ([{:keys [format-inst-fn format-id-fn format-msg-fn]
+     :or   {format-inst-fn (format-inst-fn)
+            format-id-fn sigs/format-id
+            format-msg-fn #(str "- " %)}}]
 
    (fn signal-preamble [signal]
      (let [{:keys [inst level kind ns id msg_]} signal
@@ -536,8 +540,11 @@
              (when-let [c (get signal :column)] (s+ "," c))
              (s+ ")"))))
 
-       (when id (s+spc (sigs/format-id ns id)))
-       (when-let [msg (force msg_)] (s+spc "- " msg))
+       (when id (when-let [ff format-id-fn]
+           (s+spc (ff ns id))))
+       (enc/when-let [ff format-msg-fn
+                      msg (force msg_)] 
+         (s+spc (ff msg)))
 
        (when-not (zero? (enc/sb-length sb))
          (str sb))))))
