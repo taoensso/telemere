@@ -5,8 +5,8 @@ While [Timbre](https://taoensso.com/timbre) will **continue to be maintained and
 Telemere's functionality is a **superset of Timbre**, and offers *many* improvements including:
 
 - Better support for [structured logging](./1-Getting-started#data-types-and-structures)
-- Much better [performance](https://github.com/taoensso/telemere#performance)
-- Much better [documentation](https://github.com/taoensso/telemere#documentation)
+- Better [performance](https://github.com/taoensso/telemere#performance)
+- Better [documentation](https://github.com/taoensso/telemere#documentation)
 - A more flexible [API](./1-Getting-started#usage) that unifies all telemetry and logging needs
 - A more robust [architecture](./2-Architecture), free from all historical constraints
 - Better [included handlers](./4-Handlers##included-handlers)
