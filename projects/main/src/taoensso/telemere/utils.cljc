@@ -15,7 +15,7 @@
 
 ;;;;
 
-;; (enc/defalias sigs/upper-qn sigs/format-level sigs/format-id sigs/format-location)
+(enc/defaliases #_sigs/upper-qn sigs/format-level sigs/format-id sigs/format-location)
 
 ;;;; Unique IDs (UIDs)
 
@@ -522,7 +522,7 @@
            s+spc (enc/sb-appender sb " ")]
 
        (when inst  (when-let [ff format-inst-fn] (s+spc (ff inst))))
-       (when level (s+spc (sigs/format-level level)))
+       (when level (s+spc (format-level level)))
 
        (if kind (s+spc (sigs/upper-qn kind)) (s+spc "DEFAULT"))
        #?(:clj  (s+spc (hostname)))
@@ -545,7 +545,7 @@
 (comment ((signal-preamble-fn) (tel/with-signal (tel/event! ::ev-id))))
 
 (defn- format-parent [ns {:keys [id uid]}]
-  {:id (symbol (sigs/format-id ns id)) :uid uid})
+  {:id (symbol (format-id ns id)) :uid uid})
 
 (comment (str (format-parent (str *ns*) {:id ::foo})))
 
