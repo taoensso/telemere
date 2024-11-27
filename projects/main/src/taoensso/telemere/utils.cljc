@@ -508,7 +508,7 @@
   Returns a (fn preamble [signal]) that:
     - Takes a Telemere signal (map).
     - Returns a signal preamble ?string like:
-      \"2024-03-26T11:14:51.806Z INFO EVENT Hostname taoensso.telemere(2,21) ::ev-id - msg\"
+      \"2024-03-26T11:14:51.806Z INFO EVENT Hostname taoensso.telemere(2,21) ::ev-id msg\"
 
   Options:
     `:format-inst-fn` - (fn format [instant]) => string.
@@ -518,7 +518,7 @@
   ([{:keys [format-inst-fn format-id-fn format-msg-fn]
      :or   {format-inst-fn (format-inst-fn)
             format-id-fn   format-id
-            format-msg-fn  (fn [msg] (str "- " msg))}}]
+            format-msg-fn  identity}}]
 
    (fn signal-preamble [signal]
      (let [{:keys [inst level kind ns id msg_]} signal
