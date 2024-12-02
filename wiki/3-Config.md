@@ -109,7 +109,7 @@ Telemere can easily incorporate Tufte performance data in its signals, just like
 
 ```clojure
 (let [[_ perf-data] (tufte/profiled <opts> <form>)]
-  (t/log! "Performance data" {:perf-data perf-data}))
+  (t/log! {:perf-data perf-data}  "Performance data"))
 ```
 
 Telemere and Tufte work great together:
