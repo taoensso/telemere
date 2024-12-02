@@ -103,7 +103,7 @@ Aside from configuring the exporters (2), Telemere's OpenTelemetry interop **doe
 
 ## Tufte
 
-> [Tufte](https:/www.taoensso.com/tufte) is a simple performance monitoring library for Clojure/Script by the author of Telemere.
+> [Tufte](https://www.taoensso.com/tufte) is a simple performance monitoring library for Clojure/Script by the author of Telemere.
 
 Telemere can easily incorporate Tufte performance data in its signals, just like any other data:
 
@@ -115,7 +115,7 @@ Telemere can easily incorporate Tufte performance data in its signals, just like
 Telemere and Tufte work great together:
 
 - Their functionality is complementary.
-- The [upcoming](https:/www.taoensso.com/roadmap) Tufte v3 will share the same core as Telemere and offer an **identical API** for managing filters and handlers.
+- The [upcoming](https://www.taoensso.com/roadmap) Tufte v3 will share the same core as Telemere and offer an **identical API** for managing filters and handlers.
 
 ## Truss
 
