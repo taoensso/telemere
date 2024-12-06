@@ -28,9 +28,21 @@ This may be easier than it sounds. Remember that signals are just plain Clojure/
 
 Feel free to [ping me](https://github.com/taoensso/telemere/issues) for assistance, or ask on the [`#telemere` Slack channel](https://www.taoensso.com/telemere/slack).
 
-### 2. Imports
+### 2. Logging calls
 
-Switch your Timbre namespace imports:
+What about all the Timbre logging calls in your code?
+
+You've got two choices-
+
+#### 2a. Redirect Timbre output to Telemere
+
+Add [`taoensso.telemere.timbre/timbre->telemere-appender`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.timbre#timbre->telemere-appender) as a Timbre appender. It'll redirect Timbre's output to Telemere.
+
+In this case you may want to disable all your other Timbre appenders, and all your Timbre filtering.
+
+#### 2b. Change your ns imports
+
+The [`taoensso.telemere.timbre`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.timbre) namespace contains a shim of most of Timbre's API so you can switch your Timbre namespace imports:
 
 ```clojure
 (ns my-ns
@@ -39,9 +51,9 @@ Switch your Timbre namespace imports:
   )
 ```
 
-The [`taoensso.telemere.timbre`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.timbre) namespace contains a shim of most of Timbre's API.
+In this case your Timbre appenders and filtering will be ignored.
 
-Feel free to keep using this shim API **as long as you like**, there's no need to rewrite any of your existing code unless you specifically want to use features that are only possible with Telemere's [signal creators](./1-Getting-started#create-signals), etc.
+Feel free to keep using the shim API **as long as you like**, there's no need to rewrite any of your existing code unless you specifically want to use features that are only possible with Telemere's [signal creators](./1-Getting-started#create-signals), etc.
 
 ### 3. Config
 
