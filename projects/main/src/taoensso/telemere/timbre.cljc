@@ -161,3 +161,32 @@
 (defn shutdown-appenders!
   "Prefer `telemere/stop-handlers!`."
   [] (tel/stop-handlers!))
+
+;;;; @TODO To wiki
+
+(comment
+  (defn timbre->telemere-appender
+    "Returns a simple Timbre appender that'll redirect logs to Telemere."
+    []
+    {:enabled?  true
+     :min-level nil
+     :fn
+     (fn [data]
+       (let [{:keys [instant level context ?err output_
+                     ?ns-str ?file ?line ?column]} data]
+
+         (taoensso.telemere/signal!
+           {:kind :log
+            :via-timbre? true ; User-level kv to help identify these signals
+
+            :level level
+            :inst  (taoensso.encore/as-?inst instant)
+            :ctx+  context
+
+            :ns     ?ns-str
+            :file   ?file
+            :line   ?line
+            :column ?column
+
+            :error  ?err
+            :msg    (force output_)})))}))
