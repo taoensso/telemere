@@ -2,7 +2,8 @@
   "Email handler using `postal`,
     Ref. <https://github.com/drewr/postal>."
   (:require
-   [taoensso.encore :as enc :refer [have have?]]
+   [taoensso.encore         :as enc]
+   [taoensso.encore.signals :as sigs]
    [taoensso.telemere.utils :as utils]
    [postal.core :as postal]))
 
@@ -32,9 +33,9 @@
              sb    (enc/str-builder)
              s+spc (enc/sb-appender sb " ")]
 
-         (when level (s+spc (utils/format-level level)))
-         (when kind  (s+spc (utils/upper-qn     kind)))
-         (when id    (s+spc (utils/format-id nil id)))
+         (when level (s+spc (sigs/format-level level)))
+         (when kind  (s+spc (sigs/upper-qn     kind)))
+         (when id    (s+spc (sigs/format-id nil id)))
          (when-let [msg (force msg_)] (s+spc "- " msg))
 
          (enc/substr (str sb) 0 max-len))))))
