@@ -209,9 +209,15 @@ It enables you to write code that is **information-verbose by default**.
 - Telemere [compared](../../wiki/5-Migrating#from-timbre) to [Timbre](https://www.taoensso.com/timbre) (Telemere's predecessor)
 - Telemere [compared](../../wiki/6-FAQ#how-does-telemere-compare-to-mulog) to [Mulog](https://github.com/BrunoBonacci/mulog) (Structured micro-logging library)
 
-## Video demo
+## Videos
 
-See for intro and basic usage:
+### Lightning intro (7 mins):
+
+<a href="https://www.youtube.com/watch?v=lOaZ0SgPVu4" target="_blank">
+ <img src="https://img.youtube.com/vi/lOaZ0SgPVu4/maxresdefault.jpg" alt="Telemere lightning intro" width="480" border="0" />
+</a>
+
+### REPL demo (24 mins):
 
 <a href="https://www.youtube.com/watch?v=-L9irDG8ysM" target="_blank">
  <img src="https://img.youtube.com/vi/-L9irDG8ysM/maxresdefault.jpg" alt="Telemere demo video" width="480" border="0" />
@@ -223,15 +229,15 @@ See relevant docstrings (links below) for usage info-
 
 ### Creating signals
 
-| Name                                                                                                        | Signal kind | Main arg | Optional arg   | Returns                      |
-| :---------------------------------------------------------------------------------------------------------- | :---------- | :------- | :------------- | :--------------------------- |
-| [`log!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#log!)                     | `:log`      | `msg`    | `opts`/`level` | Signal allowed?              |
-| [`event!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#event!)                 | `:event`    | `id`     | `opts`/`level` | Signal allowed?              |
-| [`error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#error!)                 | `:error`    | `error`  | `opts`/`id`    | Given error                  |
-| [`trace!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#trace!)                 | `:trace`    | `form`   | `opts`/`id`    | Form result                  |
-| [`spy!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#spy!)                     | `:spy`      | `form`   | `opts`/`level` | Form result                  |
-| [`catch->error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#catch-%3Eerror!) | `:error`    | `form`   | `opts`/`id`    | Form value or given fallback |
-| [`signal!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#signal!)               | `<arb>`     | `opts`   | -              | Depends on opts              |
+| Name                                                                                                        | Kind       | Args             | Returns                      |
+| :---------------------------------------------------------------------------------------------------------- | :--------- | :--------------- | :--------------------------- |
+| [`signal!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#signal!)               | `:generic` | `opts`           | Depends on opts              |
+| [`event!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#event!)                 | `:event`   | `id` + `?level`  | Signal allowed?              |
+| [`log!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#log!)                     | `:log`     | `?level` + `msg` | Signal allowed?              |
+| [`trace!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#trace!)                 | `:trace`   | `?id` + `run`    | Form result                  |
+| [`spy!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#spy!)                     | `:spy`     | `?level` + `run` | Form result                  |
+| [`error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#error!)                 | `:error`   | `?id` + `error`  | Given error                  |
+| [`catch->error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#catch-%3Eerror!) | `:error`   | `?id`            | Form value or given fallback |
 
 ### Internal help
 

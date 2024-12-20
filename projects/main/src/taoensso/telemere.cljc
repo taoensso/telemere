@@ -185,7 +185,7 @@
               :via :global}))))))
 
 #?(:clj
-   (def ^:dynamic ^:no-doc *otel-tracer*
+   (def ^:dynamic *otel-tracer*
      "Experimental, subject to change. Feedback welcome!
 
      OpenTelemetry `Tracer` to use for Telemere's tracing signal creators

@@ -129,15 +129,15 @@ Interop can be tough to get configured correctly so the [`check-interop`](https:
 
 Use whichever signal creator is most convenient for your needs:
 
-| Name | Signal kind | Main arg | Optional arg | Returns |
-|:-- | :-- | :-- | :-- | :-- |
-| [`log!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#log!) | `:log` | `msg` | `opts`/`level` | Signal allowed?
-| [`event!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#event!) | `:event` | `id` | `opts`/`level` | Signal allowed?
-| [`error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#error!) | `:error` | `error` | `opts`/`id` | Given error
-| [`trace!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#trace!) | `:trace` | `form` | `opts`/`id` | Form result
-| [`spy!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#spy!) | `:spy` | `form` | `opts`/`level` | Form result
-| [`catch->error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#catch-%3Eerror!) | `:error` | `form` | `opts`/`id` | Form value or given fallback
-| [`signal!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#signal!) | `<arb>` | `opts` | - | Depends on opts
+| Name                                                                                                        | Kind       | Args             | Returns                      |
+| :---------------------------------------------------------------------------------------------------------- | :--------- | :--------------- | :--------------------------- |
+| [`signal!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#signal!)               | `:generic` | `opts`           | Depends on opts              |
+| [`event!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#event!)                 | `:event`   | `id` + `?level`  | Signal allowed?              |
+| [`log!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#log!)                     | `:log`     | `?level` + `msg` | Signal allowed?              |
+| [`trace!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#trace!)                 | `:trace`   | `?id` + `run`    | Form result                  |
+| [`spy!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#spy!)                     | `:spy`     | `?level` + `run` | Form result                  |
+| [`error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#error!)                 | `:error`   | `?id` + `error`  | Given error                  |
+| [`catch->error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#catch-%3Eerror!) | `:error`   | `?id`            | Form value or given fallback |
  
 - See relevant docstrings (links above) for usage info.
 - See [`help:signal-creators`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-creators) for more about signal creators.
