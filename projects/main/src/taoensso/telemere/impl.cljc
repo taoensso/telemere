@@ -561,7 +561,7 @@
       :arglists (signal-arglists  :signal!)}
 
      ;; TODO Maybe later, once we're sure we don't want additional arities?
-     ;; Remember to also update signal-arglists, shell, etc.
+     ;; Remember to also update signal-arglists, etc.
      ;; ([arg1 & more] (enc/keep-callsite `(signal! ~(apply hash-map arg1 more))))
      ([opts]
       (have? map? opts) ; We require const map keys, but vals may require eval

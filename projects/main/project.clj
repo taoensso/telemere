@@ -50,7 +50,6 @@
      [org.clojure/test.check      "1.1.1"]
      [org.clojure/tools.logging   "1.3.0"]
      [org.slf4j/slf4j-api         "2.0.16"]
-     [com.taoensso/telemere-shell "1.0.0-RC1"]
      [com.taoensso/telemere-slf4j "1.0.0-RC1"]
      #_[org.slf4j/slf4j-simple    "2.0.16"]
      #_[org.slf4j/slf4j-nop       "2.0.16"]

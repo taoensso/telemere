@@ -9,7 +9,6 @@
     :refer  [signal!       with-signal           with-signals]
     :rename {signal! sig!, with-signal with-sig, with-signals with-sigs}]
 
-   [taoensso.telemere.shell           :as shell]
    [taoensso.telemere.utils           :as utils]
    [taoensso.telemere.timbre          :as timbre]
    #_[taoensso.telemere.tools-logging :as tools-logging]
@@ -286,12 +285,7 @@
                 (update-in [:inst]     enc/inst->udt)
                 (update-in [:end-inst] enc/inst->udt))]
 
-          [(is (= sv1 (read-string (pr-str sv1))))])))
-
-   (testing "Shell API"
-     [(is (sm? (with-sig (shell/signal! {:level :info})) {:level :info, :ns "taoensso.telemere-tests", :line :submap/some}))
-      (is (true?  (tel/with-min-level :debug (shell/signal-allowed? {:level :debug}))))
-      (is (false? (tel/with-min-level :debug (shell/signal-allowed? {:level :trace}))))])])
+          [(is (= sv1 (read-string (pr-str sv1))))])))])
 
 (deftest _handlers
   ;; Basic handler tests are in Encore
