@@ -4,7 +4,8 @@
   (:require
    [clojure.string          :as str]
    #?(:clj [clojure.java.io :as jio])
-   [taoensso.encore         :as enc :refer [have have?]]
+   [taoensso.encore         :as enc]
+   [taoensso.encore.signals :as sigs]
    [taoensso.telemere.impl  :as impl]))
 
 (comment
@@ -12,61 +13,9 @@
   (remove-ns (symbol (str *ns*)))
   (:api (enc/interns-overview)))
 
-;;;; Private
+;;;;
 
-(enc/def* ^:no-doc upper-qn
-  "Private, don't use.
-  `:foo/bar` -> \"FOO/BAR\", etc."
-  {:tag #?(:clj 'String :cljs 'string)}
-  (enc/fmemoize (fn [x] (str/upper-case (enc/as-qname x)))))
-
-(comment (upper-qn :foo/bar))
-
-(enc/def* ^:no-doc format-level
-  "Private, don't use.
-  `:info` -> \"INFO\",
-      `5` -> \"LEVEL:5\", etc."
-  {:tag #?(:clj 'String :cljs 'string)}
-  (enc/fmemoize
-    (fn [x]
-      (if (keyword?   x)
-        (upper-qn     x)
-        (str "LEVEL:" x)))))
-
-(comment (format-level :info))
-
-(enc/def* ^:no-doc format-id
-  "Private, don't use.
-  `:foo.bar/baz` -> \"::baz\", etc."
-  {:tag #?(:clj 'String :cljs 'string)}
-  (enc/fmemoize
-    (fn [ns x]
-      (if (keyword? x)
-        (if (= (namespace x) ns)
-          (str "::" (name x))
-          (str            x))
-        (str x)))))
-
-(comment
-  (format-id (str *ns*) ::id1)
-  (format-id nil ::id1))
-
-(enc/def* ^:private format-location
-  "Private, don't use.
-  Returns \"<ns/file>(<line>,<column>)\", etc."
-  {:tag #?(:clj 'String :cljs 'string)}
-  (enc/fmemoize
-    (fn [ns line column file]
-      (when-let [base (or ns file)]
-        (if line
-          (if column
-            (str base "(" line "," column ")")
-            (str base "(" line            ")"))
-          base)))))
-
-(comment
-  (format-location "my-ns" 120 8 nil)
-  (format-location nil     120 8 *file*))
+;; (enc/defalias sigs/upper-qn sigs/format-level sigs/format-id sigs/format-location)
 
 ;;;; Unique IDs (UIDs)
 
@@ -573,9 +522,9 @@
            s+spc (enc/sb-appender sb " ")]
 
        (when inst  (when-let [ff format-inst-fn] (s+spc (ff inst))))
-       (when level (s+spc (format-level level)))
+       (when level (s+spc (sigs/format-level level)))
 
-       (if kind (s+spc (upper-qn kind)) (s+spc "DEFAULT"))
+       (if kind (s+spc (sigs/upper-qn kind)) (s+spc "DEFAULT"))
        #?(:clj  (s+spc (hostname)))
 
        ;; As `format-location`
@@ -587,7 +536,7 @@
              (when-let [c (get signal :column)] (s+ "," c))
              (s+ ")"))))
 
-       (when id (s+spc (format-id ns id)))
+       (when id (s+spc (sigs/format-id ns id)))
        (when-let [msg (force msg_)] (s+spc "- " msg))
 
        (when-not (zero? (enc/sb-length sb))
@@ -595,13 +544,11 @@
 
 (comment ((signal-preamble-fn) (tel/with-signal (tel/event! ::ev-id))))
 
-(defn- not-empty-coll [x] (when x (if (coll? x) (not-empty x) x)))
-
 (defn signal-content-fn
   "Experimental, subject to change.
   Returns a (fn content [signal]) that:
     - Takes a Telemere signal (map).
-    - Returns a signal content ?string (incl. data, ctx, etc.).
+    - Returns a human-readable signal content ?string (incl. data, ctx, etc.).
 
   Options:
     `:raw-error?`      - Retain unformatted error? (default false)
@@ -644,9 +591,9 @@
             (when         (and parent root)         (af "   root: " (vf (dissoc root   :inst)))) ; {:keys [id uid]}
             #?(:clj (when (and host   incl-host?)   (af "   host: " (vf host))))   ; {:keys [      name ip]}
             #?(:clj (when (and thread incl-thread?) (af " thread: " (vf thread)))) ; {:keys [group name id]}
-            (when         (not-empty-coll data)     (af "   data: " (vf data)))
+            (when         (enc/not-empty-coll data) (af "   data: " (vf data)))
             (when         (and kvs incl-kvs?)       (af "    kvs: " (vf kvs)))
-            (when         (not-empty-coll ctx)      (af "    ctx: " (vf ctx))))
+            (when         (enc/not-empty-coll ctx)  (af "    ctx: " (vf ctx))))
 
           (let [{:keys [run-form error]} signal]
             (when run-form

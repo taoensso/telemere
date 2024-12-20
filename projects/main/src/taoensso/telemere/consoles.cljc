@@ -39,8 +39,8 @@
           ([signal]
            (let [^java.io.Writer stream
                  (case stream
-                   :*out* *out*
-                   :*err* *err*
+                   (:out :*out*) *out*
+                   (:err :*err*) *err*
                    :auto  (if (error-signal? signal) *err* *out*)
                    stream)]
 

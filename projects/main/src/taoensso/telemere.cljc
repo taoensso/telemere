@@ -32,10 +32,6 @@
 
 (enc/assert-min-encore-version [3 132 0])
 
-;;;; TODO
-;; - Update Tufte  (signal API, config API, signal keys, etc.)
-;; - Update Timbre (signal API, config API, signal keys, backport improvements)
-
 ;;;; Shared signal API
 
 (sigs/def-api
@@ -382,7 +378,6 @@
     (impl/dispatch-signal! wrapped-signal)))
 
 (comment (dispatch-signal! (assoc (with-signal :trap (log! "hello")) :level :warn)))
-
 
 ;;;; Interop
 

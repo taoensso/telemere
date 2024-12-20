@@ -37,7 +37,8 @@ Examples:
   (trace! ::my-id (+ 1 2)) ; %> {... :id ::my-id ...}
   (trace!
     {:let  [x "x"] ; Available to `:data` and `:msg`
-     :data {:x x}}
+     :data {:x x}
+     :msg  ["My message:" x]}
 
     (+ 1 2)) ; %> {... :data {x "x"}, :msg_ "My msg: x" ...}
 
