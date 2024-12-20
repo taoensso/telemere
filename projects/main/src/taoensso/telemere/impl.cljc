@@ -271,6 +271,7 @@
   [ns kind id level signal-value_]
   sigs/IFilterableSignal
   (allow-signal? [_ sig-filter] (sig-filter kind ns id level))
+  (signal-debug  [_] {:kind kind, :ns ns, :id id, :level level})
   (signal-value  [_ handler-sample-rate]
     (let [sig-val (force signal-value_)]
       (or
