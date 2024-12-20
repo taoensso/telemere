@@ -1,4 +1,4 @@
-(defproject com.taoensso/telemere "1.0.0-RC1"
+(defproject com.taoensso/telemere "1.0.0-RC2"
   :author "Peter Taoussanis <https://www.taoensso.com>"
   :description "Structured telemetry library for Clojure/Script"
   :url "https://www.taoensso.com/telemere"
@@ -50,7 +50,7 @@
      [org.clojure/test.check        "1.1.1"]
      [org.clojure/tools.logging     "1.3.0"]
      [org.slf4j/slf4j-api           "2.0.16"]
-     [com.taoensso/telemere-slf4j   "1.0.0-RC1"]
+     [com.taoensso/telemere-slf4j   "1.0.0-RC2"]
      #_[org.slf4j/slf4j-simple      "2.0.16"]
      #_[org.slf4j/slf4j-nop         "2.0.16"]
      #_[io.github.paintparty/bling  "0.4.2"]
@@ -98,5 +98,5 @@
    "test-clj"  ["with-profile" "+c1.12:+c1.11:+c1.10" "test"]
    "test-cljs" ["with-profile" "+c1.12" "cljsbuild"   "test"]
 
-   "test-clj-ott-off" ["with-profile" "+ott-off"  "test-clj"]
+   "test-clj-ott-off" ["with-profile" "+ott-off" "test-clj"]
    "test-all"  ["do" ["clean"] ["test-clj"] ["test-clj-ott-off"] ["test-cljs"]]})
