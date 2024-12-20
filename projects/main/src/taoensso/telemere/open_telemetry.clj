@@ -19,11 +19,6 @@
   (remove-ns (symbol (str *ns*)))
   (:api (enc/interns-overview)))
 
-(enc/declare-remote
-  ^:dynamic taoensso.telemere/*otel-tracer*
-  taoensso.telemere/otel-default-providers_
-  taoensso.telemere/add-handler!)
-
 ;;;; TODO
 ;; - API for remote span context and trace state? (Ref. beta19)
 ;; - API for span links?
@@ -266,7 +261,7 @@
    (let [?logger-provider
          (if (not= logger-provider :default)
            logger-provider
-           (:logger-provider (force taoensso.telemere/otel-default-providers_)))
+           (:logger-provider (force tel/otel-default-providers_)))
 
          ;; Mechanism to end spans 3-6 secs *after* signal handling. The delay
          ;; helps support out-of-order signals due to >1 handler threads, etc.
@@ -386,13 +381,13 @@
   []
   {:present?       true
    :use-tracer?    impl/enabled:otel-tracing?
-   :viable-tracer? (boolean (impl/viable-tracer (force taoensso.telemere/*otel-tracer*)))})
+   :viable-tracer? (boolean (impl/viable-tracer (force tel/*otel-tracer*)))})
 
 (impl/add-interop-check! :open-telemetry check-interop)
 
 (impl/on-init
   (when impl/enabled:otel-tracing?
-    ;; (taoensso.telemere/add-handler! :default/open-telemetry (handler:open-telemetry))
+    ;; (tel/add-handler! :default/open-telemetry (handler:open-telemetry))
     (impl/signal!
       {:kind  :event
        :level :debug ; < :info since runs on init
