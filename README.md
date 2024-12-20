@@ -209,9 +209,15 @@ It enables you to write code that is **information-verbose by default**.
 - Telemere [compared](../../wiki/5-Migrating#from-timbre) to [Timbre](https://www.taoensso.com/timbre) (Telemere's predecessor)
 - Telemere [compared](../../wiki/6-FAQ#how-does-telemere-compare-to-mulog) to [Mulog](https://github.com/BrunoBonacci/mulog) (Structured micro-logging library)
 
-## Video demo
+## Videos
 
-See for intro and basic usage:
+### Lightning intro (7 mins):
+
+<a href="https://www.youtube.com/watch?v=lOaZ0SgPVu4" target="_blank">
+ <img src="https://img.youtube.com/vi/lOaZ0SgPVu4/maxresdefault.jpg" alt="Telemere lightning intro" width="480" border="0" />
+</a>
+
+### REPL demo (24 mins):
 
 <a href="https://www.youtube.com/watch?v=-L9irDG8ysM" target="_blank">
  <img src="https://img.youtube.com/vi/-L9irDG8ysM/maxresdefault.jpg" alt="Telemere demo video" width="480" border="0" />
