@@ -11,7 +11,7 @@ Signal options (shared by all signal creators):
 `:data` -------- Arb app-level ?data    to incl. in signal: usu. a map
 `:error` ------- Arb app-level ?error   to incl. in signal: platform error [2]
 
-`:run` --------- ?form     to execute UNCONDITIONALLY; will incl. `:run-value` in signal
+`:run` --------- ?form     to execute UNCONDITIONALLY; will incl. `:run-val` in signal
 `:do` ---------- ?form     to execute   conditionally (iff signal allowed), before establishing `:let` ?binding
 `:let` --------- ?bindings to establish conditionally (iff signal allowed), BEFORE evaluating `:data` and `:msg` (useful!)
 

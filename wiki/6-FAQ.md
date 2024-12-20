@@ -1,6 +1,6 @@
 # Does Telemere replace Timbre?
 
-> [Timbre](https:/www.taoensso.com/timbre) is a pure Clojure/Script logging library, and ancestor of Telemere.
+> [Timbre](https://www.taoensso.com/timbre) is a pure Clojure/Script logging library, and ancestor of Telemere.
 
 **Yes**, Telemere's functionality is a **superset of Timbre**, and offers *many* improvements over Timbre.
 
@@ -12,7 +12,7 @@ See section [5-Migrating](./5-Migrating#from-timbre) for migration info.
 
 # Why not just update Timbre?
 
-> [Timbre](https:/www.taoensso.com/timbre) is a pure Clojure/Script logging library, and ancestor of Telemere.
+> [Timbre](https://www.taoensso.com/timbre) is a pure Clojure/Script logging library, and ancestor of Telemere.
 
 Why release Telemere as a *new library* instead of just updating Timbre?
 
@@ -32,9 +32,9 @@ This will eventually ease long-term maintenance, increase reliability, and help 
 
 # Does Telemere replace Tufte?
 
-> [Tufte](https:/www.taoensso.com/tufte) is a simple performance monitoring library for Clojure/Script by the author of Telemere.
+> [Tufte](https://www.taoensso.com/tufte) is a simple performance monitoring library for Clojure/Script by the author of Telemere.
 
-**No**, Telemere does **not** replace [Tufte](https:/www.taoensso.com/tufte). They work great together, and the [upcoming](https:/www.taoensso.com/roadmap) Tufte v3 will share the same core as Telemere and offer an **identical API** for managing filters and handlers.
+**No**, Telemere does **not** replace [Tufte](https://www.taoensso.com/tufte). They work great together, and the [upcoming](https://www.taoensso.com/roadmap) Tufte v3 will share the same core as Telemere and offer an **identical API** for managing filters and handlers.
 
 There is **some feature overlap** though since Telemere offers basic performance measurement as part of its tracing features.
 
