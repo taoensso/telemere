@@ -785,17 +785,7 @@
 ;;;; Utils
 
 (deftest _utils
-  [(testing "Basic utils"
-     [(is (= (utils/upper-qn :foo/bar) "FOO/BAR"))
-
-      (is (= (utils/format-level :info) "INFO"))
-      (is (= (utils/format-level     8) "LEVEL:8"))
-
-      (is (= (utils/format-id "foo.bar" :foo.bar/qux) "::qux"))
-      (is (= (utils/format-id "foo.baz" :foo.bar/qux) ":foo.bar/qux"))
-      (is (= (utils/format-id nil       :foo.bar/qux) ":foo.bar/qux"))])
-
-   (testing "error-signal?"
+  [(testing "error-signal?"
      [(is (= (utils/error-signal? {:error    nil}) false))
       (is (= (utils/error-signal? {:error    ex1}) true))
       (is (= (utils/error-signal? {:kind  :error}) true))
