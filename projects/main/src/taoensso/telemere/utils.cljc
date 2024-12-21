@@ -551,9 +551,11 @@
 (comment ((signal-preamble-fn) (tel/with-signal (tel/event! ::ev-id))))
 
 (defn- format-parent [ns {:keys [id uid]}]
-  {:id (symbol (format-id ns id)) :uid uid})
+  (if id
+    {:id (symbol (format-id ns id)), :uid uid}
+    {:id (symbol (format-id ns id))}))
 
-(comment (str (format-parent (str *ns*) {:id ::foo})))
+(comment (str (format-parent (str *ns*) {:id ::id1 :uid "uid1"})))
 
 (defn signal-content-fn
   "Experimental, subject to change.
