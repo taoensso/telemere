@@ -553,6 +553,14 @@
 
 (comment (enc/qb 1e6 (inst+nsecs (enc/now-inst) 1e9)))
 
+#?(:clj
+   (defn- valid-opts! [x]
+     (when-not (map?   x)
+       (throw
+         ;; We require const map keys, but vals may require eval
+         (ex-info "Telemere signal opts must be a map with const (compile-time) keys."
+           {:opts (enc/typed-val x)})))))
+
 #?(:clj (defn- auto-> [form auto-form] (if (= form :auto) auto-form form)))
 #?(:clj
    (defmacro ^:public signal!
@@ -564,7 +572,7 @@
      ;; Remember to also update signal-arglists, etc.
      ;; ([arg1 & more] (enc/keep-callsite `(signal! ~(apply hash-map arg1 more))))
      ([opts]
-      (have? map? opts) ; We require const map keys, but vals may require eval
+      (valid-opts! opts)
       (let [defaults (enc/merge {:kind :generic, :level :info} (get opts :defaults))
             opts     (enc/merge defaults (dissoc opts :defaults))
             cljs? (boolean (:ns &env))
@@ -823,7 +831,7 @@
      ;; Used also for interop (tools.logging, SLF4J), etc.
      {:arglists (signal-arglists :signal-allowed?)}
      [opts]
-     (have? map? opts)
+     (valid-opts! opts)
      (let [defaults             (get    opts :defaults)
            opts (merge defaults (dissoc opts :defaults))
 
