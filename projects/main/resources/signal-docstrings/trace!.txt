@@ -1,6 +1,6 @@
-"Trace" signal creator, emphasizing form + id.
+"Trace" signal creator, emphasizing (optional id) + form to run.
+ALWAYS (unconditionally) returns run value, or rethrows run error.
 
-API: [form] [id-or-opts form] => form's result (value/throw) (unconditional)
 Default  kind: `:trace`
 Default level: `:info` (intentionally NOT `:trace`!)
 
@@ -8,14 +8,14 @@ When filtering conditions are met [4], creates a Telemere signal [3] and
 dispatches it to registered handlers for processing (e.g. writing to
 console/file/queue/db, etc.).
 
-Enables tracing of given `form` arg:
+Enables tracing of given `run` form:
 
   - Resulting signal  will include {:keys [run-form run-val run-nsecs]}.
   - Nested    signals will include this signal's id and uid under `:parent`.
 
 Limitations:
 
-  1. Traced code (`form` arg) is usually expected to be synchronous and eager.
+  1. Traced `run` form is usually expected to be synchronous and eager.
      So no lazy seqs, async calls, or inversion of flow control (IoC) macros like
      core.async `go` blocks, etc.
 
@@ -47,10 +47,10 @@ Tips:
   - Test using `with-signal`: (with-signal (trace! ...)).
   - Supports the same options [2] as other signals [1].
 
-  - Identical to `spy!`, but emphasizes form + id rather than form + level.
+  - Like `spy!`, but takes optional id rather than optional level.
 
   - Useful for debugging/monitoring forms, and tracing (nested) execution flow.
-  - Execution of `form` arg may create additional (nested) signals.
+  - Execution of `run` form may create additional (nested) signals.
     Each signal's `:parent` key will indicate its immediate parent.
 
   - Can be useful to wrap with `catch->error!`:
@@ -60,9 +60,9 @@ Tips:
     refers to the general action of tracing program flow rather than to the
     common logging level of the same name.
 
-  - Runtime of async or lazy code in `form` will intentionally NOT be included
-    in resulting signal's `:run-nsecs` value. If you want to measure such
-    runtimes, make sure that your form wraps where the relevant costs are
+  - Runtime of async or lazy code in `run` form will intentionally NOT be
+    included in resulting signal's `:run-nsecs` value. If you want to measure
+    such runtimes, make sure that your form wraps where the relevant costs are
     actually realized. Compare:
       (trace!  (delay (my-slow-code))) ; Doesn't measure slow code
       (trace! @(delay (my-slow-code))) ; Does    measure slow code

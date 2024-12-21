@@ -198,154 +198,102 @@
 (comment (enc/qb 1e6 (force *otel-tracer*))) ; 51.23
 
 ;;;; Signal creators
-;; - event!           [id   ] [id   opts/level] ; id     + ?level => allowed? ; Sole signal with descending main arg!
-;; - log!             [msg  ] [opts/level  msg] ; msg    + ?level => allowed?
-;; - error!           [error] [opts/id   error] ; error  + ?id    => given error
-;; - trace!           [form ] [opts/id    form] ; run    + ?id    => run result (value or throw)
-;; - spy!             [form ] [opts/level form] ; run    + ?level => run result (value or throw)
-;; - catch->error!    [form ] [opts/id    form] ; run    + ?id    => run value or ?return
-;; - signal!          [opts ]                   ;                 => allowed? / run result (value or throw)
-;; - uncaught->error! [opts/id]                 ;          ?id    => nil
+;; - signal! ---------- opts            => allowed? / unconditional run result (value or throw)
+;; - event! ----------- id     + ?level => allowed?
+;; - log! ------------- ?level + msg    => allowed?
+;; - trace! ----------- ?id    + run    => unconditional run result (value or throw)
+;; - spy! ------------- ?level + run    => unconditional run result (value or throw)
+;; - error! ----------- ?id    + error  => unconditional given error
+;; - catch->error! ---- ?id    + run    => unconditional run value or ?catch-val
+;; - uncaught->error! - ?id             => nil
 
 #?(:clj
-   (defmacro event!
-     "[id] [id level-or-opts] => allowed?"
-     {:doc      (impl/signal-docstring :event!)
-      :arglists (impl/signal-arglists  :event!)}
-     [& args]
-     (let [opts
-           (impl/signal-opts `event! (enc/get-source &form &env)
-             {:kind :event, :level :info} :id :level :dsc args)]
-       `(impl/signal! ~opts))))
+   (defn- merge-or-assoc-opts [m &form &env k v]
+     (let [m (assoc m :location* (enc/get-source &form &env))]
+       (if  (map? v)
+         (merge m v)
+         (assoc m k v)))))
+
+#?(:clj
+   (let [base-opts {:kind :event, :level :info}]
+     (defmacro event!
+       "id + ?level => allowed? Note unique arg order: [x opts] rather than [opts x]!"
+       {:doc      (impl/signal-docstring :event!)
+        :arglists (impl/signal-arglists  :event!)}
+       ([   opts-or-id]    `(impl/signal!        ~(merge-or-assoc-opts base-opts &form &env :id    opts-or-id)))
+       ([id opts-or-level] `(impl/signal! ~(assoc (merge-or-assoc-opts base-opts &form &env :level opts-or-level) :id id))))))
 
 (comment (with-signal (event! ::my-id :info)))
 
 #?(:clj
-   (defmacro log!
-     "[msg] [level-or-opts msg] => allowed?"
-     {:doc      (impl/signal-docstring :log!)
-      :arglists (impl/signal-arglists  :log!)}
-     [& args]
-     (let [opts
-           (impl/signal-opts `log! (enc/get-source &form &env)
-             {:kind :log, :level :info} :msg :level :asc args)]
-       `(impl/signal! ~opts))))
+   (let [base-opts {:kind :log, :level :info}]
+     (defmacro log!
+       "?level + msg => allowed?"
+       {:doc      (impl/signal-docstring :log!)
+        :arglists (impl/signal-arglists  :log!)}
+       ([opts-or-msg      ] `(impl/signal!        ~(merge-or-assoc-opts base-opts &form &env :msg   opts-or-msg)))
+       ([opts-or-level msg] `(impl/signal! ~(assoc (merge-or-assoc-opts base-opts &form &env :level opts-or-level) :msg msg))))))
 
 (comment (with-signal (log! :info "My msg")))
 
 #?(:clj
-   (defmacro error!
-     "[error] [error id-or-opts] => error"
-     {:doc      (impl/signal-docstring :error!)
-      :arglists (impl/signal-arglists  :error!)}
-     [& args]
-     (let [opts
-           (impl/signal-opts `error! (enc/get-source &form &env)
-             {:kind :error, :level :error} :error :id :asc args)
-           error-form (get opts :error)]
+   (let [base-opts {:kind :trace, :level :info, :msg `impl/default-trace-msg}]
+     (defmacro trace!
+       "?id + run => unconditional run result (value or throw)."
+       {:doc      (impl/signal-docstring :trace!)
+        :arglists (impl/signal-arglists  :trace!)}
+       ([opts-or-run]    `(impl/signal!        ~(merge-or-assoc-opts base-opts &form &env :run opts-or-run)))
+       ([opts-or-id run] `(impl/signal! ~(assoc (merge-or-assoc-opts base-opts &form &env :id  opts-or-id) :run run))))))
 
-       `(let [~'__error ~error-form]
-          (impl/signal! ~(assoc opts :error '__error))
-          ~'__error ; Unconditional!
-          ))))
+(comment (with-signal (trace! ::my-id (+ 1 2))))
+
+#?(:clj
+   (let [base-opts {:kind :spy, :level :info, :msg `impl/default-trace-msg}]
+     (defmacro spy!
+       "?level + run => unconditional run result (value or throw)."
+       {:doc      (impl/signal-docstring :spy!)
+        :arglists (impl/signal-arglists  :spy!)}
+       ([opts-or-run]       `(impl/signal!        ~(merge-or-assoc-opts base-opts &form &env :run   opts-or-run)))
+       ([opts-or-level run] `(impl/signal! ~(assoc (merge-or-assoc-opts base-opts &form &env :level opts-or-level) :run run))))))
+
+(comment (with-signals (spy! :info (+ 1 2))))
+
+#?(:clj
+   (let [base-opts {:kind :error, :level :error}]
+     (defmacro error!
+       "?id + error => unconditional given error."
+       {:doc      (impl/signal-docstring :error!)
+        :arglists (impl/signal-arglists  :error!)}
+       ([opts-or-id error] `(error! ~(assoc (merge-or-assoc-opts base-opts &form &env :id opts-or-id) :error error)))
+       ([opts-or-error]
+        (let [opts (merge-or-assoc-opts base-opts &form &env :error opts-or-error)]
+          `(let [~'__error ~(get   opts :error)]
+             (impl/signal! ~(assoc opts :error '__error))
+             (do                              ~'__error)))))))
 
 (comment (with-signal (throw (error! ::my-id (ex-info "MyEx" {})))))
 
 #?(:clj
-   (defmacro catch->error!
-     "[form] [id-or-opts form] => run value or ?catch-val"
-     {:doc      (impl/signal-docstring :catch-to-error!)
-      :arglists (impl/signal-arglists  :catch->error!)}
-     [& args]
-     (let [opts
-           (impl/signal-opts `catch->error! (enc/get-source &form &env)
-             {:kind :error, :level :error} ::__form :id :asc args)
+   (let [base-opts {:kind :error, :level :error}]
+     (defmacro catch->error!
+       "?id + run => unconditional run value or ?catch-val."
+       {:doc      (impl/signal-docstring :catch->error!)
+        :arglists (impl/signal-arglists  :catch->error!)}
+       ([opts-or-id run] `(catch->error! ~(assoc (merge-or-assoc-opts base-opts &form &env :id opts-or-id) :run run)))
+       ([opts-or-run]
+        (let [opts     (merge-or-assoc-opts base-opts &form &env :run opts-or-run)
+              rethrow? (if (contains? opts :catch-val) false (get opts :rethrow? true))
+              catch-val    (get       opts :catch-val)
+              catch-sym    (get       opts :catch-sym '__caught-error) ; Undocumented
+              run-form     (get       opts :run)
+              opts         (dissoc    opts :run :catch-val :catch-sym :rethrow?)]
 
-           rethrow? (if (contains? opts :catch-val) false (get opts :rethrow? true))
-           catch-val    (get       opts :catch-val)
-           catch-sym    (get       opts :catch-sym '__caught-error) ; Undocumented
-           form         (get       opts ::__form)
-           opts         (dissoc    opts ::__form :catch-val :catch-sym :rethrow?)]
+          `(enc/try* ~run-form
+             (catch :all ~catch-sym
+               (impl/signal! ~(assoc opts :error catch-sym))
+               (if ~rethrow? (throw ~catch-sym) ~catch-val))))))))
 
-       `(enc/try* ~form
-          (catch :all ~catch-sym
-            (impl/signal! ~(assoc opts :error catch-sym))
-            (if ~rethrow? (throw ~catch-sym) ~catch-val))))))
-
-(comment
-  (with-signal (catch->error! ::my-id (/ 1 0)))
-  (with-signal (catch->error! {                  :msg ["Error:" __caught-error]} (/ 1 0)))
-  (with-signal (catch->error! {:catch-sym my-err :msg ["Error:" my-err]}         (/ 1 0))))
-
-#?(:clj
-   (defmacro trace!
-     "[form] [id-or-opts form] => run result (value or throw)"
-     {:doc      (impl/signal-docstring :trace!)
-      :arglists (impl/signal-arglists  :trace!)}
-     [& args]
-     (let [opts
-           (impl/signal-opts `trace! (enc/get-source &form &env)
-             {:kind :trace, :level :info, :msg `impl/default-trace-msg}
-             :run :id :asc args)
-
-           ;; :catch->error <id-or-opts> currently undocumented
-           [opts catch-opts] (impl/signal-catch-opts opts)]
-
-       (if catch-opts
-         `(catch->error! ~catch-opts (impl/signal! ~opts))
-         (do                        `(impl/signal! ~opts))))))
-
-(comment
-  (with-signal (trace! ::my-id (+ 1 2)))
-  (let [[_ [s1 s2]]
-        (with-signals
-          (trace! {:id :id1, :catch->error :id2}
-            (throw (ex-info "Ex1" {}))))]
-    [s2]))
-
-#?(:clj
-   (defmacro spy!
-     "[form] [level-or-opts form] => run result (value or throw)"
-     {:doc      (impl/signal-docstring :spy!)
-      :arglists (impl/signal-arglists  :spy!)}
-     [& args]
-     (let [opts
-           (impl/signal-opts `spy! (enc/get-source &form &env)
-             {:kind :spy, :level :info, :msg `impl/default-trace-msg}
-             :run :level :asc args)
-
-           ;; :catch->error <id-or-opts> currently undocumented
-           [opts catch-opts] (impl/signal-catch-opts opts)]
-
-       (if catch-opts
-         `(catch->error! ~catch-opts (impl/signal! ~opts))
-         (do                        `(impl/signal! ~opts))))))
-
-(comment (with-signal :force (spy! :info (+ 1 2))))
-
-#?(:clj
-   (defmacro uncaught->error!
-     "Uses `uncaught->handler!` so that `error!` will be called for
-     uncaught JVM errors.
-
-     See `uncaught->handler!` and `error!` for details."
-     {:arglists (impl/signal-arglists :uncaught->error!)}
-     [& args]
-     (let [msg-form ["Uncaught Throwable on thread:" `(.getName ~(with-meta '__thread-arg {:tag 'java.lang.Thread}))]
-           opts
-           (impl/signal-opts `uncaught->error! (enc/get-source &form &env)
-             {:kind :error, :level :error, :msg msg-form}
-             :error :id :dsc (into ['__throwable-arg] args))]
-
-       `(uncaught->handler!
-          (fn [~'__thread-arg ~'__throwable-arg]
-            (impl/signal! ~opts))))))
-
-(comment
-  (macroexpand '(uncaught->error! ::uncaught))
-  (do
-    (uncaught->error! ::uncaught)
-    (enc/threaded :user (/ 1 0))))
+(comment (with-signal (catch->error! ::my-id (/ 1 0))))
 
 #?(:clj
    (defn uncaught->handler!
@@ -360,6 +308,31 @@
            (uncaughtException [_ thread throwable]
              (handler            thread throwable)))))
      nil))
+
+#?(:clj
+   (let [base-opts
+         {:kind :error, :level :error,
+          :msg   `["Uncaught Throwable on thread:" (.getName ~(with-meta '__thread-arg {:tag 'java.lang.Thread}))]
+          :error '__throwable-arg}]
+
+     (defmacro uncaught->error!
+       "Uses `uncaught->handler!` so that `error!` will be called for
+       uncaught JVM errors.
+
+       See `uncaught->handler!` and `error!` for details."
+       {:arglists  (impl/signal-arglists :uncaught->error!)}
+       ([          ] (enc/keep-callsite `(uncaught->error! {})))
+       ([opts-or-id]
+        (let [opts (merge-or-assoc-opts base-opts &form &env :id opts-or-id)]
+          `(uncaught->handler!
+             (fn [~'__thread-arg ~'__throwable-arg]
+               (impl/signal! ~opts))))))))
+
+(comment
+  (macroexpand '(uncaught->error! ::uncaught))
+  (do
+    (uncaught->error! ::uncaught)
+    (enc/threaded :user (/ 1 0))))
 
 ;;;;
 

@@ -1,6 +1,6 @@
-"Event" signal creator, emphasizing id + level.
+"Event" signal creator, emphasizing id + (optional level).
+Returns true iff signal was created (allowed by filtering).
 
-API: [id] [id level-or-opts] => true iff signal was allowed
 Default  kind: `:event`
 Default level: `:info`
 

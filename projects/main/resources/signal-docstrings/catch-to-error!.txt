@@ -1,10 +1,9 @@
-Unconditionally executes given form and-
-  If form succeeds: return the form's result.
-  If form   throws:
+ALWAYS (unconditionally) executes given `run` form and:
+  If `run` form succeeds: return the form's result.
+  If `run` form   throws:
     Call `error!` with the thrown error and the given signal options [2],
     then return (:catch-val opts) if it exists, or rethrow the error.
 
-API: [form] [id-or-opts form] => form's result (value/throw) (unconditional), or (:catch-val opts)
 Default  kind: `:error`
 Default level: `:error`
 

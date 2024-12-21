@@ -376,159 +376,90 @@
    (defn signal-arglists [macro-id]
      (case macro-id
 
-       :signal! ; [opts] => allowed? / run result (value or throw)
-       '([{:as opts :keys
+       :signal! ; opts => allowed? / unconditional run result (value or throw)
+       '([{:as opts-map :keys
            [#_defaults #_elide? #_allow? #_expansion-id, ; Undocumented
             elidable? location #_location* inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error run & kvs]}])
 
-       :signal-allowed?
-       '([{:as opts :keys
+       :signal-allowed? ; opts => allowed?
+       '([{:as opts-map :keys
            [#_defaults #_elide? #_allow? #_expansion-id, ; Undocumented
             elidable? location #_location* #_inst #_uid #_middleware #_middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             #_ctx #_ctx+ #_parent #_root #_trace?, #_do #_let #_data #_msg #_error #_run #_& #_kvs]}])
 
-       :event! ; [id] [id level-or-opts] => allowed?
-       '([id      ]
-         [id level]
+       :event! ; id + ?level => allowed?
+       '([opts-or-id]
+         [id   level]
          [id
-          {:as opts :keys
+          {:as opts-map :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location #_location* inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}])
 
-       :log! ; [msg] [level-or-opts msg] => allowed?
-       '([      msg]
-         [level msg]
-         [{:as opts :keys
+       :log! ; ?level + msg => allowed?
+       '([opts-or-msg]
+         [level   msg]
+         [{:as opts-map :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location #_location* inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}
           msg])
 
-       :error! ; [error] [id-or-opts error] => given error
-       '([   error]
-         [id error]
-         [{:as opts :keys
+       :trace! ; ?id + run => unconditional run result (value or throw)
+       '([opts-or-run]
+         [id      run]
+         [{:as opts-map :keys
+           [#_defaults #_elide? #_allow? #_expansion-id,
+            elidable? location #_location* inst uid middleware middleware+,
+            sample-rate kind ns id level when rate-limit rate-limit-by,
+            ctx ctx+ parent root trace?, do let data msg error run & kvs]}
+          run])
+
+       :spy! ; ?level + run => unconditional run result (value or throw)
+       '([opts-or-run]
+         [level   run]
+         [{:as opts-map :keys
+           [#_defaults #_elide? #_allow? #_expansion-id,
+            elidable? location #_location* inst uid middleware middleware+,
+            sample-rate kind ns id level when rate-limit rate-limit-by,
+            ctx ctx+ parent root trace?, do let data msg error run & kvs]}
+          run])
+
+       :error! ; ?id + error => unconditional given error
+       '([opts-or-error]
+         [id      error]
+         [{:as opts-map :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location #_location* inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}
           error])
 
-       :trace! ; [form] [id-or-opts form] => run result (value or throw)
-       '([   form]
-         [id form]
-         [{:as opts :keys
-           [#_defaults #_elide? #_allow? #_expansion-id,
-            elidable? location #_location* inst uid middleware middleware+,
-            sample-rate kind ns id level when rate-limit rate-limit-by,
-            ctx ctx+ parent root trace?, do let data msg error run & kvs]}
-          form])
-
-       :spy! ; [form] [level-or-opts form] => run result (value or throw)
-       '([      form]
-         [level form]
-         [{:as opts :keys
-           [#_defaults #_elide? #_allow? #_expansion-id,
-            elidable? location #_location* inst uid middleware middleware+,
-            sample-rate kind ns id level when rate-limit rate-limit-by,
-            ctx ctx+ parent root trace?, do let data msg error run & kvs]}
-          form])
-
-       :catch->error! ; [form] [id-or-opts form] => run result (value or throw)
-       '([   form]
-         [id form]
-         [{:as opts :keys
+       :catch->error! ; ?id + run => unconditional run value or ?catch-val
+       '([opts-or-run]
+         [id      run]
+         [{:as opts-map :keys
            [#_defaults #_elide? #_allow? #_expansion-id, rethrow? catch-val,
             elidable? location #_location* inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}
-          form])
+          run])
 
-       :uncaught->error! ; [] [id-or-opts] => nil
-       '([  ]
-         [id]
-         [{:as opts :keys
+       :uncaught->error! ; ?id => nil
+       '([]
+         [opts-or-id]
+         [{:as opts-map :keys
            [#_defaults #_elide? #_allow? #_expansion-id,
             elidable? location #_location* inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}])
 
        (enc/unexpected-arg! macro-id))))
-
-#?(:clj
-   (defn signal-opts
-     "Util to help write common signal wrapper macros."
-     [context location* defaults main-key extra-key arg-order args]
-     (enc/cond
-       :let [context-name (str "`" (name context) "`")
-             num-args (count args)
-             bad-args!
-             (fn [msg data]
-               (throw
-                 (ex-info (str "Invalid " context-name " args: " msg)
-                   (conj
-                     {:context context
-                      :args    args}
-                     data))))]
-
-       (not (#{1 2} num-args))
-       (bad-args! (str "wrong number of args (" num-args ")")
-         {:actual num-args, :expected #{1 2}})
-
-       :let [[main-arg extra-arg]
-             (case arg-order
-               :dsc          args  ; [main ...]
-               :asc (reverse args) ; [... main]
-               (enc/unexpected-arg!
-                 arg-order))
-
-             extra-arg?  (= num-args 2)
-             extra-opts? (and extra-arg? (map? extra-arg))]
-
-       :do
-       (enc/cond
-         (and (map? main-arg) (not extra-arg?))
-         (bad-args! "single map arg is USUALLY a mistake, so isn't allowed. Please use 2 arg arity instead, or `signal!`." {})
-
-         (and extra-opts? (contains? extra-arg main-key))
-         (bad-args! (str "given opts should not contain `" main-key "`.") {}))
-
-       :let [base  (merge defaults {:location* location*, main-key main-arg})]
-       extra-opts? (merge base            extra-arg)
-       extra-arg?  (merge base {extra-key extra-arg})
-       :else              base)))
-
-(comment (signal-opts `foo! :loc* {:level :info} :id :level :dsc [::my-id {:level :warn}]))
-
-#?(:clj
-   (defn signal-catch-opts
-     "For use within `trace!` and `spy!`, etc."
-     [main-opts]
-     (let [catch-id-or-opts (get    main-opts :catch->error)
-           main-opts        (dissoc main-opts :catch->error)
-           catch-opts
-           (when catch-id-or-opts
-             (let [base ; Inherit some opts from main
-                   (enc/assoc-some {}
-                     :location* (get main-opts :location*)
-                     :id        (get main-opts :id))]
-               (cond
-                 (true? catch-id-or-opts) (do   base)
-                 (map?  catch-id-or-opts) (conj base catch-id-or-opts)
-                 :else                    (conj base {:id catch-id-or-opts}))))]
-
-       [main-opts catch-opts])))
-
-(comment
-  (signal-catch-opts {:id :main-id, :catch->error           true})
-  (signal-catch-opts {:id :main-id, :catch->error      :error-id})
-  (signal-catch-opts {:id :main-id, :catch->error {:id :error-id}}))
 
 ;;;; Signal macro
 

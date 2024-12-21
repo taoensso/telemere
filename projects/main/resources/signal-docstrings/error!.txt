@@ -1,6 +1,7 @@
-"Error" signal creator, emphasizing error + id.
+"Error" signal creator, emphasizing (optional id) + error (Exception, etc.).
+ALWAYS (unconditionally) returns the given error, so can conveniently be wrapped
+by `throw`: (throw (error! (ex-info ...)), etc.
 
-API: [error] [id-or-opts error] => given error (unconditional)
 Default  kind: `:error`
 Default level: `:error`
 
@@ -22,7 +23,6 @@ Tips:
   - Supports the same options [2] as other signals [1].
 
   - `error` arg is a platform error (`java.lang.Throwable` or `js/Error`).
-  - Can conveniently be wrapped by `throw`: (throw (error! ...)).
 
 ----------------------------------------------------------------------
 [1] See `help:signal-creators` - (`signal!`, `log!`, `event!`, ...)

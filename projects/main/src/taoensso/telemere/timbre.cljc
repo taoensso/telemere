@@ -73,9 +73,9 @@
             nil)))))
 
 (comment
-  (macroexpand               '(trace "foo"))
-  (tel/with-signal :force-msg (trace "foo"))
-  (tel/with-signal :force-msg (infof "Hello %s" "world")))
+  (macroexpand    '(trace "foo"))
+  (tel/with-signal (trace "foo"))
+  (tel/with-signal (infof "Hello %s" "world")))
 
 #?(:clj
    (do
@@ -103,24 +103,27 @@
      ([                form] (enc/keep-callsite `(spy! :debug nil ~form)))
      ([level           form] (enc/keep-callsite `(spy! ~level nil ~form)))
      ([level form-name form]
-      (let [msg
-            (if-not form-name
-              `impl/default-trace-msg
-              `(fn [_form# value# error# nsecs#]
-                 (impl/default-trace-msg ~form-name value# error# nsecs#)))]
+      (let [location* (enc/get-source &form &env)
+            msg
+            (if form-name
+              `(fn [_form# value# error# nsecs#] (impl/default-trace-msg  ~form-name value# error# nsecs#))
+              `(fn [_form# value# error# nsecs#] (impl/default-trace-msg '~form      value# error# nsecs#)))]
 
-        (enc/keep-callsite
-          `(tel/spy!
-             {:kind  :spy
-              :level ~level
-              :id    shim-id
-              :msg   ~msg
-              :catch->error true}
+        `(tel/spy!
+           {:location* ~location*
+            :id        shim-id
+            :level     ~level
+            :msg       ~msg}
+
+           (tel/catch->error!
+             {:location* ~location*
+              :id        shim-id}
              ~form))))))
 
 (comment
-  (select-keys (tel/with-signal :force-msg (spy! :info "my-form-name" (+ 1 2)))                   [:level   :msg_])
-  (select-keys (tel/with-signal :force-msg (spy! :info "my-form-name" (throw (Exception. "Ex")))) [:level #_:msg_]))
+  (:level (tel/with-signal (spy! (/ 1 0))))
+  (select-keys (tel/with-signal (spy! :info #_"my-form-name" (+ 1 2)))                   [:level :msg_])
+  (select-keys (tel/with-signal (spy! :info #_"my-form-name" (throw (Exception. "Ex")))) [:level :msg_]))
 
 #?(:clj (defmacro log-errors             "Prefer `telemere/catch->error!`." [& body] (enc/keep-callsite         `(tel/catch->error! {:id shim-id, :catch-val nil} (do ~@body)))))
 #?(:clj (defmacro log-and-rethrow-errors "Prefer `telemere/catch->error!`." [& body] (enc/keep-callsite         `(tel/catch->error! {:id shim-id}                 (do ~@body)))))

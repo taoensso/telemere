@@ -1,6 +1,6 @@
-"Log" signal creator, emphasizing message + level.
+"Log" signal creator, emphasizing (optional level) + message.
+Returns true iff signal was created (allowed by filtering).
 
-API: [msg] [level-or-opts msg] => true iff signal was allowed.
 Default  kind: `:log`
 Default level: `:info`
 

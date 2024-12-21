@@ -1,15 +1,16 @@
-Low-level generic signal creator.
+Low-level "generic" signal creator for creating signals of any "kind".
+Takes a single map of options [2] with compile-time keys.
 
-API: [opts] => depends on options [2]
-Default  kind: `:generic`
+Return value depends on options:
+  - If given `:run` form: unconditionally returns run value, or rethrows run error.
+  - Otherwise: returns true iff signal was created (allowed by filtering).
+
+Default  kind: `:generic` (feel free to change!)
 Default level: `:info`
 
 When filtering conditions are met [4], creates a Telemere signal [3] and
 dispatches it to registered handlers for processing (e.g. writing to
 console/file/queue/db, etc.).
-
-If `:run` option is provided: returns value of given run form, or throws.
-                   Otherwise: returns true iff signal was created (allowed).
 
 Generic signals are fairly low-level and useful mostly for library authors or
 advanced users writing their own wrapper macros. Regular users will typically
