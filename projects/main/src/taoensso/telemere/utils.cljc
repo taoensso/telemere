@@ -598,14 +598,10 @@
               vf    val-fn]
 
           (let [{:keys [ns uid parent root data kvs ctx #?@(:clj [host thread]) sample-rate]} signal]
-            (when sample-rate (af " sample: " (vf sample-rate)))
-            (when uid         (af "    uid: " (vf uid)))
-            (when parent
-              (if (= parent root)
-                (do          (af " parent: " (vf (format-parent ns parent)) " (also root)")) ; {:keys [id uid]}
-                (do
-                  (do        (af " parent: " (vf (format-parent ns parent))))                ; {:keys [id uid]}
-                  (when root (af "   root: " (vf (format-parent ns root)))))))               ; {:keys [id uid]}
+            (when sample-rate                     (af " sample: " (vf sample-rate)))
+            (when uid                             (af "    uid: " (vf uid)))
+            (when (and parent (not= parent root)) (af " parent: " (vf (format-parent ns parent)))) ; {:keys [id uid]}
+            (when root                            (af "   root: " (vf (format-parent ns root))))   ; {:keys [id uid]}
 
             #?(:clj (when (enc/and* host   incl-host?)   (af "   host: " (vf host))))    ; {:keys [      name ip]}
             #?(:clj (when (enc/and* thread incl-thread?) (af " thread: " (vf thread))))  ; {:keys [group name id]}
