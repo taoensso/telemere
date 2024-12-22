@@ -169,9 +169,8 @@
   (t/catch->error!
     {:let  [x "x"] ; Available to `:data` and `:msg`
      :data {:x x}
-     :msg  ["My msg:" x my-error]
-     :catch-val "Return value when form throws"
-     :catch-sym my-error}
+     :msg  ["My msg:" x]
+     :catch-val "Return value when form throws"}
     (/ 1 0)))
 
 ;;;; Wiki examples

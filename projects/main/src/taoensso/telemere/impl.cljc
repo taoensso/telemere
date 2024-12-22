@@ -444,7 +444,7 @@
        '([opts-or-run]
          [id      run]
          [{:as opts-map :keys
-           [#_defaults #_elide? #_allow? #_expansion-id, rethrow? catch-val,
+           [#_defaults #_elide? #_allow? #_expansion-id, catch-val,
             elidable? location #_location* inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}

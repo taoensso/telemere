@@ -1,11 +1,14 @@
 ALWAYS (unconditionally) executes given `run` form and:
-  If `run` form succeeds: return the form's result.
-  If `run` form   throws:
-    Call `error!` with the thrown error and the given signal options [2],
-    then return (:catch-val opts) if it exists, or rethrow the error.
+  If `run` form succeeds: returns the form's result.
+  If `run` form throws ANYTHING:
+    Calls `error!` with the thrown error and given signal options [2], then
+    either returns given (:catch-val opts), or rethrows.
 
 Default  kind: `:error`
 Default level: `:error`
+
+Just a convenience util. For more flexibility use your own `try/catch`.
+See `taoensso.encore/try*` for easily catching cross-platform errors.
 
 Examples:
 
@@ -14,12 +17,10 @@ Examples:
   (catch->error!
     {:let  [x "x"] ; Available to `:data` and `:msg`
      :data {:x x}
-     :msg  ["My msg:" x my-error]
-     :catch-val "Return value when form throws"
-     :catch-sym my-error ; Sym of caught error, available to `:data` and `:msg`
-     }
+     :msg  ["My msg:" x]
+     :catch-val "Return value iff form throws"}
 
-     (/ 1 0)) ; %> {... :data {x "x"}, :msg_ "My msg: x <caught>" ...}
+     (/ 1 0)) ; %> {... :data {x "x"}, :msg_ "My msg: x" ...}
 
 Tips:
 

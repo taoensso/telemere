@@ -281,17 +281,16 @@
         :arglists (impl/signal-arglists  :catch->error!)}
        ([opts-or-id run] `(catch->error! ~(assoc (merge-or-assoc-opts base-opts &form &env :id opts-or-id) :run run)))
        ([opts-or-run]
-        (let [opts     (merge-or-assoc-opts base-opts &form &env :run opts-or-run)
-              rethrow? (if (contains? opts :catch-val) false (get opts :rethrow? true))
-              catch-val    (get       opts :catch-val)
-              catch-sym    (get       opts :catch-sym '__caught-error) ; Undocumented
-              run-form     (get       opts :run)
-              opts         (dissoc    opts :run :catch-val :catch-sym :rethrow?)]
+        (let [opts      (merge-or-assoc-opts base-opts &form &env :run opts-or-run)
+              rethrow?  (not (contains? opts :catch-val))
+              catch-val      (get       opts :catch-val)
+              run-form       (get       opts :run)
+              opts           (dissoc    opts :run :catch-val)]
 
           `(enc/try* ~run-form
-             (catch :all ~catch-sym
-               (impl/signal! ~(assoc opts :error catch-sym))
-               (if ~rethrow? (throw ~catch-sym) ~catch-val))))))))
+             (catch :all ~'__caught
+               (impl/signal! ~(assoc opts :error '__caught))
+               (if ~rethrow? (throw ~'__caught) ~catch-val))))))))
 
 (comment (with-signal (catch->error! ::my-id (/ 1 0))))
 

@@ -627,16 +627,8 @@
       (let [[[rv re] [sv]] (with-sigs (tel/catch->error!                    (ex1!)))] [(is (ex1?   re)) (is (sm? sv {:kind :error, :line :submap/some, :level :error, :error pex1?, :id  nil}))])
       (let [[[rv re] [sv]] (with-sigs (tel/catch->error!             :id1   (ex1!)))] [(is (ex1?   re)) (is (sm? sv {:kind :error, :line :submap/some, :level :error, :error pex1?, :id :id1}))])
       (let [[[rv re] [sv]] (with-sigs (tel/catch->error! {:id        :id1}  (ex1!)))] [(is (ex1?   re)) (is (sm? sv {:kind :error, :line :submap/some, :level :error, :error pex1?, :id :id1}))])
-      (let [[[rv re] [sv]] (with-sigs (tel/catch->error! {:rethrow?  false} (ex1!)))] [(is (nil?   re)) (is (sm? sv {:kind :error, :line :submap/some, :level :error, :error pex1?, :id  nil}))])
       (let [[[rv re] [sv]] (with-sigs (tel/catch->error! {:catch-val :foo}  (ex1!)))] [(is (= rv :foo)) (is (sm? sv {:kind :error, :line :submap/some, :level :error, :error pex1?, :id  nil}))])
-      (let [[[rv re] [sv]] (with-sigs (tel/catch->error! {:catch-val :foo} (+ 1 2)))] [(is (= rv    3)) (is (nil? sv))])
-      (let [[[rv re] [sv]] (with-sigs (tel/catch->error! {:catch-val :foo ; Overrides `:rethrow?`
-                                                          :rethrow?  true} (+ 1 2)))] [(is (= rv 3))    (is (nil? sv))])
-
-      (let [[[rv]    [sv]] (with-sigs (tel/catch->error! {:catch-val     nil
-                                                          :catch-sym     my-err
-                                                          :data {:my-err my-err}} (ex1!)))]
-        [(is (= rv nil)) (is (sm? sv {:kind :error, :data {:my-err pex1?}}))])])
+      (let [[[rv re] [sv]] (with-sigs (tel/catch->error! {:catch-val :foo} (+ 1 2)))] [(is (= rv    3)) (is (nil? sv))])])
 
    #?(:clj
       (testing "uncaught->error!"
