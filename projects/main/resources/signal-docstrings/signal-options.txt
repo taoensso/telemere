@@ -1,4 +1,5 @@
-Signal options (shared by all signal creators):
+Signal options are provided as a map with COMPILE-TIME keys.
+All options are available for all signal creators:
 
 `:inst` -------- Platform instant [1] when signal was created, ∈ #{nil :auto <[1]>}
 `:level` ------- Signal level ∈ #{<int> :trace :debug :info :warn :error :fatal :report ...}
