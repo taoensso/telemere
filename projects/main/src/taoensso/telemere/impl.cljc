@@ -327,24 +327,31 @@
 #?(:clj
    (defmacro ^:public with-signals
      "Experimental, subject to change.
-     Like `with-signal` but returns [[<form-value> <form-error>] [<signal1> ...]].
-     Useful for more advanced tests/debugging."
+     Like `with-signal` but returns {:keys [value error signals]}.
+     Useful for more advanced tests/debugging.
+
+     Destructuring example:
+       (let [{:keys [value error] [sig1 sig2] :signals} (with-signals ...)]
+         ...)"
      ([                        form] `(with-signals false false          ~form))
      ([          trap-signals? form] `(with-signals false ~trap-signals? ~form))
      ([raw-msgs? trap-signals? form]
       `(let [sigs_# (volatile! nil)
-             form-result#
+             base-map#
              (binding [*sig-spy* (SpyOpts. sigs_# false ~trap-signals?)]
                (enc/try*
-                 (do            [~form nil])
-                 (catch :all t# [nil    t#])))
+                 (do            {:value ~form})
+                 (catch :all t# {:error t#})))
 
              sigs#
-             (if ~raw-msgs?
-               (do                    @sigs_#)
-               (mapv force-msg-in-sig @sigs_#))]
+             (not-empty
+               (if ~raw-msgs?
+                 (do                    @sigs_#)
+                 (mapv force-msg-in-sig @sigs_#)))]
 
-         [form-result# (not-empty sigs#)]))))
+         (if sigs#
+           (assoc base-map# :signals sigs#)
+           (do    base-map#))))))
 
 #?(:clj (def ^:dynamic *sig-spy-off-thread?* false))
 (defn dispatch-signal!

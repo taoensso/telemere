@@ -81,27 +81,27 @@
          "x y nil [\"z1\" nil \"z2\" \"z3\"] s1 nil s2 s3 s4 :kw"))])
 
 (deftest _signal-macro
-  [(is (= (with-sigs (sig! {:level :info, :elide? true               })) [[nil nil] nil]) "With compile-time elision")
-   (is (= (with-sigs (sig! {:level :info, :elide? true,  :run (+ 1 2)})) [[3   nil] nil]) "With compile-time elision, run-form")
-   (is (= (with-sigs (sig! {:level :info, :allow? false              })) [[nil nil] nil]) "With runtime suppression")
-   (is (= (with-sigs (sig! {:level :info, :allow? false, :run (+ 1 2)})) [[3   nil] nil]) "With runtime suppression, run-form")
+  [(is (= (with-sigs (sig! {:level :info, :elide? true               })) {:value nil}) "With compile-time elision")
+   (is (= (with-sigs (sig! {:level :info, :elide? true,  :run (+ 1 2)})) {:value   3}) "With compile-time elision, run-form")
+   (is (= (with-sigs (sig! {:level :info, :allow? false              })) {:value nil}) "With runtime suppression")
+   (is (= (with-sigs (sig! {:level :info, :allow? false, :run (+ 1 2)})) {:value   3}) "With runtime suppression, run-form")
 
    (is (->> (sig! {:level :info, :elide? true,  :run (ex1!)}) (throws? :ex-info "Ex1")) "With compile-time elision, throwing run-form")
    (is (->> (sig! {:level :info, :allow? false, :run (ex1!)}) (throws? :ex-info "Ex1")) "With runtime suppression,  throwing run-form")
 
-   (let [[[rv1 _] [sv1]] (with-sigs (sig! {:level :info              }))
-         [[rv2 -] [sv2]] (with-sigs (sig! {:level :info, :run (+ 1 2)}))]
+   (let [{rv1 :value, [sv1] :signals} (with-sigs (sig! {:level :info              }))
+         {rv2 :value, [sv2] :signals} (with-sigs (sig! {:level :info, :run (+ 1 2)}))]
 
      [(is (= rv1 true)) (is (sm? sv1 {:ns "taoensso.telemere-tests", :level :info, :run-form nil,      :run-val nil, :run-nsecs nil}))
       (is (= rv2    3)) (is (sm? sv2 {:ns "taoensso.telemere-tests", :level :info, :run-form '(+ 1 2), :run-val 3,   :run-nsecs pnat-int?}))])
 
    (testing "Nested signals"
-     (let [[[outer-rv _] [outer-sv]] (with-sigs (sig! {:level :info, :run (with-sigs (sig! {:level :warn, :run "inner-run"}))}))
-           [[inner-rv _] [inner-sv]] outer-rv]
+     (let [{outer-rv :value, [outer-sv] :signals} (with-sigs (sig! {:level :info, :run (with-sigs (sig! {:level :warn, :run "inner-run"}))}))
+           {inner-rv :value, [inner-sv] :signals} outer-rv]
 
        [(is (= inner-rv "inner-run"))
-        (is (sm? inner-sv {:level :warn, :run-val "inner-run"}))
-        (is (sm? outer-sv {:level :info  :run-val [[inner-rv nil] [inner-sv]]}))]))
+        (is (sm? inner-sv {:level :warn, :run-val         "inner-run"}))
+        (is (sm? outer-sv {:level :info  :run-val {:value "inner-run", :signals [inner-sv]}}))]))
 
    (testing "Instants"
      (let [sv1 (with-sig (sig! {:level :info                             }))
@@ -133,12 +133,12 @@
                                :kvs         {:my-k1 "v1", :my-k2 "v2"}}))))
 
    (testing "`:msg` basics"
-     (let [c               (enc/counter)
-           [[rv1 _] [sv1]] (with-sigs :raw nil (sig! {:level :info, :run (c), :msg             "msg1"}))         ; No     delay
-           [[rv2 _] [sv2]] (with-sigs :raw nil (sig! {:level :info, :run (c), :msg        [    "msg2:"  (c)]}))  ; Auto   delay
-           [[rv3 _] [sv3]] (with-sigs :raw nil (sig! {:level :info, :run (c), :msg (delay (str "msg3: " (c)))})) ; Manual delay
-           [[rv4 _] [sv4]] (with-sigs :raw nil (sig! {:level :info, :run (c), :msg        (str "msg4: " (c))}))  ; No     delay
-           [[rv5 _] [sv5]] (with-sigs :raw nil (sig! {:level :info, :run (c), :msg        (str "msg5: " (c)), :allow? false}))]
+     (let [c (enc/counter)
+           {rv1 :value, [sv1] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), :msg             "msg1"}))         ; No     delay
+           {rv2 :value, [sv2] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), :msg        [    "msg2:"  (c)]}))  ; Auto   delay
+           {rv3 :value, [sv3] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), :msg (delay (str "msg3: " (c)))})) ; Manual delay
+           {rv4 :value, [sv4] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), :msg        (str "msg4: " (c))}))  ; No     delay
+           {rv5 :value, [sv5] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), :msg        (str "msg5: " (c)), :allow? false}))]
 
        [(is (= rv1 0)) (is (=  (:msg_ sv1) "msg1"))
         (is (= rv2 1)) (is (= @(:msg_ sv2) "msg2: 6"))
@@ -150,13 +150,13 @@
    (testing "`:data` basics"
      (vec
        (for [dk [:data :my-k1]] ; User kvs share same behaviour as data
-         (let [c               (enc/counter)
-               [[rv1 _] [sv1]] (with-sigs :raw nil (sig! {:level :info, :run (c), dk        {:c1 (c)}}))
-               [[rv2 _] [sv2]] (with-sigs :raw nil (sig! {:level :info, :run (c), dk (delay {:c2 (c)})}))
-               [[rv3 _] [sv3]] (with-sigs :raw nil (sig! {:level :info, :run (c), dk        {:c3 (c)},  :allow? false}))
-               [[rv4 _] [sv4]] (with-sigs :raw nil (sig! {:level :info, :run (c), dk (delay {:c4 (c)}), :allow? false}))
-               [[rv5 _] [sv5]] (with-sigs :raw nil (sig! {:level :info, :run (c), dk        [:c5 (c)]}))
-               [[rv6 _] [sv6]] (with-sigs :raw nil (sig! {:level :info, :run (c), dk (delay [:c6 (c)])}))]
+         (let [c (enc/counter)
+               {rv1 :value, [sv1] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), dk        {:c1 (c)}}))
+               {rv2 :value, [sv2] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), dk (delay {:c2 (c)})}))
+               {rv3 :value, [sv3] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), dk        {:c3 (c)},  :allow? false}))
+               {rv4 :value, [sv4] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), dk (delay {:c4 (c)}), :allow? false}))
+               {rv5 :value, [sv5] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), dk        [:c5 (c)]}))
+               {rv6 :value, [sv6] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), dk (delay [:c6 (c)])}))]
 
            [(is (= rv1 0)) (is (=        (get sv1 dk)  {:c1 1}))
             (is (= rv2 2)) (is (= (force (get sv2 dk)) {:c2 8}))
@@ -167,10 +167,10 @@
             (is (= @c  10) "6x run + 4x data (2x suppressed)")]))))
 
    (testing "`:let` basics"
-     (let [c               (enc/counter)
-           [[rv1 _] [sv1]] (with-sigs :raw nil (sig! {:level :info, :run (c), :let [_ (c)]}))
-           [[rv2 _] [sv2]] (with-sigs :raw nil (sig! {:level :info, :run (c), :let [_ (c)], :allow? false}))
-           [[rv3 _] [sv3]] (with-sigs :raw nil (sig! {:level :info, :run (c), :let [_ (c)]}))]
+     (let [c (enc/counter)
+           {rv1 :value, [sv1] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), :let [_ (c)]}))
+           {rv2 :value, [sv2] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), :let [_ (c)], :allow? false}))
+           {rv3 :value, [sv3] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), :let [_ (c)]}))]
 
        [(is (= rv1 0))
         (is (= rv2 2))
@@ -178,12 +178,12 @@
         (is (= @c  5) "3x run + 2x let (1x suppressed)")]))
 
    (testing "`:let` + `:msg`"
-     (let [c               (enc/counter)
-           [[rv1 _] [sv1]] (with-sigs :raw nil (sig! {:level :info, :run (c), :let [n (c)], :msg             "msg1"}))               ; No     delay
-           [[rv2 _] [sv2]] (with-sigs :raw nil (sig! {:level :info, :run (c), :let [n (c)], :msg        [    "msg2:"  n     (c)]}))  ; Auto   delay
-           [[rv3 _] [sv3]] (with-sigs :raw nil (sig! {:level :info, :run (c), :let [n (c)], :msg (delay (str "msg3: " n " " (c)))})) ; Manual delay
-           [[rv4 _] [sv4]] (with-sigs :raw nil (sig! {:level :info, :run (c), :let [n (c)], :msg        (str "msg4: " n " " (c))}))  ; No     delay
-           [[rv5 _] [sv5]] (with-sigs :raw nil (sig! {:level :info, :run (c), :let [n (c)], :msg        (str "msg5: " n " " (c)), :allow? false}))]
+     (let [c (enc/counter)
+           {rv1 :value, [sv1] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), :let [n (c)], :msg             "msg1"}))               ; No     delay
+           {rv2 :value, [sv2] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), :let [n (c)], :msg        [    "msg2:"  n     (c)]}))  ; Auto   delay
+           {rv3 :value, [sv3] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), :let [n (c)], :msg (delay (str "msg3: " n " " (c)))})) ; Manual delay
+           {rv4 :value, [sv4] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), :let [n (c)], :msg        (str "msg4: " n " " (c))}))  ; No     delay
+           {rv5 :value, [sv5] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), :let [n (c)], :msg        (str "msg5: " n " " (c)), :allow? false}))]
 
        [(is (= rv1 0)) (is (=  (:msg_ sv1) "msg1"))
         (is (= rv2 2)) (is (= @(:msg_ sv2) "msg2: 3 10"))
@@ -195,13 +195,13 @@
    (testing "`:do` + `:let` + `:data`/`:my-k1`"
      (vec
        (for [dk [:data :my-k1]]
-         (let [c               (enc/counter)
-               [[rv1 _] [sv1]] (with-sigs :raw nil (sig! {:level :info, :run (c), :do (c), :let [n (c)], dk        {:n n, :c1 (c)}}))
-               [[rv2 _] [sv2]] (with-sigs :raw nil (sig! {:level :info, :run (c), :do (c), :let [n (c)], dk (delay {:n n, :c2 (c)})}))
-               [[rv3 _] [sv3]] (with-sigs :raw nil (sig! {:level :info, :run (c), :do (c), :let [n (c)], dk        {:n n, :c3 (c)},  :allow? false}))
-               [[rv4 _] [sv4]] (with-sigs :raw nil (sig! {:level :info, :run (c), :do (c), :let [n (c)], dk (delay {:n n, :c4 (c)}), :allow? false}))
-               [[rv5 _] [sv5]] (with-sigs :raw nil (sig! {:level :info, :run (c), :do (c), :let [n (c)], dk        [:n n, :c5 (c)]}))
-               [[rv6 _] [sv6]] (with-sigs :raw nil (sig! {:level :info, :run (c), :do (c), :let [n (c)], dk (delay [:n n, :c6 (c)])}))]
+         (let [c (enc/counter)
+               {rv1 :value, [sv1] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), :do (c), :let [n (c)], dk        {:n n, :c1 (c)}}))
+               {rv2 :value, [sv2] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), :do (c), :let [n (c)], dk (delay {:n n, :c2 (c)})}))
+               {rv3 :value, [sv3] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), :do (c), :let [n (c)], dk        {:n n, :c3 (c)},  :allow? false}))
+               {rv4 :value, [sv4] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), :do (c), :let [n (c)], dk (delay {:n n, :c4 (c)}), :allow? false}))
+               {rv5 :value, [sv5] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), :do (c), :let [n (c)], dk        [:n n, :c5 (c)]}))
+               {rv6 :value, [sv6] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), :do (c), :let [n (c)], dk (delay [:n n, :c6 (c)])}))]
 
            [(is (= rv1 0))  (is (=        (get sv1 dk)  {:n 2, :c1 3}))
             (is (= rv2 4))  (is (= (force (get sv2 dk)) {:n 6, :c2 16}))
@@ -214,13 +214,13 @@
    (testing "Manual `let` (unconditional) + `:data`/`:my-k1`"
      (vec
        (for [dk [:data :my-k1]]
-         (let [c               (enc/counter)
-               [[rv1 _] [sv1]] (with-sigs :raw nil (let [n (c)] (sig! {:level :info, :run (c), dk        {:n n, :c1 (c)}})))
-               [[rv2 _] [sv2]] (with-sigs :raw nil (let [n (c)] (sig! {:level :info, :run (c), dk (delay {:n n, :c2 (c)})})))
-               [[rv3 _] [sv3]] (with-sigs :raw nil (let [n (c)] (sig! {:level :info, :run (c), dk        {:n n, :c3 (c)},  :allow? false})))
-               [[rv4 _] [sv4]] (with-sigs :raw nil (let [n (c)] (sig! {:level :info, :run (c), dk (delay {:n n, :c4 (c)}), :allow? false})))
-               [[rv5 _] [sv5]] (with-sigs :raw nil (let [n (c)] (sig! {:level :info, :run (c), dk        [:n n, :c5 (c)]})))
-               [[rv6 _] [sv6]] (with-sigs :raw nil (let [n (c)] (sig! {:level :info, :run (c), dk (delay [:n n, :c6 (c)])})))]
+         (let [c (enc/counter)
+               {rv1 :value, [sv1] :signals} (with-sigs :raw nil (let [n (c)] (sig! {:level :info, :run (c), dk        {:n n, :c1 (c)}})))
+               {rv2 :value, [sv2] :signals} (with-sigs :raw nil (let [n (c)] (sig! {:level :info, :run (c), dk (delay {:n n, :c2 (c)})})))
+               {rv3 :value, [sv3] :signals} (with-sigs :raw nil (let [n (c)] (sig! {:level :info, :run (c), dk        {:n n, :c3 (c)},  :allow? false})))
+               {rv4 :value, [sv4] :signals} (with-sigs :raw nil (let [n (c)] (sig! {:level :info, :run (c), dk (delay {:n n, :c4 (c)}), :allow? false})))
+               {rv5 :value, [sv5] :signals} (with-sigs :raw nil (let [n (c)] (sig! {:level :info, :run (c), dk        [:n n, :c5 (c)]})))
+               {rv6 :value, [sv6] :signals} (with-sigs :raw nil (let [n (c)] (sig! {:level :info, :run (c), dk (delay [:n n, :c6 (c)])})))]
 
            [(is (= rv1 1))  (is (=        (get sv1 dk)  {:n 0, :c1 2}))
             (is (= rv2 4))  (is (= (force (get sv2 dk)) {:n 3, :c2 14}))
@@ -257,12 +257,12 @@
          (is (sm? (tel/with-middleware #(do nil)         (with-sig (sig! {:level :info, :middleware nil})))               {:level :info})                  "call > dynamic")])
 
       (testing "Call middleware"
-        (let [c               (enc/counter)
-              [[rv1 _] [sv1]] (with-sigs :raw nil (sig! {:level :info, :run (c), :middleware (tel/comp-middleware #(assoc % :m1 (c)) #(assoc % :m2 (c)))}))
-              [[rv2 _] [sv2]] (with-sigs :raw nil (sig! {:level :info, :run (c), :middleware (tel/comp-middleware #(assoc % :m1 (c)) #(assoc % :m2 (c))), :allow? false}))
-              [[rv3 _] [sv3]] (with-sigs :raw nil (sig! {:level :info, :run (c), :middleware (tel/comp-middleware #(assoc % :m1 (c)) #(assoc % :m2 (c)))}))
-              [[rv4 _] [sv4]] (with-sigs :raw nil (sig! {:level :info,           :middleware (fn [_] "signal-value")}))
-              [[rv5 _] [sv5]] (with-sigs :raw nil (sig! {:level :info,           :middleware (fn [_] nil)}))]
+        (let [c (enc/counter)
+              {rv1 :value, [sv1] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), :middleware (tel/comp-middleware #(assoc % :m1 (c)) #(assoc % :m2 (c)))}))
+              {rv2 :value, [sv2] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), :middleware (tel/comp-middleware #(assoc % :m1 (c)) #(assoc % :m2 (c))), :allow? false}))
+              {rv3 :value, [sv3] :signals} (with-sigs :raw nil (sig! {:level :info, :run (c), :middleware (tel/comp-middleware #(assoc % :m1 (c)) #(assoc % :m2 (c)))}))
+              {rv4 :value, [sv4] :signals} (with-sigs :raw nil (sig! {:level :info,           :middleware (fn [_] "signal-value")}))
+              {rv5 :value, [sv5] :signals} (with-sigs :raw nil (sig! {:level :info,           :middleware (fn [_] nil)}))]
 
           [(is (= rv1 0))    (is (sm? sv1 {:m1 1 :m2 2}))
            (is (= rv2 3))    (is (nil?    sv2))
@@ -490,14 +490,15 @@
 
      (testing "Signal nesting"
        (when #?(:cljs true :clj (not impl/enabled:otel-tracing?))
-         (let [[[s1-rv _] [s1-sv]]
+         (let [{s1-rv :value, [s1-sv] :signals}
                (with-sigs
                  (sig! {                       :level :info, :id :id1, :uid :uid1
                         :run (with-sigs (sig! {:level :info, :id :id2, :uid :uid2
                                                :run
                                                {:parent impl/*trace-parent*
                                                 :root   impl/*trace-root*}}))}))
-               [[s2-rv _] [s2-sv]] s1-rv]
+
+               {s2-rv :value, [s2-sv] :signals} s1-rv]
 
            [(is (sm? s1-sv           {:id :id1, :uid :uid1, :parent nil}))
             (is (sm? s2-sv {:parent  {:id :id1, :uid :uid1}}))
@@ -507,14 +508,15 @@
 
        #?(:clj
           (enc/compile-when impl/enabled:otel-tracing?
-            (let [[[s1-rv _] [s1-sv]]
+            (let [{s1-rv :value, [s1-sv] :signals}
                   (with-sigs
                     (sig! {                       :level :info, :id :id1
                            :run (with-sigs (sig! {:level :info, :id :id2
                                                   :run
                                                   {:parent impl/*trace-parent*
                                                    :root   impl/*trace-root*}}))}))
-                  [[s2-rv _] [s2-sv]] s1-rv
+
+                  {s2-rv :value, [s2-sv] :signals} s1-rv
 
                   c1 (:_otel-context s1-sv)
                   c2 (:_otel-context s2-sv)
@@ -569,32 +571,32 @@
 
 (deftest _common-signals
   [(testing "event!" ; id + ?level => allowed?
-     [(let [[[rv] [sv]] (with-sigs (tel/event! :id1                   )) ] [(is (= rv true)) (is (sm?  sv {:kind :event, :line :submap/some, :level :info, :id :id1}))])
-      (let [[[rv] [sv]] (with-sigs (tel/event! :id1              :warn)) ] [(is (= rv true)) (is (sm?  sv {:kind :event, :line :submap/some, :level :warn, :id :id1}))])
-      (let [[[rv] [sv]] (with-sigs (tel/event! :id1      {:level :warn}))] [(is (= rv true)) (is (sm?  sv {:kind :event, :line :submap/some, :level :warn, :id :id1}))])
-      (let [[[rv] [sv]] (with-sigs (tel/event! {:id :id1, :level :warn}))] [(is (= rv true)) (is (sm?  sv {:kind :event, :line :submap/some, :level :warn, :id :id1}))])
-      (let [[[rv] [sv]] (with-sigs (tel/event! :id1 {:allow? false}))    ] [(is (= rv nil))  (is (nil? sv))])])
+     [(let [{rv :value, [sv] :signals} (with-sigs (tel/event! :id1                    ))] [(is (= rv true)) (is (sm?  sv {:kind :event, :line :submap/some, :level :info, :id :id1}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/event! :id1              :warn)) ] [(is (= rv true)) (is (sm?  sv {:kind :event, :line :submap/some, :level :warn, :id :id1}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/event! :id1      {:level :warn}))] [(is (= rv true)) (is (sm?  sv {:kind :event, :line :submap/some, :level :warn, :id :id1}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/event! {:id :id1, :level :warn}))] [(is (= rv true)) (is (sm?  sv {:kind :event, :line :submap/some, :level :warn, :id :id1}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/event! :id1 {:allow? false}))    ] [(is (= rv nil))  (is (nil? sv))])])
 
    (testing "log!" ; ?level + msg => allowed?
-     [(let [[[rv] [sv]] (with-sigs (tel/log!                      "msg")) ] [(is (= rv true)) (is (sm?  sv {:kind :log, :line :submap/some, :msg_ "msg", :level :info}))])
-      (let [[[rv] [sv]] (with-sigs (tel/log!          :warn       "msg")) ] [(is (= rv true)) (is (sm?  sv {:kind :log, :line :submap/some, :msg_ "msg", :level :warn}))])
-      (let [[[rv] [sv]] (with-sigs (tel/log! {:level  :warn}      "msg")) ] [(is (= rv true)) (is (sm?  sv {:kind :log, :line :submap/some, :msg_ "msg", :level :warn}))])
-      (let [[[rv] [sv]] (with-sigs (tel/log! {:level  :warn, :msg "msg"}))] [(is (= rv true)) (is (sm?  sv {:kind :log, :line :submap/some, :msg_ "msg", :level :warn}))])
-      (let [[[rv] [sv]] (with-sigs (tel/log! {:allow? false}      "msg")) ] [(is (= rv nil))  (is (nil? sv))])])
+     [(let [{rv :value, [sv] :signals} (with-sigs (tel/log!                      "msg")) ] [(is (= rv true)) (is (sm?  sv {:kind :log, :line :submap/some, :msg_ "msg", :level :info}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/log!          :warn       "msg")) ] [(is (= rv true)) (is (sm?  sv {:kind :log, :line :submap/some, :msg_ "msg", :level :warn}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/log! {:level  :warn}      "msg")) ] [(is (= rv true)) (is (sm?  sv {:kind :log, :line :submap/some, :msg_ "msg", :level :warn}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/log! {:level  :warn, :msg "msg"}))] [(is (= rv true)) (is (sm?  sv {:kind :log, :line :submap/some, :msg_ "msg", :level :warn}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/log! {:allow? false}      "msg")) ] [(is (= rv nil))  (is (nil? sv))])])
 
    (testing "trace!" ; ?id + run => unconditional run result (value or throw)
-     [(let [[[rv]   [sv]] (with-sigs (tel/trace!                 (+ 1 2))) ] [(is (= rv 3))  (is (sm?  sv {:kind :trace, :line :submap/some, :level :info, :id  nil, :msg_ "(+ 1 2) => 3"}))])
-      (let [[[rv]   [sv]] (with-sigs (tel/trace! {:msg nil}      (+ 1 2))) ] [(is (= rv 3))  (is (sm?  sv {:kind :trace, :line :submap/some, :level :info, :id  nil, :msg_ nil}))])
-      (let [[[rv]   [sv]] (with-sigs (tel/trace!      :id1       (+ 1 2))) ] [(is (= rv 3))  (is (sm?  sv {:kind :trace, :line :submap/some, :level :info, :id :id1}))])
-      (let [[[rv]   [sv]] (with-sigs (tel/trace! {:id :id1}      (+ 1 2))) ] [(is (= rv 3))  (is (sm?  sv {:kind :trace, :line :submap/some, :level :info, :id :id1}))])
-      (let [[[rv]   [sv]] (with-sigs (tel/trace! {:id :id1, :run (+ 1 2)}))] [(is (= rv 3))  (is (sm?  sv {:kind :trace, :line :submap/some, :level :info, :id :id1}))])
-      (let [[[_ re] [sv]] (with-sigs (tel/trace!      :id1        (ex1!))) ] [(is (ex1? re)) (is (sm?  sv {:kind :trace, :line :submap/some, :level :info, :id :id1, :error pex1?,
+     [(let [{rv :value, [sv] :signals} (with-sigs (tel/trace!                 (+ 1 2))) ] [(is (= rv 3))  (is (sm?  sv {:kind :trace, :line :submap/some, :level :info, :id  nil, :msg_ "(+ 1 2) => 3"}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/trace! {:msg nil}      (+ 1 2))) ] [(is (= rv 3))  (is (sm?  sv {:kind :trace, :line :submap/some, :level :info, :id  nil, :msg_ nil}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/trace!      :id1       (+ 1 2))) ] [(is (= rv 3))  (is (sm?  sv {:kind :trace, :line :submap/some, :level :info, :id :id1}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/trace! {:id :id1}      (+ 1 2))) ] [(is (= rv 3))  (is (sm?  sv {:kind :trace, :line :submap/some, :level :info, :id :id1}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/trace! {:id :id1, :run (+ 1 2)}))] [(is (= rv 3))  (is (sm?  sv {:kind :trace, :line :submap/some, :level :info, :id :id1}))])
+      (let [{re :error, [sv] :signals} (with-sigs (tel/trace!      :id1        (ex1!))) ] [(is (ex1? re)) (is (sm?  sv {:kind :trace, :line :submap/some, :level :info, :id :id1, :error pex1?,
                                                                                                            :msg_ #?(:clj  "(ex1!) !> clojure.lang.ExceptionInfo"
                                                                                                                     :cljs "(ex1!) !> cljs.core/ExceptionInfo")}))])
-      (let [[[rv] [sv]] (with-sigs (tel/trace! {:allow? false} (+ 1 2)))] [(is (= rv 3)) (is (nil? sv))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/trace! {:allow? false} (+ 1 2)))] [(is (= rv 3)) (is (nil? sv))])
 
       (testing "Use with `catch->error!`"
-        (let [[[_ re] [sv1 sv2]] (with-sigs (tel/trace! ::id1 (tel/catch->error! ::id2 (ex1!))))]
+        (let [{re :error, [sv1 sv2] :signals} (with-sigs (tel/trace! ::id1 (tel/catch->error! ::id2 (ex1!))))]
           [(is (ex1? re))
            (is (sm? sv1 {:kind :error, :line :submap/some, :level :error, :id ::id2, :error ex1, :parent {:id ::id1}}))
            (is (sm? sv2 {:kind :trace, :line :submap/some, :level :info,  :id ::id1, :error ex1, :root   {:id ::id1}}))]))
@@ -610,37 +612,37 @@
          (is (sm? (with-sig (tel/trace! {:run-val "custom"} (+ 2 2))) {:run-val "custom", :msg_ "(+ 2 2) => custom", :kvs nil}))])])
 
    (testing "spy" ; ?level + run => unconditional run result (value or throw)
-     [(let [[[rv]   [sv]] (with-sigs (tel/spy!                     (+ 1 2))) ] [(is (= rv 3))  (is (sm?  sv {:kind :spy, :line :submap/some, :level :info, :msg_ "(+ 1 2) => 3"}))])
-      (let [[[rv]   [sv]] (with-sigs (tel/spy! {:msg nil}          (+ 1 2))) ] [(is (= rv 3))  (is (sm?  sv {:kind :spy, :line :submap/some, :level :info, :msg_ nil}))])
-      (let [[[rv]   [sv]] (with-sigs (tel/spy!         :warn       (+ 1 2))) ] [(is (= rv 3))  (is (sm?  sv {:kind :spy, :line :submap/some, :level :warn}))])
-      (let [[[rv]   [sv]] (with-sigs (tel/spy! {:level :warn}      (+ 1 2))) ] [(is (= rv 3))  (is (sm?  sv {:kind :spy, :line :submap/some, :level :warn}))])
-      (let [[[rv]   [sv]] (with-sigs (tel/spy! {:level :warn, :run (+ 1 2)}))] [(is (= rv 3))  (is (sm?  sv {:kind :spy, :line :submap/some, :level :warn}))])
-      (let [[[_ re] [sv]] (with-sigs (tel/spy!         :warn         (ex1!)))] [(is (ex1? re)) (is (sm?  sv {:kind :spy, :line :submap/some, :level :warn, :error pex1?,
+     [(let [{rv :value, [sv] :signals} (with-sigs (tel/spy!                     (+ 1 2))) ] [(is (= rv 3))  (is (sm?  sv {:kind :spy, :line :submap/some, :level :info, :msg_ "(+ 1 2) => 3"}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/spy! {:msg nil}          (+ 1 2))) ] [(is (= rv 3))  (is (sm?  sv {:kind :spy, :line :submap/some, :level :info, :msg_ nil}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/spy!         :warn       (+ 1 2))) ] [(is (= rv 3))  (is (sm?  sv {:kind :spy, :line :submap/some, :level :warn}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/spy! {:level :warn}      (+ 1 2))) ] [(is (= rv 3))  (is (sm?  sv {:kind :spy, :line :submap/some, :level :warn}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/spy! {:level :warn, :run (+ 1 2)}))] [(is (= rv 3))  (is (sm?  sv {:kind :spy, :line :submap/some, :level :warn}))])
+      (let [{re :error, [sv] :signals} (with-sigs (tel/spy!         :warn         (ex1!)))] [(is (ex1? re)) (is (sm?  sv {:kind :spy, :line :submap/some, :level :warn, :error pex1?,
                                                                                                              :msg_ #?(:clj  "(ex1!) !> clojure.lang.ExceptionInfo"
                                                                                                                       :cljs "(ex1!) !> cljs.core/ExceptionInfo")}))])
-      (let [[[rv] [sv]] (with-sigs (tel/spy! {:allow? false} (+ 1 2))) ] [(is (= rv 3)) (is (nil? sv))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/spy! {:allow? false} (+ 1 2))) ] [(is (= rv 3)) (is (nil? sv))])
 
       (testing "Use with `catch->error!`"
-        (let [[[_ re] [sv1 sv2]] (with-sigs (tel/spy! :warn (tel/catch->error! :error (ex1!))))]
+        (let [{re :error, [sv1 sv2] :signals} (with-sigs (tel/spy! :warn (tel/catch->error! :error (ex1!))))]
           [(is (ex1? re))
            (is (sm? sv1 {:kind :error, :line :submap/some, :level :error, :error ex1, :parent {}}))
            (is (sm? sv2 {:kind :spy,   :line :submap/some, :level :warn,  :error ex1, :root   {}}))]))])
 
    (testing "error!" ; ?id + error => unconditional given error
-     [(let [[[rv] [sv]] (with-sigs (tel/error!                        ex1)) ] [(is (ex1? rv)) (is (sm?  sv {:kind :error, :line :submap/some, :level :error, :error pex1?, :id  nil}))])
-      (let [[[rv] [sv]] (with-sigs (tel/error!           :id1         ex1)) ] [(is (ex1? rv)) (is (sm?  sv {:kind :error, :line :submap/some, :level :error, :error pex1?, :id :id1}))])
-      (let [[[rv] [sv]] (with-sigs (tel/error! {:id      :id1}        ex1)) ] [(is (ex1? rv)) (is (sm?  sv {:kind :error, :line :submap/some, :level :error, :error pex1?, :id :id1}))])
-      (let [[[rv] [sv]] (with-sigs (tel/error! {:id      :id1, :error ex1}))] [(is (ex1? rv)) (is (sm?  sv {:kind :error, :line :submap/some, :level :error, :error pex1?, :id :id1}))])
-      (let [[[rv] [sv]] (with-sigs (tel/error! {:allow? false}        ex1)) ] [(is (ex1? rv)) (is (nil? sv))])
-      (let [c (enc/counter)]       (tel/error!                (do (c) ex1))    (is (= @c 1) "Error form evaluated exactly once"))])
+     [(let [{rv :value, [sv] :signals} (with-sigs (tel/error!                        ex1)) ] [(is (ex1? rv)) (is (sm?  sv {:kind :error, :line :submap/some, :level :error, :error pex1?, :id  nil}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/error!           :id1         ex1)) ] [(is (ex1? rv)) (is (sm?  sv {:kind :error, :line :submap/some, :level :error, :error pex1?, :id :id1}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/error! {:id      :id1}        ex1)) ] [(is (ex1? rv)) (is (sm?  sv {:kind :error, :line :submap/some, :level :error, :error pex1?, :id :id1}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/error! {:id      :id1, :error ex1}))] [(is (ex1? rv)) (is (sm?  sv {:kind :error, :line :submap/some, :level :error, :error pex1?, :id :id1}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/error! {:allow? false}        ex1)) ] [(is (ex1? rv)) (is (nil? sv))])
+      (let [c (enc/counter)]                      (tel/error!                (do (c) ex1))    (is (= @c 1) "Error form evaluated exactly once"))])
 
    (testing "catch->error!" ; ?id + run => unconditional run value or ?return
-     [(let [[[rv re] [sv]] (with-sigs (tel/catch->error!                   (+ 1 2)))] [(is (= rv    3)) (is (nil? sv))])
-      (let [[[rv re] [sv]] (with-sigs (tel/catch->error!                    (ex1!)))] [(is (ex1?   re)) (is (sm? sv {:kind :error, :line :submap/some, :level :error, :error pex1?, :id  nil}))])
-      (let [[[rv re] [sv]] (with-sigs (tel/catch->error!             :id1   (ex1!)))] [(is (ex1?   re)) (is (sm? sv {:kind :error, :line :submap/some, :level :error, :error pex1?, :id :id1}))])
-      (let [[[rv re] [sv]] (with-sigs (tel/catch->error! {:id        :id1}  (ex1!)))] [(is (ex1?   re)) (is (sm? sv {:kind :error, :line :submap/some, :level :error, :error pex1?, :id :id1}))])
-      (let [[[rv re] [sv]] (with-sigs (tel/catch->error! {:catch-val :foo}  (ex1!)))] [(is (= rv :foo)) (is (sm? sv {:kind :error, :line :submap/some, :level :error, :error pex1?, :id  nil}))])
-      (let [[[rv re] [sv]] (with-sigs (tel/catch->error! {:catch-val :foo} (+ 1 2)))] [(is (= rv    3)) (is (nil? sv))])])
+     [(let [{rv :value, [sv] :signals} (with-sigs (tel/catch->error!                   (+ 1 2)))] [(is (= rv    3)) (is (nil? sv))])
+      (let [{re :error, [sv] :signals} (with-sigs (tel/catch->error!                    (ex1!)))] [(is (ex1?   re)) (is (sm? sv {:kind :error, :line :submap/some, :level :error, :error pex1?, :id  nil}))])
+      (let [{re :error, [sv] :signals} (with-sigs (tel/catch->error!             :id1   (ex1!)))] [(is (ex1?   re)) (is (sm? sv {:kind :error, :line :submap/some, :level :error, :error pex1?, :id :id1}))])
+      (let [{re :error, [sv] :signals} (with-sigs (tel/catch->error! {:id        :id1}  (ex1!)))] [(is (ex1?   re)) (is (sm? sv {:kind :error, :line :submap/some, :level :error, :error pex1?, :id :id1}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/catch->error! {:catch-val :foo}  (ex1!)))] [(is (= rv :foo)) (is (sm? sv {:kind :error, :line :submap/some, :level :error, :error pex1?, :id  nil}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/catch->error! {:catch-val :foo} (+ 1 2)))] [(is (= rv    3)) (is (nil? sv))])])
 
    #?(:clj
       (testing "uncaught->error!"
@@ -755,12 +757,12 @@
    (is (sm?                            (with-sig (timbre/spy! :info "my-name" (+ 1 2))) {:kind :spy, :level :info,  :id timbre/shim-id, :msg_ "my-name => 3", :ns pstr?}))
    (is (sm? (tel/with-min-level :debug (with-sig (timbre/spy! (+ 1 2))))                {:kind :spy, :level :debug, :id timbre/shim-id, :msg_ "(+ 1 2) => 3", :ns pstr?}))
 
-   (let [[_ [sv1 sv2]] (tel/with-min-level :debug (with-sigs (timbre/spy! (ex1!))))]
+   (let [{[sv1 sv2] :signals} (tel/with-min-level :debug (with-sigs (timbre/spy! (ex1!))))]
      [(is (sm? sv1 {:kind :error, :level :error, :id timbre/shim-id, :msg_ nil,  :error pex1?, :ns pstr?}))
       (is (sm? sv2 {:kind :spy,   :level :debug, :id timbre/shim-id, :msg_ pstr? :error pex1?, :ns pstr?}))])
 
-   (let [[[rv re] [sv]] (with-sigs (timbre/log-errors             (ex1!)))] [(is (nil? re)) (is (sm? sv {:kind :error, :level :error, :error pex1?, :id timbre/shim-id}))])
-   (let [[[rv re] [sv]] (with-sigs (timbre/log-and-rethrow-errors (ex1!)))] [(is (ex1? re)) (is (sm? sv {:kind :error, :level :error, :error pex1?, :id timbre/shim-id}))])])
+   (let [{re :error, [sv] :signals} (with-sigs (timbre/log-errors             (ex1!)))] [(is (nil? re)) (is (sm? sv {:kind :error, :level :error, :error pex1?, :id timbre/shim-id}))])
+   (let [{re :error, [sv] :signals} (with-sigs (timbre/log-and-rethrow-errors (ex1!)))] [(is (ex1? re)) (is (sm? sv {:kind :error, :level :error, :error pex1?, :id timbre/shim-id}))])])
 
 ;;;; Utils
 

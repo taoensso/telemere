@@ -472,4 +472,4 @@
     (do      (let [hf (handler:console)]     (hf sig) (hf)))
     #?(:cljs (let [hf (handler:console-raw)] (hf sig) (hf)))))
 
-(comment (let [[_ [s1 s2]] (with-signals (trace! ::id1 (trace! ::id2 "form2")))] s1))
+(comment (let [{[s1 s2] :signals} (with-signals (trace! ::id1 (trace! ::id2 "form2")))] s1))
