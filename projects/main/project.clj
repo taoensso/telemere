@@ -46,13 +46,14 @@
      *unchecked-math*     false #_:warn-on-boxed}
 
     :dependencies
-    [[org.clojure/core.async      "1.7.701"]
-     [org.clojure/test.check      "1.1.1"]
-     [org.clojure/tools.logging   "1.3.0"]
-     [org.slf4j/slf4j-api         "2.0.16"]
-     [com.taoensso/telemere-slf4j "1.0.0-RC1"]
-     #_[org.slf4j/slf4j-simple    "2.0.16"]
-     #_[org.slf4j/slf4j-nop       "2.0.16"]
+    [[org.clojure/core.async        "1.7.701"]
+     [org.clojure/test.check        "1.1.1"]
+     [org.clojure/tools.logging     "1.3.0"]
+     [org.slf4j/slf4j-api           "2.0.16"]
+     [com.taoensso/telemere-slf4j   "1.0.0-RC1"]
+     #_[org.slf4j/slf4j-simple      "2.0.16"]
+     #_[org.slf4j/slf4j-nop         "2.0.16"]
+     #_[io.github.paintparty/bling  "0.4.2"]
 
      ;;; For optional handlers
      [io.opentelemetry/opentelemetry-api                         "1.45.0"]
