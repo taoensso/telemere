@@ -591,7 +591,13 @@
       (let [[[_ re] [sv]] (with-sigs (tel/trace!      :id1        (ex1!))) ] [(is (ex1? re)) (is (sm?  sv {:kind :trace, :line :submap/some, :level :info, :id :id1, :error pex1?,
                                                                                                            :msg_ #?(:clj  "(ex1!) !> clojure.lang.ExceptionInfo"
                                                                                                                     :cljs "(ex1!) !> cljs.core/ExceptionInfo")}))])
-      (let [[[rv]   [sv]] (with-sigs (tel/trace! {:allow? false} (+ 1 2))) ] [(is (= rv 3))  (is (nil? sv))])
+      (let [[[rv] [sv]] (with-sigs (tel/trace! {:allow? false} (+ 1 2)))] [(is (= rv 3)) (is (nil? sv))])
+
+      (testing "Use with `catch->error!`"
+        (let [[[_ re] [sv1 sv2]] (with-sigs (tel/trace! ::id1 (tel/catch->error! ::id2 (ex1!))))]
+          [(is (ex1? re))
+           (is (sm? sv1 {:kind :error, :line :submap/some, :level :error, :id ::id2, :error ex1, :parent {:id ::id1}}))
+           (is (sm? sv2 {:kind :trace, :line :submap/some, :level :info,  :id ::id1, :error ex1, :root   {:id ::id1}}))]))
 
       (testing  ":run-form" ; Undocumented, experimental
         [(is (sm? (with-sig (tel/trace! :non-list))    {:run-form :non-list}))
@@ -612,7 +618,13 @@
       (let [[[_ re] [sv]] (with-sigs (tel/spy!         :warn         (ex1!)))] [(is (ex1? re)) (is (sm?  sv {:kind :spy, :line :submap/some, :level :warn, :error pex1?,
                                                                                                              :msg_ #?(:clj  "(ex1!) !> clojure.lang.ExceptionInfo"
                                                                                                                       :cljs "(ex1!) !> cljs.core/ExceptionInfo")}))])
-      (let [[[rv]   [sv]] (with-sigs (tel/spy! {:allow? false}     (+ 1 2))) ] [(is (= rv 3))  (is (nil? sv))])])
+      (let [[[rv] [sv]] (with-sigs (tel/spy! {:allow? false} (+ 1 2))) ] [(is (= rv 3)) (is (nil? sv))])
+
+      (testing "Use with `catch->error!`"
+        (let [[[_ re] [sv1 sv2]] (with-sigs (tel/spy! :warn (tel/catch->error! :error (ex1!))))]
+          [(is (ex1? re))
+           (is (sm? sv1 {:kind :error, :line :submap/some, :level :error, :error ex1, :parent {}}))
+           (is (sm? sv2 {:kind :spy,   :line :submap/some, :level :warn,  :error ex1, :root   {}}))]))])
 
    (testing "error!" ; ?id + error => unconditional given error
      [(let [[[rv] [sv]] (with-sigs (tel/error!                        ex1)) ] [(is (ex1? rv)) (is (sm?  sv {:kind :error, :line :submap/some, :level :error, :error pex1?, :id  nil}))])

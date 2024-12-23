@@ -53,8 +53,18 @@ Tips:
   - Execution of `run` form may create additional (nested) signals.
     Each signal's `:parent` key will indicate its immediate parent.
 
-  - Can be useful to wrap with `catch->error!`:
-      (catch->error! ::error-id (trace! ...)).
+  - It's often useful to wrap `run` form with `catch->error!`:
+      (trace! ::trace-id (catch->error! ::error-id ...)).
+
+    This way you have independent filtering for `run` forms that throw,
+    allowing you to use a higher min level and/or reduced sampling, etc.
+
+    In this case you'll create:
+      0 or 1 `:trace` signals (depending on filtering), AND
+      0 or 1 `:error` signals (depending on filtering).
+
+    Note that the `:error` signal will contain tracing info (e.g. `:parent` key)
+    iff the enclosing `trace!` is allowed.
 
   - Default level is `:info`, not `:trace`! The name "trace" in "trace signal"
     refers to the general action of tracing program flow rather than to the
