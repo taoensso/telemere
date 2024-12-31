@@ -99,7 +99,21 @@
 
 #?(:clj
    (defmacro spy
-     "Prefer `telemere/spy!`."
+     "Prefer `telemere/spy!`.
+
+     Note that for extra flexibility and improved interop with Open Telemetry,
+     this shim intentionally handles errors (forms that throw) slightly differently
+     to Timbre's original `spy`:
+
+       When the given `form` throws, this shim may create an ADDITIONAL signal of
+       `:error` kind and level. The behaviour is equivalent to:
+
+       (telemere/spy! level             ; Creates 0/1 `:spy`   signals with given/default (`:debug`) level
+         (telemere/catch->error! form)) ; Creates 0/1 `:error` signals with `:error`                 level
+
+     The additional signal helps to separate the success and error cases for
+     individual filtering and/or handling."
+
      ([                form] (enc/keep-callsite `(spy :debug nil ~form)))
      ([level           form] (enc/keep-callsite `(spy ~level nil ~form)))
      ([level form-name form]
