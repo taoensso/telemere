@@ -48,7 +48,7 @@
                   (enc/format* pattern            vargs)
                   (enc/str-join " " (map arg-str) vargs)))]
 
-          [error msg {:vargs vargs}])))))
+          [error msg (when-not (empty? vargs) {:vargs vargs})])))))
 
 (comment
   (parse-vargs true [                   "hello %s" "stu"])
