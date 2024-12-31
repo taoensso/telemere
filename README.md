@@ -102,9 +102,13 @@ It enables you to write code that is **information-verbose by default**.
 (t/set-min-level!       :warn) ; For all    signals
 (t/set-min-level! :log :debug) ; For `log!` signals only
 
-;; Set namespace and id filters
-(t/set-ns-filter! {:disallow "taoensso.*" :allow "taoensso.sente.*"})
+;; Set id and namespace filters
 (t/set-id-filter! {:allow #{::my-particular-id "my-app/*"}})
+(t/set-ns-filter! {:disallow "taoensso.*" :allow "taoensso.sente.*"})
+
+;; SLF4J signals will have their `:ns` key set to the logger's name
+;; (typically a source class)
+(t/set-ns-filter! {:disallow "com.noisy.java.package.*"})
 
 ;; Set minimum level for `event!` signals for particular ns pattern
 (t/set-min-level! :event "taoensso.sente.*" :warn)
