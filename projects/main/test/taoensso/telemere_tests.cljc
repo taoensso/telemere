@@ -753,10 +753,10 @@
 
    (is (sm? (with-sig (timbre/info ex1 "x1" "x2")) {:kind :log, :level :info, :error ex1, :msg_ "x1 x2", :data {:vargs ["x1" "x2"]}}) "First-arg error")
 
-   (is (sm?                            (with-sig (timbre/spy! :info "my-name" (+ 1 2))) {:kind :spy, :level :info,  :id timbre/shim-id, :msg_ "my-name => 3", :ns pstr?}))
-   (is (sm? (tel/with-min-level :debug (with-sig (timbre/spy! (+ 1 2))))                {:kind :spy, :level :debug, :id timbre/shim-id, :msg_ "(+ 1 2) => 3", :ns pstr?}))
+   (is (sm?                            (with-sig (timbre/spy :info "my-name" (+ 1 2))) {:kind :spy, :level :info,  :id timbre/shim-id, :msg_ "my-name => 3", :ns pstr?}))
+   (is (sm? (tel/with-min-level :debug (with-sig (timbre/spy (+ 1 2))))                {:kind :spy, :level :debug, :id timbre/shim-id, :msg_ "(+ 1 2) => 3", :ns pstr?}))
 
-   (let [{[sv1 sv2] :signals} (tel/with-min-level :debug (with-sigs (timbre/spy! (ex1!))))]
+   (let [{[sv1 sv2] :signals} (tel/with-min-level :debug (with-sigs (timbre/spy (ex1!))))]
      [(is (sm? sv1 {:kind :error, :level :error, :id timbre/shim-id, :msg_ nil,  :error ex1, :ns pstr?}))
       (is (sm? sv2 {:kind :spy,   :level :debug, :id timbre/shim-id, :msg_ pstr? :error ex1, :ns pstr?}))])
 

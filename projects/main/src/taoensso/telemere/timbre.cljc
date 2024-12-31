@@ -98,10 +98,10 @@
      (defmacro reportf "Prefer `telemere/log!`, etc."       [& args] (enc/keep-callsite `(log! :report true  [~@args])))))
 
 #?(:clj
-   (defmacro spy!
+   (defmacro spy
      "Prefer `telemere/spy!`."
-     ([                form] (enc/keep-callsite `(spy! :debug nil ~form)))
-     ([level           form] (enc/keep-callsite `(spy! ~level nil ~form)))
+     ([                form] (enc/keep-callsite `(spy :debug nil ~form)))
+     ([level           form] (enc/keep-callsite `(spy ~level nil ~form)))
      ([level form-name form]
       (let [location* (enc/get-source &form &env)
             msg
@@ -121,9 +121,9 @@
              ~form))))))
 
 (comment
-  (:level (tel/with-signal (spy! (/ 1 0))))
-  (select-keys (tel/with-signal (spy! :info #_"my-form-name" (+ 1 2)))                   [:level :msg_])
-  (select-keys (tel/with-signal (spy! :info #_"my-form-name" (throw (Exception. "Ex")))) [:level :msg_]))
+  (:level      (tel/with-signal (spy (/ 1 0))))
+  (select-keys (tel/with-signal (spy :info #_"my-form-name" (+ 1 2)))                   [:level :msg_])
+  (select-keys (tel/with-signal (spy :info #_"my-form-name" (throw (Exception. "Ex")))) [:level :msg_]))
 
 #?(:clj (defmacro log-errors             "Prefer `telemere/catch->error!`." [& body] (enc/keep-callsite         `(tel/catch->error! {:id shim-id, :catch-val nil} (do ~@body)))))
 #?(:clj (defmacro log-and-rethrow-errors "Prefer `telemere/catch->error!`." [& body] (enc/keep-callsite         `(tel/catch->error! {:id shim-id}                 (do ~@body)))))
