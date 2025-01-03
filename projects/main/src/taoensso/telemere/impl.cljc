@@ -220,17 +220,27 @@
          We leave the (expensive) population of attributes, etc. for signal handler.
          Interop needs only the basics (t0, traceId, spanId, spanName) right away."
          ^io.opentelemetry.context.Context
-         [id inst ?parent-context]
+         [id inst ?parent-context ?span-kind]
          (let [parent-context (or ?parent-context (otel-context))]
            (enc/if-not [tracer (force taoensso.telemere/*otel-tracer*)]
              parent-context ; Can't add Span without Tracer
              (let [sb (.spanBuilder ^io.opentelemetry.api.trace.Tracer tracer (otel-name id))]
                (.setStartTimestamp sb ^java.time.Instant inst)
+               (.setSpanKind       sb
+                 (case ?span-kind
+                   (nil :internal) io.opentelemetry.api.trace.SpanKind/INTERNAL
+                   :client         io.opentelemetry.api.trace.SpanKind/CLIENT
+                   :server         io.opentelemetry.api.trace.SpanKind/SERVER
+                   :consumer       io.opentelemetry.api.trace.SpanKind/CONSUMER
+                   :producer       io.opentelemetry.api.trace.SpanKind/PRODUCER
+                   (enc/unexpected-arg! ?span-kind
+                     {:expected #{nil :internal :client :server :consumer :producer}})))
+
                (.with ^io.opentelemetry.context.Context parent-context
                  (.startSpan sb)))))))))
 
 (comment
-  (enc/qb 1e6 (otel-context) (otel-context+span ::id1 (enc/now-inst) nil)) ; [46.42 186.89]
+  (enc/qb 1e6 (otel-context) (otel-context+span ::id1 (enc/now-inst) nil nil)) ; [46.42 186.89]
   (viable-tracer (force taoensso.telemere/*otel-tracer*))
   (otel-trace-id (otel-context)))
 
@@ -689,9 +699,9 @@
 
                  ;; Trace with OpenTelemetry
                  (and clj? enabled:otel-tracing?)
-                 `[~'__otel-context0 ~(get opts :otel/context `(otel-context)) ; Context
-                   ~'__otel-context1 ~(if run-form `(otel-context+span ~'__id ~'__inst ~'__otel-context0) ~'__otel-context0)
-                   ~'__uid           ~(auto-> uid-form `(or (otel-span-id ~'__otel-context1) (com.taoensso.encore.Ids/genHexId16)))
+                 `[~'__otel-context0  ~(get opts :otel/context `(otel-context)) ; Context
+                   ~'__otel-context1  ~(if run-form `(otel-context+span ~'__id ~'__inst ~'__otel-context0 ~(get opts :otel/span-kind)) ~'__otel-context0)
+                   ~'__uid            ~(auto-> uid-form `(or (otel-span-id ~'__otel-context1) (com.taoensso.encore.Ids/genHexId16)))
                    ~'__root1
                    (or ~'__root0
                      ~(when trace?
