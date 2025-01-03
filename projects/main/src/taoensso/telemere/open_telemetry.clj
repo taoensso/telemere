@@ -244,6 +244,9 @@
     `:otel/attrs`       - Attributes [1] to add to log records AND tracing spans/events
     `:otel/log-attrs`   - Attributes [1] to add to log records ONLY
     `:otel/trace-attrs` - Attributes [1] to add to tracing spans/events ONLY
+    `:otel/span-kind`   - The span kind, one of `:internal`, `:server`, `:client`,
+                          `:producer`, `:consumer`. Default is `:internal`. Any other
+                          kind will result in an internal span as well.
 
   [1] `io.opentelemetry.api.common.Attributes` or Clojure map with str/kw keys and vals ∈
       #{nil boolean keyword string UUID long double string-vec long-vec double-vec boolean-vec}.
