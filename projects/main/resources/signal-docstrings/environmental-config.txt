@@ -4,24 +4,24 @@ environment variables, or classpath resources.
 Environmental filter config includes:
 
   Kind filter:
-          JVM property: `taoensso.telemere.rt-kind-filter`
-          Env variable: `TAOENSSO_TELEMERE_RT_KIND_FILTER`
-    Classpath resource: `taoensso.telemere.rt-kind-filter`
+    1.       JVM property: `taoensso.telemere.rt-kind-filter`
+    2.       Env variable: `TAOENSSO_TELEMERE_RT_KIND_FILTER`
+    3. Classpath resource: `taoensso.telemere.rt-kind-filter`
 
   Namespace filter:
-          JVM property: `taoensso.telemere.rt-ns-filter`
-          Env variable: `TAOENSSO_TELEMERE_RT_NS_FILTER`
-    Classpath resource: `taoensso.telemere.rt-ns-filter`
+    1.       JVM property: `taoensso.telemere.rt-ns-filter`
+    2.       Env variable: `TAOENSSO_TELEMERE_RT_NS_FILTER`
+    3. Classpath resource: `taoensso.telemere.rt-ns-filter`
 
   Id filter:
-          JVM property: `taoensso.telemere.rt-id-filter`
-          Env variable: `TAOENSSO_TELEMERE_RT_ID_FILTER`
-    Classpath resource: `taoensso.telemere.rt-id-filter`
+    1.       JVM property: `taoensso.telemere.rt-id-filter`
+    2.       Env variable: `TAOENSSO_TELEMERE_RT_ID_FILTER`
+    3. Classpath resource: `taoensso.telemere.rt-id-filter`
 
   Minimum level:
-          JVM property: `taoensso.telemere.rt-min-level`
-          Env variable: `TAOENSSO_TELEMERE_RT_MIN_LEVEL`
-    Classpath resource: `taoensso.telemere.rt-min-level`
+    1.       JVM property: `taoensso.telemere.rt-min-level`
+    2.       Env variable: `TAOENSSO_TELEMERE_RT_MIN_LEVEL`
+    3. Classpath resource: `taoensso.telemere.rt-min-level`
 
 Values are edn, examples:
 
@@ -39,10 +39,8 @@ Tips:
 
   - The above ids will affect both Clj AND Cljs.
     For platform-specific filters, use
-      ".clj.edn"  / "_CLJ_EDN"  or
-      ".cljs.edn" / "_CLJS_EDN" suffixes instead.
-
-  - Optional ".edn" / "_EDN" suffixes may be added for clarity.
+      ".clj"  / "_CLJ"  or
+      ".cljs" / "_CLJS" suffixes instead.
 
   - To get the right edn syntax, first set your runtime filters using the
     standard utils (`set-min-level!`, etc.). Then call `get-filters` and

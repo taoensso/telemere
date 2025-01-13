@@ -95,9 +95,9 @@
   more entropy and so are usually longer (e.g. 32 vs 16 hex chars).
 
   Override default by setting one of the following:
-          JVM property: `taoensso.telemere/uid-fn`
-          Env variable: `TAOENSSO_TELEMERE_UID_FN`
-    Classpath resource: `taoensso.telemere/uid-fn`
+    1.       JVM property: `taoensso.telemere.uid-kind`
+    2.       Env variable: `TAOENSSO_TELEMERE_UID_KIND`
+    3. Classpath resource: `taoensso.telemere.uid-kind`
 
     Possible (compile-time) values include:
       `:uuid`          - UUID string (Cljs) or `java.util.UUID` (Clj)
@@ -133,9 +133,9 @@
        2. Telemere and OpenTelemetry WILL recognize each other's spans.
 
      Override default by setting one of the following to \"true\" or \"false\":
-             JVM property: `taoensso.telemere.otel-tracing`
-             Env variable: `TAOENSSO_TELEMERE_otel-tracing`
-       Classpath resource: `taoensso.telemere.otel-tracing`
+       1.       JVM property: `taoensso.telemere.otel-tracing`
+       2.       Env variable: `TAOENSSO_TELEMERE_OTEL_TRACING`
+       3. Classpath resource: `taoensso.telemere.otel-tracing`
 
      See also: `otel-default-providers_`, `*otel-tracer*`,
        `taoensso.telemere.open-telemere/handler:open-telemetry`.

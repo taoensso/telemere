@@ -45,9 +45,9 @@
   implementation (backend).
 
   Called automatically if one of the following is \"true\":
-          JVM property: `clojure.tools.logging.to-telemere`
-          Env variable: `CLOJURE_TOOLS_LOGGING_TO_TELEMERE`
-    Classpath resource: `clojure.tools.logging.to-telemere`"
+    1.       JVM property: `clojure.tools.logging.to-telemere`
+    2.       Env variable: `CLOJURE_TOOLS_LOGGING_TO_TELEMERE`
+    3. Classpath resource: `clojure.tools.logging.to-telemere`"
   []
   (impl/signal!
     {:kind  :event
