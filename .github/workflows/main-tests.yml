@@ -24,8 +24,8 @@ jobs:
         id: cache-deps
         with:
           path: ~/.m2/repository
-          key: deps-${{ hashFiles('projects/main/project.clj') }}
+          key: deps-${{ hashFiles('main/project.clj') }}
           restore-keys: deps-
 
       - run: lein test-all
-        working-directory: projects/main
+        working-directory: main

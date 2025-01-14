@@ -26,8 +26,8 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: ~/.m2/repository
-          key: deps-${{ hashFiles('projects/main/project.clj') }}
+          key: deps-${{ hashFiles('main/project.clj') }}
           restore-keys: deps-
 
       - run: bb graal-tests
-        working-directory: projects/main
+        working-directory: main
