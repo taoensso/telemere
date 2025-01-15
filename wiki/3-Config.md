@@ -101,6 +101,13 @@ To do this:
 
 Aside from configuring the exporters (2), Telemere's OpenTelemetry interop **does not require** any use of or familiarity with the OpenTelemetry Java API or concepts. Just use Telemere as you normally would, and the handler (3) will automatically emit detailed log and trace data to your configured exporters (2).
 
+Verify successful interop with [`check-interop`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#check-interop):
+
+```clojure
+(check-interop) ; =>
+{:open-telemetry {:present? true, :use-tracer? true, :viable-tracer? true}}
+```
+
 ## Tufte
 
 > [Tufte](https://www.taoensso.com/tufte) is a simple performance monitoring library for Clojure/Script by the author of Telemere.

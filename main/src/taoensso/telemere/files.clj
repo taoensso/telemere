@@ -272,14 +272,14 @@
     - Takes a Telemere signal (map).
     - Writes (appends) the signal as a string to file specified by `path`.
 
-  Depending on options, archives may be maintained:
+  Can output signals as human or machine-readable (edn, JSON) strings.
+
+  Depending on options, archive file/s may also be maintained:
     - `logs/app.log.n.gz`             (for     nil `:interval`, non-nil `:max-file-size`)
     - `logs/app.log-YYYY-MM-DDd.n.gz` (for non-nil `:interval`) ; d=daily/w=weekly/m=monthly
 
-  Can output signals as human or machine-readable (edn, JSON) strings.
-
   Example files with default options:
-    `/logs/telemere.log`                  ; Current file
+    `/logs/telemere.log`                  ; Current file (newest entries)
     `/logs/telemere.log-2020-01-01m.1.gz` ; Archive for Jan 2020, part 1 (newest entries)
     ...
     `/logs/telemere.log-2020-01-01m.8.gz` ; Archive for Jan 2020, part 8 (oldest entries)

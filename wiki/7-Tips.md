@@ -94,11 +94,14 @@ Consider the [differences](https://www.youtube.com/watch?v=oyLBGkS5ICk) between 
   
   So for `n` randomly sampled signals matching some criteria, you'd have seen an estimated `Σ(1.0/sample-rate_i)` such signals _without_ sampling, etc.
   
-- Middleware can return any type, but it's best to return only `nil` or a map.
+- Middleware can return any type, but it's best to return only `nil` or a map. This ensures maximum compatibility with community middleware, handlers, and tools.
+  
 - Middleware can be used to **filter signals** by returning `nil`.
-- Middleware can be used to **split signals**.
+- Middleware can be used to **split signals**:
   
   Your middleware can *call signal creators* like any other code. Return `nil` after to filter the source signal. Just be aware that new signals will re-enter your handler queue/s as would any other signal - and so may be subject to handling delay and normal handler queue back-pressure.
+  
+  See also the [`dispatch-signal!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#dispatch-signal!) util.
   
 - Levels can be **arbitrary integers**.
   

@@ -272,17 +272,17 @@
    ;; Do option validation and other prep here, i.e. try to keep
    ;; expensive work outside handler function when possible!
 
-   (let [handler-fn ; Fn of exactly 2 arities
+   (let [handler-fn ; Fn of exactly 2 arities (1 and 0)
          (fn a-handler:my-fancy-handler ; Note fn naming convention
-
-           ([] ; Arity-0 called when stopping the handler
-            ;; Flush buffers, close files, etc. May just noop.
-            ;; Return value is ignored.
-            )
 
            ([signal] ; Arity-1 called when handling a signal
             ;; Do something useful with the given signal (write to
             ;; console/file/queue/db, etc.). Return value is ignored.
+            )
+
+           ([] ; Arity-0 called when stopping the handler
+            ;; Flush buffers, close files, etc. May just noop.
+            ;; Return value is ignored.
             ))]
 
      ;; (Advanced, optional) You can use metadata to provide default

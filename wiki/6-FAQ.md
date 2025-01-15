@@ -26,7 +26,7 @@ That eventually grew into Telemere. And I'm happy enough with the result that I 
 
 I will **continue to maintain and support** Timbre for users that are happy with it, though I've also tried to make [migration](./5-Migrating#from-timbre) as easy as possible.
 
-Over time, I also intend to back-port many backwards-compatible improvements from Telemere to Timbre. For one, Telemere's core was actually written as a library that will eventually be used by Telemere, Timbre, and also [Tufte](https://taoensso.com/tufte).
+Over time, I also intend to back-port many backwards-compatible improvements from Telemere to Timbre. For one, Telemere's core was actually written as a library that can eventually be used by Telemere, Timbre, and also [Tufte](https://taoensso.com/tufte).
 
 This will eventually ease long-term maintenance, increase reliability, and help provide unified capabilities across all 3.
 
@@ -60,7 +60,7 @@ They're focused on complementary things. When both are in use:
 
 > [Babashka](https://github.com/babashka/babashka) is a native Clojure interpreter for scripting with fast startup.
 
-**No**, not currently - though support should be possible with a little work. The current bottleneck is a dependency on [Encore](https://github.com/taoensso/encore), though that could actually be removed (also offering benefits re: library size).
+**No**, not currently - though support should be possible with a little work. The current bottleneck is a dependency on [Encore](https://github.com/taoensso/encore), which uses some classes not available in Babashka. With some work it should be possible to remove the dependency, and so also reduce library size.
 
 If there's interest in this, please [upvote](https://github.com/taoensso/roadmap/issues/22) on my open source roadmap.
 

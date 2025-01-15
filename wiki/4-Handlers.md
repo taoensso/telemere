@@ -1,10 +1,14 @@
 Telemere's signal handlers are just **plain functions** that take a signal (map) to **do something with them** (analyse them, write them to console/file/queue/db/etc.).
 
-Here's a simple handler: `(fn [signal] (println signal))`.
+Here's a minimal handler: `(fn [signal] (println signal))`.
 
 A second 0-arg arity will be called when stopping the handler. This is handy for stateful handlers or handlers that need to release resources, e.g.:
 
-`(fn my-handler ([] (my-stop-code)) ([signal] (println signal))`
+```
+(fn my-handler
+  ([signal] (println signal)
+  ([] (my-stop-code)))
+```
 
 Telemere includes a number of signal handlers out-the-box, and more may be available via the [community](./8-Community#handlers-and-tools).
 
@@ -47,7 +51,7 @@ Handler dispatch opts includes dispatch priority (determines order in which hand
 
 See [`help:handler-dispatch-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) for full info, and [`default-handler-dispatch-opts`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#default-handler-dispatch-opts) for defaults.
 
-Note that handler middleware in particular is an often overlooked but powerful feature, allowing you to arbitrarily transform and/or filter every [signal map](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content) before it is given to each handler.
+Note that handler middleware in particular is an easily overlooked but powerful feature, allowing you to arbitrarily transform and/or filter every [signal map](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content) before it is given to each handler.
 
 ## Handler-specific opts
 
@@ -181,9 +185,9 @@ Writing your own signal handlers for Telemere is straightforward, and a reasonab
 - Handlers just plain Clojure/Script fns of 2 arities:
 
 ```clojure
-(defn my-basic-handler
-  ([])                        ; Arity-0 called when stopping the handler
+(defn my-handler
   ([signal] (println signal)) ; Arity-1 called when handling a signal
+  ([] (my-stop-code))         ; Arity-0 called when stopping the handler
   )
 ```
 
@@ -211,17 +215,17 @@ If you're making a customizable handler for use by others, it's often handy to d
    ;; Do option validation and other prep here, i.e. try to keep
    ;; expensive work outside handler function when possible!
 
-   (let [handler-fn ; Fn of exactly 2 arities
+   (let [handler-fn ; Fn of exactly 2 arities (1 and 0)
          (fn a-handler:my-fancy-handler ; Note fn naming convention
-
-           ([] ; Arity-0 called when stopping the handler
-            ;; Flush buffers, close files, etc. May just noop.
-            ;; Return value is ignored.
-            )
 
            ([signal] ; Arity-1 called when handling a signal
             ;; Do something useful with the given signal (write to
             ;; console/file/queue/db, etc.). Return value is ignored.
+            )
+
+           ([] ; Arity-0 called when stopping the handler
+            ;; Flush buffers, close files, etc. May just noop.
+            ;; Return value is ignored.
             ))]
 
      ;; (Advanced, optional) You can use metadata to provide default

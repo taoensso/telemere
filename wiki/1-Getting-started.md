@@ -69,7 +69,7 @@ Its name is a combination of _telemetry_ and _telomere_:
 
 > *Telemetry* derives from the Greek *tele* (remote) and *metron* (measure). It refers to the collection of *in situ* (in position) data, for transmission to other systems for monitoring/analysis. *Logs* are the most common form of software telemetry. So think of telemetry as the *superset of logging-like activities* that help monitor and understand (software) systems.
 
-> *Telomere* derives from the Greek *télos* (end) and *méros* (part). It refers to a genetic feature commonly found at the end of linear chromosomes that helps to protect chromosome integrity.
+> *Telomere* derives from the Greek *télos* (end) and *méros* (part). It refers to a genetic feature commonly found at the end of linear chromosomes that helps to protect chromosome integrity (think biological checksum).
 
 # Setup
 
