@@ -31,10 +31,10 @@ Limitations:
 
 Examples:
 
-  (spy! (+ 1 2))         ; %> {:kind :trace, :level :info, :run-form '(+ 1 2),
-                         ;     :run-val 3, :run-nsecs <int>, :parent {:keys [id uid]}
-                         ;     :msg "(+ 1 2) => 3" ...}
-  (spy! ::my-id (+ 1 2)) ; %> {... :id ::my-id ...}
+  (spy! (+ 1 2))        ; %> {:kind :trace, :level :info, :run-form '(+ 1 2),
+                        ;     :run-val 3, :run-nsecs <int>, :parent {:keys [id uid]}
+                        ;     :msg "(+ 1 2) => 3" ...}
+  (spy! :debug (+ 1 2)) ; %> {... :level :debug ...}
   (spy!
     {:let  [x "x"] ; Available to `:data` and `:msg`
      :data {:x x}
