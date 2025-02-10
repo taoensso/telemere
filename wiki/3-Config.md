@@ -45,7 +45,7 @@ Verify successful interop with [`check-interop`](https://cljdoc.org/d/com.taoens
 
 To do this:
 
-1. Ensure that you have the SLF4J [dependency](https://mvnrepository.com/artifact/org.slf4j/slf4j-api) ( v2+ **only**), and
+1. Ensure that you have the SLF4J [dependency](https://mvnrepository.com/artifact/org.slf4j/slf4j-api) (v2+ **only**), and
 2. Ensure that you have the Telemere SLF4J backend [dependency](https://clojars.org/com.taoensso/telemere-slf4j)
 
 When `com.taoensso/telemere-slf4j` (2) is on your classpath AND no other SLF4J backends are, SLF4J will automatically direct all its logging calls to Telemere.
