@@ -1,5 +1,5 @@
 <a href="https://www.taoensso.com/clojure" title="More stuff by @ptaoussanis at www.taoensso.com"><img src="https://www.taoensso.com/open-source.png" alt="Taoensso open source" width="340"/></a>  
-[**API**][cljdoc docs] | [**Wiki**][GitHub wiki] | [Latest releases](#latest-releases) | [Slack channel][]
+[**API**][cljdoc] | [**Wiki**][GitHub wiki] | [Latest releases](#latest-releases) | [Slack channel][]
 
 # <img src="https://raw.githubusercontent.com/taoensso/telemere/master/imgs/telemere-logo.svg" alt="Telemere logo" width="360"/>
 
@@ -321,7 +321,7 @@ See [here](../../wiki/8-Community) for community resources.
 ## Documentation
 
 - [Wiki][GitHub wiki] (getting started, usage, etc.)
-- API reference via [cljdoc][cljdoc docs] or [Codox][Codox docs]
+- API reference via [cljdoc][cljdoc]
 - Extensive [internal help](#internal-help) (no need to leave your IDE)
 - Support via [Slack channel][] or [GitHub issues][]
 - [General observability tips](../../wiki/7-Tips) (advice on building and maintaining observable Clojure/Script systems, and getting the most out of Telemere)
@@ -347,8 +347,7 @@ Licensed under [EPL 1.0](LICENSE.txt) (same as Clojure).
 
 <!-- Project -->
 
-[Codox docs]:  https://taoensso.github.io/telemere/
-[cljdoc docs]: https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere
+[cljdoc]: https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere
 
 [Clojars SVG]: https://img.shields.io/clojars/v/com.taoensso/telemere.svg
 [Clojars URL]: https://clojars.org/com.taoensso/telemere
