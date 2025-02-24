@@ -5,9 +5,9 @@
     <https://www.taoensso.com/telemere>"
 
   {:author "Peter Taoussanis (@ptaoussanis)"}
-  (:refer-clojure :exclude [binding newline])
+  (:refer-clojure :exclude [newline])
   (:require
-   [taoensso.encore         :as enc :refer [binding have have?]]
+   [taoensso.encore         :as enc :refer [have have?]]
    [taoensso.encore.signals :as sigs]
    [taoensso.telemere.impl  :as impl]
    [taoensso.telemere.utils :as utils]
