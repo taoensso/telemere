@@ -266,10 +266,11 @@
         :arglists (impl/signal-arglists  :error!)}
        ([opts-or-id error] `(error! ~(assoc (merge-or-assoc-opts base-opts &form &env :id opts-or-id) :error error)))
        ([opts-or-error]
-        (let [opts (merge-or-assoc-opts base-opts &form &env :error opts-or-error)]
-          `(let [~'__error ~(get   opts :error)]
-             (impl/signal! ~(assoc opts :error '__error))
-             (do                              ~'__error)))))))
+        (let [opts (merge-or-assoc-opts base-opts &form &env :error opts-or-error)
+              gs-error (gensym "error")]
+          `(let [~gs-error ~(get   opts :error)]
+             (impl/signal! ~(assoc opts :error gs-error))
+             (do                              ~gs-error)))))))
 
 (comment (with-signal (throw (error! ::my-id (ex-info "MyEx" {})))))
 
@@ -285,12 +286,13 @@
               rethrow?  (not (contains? opts :catch-val))
               catch-val      (get       opts :catch-val)
               run-form       (get       opts :run)
-              opts           (dissoc    opts :run :catch-val)]
+              opts           (dissoc    opts :run :catch-val)
+              gs-caught      (gensym "caught")]
 
           `(enc/try* ~run-form
-             (catch :all ~'__caught
-               (impl/signal! ~(assoc opts :error '__caught))
-               (if ~rethrow? (throw ~'__caught) ~catch-val))))))))
+             (catch :all ~gs-caught
+               (impl/signal! ~(assoc opts :error gs-caught))
+               (if ~rethrow? (throw ~gs-caught) ~catch-val))))))))
 
 (comment (with-signal (catch->error! ::my-id (/ 1 0))))
 
