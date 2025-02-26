@@ -108,20 +108,20 @@
   [logger-name level]
   (when-debug (println [:slf4j/allowed? (sig-level level) logger-name]))
   (impl/signal-allowed?
-    {:location {:ns logger-name} ; Typically source class name
-     :kind     :slf4j
-     :level    (sig-level level)}))
+    {:ns    logger-name ; Typically source class name
+     :kind  :slf4j
+     :level (sig-level level)}))
 
 (defn- normalized-log!
   [logger-name level inst error msg-pattern args marker-names kvs]
   (when-debug (println [:slf4j/normalized-log! (sig-level level) logger-name]))
   (impl/signal!
-    {:allow?   true ; Pre-filtered by `allowed?` call
-     :location {:ns logger-name} ; Typically source class name
-     :kind     :slf4j
-     :level    (sig-level level)
-     :inst     inst
-     :error    error
+    {:allow? true ; Pre-filtered by `allowed?` call
+     :ns     logger-name ; Typically source class name
+     :kind   :slf4j
+     :level  (sig-level level)
+     :inst   inst
+     :error  error
 
      :ctx
      (when-let [hmap (org.slf4j.MDC/getCopyOfContextMap)]

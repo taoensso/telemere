@@ -40,22 +40,22 @@
   (defn ex1! [] (throw ex1))
   (defn ex1? [x] (= (truss/ex-root x) ex1)))
 
-(let [rt-sig-filter_ (atom nil)
-      sig-handlers_  (atom nil)]
+(let [rt-call-filter_ (atom nil)
+      sig-handlers_   (atom nil)]
 
   (test/use-fixtures :once
     (enc/test-fixtures
       {:before
        (fn []
-         (reset! rt-sig-filter_ impl/*rt-sig-filter*)
-         (reset! sig-handlers_  impl/*sig-handlers*)
-         (enc/set-var-root!     impl/*sig-handlers*  nil)
-         (enc/set-var-root!     impl/*rt-sig-filter* nil))
+         (reset! rt-call-filter_ impl/*rt-call-filter*)
+         (reset! sig-handlers_   impl/*sig-handlers*)
+         (enc/set-var-root!      impl/*sig-handlers*   nil)
+         (enc/set-var-root!      impl/*rt-call-filter* nil))
 
        :after
        (fn []
-         (enc/set-var-root! impl/*rt-sig-filter* @rt-sig-filter_)
-         (enc/set-var-root! impl/*sig-handlers*  @sig-handlers_))})))
+         (enc/set-var-root! impl/*rt-call-filter* @rt-call-filter_)
+         (enc/set-var-root! impl/*sig-handlers*   @sig-handlers_))})))
 
 ;;;;
 

@@ -21,19 +21,19 @@
   (enabled? [_ level]
     (when-debug (println [:tools-logging/enabled? level logger-name]))
     (impl/signal-allowed?
-      {:location {:ns logger-name}
-       :kind     :tools-logging
-       :level    level}))
+      {:ns    logger-name
+       :kind  :tools-logging
+       :level level}))
 
   (write! [_ level throwable message]
     (when-debug (println [:tools-logging/write! level logger-name]))
     (impl/signal!
-      {:allow?   true ; Pre-filtered by `enabled?` call
-       :location {:ns logger-name}
-       :kind     :tools-logging
-       :level    level
-       :error    throwable
-       :msg      message})
+      {:allow? true ; Pre-filtered by `enabled?` call
+       :ns     logger-name
+       :kind   :tools-logging
+       :level  level
+       :error  throwable
+       :msg    message})
     nil))
 
 (deftype TelemereLoggerFactory []
