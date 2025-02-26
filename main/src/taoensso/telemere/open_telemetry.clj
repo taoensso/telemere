@@ -164,11 +164,12 @@
       (when data ; Non-standard
         (merge-attrs! ab "exception.data" data)))
 
-    (let [{:keys [ns line column]} signal]
+    (let [ns (get signal :ns)]
       ;; All standard
-      (put-attr! ab "code.namespace"     ns)
-      (put-attr! ab "code.line.number"   line)
-      (put-attr! ab "code.column.number" column))
+      (put-attr! ab "code.namespace" ns)
+      (when-let [[line column] (get signal :coords)]
+        (when line   (put-attr! ab "code.line.number"   line))
+        (when column (put-attr! ab "code.column.number" column))))
 
     (let [{:keys [kind id uid]} signal]
       (put-attr! ab "kind" kind)

@@ -21,7 +21,7 @@ And they're represented by plain **Clojure/Script maps** with those attributes (
 
 Fundamentally **all signals**:
 
-- Occur or are observed at a particular **location** in your code (file, namespace, line, column).
+- Occur or are observed at a particular **location** in your code (namespace, line, column).
 - Occur or are observed *within* a particular **program state** / context.
 - Convey something of value *about* that **program state** / context.
 
