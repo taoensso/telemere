@@ -3,7 +3,8 @@
   Signal design shared by: Telemere, Tufte, Timbre."
   (:require
    [clojure.set             :as set]
-   [taoensso.encore         :as enc :refer [have have?]]
+   [taoensso.truss          :as truss]
+   [taoensso.encore         :as enc]
    [taoensso.encore.signals :as sigs])
 
   #?(:cljs
@@ -169,7 +170,7 @@
 (defn default-trace-msg
   [form value error nsecs]
   (if error
-    (str form " !> " (enc/ex-type error))
+    (str form " !> " (truss/ex-type error))
     (str form " => " value)))
 
 (comment
@@ -232,7 +233,7 @@
                    :server         io.opentelemetry.api.trace.SpanKind/SERVER
                    :consumer       io.opentelemetry.api.trace.SpanKind/CONSUMER
                    :producer       io.opentelemetry.api.trace.SpanKind/PRODUCER
-                   (enc/unexpected-arg! ?span-kind
+                   (truss/unexpected-arg! ?span-kind
                      {:expected #{nil :internal :client :server :consumer :producer}})))
 
                (.with ^io.opentelemetry.context.Context parent-context
@@ -327,7 +328,7 @@
      ([raw-msg? trap-signals? form]
       `(let [sig_# (volatile! nil)]
          (binding [*sig-spy* (SpyOpts. sig_# true ~trap-signals?)]
-           (enc/try* ~form (catch :all _#)))
+           (truss/try* ~form (catch :all _#)))
 
          (if ~raw-msg?
            (do               @sig_#)
@@ -348,7 +349,7 @@
       `(let [sigs_# (volatile! nil)
              base-map#
              (binding [*sig-spy* (SpyOpts. sigs_# false ~trap-signals?)]
-               (enc/try*
+               (truss/try*
                  (do            {:value ~form})
                  (catch :all t# {:error t#})))
 
@@ -477,7 +478,7 @@
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}])
 
-       (enc/unexpected-arg! macro-id))))
+       (truss/unexpected-arg! macro-id))))
 
 ;;;; Signal macro
 
@@ -486,12 +487,11 @@
   (#?(:clj invoke :cljs -invoke) [_] (if error (throw error) value))
   (#?(:clj invoke :cljs -invoke) [_ signal_]
     (if error
-      (throw
-        (ex-info "Signal `:run` form error"
-          (enc/try*
-            (do           {:taoensso.telemere/signal (force signal_)})
-            (catch :all t {:taoensso.telemere/signal-error t}))
-          error))
+      (truss/ex-info! "Signal `:run` form error"
+        (truss/try*
+          (do           {:taoensso.telemere/signal (force signal_)})
+          (catch :all t {:taoensso.telemere/signal-error t}))
+        error)
       value)))
 
 (defn inst+nsecs
@@ -506,10 +506,9 @@
    (defn- valid-opts! [x]
      (if (map? x)
        (do     x)
-       (throw
-         ;; We require const map keys, but vals may require eval
-         (ex-info "Telemere signal opts must be a map with const (compile-time) keys."
-           {:opts (enc/typed-val x)})))))
+       ;; We require const map keys, but vals may require eval
+       (truss/ex-info! "Telemere signal opts must be a map with const (compile-time) keys."
+         {:opts (truss/typed-val x)}))))
 
 #?(:clj (defn- auto-> [form auto-form] (if (= form :auto) auto-form form)))
 #?(:clj
@@ -565,9 +564,10 @@
                trace? (get opts :trace? (boolean run-form))
                _
                (when-not (contains? #{true false nil} trace?)
-                 (enc/unexpected-arg! trace?
-                   {:msg "Expected constant (compile-time) `:trace?` boolean"
-                    :context `signal!}))
+                 (truss/unexpected-arg! trace?
+                   {:param             'trace?
+                    :context `signal!
+                    :msg "Expected constant (compile-time) `:trace?` boolean"}))
 
                thread-form (when clj? `(enc/thread-info))
 
@@ -611,17 +611,15 @@
                      _ ; Compile-time validation
                      (do
                        (when (and run-form error-form) ; Ambiguous source of error
-                         (throw
-                           (ex-info "Signals cannot have both `:run` and `:error` opts at the same time"
-                             {:run-form   run-form
-                              :error-form error-form
-                              :location   location
-                              :other-opts (dissoc opts :run :error)})))
+                         (truss/ex-info! "Signals cannot have both `:run` and `:error` opts at the same time"
+                           {:run-form   run-form
+                            :error-form error-form
+                            :location   location
+                            :other-opts (dissoc opts :run :error)}))
 
                        (when-let [e (find opts :msg_)] ; Common typo/confusion
-                         (throw
-                           (ex-info "Signals cannot have `:msg_` opt (did you mean `:msg`?))"
-                             {:msg_ (enc/typed-val (val e))}))))
+                         (truss/ex-info! "Signals cannot have `:msg_` opt (did you mean `:msg`?))"
+                           {:msg_ (truss/typed-val (val e))})))
 
                      signal-form
                      (let [record-form
@@ -631,7 +629,7 @@
                                [:run    :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form,                                               ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~show-run-form ~show-run-val ~'_end-inst ~'_run-nsecs)
                                [:no-run :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form, (enc/host-info) ~'__thread ~'__otel-context1, ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil             nil           nil         nil)
                                [:no-run :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~location ~'__ns ~line-form ~column-form ~file-form,                                               ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil             nil           nil         nil)
-                               (enc/unexpected-arg! clause {:context :signal-constructor-args})))
+                               (truss/unexpected-arg! clause {:context :signal-constructor-args})))
 
                            record-form
                            (if-not run-form
@@ -678,7 +676,7 @@
                    ~'__run-result
                    ~(when run-form
                       `(let [t0# (enc/now-nano*)]
-                         (enc/try*
+                         (truss/try*
                            (do            (RunResult. ~run-form* nil (- (enc/now-nano*) t0#)))
                            (catch :all t# (RunResult. nil        t#  (- (enc/now-nano*) t0#))))))]
 
@@ -692,7 +690,7 @@
                       `(binding [*trace-root*   ~'__root1
                                  *trace-parent* {:id ~'__id, :uid ~'__uid}]
                          (let [t0# (enc/now-nano*)]
-                           (enc/try*
+                           (truss/try*
                              (do            (RunResult. ~run-form* nil (- (enc/now-nano*) t0#)))
                              (catch :all t# (RunResult. nil        t#  (- (enc/now-nano*) t0#)))))))]
 
@@ -713,7 +711,7 @@
                                  *trace-parent* {:id ~'__id, :uid ~'__uid}]
                          (let [otel-scope# (.makeCurrent ~'__otel-context1)
                                t0#         (enc/now-nano*)]
-                           (enc/try*
+                           (truss/try*
                              (do            (RunResult. ~run-form* nil (- (enc/now-nano*) t0#)))
                              (catch :all t# (RunResult. nil        t#  (- (enc/now-nano*) t0#)))
                              (finally (.close otel-scope#))))))])

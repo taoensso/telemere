@@ -1,7 +1,8 @@
 (ns taoensso.telemere.streams
   "Interop support for standard stream/s -> Telemere."
   (:require
-   [taoensso.encore        :as enc :refer [have have?]]
+   [taoensso.encore        :as truss]
+   [taoensso.encore        :as enc]
    [taoensso.telemere.impl :as impl]))
 
 (enc/defonce ^:private          orig-*out* "Original `*out*` on ns load" *out*)

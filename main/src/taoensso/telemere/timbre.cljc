@@ -3,7 +3,8 @@
   Intended to help ease migration from Timbre to Telemere."
   (:require
    [clojure.string         :as str]
-   [taoensso.encore        :as enc :refer [have have?]]
+   [taoensso.truss         :as truss]
+   [taoensso.encore        :as enc]
    [taoensso.telemere.impl :as impl]
    [taoensso.telemere      :as tel]))
 
@@ -21,10 +22,10 @@
   (defn ^:no-doc parse-vargs
     "Private, don't use. Adapted from Timbre."
     [format-msg? vargs]
-    (let [[v0] vargs]
+    (let [[v0]   vargs]
 
-      (if (enc/error? v0)
-        (let [error   v0
+      (if (truss/error? v0)
+        (let [error     v0
               vargs   (enc/vrest vargs)
               pattern (if format-msg? (let [[v0] vargs] v0) nil)
               vargs   (if format-msg? (enc/vrest vargs) vargs)

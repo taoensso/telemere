@@ -2,7 +2,8 @@
   "Private ns, implementation detail.
   Core console handlers, aliased in main Telemere ns."
   (:require
-   [taoensso.encore         :as enc :refer [have have?]]
+   [taoensso.truss          :as truss]
+   [taoensso.encore         :as enc]
    [taoensso.telemere.utils :as utils]))
 
 (comment
@@ -126,7 +127,7 @@
                (.group js/console (preamble-fn signal))
                (content-fn signal (logger-fn logger) identity)
 
-               (when-let [stack (and error (.-stack (enc/ex-root error)))]
+               (when-let [stack (and error (.-stack (truss/ex-root error)))]
                  (.call logger logger stack))
 
                (.groupEnd js/console)))))))))

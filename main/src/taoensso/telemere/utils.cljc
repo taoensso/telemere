@@ -4,6 +4,7 @@
   (:require
    [clojure.string          :as str]
    #?(:clj [clojure.java.io :as jio])
+   [taoensso.truss          :as truss]
    [taoensso.encore         :as enc]
    [taoensso.encore.signals :as sigs]
    [taoensso.telemere.impl  :as impl]))
@@ -118,8 +119,9 @@
             :hex/secure    (hex-uid-fn  {:secure? true,  :root-len root-len, :child-len child-len})
             nil)))
 
-      (enc/unexpected-arg! kind
-        {:context  `uid-fn
+      (truss/unexpected-arg! kind
+        {:param             'kind
+         :context  `uid-fn
          :expected
          '#{:uuid :uuid-str :default,
             :nano/secure   [:nano/secure   <root-len> <child-len>]
@@ -205,7 +207,7 @@
   [{:keys [type msg data]} ...] cause chain."
   [signal]
   (enc/if-let [error (get signal :error)
-               chain (enc/ex-chain :as-map error)]
+               chain (truss/ex-chain :as-map error)]
     (assoc signal :error chain)
     (do    signal)))
  
@@ -224,9 +226,8 @@
 
        (if (.canWrite file)
          file
-         (throw
-           (ex-info "Unable to prepare writable `java.io.File`"
-             {:path (.getAbsolutePath file)}))))))
+         (truss/ex-info! "Unable to prepare writable `java.io.File`"
+           {:path (.getAbsolutePath file)})))))
 
 #?(:clj
    (defn ^:no-doc file-stream
@@ -253,7 +254,7 @@
      [{:keys [file append?]
        :or   {append? true}}]
 
-     (when-not file (throw (ex-info "Expected `:file` value" (enc/typed-val file))))
+     (when-not file (truss/ex-info! "Expected `:file` value" (truss/typed-val file)))
 
      (let [file    (writeable-file! file)
            stream_ (volatile! (file-stream file append?))
@@ -364,8 +365,8 @@
         socket-fn     default-socket-fn
         ssl-socket-fn default-ssl-socket-fn}}]
 
-     (when-not (string? host) (throw (ex-info "Expected `:host` string" (enc/typed-val host))))
-     (when-not (int?    port) (throw (ex-info "Expected `:port` int"    (enc/typed-val port))))
+     (when-not (string? host) (truss/ex-info! "Expected `:host` string" (truss/typed-val host)))
+     (when-not (int?    port) (truss/ex-info! "Expected `:port` int"    (truss/typed-val port)))
 
      (let [new-conn! ; => [<java.net.Socket> <java.io.OutputStream>], or throws
            (fn []
@@ -379,7 +380,7 @@
                  [socket (.getOutputStream socket)])
 
                (catch Exception ex
-                 (throw (ex-info "Failed to create connection" opts ex)))))
+                 (truss/ex-info! "Failed to create connection" opts ex))))
 
            conn_  (volatile! (new-conn!))
            open?_ (enc/latom true)
@@ -464,7 +465,7 @@
            (s+nl "  " class "/" method " at " file ":" line)))
        (str sb))))
 
-(comment (println (format-clj-stacktrace (:trace (enc/ex-map (ex-info "Ex2" {:k2 "v2"} (ex-info "Ex1" {:k1 "v1"})))))))
+(comment (println (format-clj-stacktrace (:trace (truss/ex-map (truss/ex-info "Ex2" {:k2 "v2"} (truss/ex-info "Ex1" {:k1 "v1"})))))))
 
 (defn format-error-fn
   "Experimental, subject to change.
@@ -477,7 +478,7 @@
          nls enc/newlines]
 
      (fn format-error [error]
-       (when-let [em (enc/ex-map error)]
+       (when-let [em (truss/ex-map error)]
          (let [sb (enc/str-builder)
                s+ (partial enc/sb-append sb)
                {:keys [chain trace]} em]
@@ -497,9 +498,9 @@
            (str sb)))))))
 
 (comment
-  (do                         (throw      (ex-info "Ex2" {:k2 "v2"} (ex-info "Ex1" {:k1 "v1"}))))
-  (do                         (enc/ex-map (ex-info "Ex2" {:k2 "v2"} (ex-info "Ex1" {:k1 "v1"}))))
-  (println (str "--\n" ((format-error-fn) (ex-info "Ex2" {:k2 "v2"} (ex-info "Ex1" {:k1 "v1"}))))))
+  (do                         (throw        (truss/ex-info "Ex2" {:k2 "v2"} (truss/ex-info "Ex1" {:k1 "v1"}))))
+  (do                         (truss/ex-map (truss/ex-info "Ex2" {:k2 "v2"} (truss/ex-info "Ex1" {:k1 "v1"}))))
+  (println (str "--\n" ((format-error-fn)   (truss/ex-info "Ex2" {:k2 "v2"} (truss/ex-info "Ex1" {:k1 "v1"}))))))
 
 ;;;;
 
@@ -680,8 +681,8 @@
                  (assoc!* m k v)
 
                  ;; Main keys to include with modified val
-                 :error (if-let [chain (enc/ex-chain :as-map v)] (assoc!  m k chain) m)  ; As `expand-signal-error`
-                 :msg_                                           (assoc!* m k (force v)) ; As  `force-signal-msg`
+                 :error (if-let [chain (truss/ex-chain :as-map v)] (assoc!  m k chain) m)  ; As `expand-signal-error`
+                 :msg_                                             (assoc!* m k (force v)) ; As  `force-signal-msg`
 
                  ;; Implementation keys to always exclude
                  (clojure.core/into ()
@@ -748,15 +749,14 @@
              :json
              #?(:cljs pr-json
                 :clj
-                (throw
-                  (ex-info "`:json` pr-fn only supported in Cljs. To output JSON in Clj, please provide an appropriate unary fn instead (e.g. jsonista/write-value-as-string)."
-                    {})))
+                (truss/ex-info! "`:json` pr-fn only supported in Cljs. To output JSON in Clj, please provide an appropriate unary fn instead (e.g. jsonista/write-value-as-string)."
+                  {}))
 
              (if (fn? pr-fn)
                (do    pr-fn)
-               (enc/unexpected-arg! pr-fn
-                 {:context  `pr-signal-fn
-                  :param    'pr-fn
+               (truss/unexpected-arg! pr-fn
+                 {:param             'pr-fn
+                  :context  `pr-signal-fn
                   :expected
                   #?(:clj  '#{:edn       unary-fn}
                      :cljs '#{:edn :json unary-fn})}))))]
@@ -813,5 +813,5 @@
            {:my-k1 #{:a :b :c}
             :msg   "hi"
             :data  {:a :A}
-            ;; :error (ex-info "Ex2" {:k2 "v2"} (ex-info "Ex1" {:k1 "v1"}))
+            ;; :error (truss/ex-info "Ex2" {:k2 "v2"} (truss/ex-info "Ex1" {:k1 "v1"}))
             :run   (/ 1 0)}))))))

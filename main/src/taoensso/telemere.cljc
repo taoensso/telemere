@@ -7,7 +7,8 @@
   {:author "Peter Taoussanis (@ptaoussanis)"}
   (:refer-clojure :exclude [newline])
   (:require
-   [taoensso.encore         :as enc :refer [have have?]]
+   [taoensso.truss          :as truss]
+   [taoensso.encore         :as enc]
    [taoensso.encore.signals :as sigs]
    [taoensso.telemere.impl  :as impl]
    [taoensso.telemere.utils :as utils]
@@ -166,7 +167,7 @@
            ;; Via SDK autoconfiguration extension (when available)
            (enc/compile-when
              io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk
-             (enc/catching :common
+             (truss/catching :common
                (let [builder (io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk/builder)
                      sdk    (.getOpenTelemetrySdk (.build builder))]
                  {:logger-provider (.getLogsBridge     sdk)
@@ -272,7 +273,7 @@
              (impl/signal! ~(assoc opts :error gs-error))
              (do                              ~gs-error)))))))
 
-(comment (with-signal (throw (error! ::my-id (ex-info "MyEx" {})))))
+(comment (with-signal (throw (error! ::my-id (truss/ex-info "MyEx" {})))))
 
 #?(:clj
    (let [base-opts {:kind :error, :level :error}]
@@ -289,7 +290,7 @@
               opts           (dissoc    opts :run :catch-val)
               gs-caught      (gensym "caught")]
 
-          `(enc/try* ~run-form
+          `(truss/try* ~run-form
              (catch :all ~gs-caught
                (impl/signal! ~(assoc opts :error gs-caught))
                (if ~rethrow? (throw ~gs-caught) ~catch-val))))))))
@@ -400,9 +401,9 @@
 
   (add-handler! :default/console (handler:console))
 
-  #?(:clj (enc/catching (require '[taoensso.telemere.tools-logging])))  ;    TL->Telemere
-  #?(:clj (enc/catching (require '[taoensso.telemere.slf4j])))          ; SLF4J->Telemere
-  #?(:clj (enc/catching (require '[taoensso.telemere.open-telemetry]))) ; Telemere->OTel
+  #?(:clj (truss/catching (require '[taoensso.telemere.tools-logging])))  ;    TL->Telemere
+  #?(:clj (truss/catching (require '[taoensso.telemere.slf4j])))          ; SLF4J->Telemere
+  #?(:clj (truss/catching (require '[taoensso.telemere.open-telemetry]))) ; Telemere->OTel
   )
 
 ;;;; Flow benchmarks
@@ -467,8 +468,8 @@
           (event! ::ev-id
             {:data  {:a :A :b :b}
              :error
-             (ex-info "Ex2" {:b :B}
-               (ex-info "Ex1" {:a :A}))}))]
+             (truss/ex-info   "Ex2" {:b :B}
+               (truss/ex-info "Ex1" {:a :A}))}))]
 
     (do      (let [hf (handler:file)]        (hf sig) (hf)))
     (do      (let [hf (handler:console)]     (hf sig) (hf)))

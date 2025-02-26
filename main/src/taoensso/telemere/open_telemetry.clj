@@ -5,7 +5,8 @@
   (:require
    [clojure.string  :as str]
    [clojure.set     :as set]
-   [taoensso.encore :as enc :refer [have have?]]
+   [taoensso.truss  :as truss]
+   [taoensso.encore :as enc]
    [taoensso.telemere.utils :as utils]
    [taoensso.telemere.impl  :as impl]
    [taoensso.telemere       :as tel])
@@ -61,24 +62,24 @@
   clojure.lang.IPersistentCollection
   (-put-attr! [v ^String k ^AttributesBuilder ab]
     (if (map? v)
-      (when-let [^String s (enc/catching :common (enc/pr-edn* v))]
+      (when-let [^String s (truss/catching :common (enc/pr-edn* v))]
         (.put ab k s))
 
       (when-some [v1 (if (indexed? v) (nth v 0 nil) (first v))]
       (or
         (cond
-          (string?  v1) (enc/catching :common (.put ab k ^"[Ljava.lang.String;" (into-array String v)))
-          (int?     v1) (enc/catching :common (.put ab k                        (long-array        v)))
-          (float?   v1) (enc/catching :common (.put ab k                        (double-array      v)))
-          (boolean? v1) (enc/catching :common (.put ab k                        (boolean-array     v))))
+          (string?  v1) (truss/catching :common (.put ab k ^"[Ljava.lang.String;" (into-array String v)))
+          (int?     v1) (truss/catching :common (.put ab k                        (long-array        v)))
+          (float?   v1) (truss/catching :common (.put ab k                        (double-array      v)))
+          (boolean? v1) (truss/catching :common (.put ab k                        (boolean-array     v))))
 
-        (when-let [^String s (enc/catching :common (enc/pr-edn* v))]
+        (when-let [^String s (truss/catching :common (enc/pr-edn* v))]
           (.put ab k s)))))
     ab)
 
   Object
   (-put-attr! [v ^String k ^AttributesBuilder ab]
-    (when-let [^String s (enc/catching :common (enc/pr-edn* v))]
+    (when-let [^String s (truss/catching :common (enc/pr-edn* v))]
       (.put ab k s))))
 
 (defmacro ^:private put-attr! [attrs-builder attr-name attr-val]
@@ -90,8 +91,9 @@
     (map?                 attrs) (enc/run-kv! (fn [k v] (put-attr! attrs-builder (attr-name k) v)) attrs) ; Unprefixed
     (instance? Attributes attrs)                        (.putAll   attrs-builder ^Attributes       attrs) ; Unprefixed
     :else
-    (enc/unexpected-arg! attrs
-      {:context `put-attrs!
+    (truss/unexpected-arg! attrs
+      {:param             'attrs
+       :context `put-attrs!
        :expected #{nil map io.opentelemetry.api.common.Attributes}})))
 
 (defn- merge-attrs!
@@ -145,7 +147,7 @@
       (put-attr! ab "level" ; Standard
         (level->string level)))
 
-    (when-let [{:keys [type msg trace data]} (enc/ex-map (get signal :error))]
+    (when-let [{:keys [type msg trace data]} (truss/ex-map (get signal :error))]
       (put-attr! ab "exception.type"    type) ; Standard
       (put-attr! ab "exception.message" msg)  ; Standard
       (when trace
@@ -356,7 +358,7 @@
                            (force msg_)
                            (when-let [error (get signal :error)]
                              (when (instance? Throwable error)
-                               (str (enc/ex-type error) ": " (enc/ex-message error)))))]
+                               (str (truss/ex-type error) ": " (ex-message error)))))]
                 (.setBody lrb body))
 
               ;; Emit to `LogRecordExporter`

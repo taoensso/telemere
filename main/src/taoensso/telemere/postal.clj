@@ -2,6 +2,7 @@
   "Email handler using `postal`,
     Ref. <https://github.com/drewr/postal>."
   (:require
+   [taoensso.truss          :as truss]
    [taoensso.encore         :as enc]
    [taoensso.encore.signals :as sigs]
    [taoensso.telemere.utils :as utils]
@@ -76,8 +77,8 @@
       subject-fn (utils/signal-preamble-fn {:format-inst-fn nil})
       subject-max-len 128}}]
 
-   (when-not (map? conn-opts) (throw (ex-info "Expected `:conn-opts` map" (enc/typed-val conn-opts))))
-   (when-not (map? msg-opts)  (throw (ex-info "Expected `:msg-opts` map"  (enc/typed-val msg-opts))))
+   (when-not (map? conn-opts) (truss/ex-info! "Expected `:conn-opts` map" (truss/typed-val conn-opts)))
+   (when-not (map? msg-opts)  (truss/ex-info! "Expected `:msg-opts` map"  (truss/typed-val msg-opts)))
 
    (let [subject-fn
          (if-let [n subject-max-len]
@@ -108,7 +109,7 @@
                     success? (= (get result :code) 0)]
 
                 (when-not success?
-                  (throw (ex-info "Failed to send email" result ex)))))))]
+                  (truss/ex-info! "Failed to send email" result ex))))))]
 
      (with-meta handler-fn
        {:dispatch-opts default-dispatch-opts}))))

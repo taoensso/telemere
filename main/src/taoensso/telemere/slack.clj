@@ -2,7 +2,8 @@
   "Slack handler using `clj-slack`,
     Ref. <https://github.com/julienXX/clj-slack>"
   (:require
-   [taoensso.encore :as enc :refer [have have?]]
+   [taoensso.truss  :as truss]
+   [taoensso.encore :as enc]
    [taoensso.telemere.utils :as utils]
    [clj-slack.core  :as slack]
    [clj-slack.chat  :as slack.chat]))
@@ -68,8 +69,8 @@
          {:keys [channel-id]} post-opts
          post-opts    (dissoc post-opts :channel-id)
 
-         _ (when-not (string? token)      (throw (ex-info "Expected `:conn-opts/token` string"      (enc/typed-val token))))
-         _ (when-not (string? channel-id) (throw (ex-info "Expected `:post-opts/channel-id` string" (enc/typed-val channel-id))))
+         _ (when-not (string? token)      (truss/ex-info! "Expected `:conn-opts/token` string"      (truss/typed-val token)))
+         _ (when-not (string? channel-id) (truss/ex-info! "Expected `:post-opts/channel-id` string" (truss/typed-val channel-id)))
 
          handler-fn
          (fn a-handler:slack

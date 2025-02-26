@@ -10,7 +10,8 @@
   :scm {:name "git" :url "https://github.com/taoensso/telemere"}
 
   :dependencies
-  [[com.taoensso/encore "3.132.0"]]
+  [[com.taoensso/truss  "2.0.0-SNAPSHOT"]
+   [com.taoensso/encore "3.132.0"]]
 
   :test-paths ["test" #_"src"]
 

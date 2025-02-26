@@ -8,7 +8,8 @@
     `clojure.tools.logging` - For env config to match library's conventions."
 
   (:require
-   [taoensso.encore        :as enc :refer [have have?]]
+   [taoensso.truss         :as truss]
+   [taoensso.encore        :as enc]
    [taoensso.telemere.impl :as impl]
    [clojure.tools.logging  :as ctl]))
 

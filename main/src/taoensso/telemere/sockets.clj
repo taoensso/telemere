@@ -1,7 +1,8 @@
 (ns taoensso.telemere.sockets
   "Basic TCP/UDP socket handlers."
   (:require
-   [taoensso.encore :as enc :refer [have have?]]
+   [taoensso.truss  :as truss]
+   [taoensso.encore :as enc]
    [taoensso.telemere.utils :as utils])
 
   (:import
@@ -90,8 +91,8 @@
          socket (DatagramSocket.) ; No need to change socket once created
          lock   (Object.)]
 
-     (when-not (string? host) (throw (ex-info "Expected `:host` string" (enc/typed-val host))))
-     (when-not (int?    port) (throw (ex-info "Expected `:port` int"    (enc/typed-val port))))
+     (when-not (string? host) (truss/ex-info! "Expected `:host` string" (truss/typed-val host)))
+     (when-not (int?    port) (truss/ex-info! "Expected `:port` int"    (truss/typed-val port)))
 
      (.connect socket (InetSocketAddress. (str host) (int port)))
 

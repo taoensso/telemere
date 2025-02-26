@@ -18,7 +18,8 @@
 
   {:author "Peter Taoussanis (@ptaoussanis)"}
   (:require
-   [taoensso.encore        :as enc :refer [have have?]]
+   [taoensso.truss         :as truss]
+   [taoensso.encore        :as enc]
    [taoensso.telemere.impl :as impl])
 
   (:import
@@ -87,7 +88,7 @@
         ;; Vector of markers
         (reduce
           (fn [acc in] (into acc (marker-names in)))
-          #{} (have vector? marker-or-markers))))))
+          #{} (truss/have vector? marker-or-markers))))))
 
 (comment
   (let [m1 (est-marker! "M1")

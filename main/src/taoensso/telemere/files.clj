@@ -2,7 +2,8 @@
   "Private ns, implementation detail.
   Core file handler, aliased in main Telemere ns."
   (:require
-   [taoensso.encore :as enc :refer [have have?]]
+   [taoensso.truss  :as truss]
+   [taoensso.encore :as enc]
    [taoensso.telemere.utils :as utils]))
 
 (comment
@@ -71,9 +72,9 @@
       :daily   (str (.format dtf (java.time.LocalDate/ofEpochDay            edy))  "d")
       :weekly  (str (.format dtf (java.time.LocalDate/ofEpochDay (edy-week  edy))) "w")
       :monthly (str (.format dtf (java.time.LocalDate/ofEpochDay (edy-month edy))) "m")
-      (enc/unexpected-arg! interval
-        {:context  `file-timestamp
-         :param    'interval
+      (truss/unexpected-arg! interval
+        {:param             'interval
+         :context  `file-timestamp
          :expected #{:daily :weekly :monthly}}))))
 
 (comment (file-timestamp->edy (format-file-timestamp :weekly (udt->edy (enc/now-udt*)))))
@@ -81,7 +82,7 @@
 (defn manage-test-files!
   "Describes/creates/deletes files used for tests/debugging, etc."
   [action]
-  (have? [:el #{:return :println :create :delete}] action)
+  (truss/have? [:el #{:return :println :create :delete}] action)
   (let [fnames_ (volatile! [])
         action!
         (fn [app timestamp part gz? timestamp main?]
@@ -136,7 +137,7 @@
     - Have the same `interval` type ∈ #{:daily :weekly :monthly nil} (=> ?timestamped).
     - Have the given timestamp (e.g. \"2020-01-01d\", or nil for NO timestamp)."
   [main-path interval timestamp sort?]
-  (have? [:el #{:daily :weekly :monthly nil}] interval)
+  (truss/have? [:el #{:daily :weekly :monthly nil}] interval)
   (let [main-file (utils/as-file main-path) ; `logs/app.log`
         main-dir  (.getParentFile (.getAbsoluteFile main-file)) ; `.../logs`
 
@@ -168,9 +169,8 @@
                              (let [actual (.getAbsolutePath file-in)
                                    expected file-name]
                                (when-not (.endsWith actual expected)
-                                 (throw
-                                   (ex-info "Unexpected file name"
-                                     {:actual actual, :expected expected}))))
+                                 (truss/ex-info! "Unexpected file name"
+                                   {:actual actual, :expected expected})))
 
                              (conj acc
                                {:file      file-in
@@ -234,8 +234,8 @@
             arch-file+gz (utils/as-file arch-file-name+gz) ; `logs/app.log.1.gz` or `logs/app.log-2020-01-01d.1.gz`
             ]
 
-        (have? false? (.exists    arch-file+gz)) ; No pre-existing `.1.gz`
-        (.renameTo      main-file arch-file-gz)
+        (truss/have? false? (.exists arch-file+gz)) ; No pre-existing `.1.gz`
+        (.renameTo      main-file    arch-file-gz)
         (.createNewFile main-file)
 
         (when gz?
