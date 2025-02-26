@@ -52,9 +52,9 @@
          id-filter   (enc/get-env {:as :edn} :taoensso.telemere/ct-id-filter<.platform><.edn>)
          min-level   (enc/get-env {:as :edn} :taoensso.telemere/ct-min-level<.platform><.edn>)]
 
-     (enc/defonce ct-sig-filter
-       "`SigFilter` used for compile-time elision, or nil."
-       (sigs/sig-filter
+     (enc/defonce ct-call-filter
+       "`SpecFilter` used for compile-time elision, or nil."
+       (sigs/spec-filter
          {:kind-filter (or kind-filter (get base :kind-filter))
           :ns-filter   (or ns-filter   (get base :ns-filter))
           :id-filter   (or id-filter   (get base :id-filter))
@@ -66,9 +66,9 @@
       id-filter   (enc/get-env {:as :edn}                 :taoensso.telemere/rt-id-filter<.platform><.edn>)
       min-level   (enc/get-env {:as :edn, :default :info} :taoensso.telemere/rt-min-level<.platform><.edn>)]
 
-  (enc/defonce ^:dynamic *rt-sig-filter*
-    "`SigFilter` used for runtime filtering, or nil."
-    (sigs/sig-filter
+  (enc/defonce ^:dynamic *rt-call-filter*
+    "`SpecFilter` used for runtime filtering, or nil."
+    (sigs/spec-filter
       {:kind-filter (or kind-filter (get base :kind-filter))
        :ns-filter   (or ns-filter   (get base :ns-filter))
        :id-filter   (or id-filter   (get base :id-filter))
@@ -276,11 +276,9 @@
       (pr-str (assoc (MyRec. :x) :y :y)))))
 
 (deftype #_defrecord WrappedSignal
-  ;; Internal type to implement `sigs/IFilterableSignal`,
-  ;; incl. lazy + cached `signal-value_` field.
   [kind ns id level signal-value_]
-  sigs/IFilterableSignal
-  (allow-signal? [_ sig-filter] (sig-filter kind ns id level))
+  sigs/ISignalHandling
+  (allow-signal? [_ spec-filter] (spec-filter kind ns id level))
   (signal-debug  [_] {:kind kind, :ns ns, :id id, :level level})
   (signal-value  [_ handler-sample-rate]
     (sigs/signal-with-combined-sample-rate handler-sample-rate
@@ -396,16 +394,16 @@
        :signal! ; opts => allowed? / unconditional run result (value or throw)
        '(   [& opts-kvs]
          [{:as opts-map :keys
-           [#_defaults #_elide? #_allow? #_expansion-id, ; Undocumented
-            elidable? location #_location* inst uid middleware middleware+,
+           [#_defaults #_elide? #_allow? #_callsite-id, ; Undocumented
+            elidable? coords inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error run & kvs]}])
 
        :signal-allowed? ; opts => allowed?
        '(   [& opts-kvs]
          [{:as opts-map :keys
-           [#_defaults #_elide? #_allow? #_expansion-id, ; Undocumented
-            elidable? location #_location* #_inst #_uid #_middleware #_middleware+,
+           [#_defaults #_elide? #_allow? #_callsite-id, ; Undocumented
+            elidable? coords #_inst #_uid #_middleware #_middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             #_ctx #_ctx+ #_parent #_root #_trace?, #_do #_let #_data #_msg #_error #_run #_& #_kvs]}])
 
@@ -414,8 +412,8 @@
          [id   level]
          [id
           {:as opts-map :keys
-           [#_defaults #_elide? #_allow? #_expansion-id,
-            elidable? location #_location* inst uid middleware middleware+,
+           [#_defaults #_elide? #_allow? #_callsite-id,
+            elidable? coords inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}])
 
@@ -423,8 +421,8 @@
        '([opts-or-msg]
          [level   msg]
          [{:as opts-map :keys
-           [#_defaults #_elide? #_allow? #_expansion-id,
-            elidable? location #_location* inst uid middleware middleware+,
+           [#_defaults #_elide? #_allow? #_callsite-id,
+            elidable? coords inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}
           msg])
@@ -433,8 +431,8 @@
        '([opts-or-run]
          [id      run]
          [{:as opts-map :keys
-           [#_defaults #_elide? #_allow? #_expansion-id,
-            elidable? location #_location* inst uid middleware middleware+,
+           [#_defaults #_elide? #_allow? #_callsite-id,
+            elidable? coords inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error run & kvs]}
           run])
@@ -443,8 +441,8 @@
        '([opts-or-run]
          [level   run]
          [{:as opts-map :keys
-           [#_defaults #_elide? #_allow? #_expansion-id,
-            elidable? location #_location* inst uid middleware middleware+,
+           [#_defaults #_elide? #_allow? #_callsite-id,
+            elidable? coords inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error run & kvs]}
           run])
@@ -453,8 +451,8 @@
        '([opts-or-error]
          [id      error]
          [{:as opts-map :keys
-           [#_defaults #_elide? #_allow? #_expansion-id,
-            elidable? location #_location* inst uid middleware middleware+,
+           [#_defaults #_elide? #_allow? #_callsite-id,
+            elidable? coords inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}
           error])
@@ -463,8 +461,8 @@
        '([opts-or-run]
          [id      run]
          [{:as opts-map :keys
-           [#_defaults #_elide? #_allow? #_expansion-id, catch-val,
-            elidable? location #_location* inst uid middleware middleware+,
+           [#_defaults #_elide? #_allow? #_callsite-id, catch-val,
+            elidable? coords inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}
           run])
@@ -473,8 +471,8 @@
        '([]
          [opts-or-id]
          [{:as opts-map :keys
-           [#_defaults #_elide? #_allow? #_expansion-id,
-            elidable? location #_location* inst uid middleware middleware+,
+           [#_defaults #_elide? #_allow? #_callsite-id,
+            elidable? coords inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}])
 
@@ -524,6 +522,9 @@
            clj?  (not cljs?)
            {run-form :run} opts
 
+           ns-form* (get opts :ns :auto)
+           ns-form  (auto-> ns-form* (str *ns*))
+
            show-run-val (get opts :run-val '_run-val)
            show-run-form
            (when run-form
@@ -535,15 +536,16 @@
                  (list (first run-form) '...)
                  (do          run-form))))
 
-           {:keys [#_expansion-id location elide? allow?]}
-           (sigs/filterable-expansion
-             {:sf-arity 4
-              :ct-sig-filter     ct-sig-filter
-              :*rt-sig-filter* `*rt-sig-filter*}
+           {:keys [#_callsite-id elide? allow?]}
+           (sigs/filter-call
+             {:cljs? cljs?
+              :sf-arity 4
+              :ct-call-filter     ct-call-filter
+              :*rt-call-filter* `*rt-call-filter*}
 
              (assoc opts
-               :location* (get opts :location* (enc/get-source &form &env))
-               :bound-forms
+               :ns ns-form
+               :local-forms
                {:kind  '__kind
                 :ns    '__ns
                 :id    '__id
@@ -551,12 +553,11 @@
 
        (if elide?
          run-form
-         (let [{ns-form     :ns
-                line-form   :line
-                column-form :column
-                file-form   :file} location
-
-               coords (when line-form [line-form column-form])
+         (let [coords
+               (get opts :coords
+                 (when (= ns-form* :auto)
+                   ;; Auto coords iff auto ns
+                   (truss/callsite-coords &form)))
 
                {inst-form  :inst
                 level-form :level
@@ -605,10 +606,10 @@
                      kvs-form
                      (not-empty
                        (dissoc opts
-                         :elidable? :location :location* :inst :uid :middleware :middleware+,
+                         :elidable? :coords :inst :uid :middleware :middleware+,
                          :sample-rate :ns :kind :id :level :filter :when #_:rate-limit #_:rate-limit-by,
                          :ctx :ctx+ :parent #_:trace?, :do :let :data :msg :error,
-                         :run :run-form :run-val, :elide? :allow? #_:expansion-id :otel/context))
+                         :run :run-form :run-val, :elide? :allow? #_:callsite-id :otel/context))
 
                      _ ; Compile-time validation
                      (do
@@ -616,7 +617,8 @@
                          (truss/ex-info! "Signals cannot have both `:run` and `:error` opts at the same time"
                            {:run-form   run-form
                             :error-form error-form
-                            :location   location
+                            :ns         ns-form
+                            :coords     coords
                             :other-opts (dissoc opts :run :error)}))
 
                        (when-let [e (find opts :msg_)] ; Common typo/confusion
@@ -782,13 +784,14 @@
            defaults             (get    opts :defaults)
            opts (merge defaults (dissoc opts :defaults))
 
-           {:keys [#_expansion-id #_location elide? allow?]}
-           (sigs/filterable-expansion
-             {:sf-arity 4
-              :ct-sig-filter     ct-sig-filter
-              :*rt-sig-filter* `*rt-sig-filter*}
-             (assoc opts :location*
-               (get opts :location* (enc/get-source &form &env))))]
+           {:keys [#_callsite-id elide? allow?]}
+           (sigs/filter-call
+             {:cljs? (boolean (:ns &env))
+              :sf-arity 4
+              :ct-call-filter     ct-call-filter
+              :*rt-call-filter* `*rt-call-filter*}
+             (assoc opts :ns
+               (get opts :ns (str *ns*))))]
 
        (if elide? false `(if ~allow? true false)))))
 
@@ -825,7 +828,7 @@
      (defn test-interop! [msg test-fn]
        (let [msg (str "Interop test: " msg " (" (enc/uuid-str) ")")
              signal
-             (binding [*rt-sig-filter* nil] ; Without runtime filters
+             (binding [*rt-call-filter* nil] ; Without runtime filters
                (with-signal :raw :trap (test-fn msg)))]
 
          (= (force (get signal :msg_)) msg)))))

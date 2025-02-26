@@ -35,12 +35,11 @@
                             *err* (or prev-*err* orig-*err*)]
 
                     (impl/signal!
-                      {:location nil
-                       :ns       nil
-                       :kind     kind
-                       :level    level
-                       :id       id
-                       :msg      msg})))))))]
+                      {:ns    nil
+                       :kind  kind
+                       :level level
+                       :id    id
+                       :msg   msg})))))))]
 
     (java.io.PrintStream. baos true ; Auto flush
       java.nio.charset.StandardCharsets/UTF_8)))

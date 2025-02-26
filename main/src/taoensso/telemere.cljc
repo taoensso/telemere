@@ -31,15 +31,15 @@
   (remove-ns (symbol (str *ns*)))
   (:api (enc/interns-overview)))
 
-(enc/assert-min-encore-version [3 132 0])
+(enc/assert-min-encore-version [3 135 0])
 
 ;;;; Shared signal API
 
 (sigs/def-api
   {:sf-arity 4
-   :ct-sig-filter   impl/ct-sig-filter
-   :*rt-sig-filter* impl/*rt-sig-filter*
-   :*sig-handlers*  impl/*sig-handlers*
+   :ct-call-filter   impl/ct-call-filter
+   :*rt-call-filter* impl/*rt-call-filter*
+   :*sig-handlers*   impl/*sig-handlers*
    :lib-dispatch-opts
    (assoc sigs/default-handler-dispatch-opts
      :convey-bindings? false ; Handled manually
@@ -209,8 +209,8 @@
 ;; - uncaught->error! - ?id             => nil
 
 #?(:clj
-   (defn- merge-or-assoc-opts [m &form &env k v]
-     (let [m (assoc m :location* (enc/get-source &form &env))]
+   (defn- merge-or-assoc-opts [m macro-form k v]
+     (let [m (assoc m :coords (truss/callsite-coords macro-form))]
        (if  (map? v)
          (merge m v)
          (assoc m k v)))))
@@ -221,8 +221,8 @@
        "id + ?level => allowed? Note unique arg order: [x opts] rather than [opts x]!"
        {:doc      (impl/signal-docstring :event!)
         :arglists (impl/signal-arglists  :event!)}
-       ([   opts-or-id]    `(impl/signal!        ~(merge-or-assoc-opts base-opts &form &env :id    opts-or-id)))
-       ([id opts-or-level] `(impl/signal! ~(assoc (merge-or-assoc-opts base-opts &form &env :level opts-or-level) :id id))))))
+       ([   opts-or-id]    `(impl/signal!        ~(merge-or-assoc-opts base-opts &form :id    opts-or-id)))
+       ([id opts-or-level] `(impl/signal! ~(assoc (merge-or-assoc-opts base-opts &form :level opts-or-level) :id id))))))
 
 (comment (with-signal (event! ::my-id :info)))
 
@@ -232,8 +232,8 @@
        "?level + msg => allowed?"
        {:doc      (impl/signal-docstring :log!)
         :arglists (impl/signal-arglists  :log!)}
-       ([opts-or-msg      ] `(impl/signal!        ~(merge-or-assoc-opts base-opts &form &env :msg   opts-or-msg)))
-       ([opts-or-level msg] `(impl/signal! ~(assoc (merge-or-assoc-opts base-opts &form &env :level opts-or-level) :msg msg))))))
+       ([opts-or-msg      ] `(impl/signal!        ~(merge-or-assoc-opts base-opts &form :msg   opts-or-msg)))
+       ([opts-or-level msg] `(impl/signal! ~(assoc (merge-or-assoc-opts base-opts &form :level opts-or-level) :msg msg))))))
 
 (comment (with-signal (log! :info "My msg")))
 
@@ -243,8 +243,8 @@
        "?id + run => unconditional run result (value or throw)."
        {:doc      (impl/signal-docstring :trace!)
         :arglists (impl/signal-arglists  :trace!)}
-       ([opts-or-run]    `(impl/signal!        ~(merge-or-assoc-opts base-opts &form &env :run opts-or-run)))
-       ([opts-or-id run] `(impl/signal! ~(assoc (merge-or-assoc-opts base-opts &form &env :id  opts-or-id) :run run))))))
+       ([opts-or-run]    `(impl/signal!        ~(merge-or-assoc-opts base-opts &form :run opts-or-run)))
+       ([opts-or-id run] `(impl/signal! ~(assoc (merge-or-assoc-opts base-opts &form :id  opts-or-id) :run run))))))
 
 (comment (with-signal (trace! ::my-id (+ 1 2))))
 
@@ -254,8 +254,8 @@
        "?level + run => unconditional run result (value or throw)."
        {:doc      (impl/signal-docstring :spy!)
         :arglists (impl/signal-arglists  :spy!)}
-       ([opts-or-run]       `(impl/signal!        ~(merge-or-assoc-opts base-opts &form &env :run   opts-or-run)))
-       ([opts-or-level run] `(impl/signal! ~(assoc (merge-or-assoc-opts base-opts &form &env :level opts-or-level) :run run))))))
+       ([opts-or-run]       `(impl/signal!        ~(merge-or-assoc-opts base-opts &form :run   opts-or-run)))
+       ([opts-or-level run] `(impl/signal! ~(assoc (merge-or-assoc-opts base-opts &form :level opts-or-level) :run run))))))
 
 (comment (with-signals (spy! :info (+ 1 2))))
 
@@ -265,9 +265,9 @@
        "?id + error => unconditional given error."
        {:doc      (impl/signal-docstring :error!)
         :arglists (impl/signal-arglists  :error!)}
-       ([opts-or-id error] `(error! ~(assoc (merge-or-assoc-opts base-opts &form &env :id opts-or-id) :error error)))
+       ([opts-or-id error] `(error! ~(assoc (merge-or-assoc-opts base-opts &form :id opts-or-id) :error error)))
        ([opts-or-error]
-        (let [opts (merge-or-assoc-opts base-opts &form &env :error opts-or-error)
+        (let [opts (merge-or-assoc-opts base-opts &form :error opts-or-error)
               gs-error (gensym "error")]
           `(let [~gs-error ~(get   opts :error)]
              (impl/signal! ~(assoc opts :error gs-error))
@@ -281,9 +281,9 @@
        "?id + run => unconditional run value or ?catch-val."
        {:doc      (impl/signal-docstring :catch->error!)
         :arglists (impl/signal-arglists  :catch->error!)}
-       ([opts-or-id run] `(catch->error! ~(assoc (merge-or-assoc-opts base-opts &form &env :id opts-or-id) :run run)))
+       ([opts-or-id run] `(catch->error! ~(assoc (merge-or-assoc-opts base-opts &form :id opts-or-id) :run run)))
        ([opts-or-run]
-        (let [opts      (merge-or-assoc-opts base-opts &form &env :run opts-or-run)
+        (let [opts      (merge-or-assoc-opts base-opts &form :run opts-or-run)
               rethrow?  (not (contains? opts :catch-val))
               catch-val      (get       opts :catch-val)
               run-form       (get       opts :run)
@@ -325,7 +325,7 @@
        {:arglists  (impl/signal-arglists :uncaught->error!)}
        ([          ] (enc/keep-callsite `(uncaught->error! {})))
        ([opts-or-id]
-        (let [opts (merge-or-assoc-opts base-opts &form &env :id opts-or-id)]
+        (let [opts (merge-or-assoc-opts base-opts &form :id opts-or-id)]
           `(uncaught->handler!
              (fn [~'__thread-arg ~'__throwable-arg]
                (impl/signal! ~opts))))))))
@@ -381,23 +381,23 @@
   (enc/set-var-root! sigs/*default-handler-error-fn*
     (fn [{:keys [error] :as m}]
       (impl/signal!
-        {:kind     :error
-         :level    :error
-         :error     error
-         :location {:ns "taoensso.encore.signals"}
-         :id            :taoensso.encore.signals/handler-error
-         :msg      "Error executing wrapped handler fn"
-         :data     (dissoc m :error)})))
+        {:kind  :error
+         :level :error
+         :error  error
+         :ns    "taoensso.encore.signals"
+         :id    :taoensso.encore.signals/handler-error
+         :msg   "Error executing wrapped handler fn"
+         :data  (dissoc m :error)})))
 
   (enc/set-var-root! sigs/*default-handler-backp-fn*
     (fn [data]
       (impl/signal!
-        {:kind     :event
-         :level    :warn
-         :location {:ns "taoensso.encore.signals"}
-         :id            :taoensso.encore.signals/handler-back-pressure
-         :msg      "Back pressure on wrapped handler fn"
-         :data     data})))
+        {:kind  :event
+         :level :warn
+         :ns    "taoensso.encore.signals"
+         :id    :taoensso.encore.signals/handler-back-pressure
+         :msg   "Back pressure on wrapped handler fn"
+         :data  data})))
 
   (add-handler! :default/console (handler:console))
 

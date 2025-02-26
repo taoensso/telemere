@@ -40,22 +40,22 @@
   (defn ex1! [] (throw ex1))
   (defn ex1? [x] (= (truss/ex-root x) ex1)))
 
-(let [rt-sig-filter_ (atom nil)
-      sig-handlers_  (atom nil)]
+(let [rt-call-filter_ (atom nil)
+      sig-handlers_   (atom nil)]
 
   (test/use-fixtures :once
     (enc/test-fixtures
       {:before
        (fn []
-         (reset! rt-sig-filter_ impl/*rt-sig-filter*)
-         (reset! sig-handlers_  impl/*sig-handlers*)
-         (enc/set-var-root!     impl/*sig-handlers*  nil)
-         (enc/set-var-root!     impl/*rt-sig-filter* nil))
+         (reset! rt-call-filter_ impl/*rt-call-filter*)
+         (reset! sig-handlers_   impl/*sig-handlers*)
+         (enc/set-var-root!      impl/*sig-handlers*   nil)
+         (enc/set-var-root!      impl/*rt-call-filter* nil))
 
        :after
        (fn []
-         (enc/set-var-root! impl/*rt-sig-filter* @rt-sig-filter_)
-         (enc/set-var-root! impl/*sig-handlers*  @sig-handlers_))})))
+         (enc/set-var-root! impl/*rt-call-filter* @rt-call-filter_)
+         (enc/set-var-root! impl/*sig-handlers*   @sig-handlers_))})))
 
 ;;;;
 
@@ -124,6 +124,12 @@
            (is (= (inst-ms start) 0)               "Respect custom instant")
            (is (> (inst-ms end)   (inst-ms start)) "End instant is start + run-nsecs")
            (is (< (inst-ms end)   1e6)             "End instant is start + run-nsecs")])]))
+
+   (testing "Callsite overrides"
+     [(is (sm? (with-sig (sig! {                              })) {:ns "taoensso.telemere-tests", :coords coords?}))
+      (is (sm? (with-sig (sig! {:ns "custom-ns"               })) {:ns "custom-ns",               :coords nil})   "Custom ns clears coords")
+      (is (sm? (with-sig (sig! {                 :coords [1 2]})) {:ns "taoensso.telemere-tests", :coords [1 2]}) "Custom coords")
+      (is (sm? (with-sig (sig! {:ns "custom-ns", :coords [1 2]})) {:ns "custom-ns",               :coords [1 2]}) "Custom ns + coords")])
 
    (testing "Support arb extra user kvs"
      (let [sv (with-sig (sig! {:level :info, :my-k1 "v1", :my-k2 "v2"}))]

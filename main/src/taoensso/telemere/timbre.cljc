@@ -118,21 +118,24 @@
      ([                form] (enc/keep-callsite `(spy :debug nil ~form)))
      ([level           form] (enc/keep-callsite `(spy ~level nil ~form)))
      ([level form-name form]
-      (let [location* (enc/get-source &form &env)
+      (let [ns     (str *ns*)
+            coords (truss/callsite-coords &form)
             msg
             (if form-name
               `(fn [_form# value# error# nsecs#] (impl/default-trace-msg  ~form-name value# error# nsecs#))
               `(fn [_form# value# error# nsecs#] (impl/default-trace-msg '~form      value# error# nsecs#)))]
 
         `(tel/spy!
-           {:location* ~location*
-            :id        shim-id
-            :level     ~level
-            :msg       ~msg}
+           {:ns     ~ns
+            :coords ~coords
+            :id     shim-id
+            :level  ~level
+            :msg    ~msg}
 
            (tel/catch->error!
-             {:location* ~location*
-              :id        shim-id}
+             {:ns     ~ns
+              :coords ~coords
+              :id     shim-id}
              ~form))))))
 
 (comment

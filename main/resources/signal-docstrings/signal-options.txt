@@ -18,9 +18,11 @@ All options are available for all signal creators:
 
 `:parent` ------ Custom ?{:keys [id uid]} to override auto (dynamic) parent signal tracing info
 `:root` -------- Custom ?{:keys [id uid]} to override auto (dynamic) root   signal tracing info
-`:location` ---- Custom ?{:keys [ns line column file]} to override auto signal creator callsite location
 `:ctx` --------- Custom ?val to override auto (dynamic `*ctx*`) in signal, as per `with-ctx`
 `:ctx+` -------- Custom ?val to update   auto (dynamic `*ctx*`) in signal, as per `with-ctx+`
+
+`:ns` ---------- Custom ?str namespace to override auto signal creator callsite
+`:coords` ------ Custom ?[line column] to override auto signal creator callsite
 
 `:elidable?` --- Should signal be subject to compile-time elision? (Default: true)
 `:sample-rate` - ?rate ∈ℝ[0,1] for signal sampling (0.75 => allow 75% of signals, nil => allow all)
