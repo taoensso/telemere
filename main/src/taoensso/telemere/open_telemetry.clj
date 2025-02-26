@@ -133,34 +133,44 @@
 
 (defn- signal->attrs
   "Returns `Attributes` for given signal.
-  Ref. <https://opentelemetry.io/docs/specs/otel/logs/data-model/>."
+  Ref. <https://opentelemetry.io/docs/specs/otel/logs/data-model/>,
+       <https://opentelemetry.io/docs/specs/semconv/attributes-registry/>."
   ^Attributes [signal]
   (let [ab (Attributes/builder)]
     (put-attr!    ab "error"     (utils/error-signal? signal)) ; Standard
     ;; (put-attr! ab "host.name" (utils/hostname))             ; Standard
 
     (when-let [{:keys [name ip]} (get signal :host)]
-      (put-attr! ab "host.name" name) ; Standard
+      ;; Both standard
+      (put-attr! ab "host.name" name)
       (put-attr! ab "host.ip"   ip))
 
+    (when-let [{:keys [name id]} (get signal :thread)]
+      ;; Both standard
+      (put-attr! ab "thread.name" name)
+      (put-attr! ab "thread.id"   id))
+
     (when-let [level (get signal :level)]
-      (put-attr! ab "level" ; Standard
-        (level->string level)))
+      (put-attr! ab "level" (level->string level)))
 
     (when-let [{:keys [type msg trace data]} (truss/ex-map (get signal :error))]
-      (put-attr! ab "exception.type"    type) ; Standard
-      (put-attr! ab "exception.message" msg)  ; Standard
+      ;; Standard
+      (put-attr! ab "exception.type"    type)
+      (put-attr! ab "exception.message" msg)
       (when trace
-        (put-attr! ab "exception.stacktrace"  ; Standard
+        (put-attr! ab "exception.stacktrace"
           (#'utils/format-clj-stacktrace trace)))
 
-      (when data (merge-attrs! ab "exception.data" data)))
+      (when data ; Non-standard
+        (merge-attrs! ab "exception.data" data)))
 
-    (let [{:keys [ns line file, kind id uid]} signal]
-      (put-attr! ab "ns"   ns)
-      (put-attr! ab "line" line)
-      (put-attr! ab "file" file)
+    (let [{:keys [ns line column]} signal]
+      ;; All standard
+      (put-attr! ab "code.namespace"     ns)
+      (put-attr! ab "code.line.number"   line)
+      (put-attr! ab "code.column.number" column))
 
+    (let [{:keys [kind id uid]} signal]
       (put-attr! ab "kind" kind)
       (put-attr! ab "id"    id)
       (put-attr! ab "uid"  uid))

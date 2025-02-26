@@ -1012,9 +1012,9 @@
                  {:kind  :event
                   :level :info
 
-                  :ns   "ns"
-                  :file "file"
-                  :line 100
+                  :ns    "ns"
+                  :line   10
+                  :column 20
 
                   :id     ::id1
                   :uid                           #uuid "7e9c1df6-78e4-40ac-8c5c-e2353df9ab82"
@@ -1037,9 +1037,9 @@
                {"kind" ":event"
                 "level" "INFO"
 
-                "ns"   "ns"
-                "file" "file"
-                "line" 100
+                "code.namespace"    "ns"
+                "code.line.number"   10
+                "code.column.number" 20
 
                 "id"         ":taoensso.telemere-tests/id1",
                 "uid"        "7e9c1df6-78e4-40ac-8c5c-e2353df9ab82",
