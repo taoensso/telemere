@@ -16,7 +16,7 @@
 
 ;;;;
 
-(enc/defaliases #_sigs/upper-qn sigs/format-level sigs/format-id sigs/format-location)
+(enc/defaliases #_sigs/upper-qn sigs/format-level sigs/format-id)
 
 ;;;; Unique IDs (UIDs)
 
@@ -509,7 +509,7 @@
   Returns a (fn preamble [signal]) that:
     - Takes a Telemere signal (map).
     - Returns a signal preamble ?string like:
-      \"2024-03-26T11:14:51.806Z INFO EVENT Hostname taoensso.telemere(2,21) ::ev-id msg\"
+      \"2024-03-26T11:14:51.806Z INFO EVENT Hostname taoensso.telemere[2,21] ::ev-id msg\"
 
   Options:
     `:format-inst-fn` - (fn format [instant]) => string.
@@ -532,14 +532,12 @@
        (if kind (s+spc (sigs/upper-qn kind)) (s+spc "DEFAULT"))
        #?(:clj  (s+spc (hostname)))
 
-       ;; As `format-location`
-       (when-let [base (or ns (get signal :file))]
-         (let [s+ (partial enc/sb-append sb)] ; Without separator
-           (s+ " " base)
-           (when-let [l (get signal :line)]
-             (s+ "(" l)
-             (when-let [c (get signal :column)] (s+ "," c))
-             (s+ ")"))))
+       (when ns
+         (enc/sb-append sb " " ns)
+         (when-let [[line column] (get signal :coords)]
+           (if column
+             (enc/sb-append sb "[" line "," column "]")
+             (enc/sb-append sb "[" line            "]"))))
 
        (when id (when-let [ff format-id-fn] (s+spc (ff ns id))))
        (enc/when-let [ff format-msg-fn
@@ -653,7 +651,7 @@
     `:incl-nils?` - Include signal's keys with nil values? (default false)
     `:incl-kvs?`  - Include signal's app-level root kvs?   (default false)
     `:incl-keys`  - Subset of signal keys to retain from those otherwise
-                    excluded by default: #{:location :kvs :file :host :thread}"
+                    excluded by default: #{:kvs :host :thread}"
   ([] (clean-signal-fn nil))
   ([{:keys [incl-kvs? incl-nils? incl-keys] :as opts}]
    (let [assoc!*
@@ -661,11 +659,9 @@
            (fn [m k v] (if (nil? v) m (assoc! m k v))) ; As `remove-signal-nils`
            (do                         assoc!))
 
-         incl-location? (contains? incl-keys :location)
-         incl-kvs-key?  (contains? incl-keys :kvs)
-         incl-file?     (contains? incl-keys :file)
-         incl-host?     (contains? incl-keys :host)
-         incl-thread?   (contains? incl-keys :thread)]
+         incl-kvs-key? (contains? incl-keys :kvs)
+         incl-host?    (contains? incl-keys :host)
+         incl-thread?  (contains? incl-keys :thread)]
 
      (fn clean-signal [signal]
        (when (map?     signal)
@@ -677,7 +673,7 @@
                  (clojure.core/into ()
                    (clojure.core/disj
                      taoensso.telemere.impl/standard-signal-keys
-                     :msg_ :error :location :kvs :file :host :thread))
+                     :msg_ :error :kvs :host :thread))
                  (assoc!* m k v)
 
                  ;; Main keys to include with modified val
@@ -689,11 +685,9 @@
                    taoensso.telemere.impl/impl-signal-keys) m ; noop
 
                  ;;; Other keys to exclude by default
-                 :location (if incl-location? (assoc!* m k v) m)
-                 :kvs      (if incl-kvs-key?  (assoc!* m k v) m)
-                 :file     (if incl-file?     (assoc!* m k v) m)
-                 :thread   (if incl-thread?   (assoc!* m k v) m)
-                 :host     (if incl-host?     (assoc!* m k v) m)
+                 :kvs    (if incl-kvs-key? (assoc!* m k v) m)
+                 :thread (if incl-thread?  (assoc!* m k v) m)
+                 :host   (if incl-host?    (assoc!* m k v) m)
 
                  ;; Other (app-level) keys
                  (enc/cond
