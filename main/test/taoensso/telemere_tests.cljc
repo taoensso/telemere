@@ -37,11 +37,7 @@
   (def  ex2 (ex-info "Ex2" {:k2 "v2"} (ex-info "Ex1" {:k1 "v1"})))
   (def  ex2-chain (enc/ex-chain :as-map ex2))
   (defn ex1! [] (throw ex1))
-
-  (defn ex1?     [x] (= (enc/ex-root x) ex1))
-  (def pstr?     (enc/pred string?))
-  (def pnat-int? (enc/pred enc/nat-int?))
-  (def pinst?    (enc/pred enc/inst?)))
+  (defn ex1? [x] (= (enc/ex-root x) ex1)))
 
 (let [rt-sig-filter_ (atom nil)
       sig-handlers_  (atom nil)]
@@ -92,7 +88,7 @@
          {rv2 :value, [sv2] :signals} (with-sigs (sig! {:level :info, :run (+ 1 2)}))]
 
      [(is (= rv1 true)) (is (sm? sv1 {:ns "taoensso.telemere-tests", :level :info, :run-form nil,      :run-val nil, :run-nsecs nil}))
-      (is (= rv2    3)) (is (sm? sv2 {:ns "taoensso.telemere-tests", :level :info, :run-form '(+ 1 2), :run-val 3,   :run-nsecs pnat-int?}))])
+      (is (= rv2    3)) (is (sm? sv2 {:ns "taoensso.telemere-tests", :level :info, :run-form '(+ 1 2), :run-val 3,   :run-nsecs enc/nat-int?}))])
 
    (testing "Nested signals"
      (let [{outer-rv :value, [outer-sv] :signals} (with-sigs (sig! {:level :info, :run (with-sigs (sig! {:level :warn, :run "inner-run"}))}))
@@ -438,7 +434,7 @@
         (let [sv (with-sig (sig! {:level :info, :root   {:id   :id1, :foo :bar}}))] (is (sm? sv {:root   {:id :id1       :uid :submap/nx, :foo :bar}}) "Manual `:root/id`"))
         (let [sv (with-sig (sig! {:level :info, :root   {:uid :uid1, :foo :bar}}))] (is (sm? sv {:root   {:id :submap/nx :uid      :uid1, :foo :bar}}) "Manual `:root/uid`"))
         (let [sv (with-sig (sig! {:level :info}))                                 ] (is (sm? sv {:uid nil})))
-        (let [sv (with-sig (sig! {:level :info, :uid :auto}))                     ] (is (sm? sv {:uid (enc/pred string?)})))
+        (let [sv (with-sig (sig! {:level :info, :uid :auto}))                     ] (is (sm? sv {:uid string?})))
         (let [sv (binding [tel/*uid-fn* (fn [_] "my-uid")]
                    (with-sig (sig! {:level :info, :uid :auto})))                  ] (is (sm? sv {:uid "my-uid"})))])
 
@@ -687,9 +683,9 @@
    (deftest _interop
      [(testing "tools.logging -> Telemere"
         [(is (sm? (tel/check-interop) {:tools-logging {:present? true, :sending->telemere? true, :telemere-receiving? true}}))
-         (is (sm? (with-sig (ctl/info "Hello" "x" "y")) {:level :info, :ns "taoensso.telemere-tests", :kind :tools-logging, :msg_ "Hello x y", :inst pinst?}))
-         (is (sm? (with-sig (ctl/warn "Hello" "x" "y")) {:level :warn, :ns "taoensso.telemere-tests", :kind :tools-logging, :msg_ "Hello x y", :inst pinst?}))
-         (is (sm? (with-sig (ctl/error ex1 "An error")) {:level :error, :error ex1, :inst pinst?}) "Errors")])
+         (is (sm? (with-sig (ctl/info "Hello" "x" "y")) {:level :info, :ns "taoensso.telemere-tests", :kind :tools-logging, :msg_ "Hello x y", :inst enc/inst?}))
+         (is (sm? (with-sig (ctl/warn "Hello" "x" "y")) {:level :warn, :ns "taoensso.telemere-tests", :kind :tools-logging, :msg_ "Hello x y", :inst enc/inst?}))
+         (is (sm? (with-sig (ctl/error ex1 "An error")) {:level :error, :error ex1, :inst enc/inst?}) "Errors")])
 
       (testing "Standard out/err streams -> Telemere"
         [(is (sm?   (tel/check-interop) {:system/out {:sending->telemere? false, :telemere-receiving? false},
@@ -710,10 +706,10 @@
         [(is (sm? (tel/check-interop) {:slf4j {:present? true, :sending->telemere? true, :telemere-receiving? true}}))
          (let [^org.slf4j.Logger sl (org.slf4j.LoggerFactory/getLogger "my.class")]
            [(testing "Basics"
-              [(is (sm? (with-sig (.info sl "Hello"))               {:level :info, :ns "my.class", :kind :slf4j, :msg_ "Hello", :inst pinst?}) "Legacy API: info basics")
-               (is (sm? (with-sig (.warn sl "Hello"))               {:level :warn, :ns "my.class", :kind :slf4j, :msg_ "Hello", :inst pinst?}) "Legacy API: warn basics")
-               (is (sm? (with-sig (-> (.atInfo sl) (.log "Hello"))) {:level :info, :ns "my.class", :kind :slf4j, :msg_ "Hello", :inst pinst?}) "Fluent API: info basics")
-               (is (sm? (with-sig (-> (.atWarn sl) (.log "Hello"))) {:level :warn, :ns "my.class", :kind :slf4j, :msg_ "Hello", :inst pinst?}) "Fluent API: warn basics")])
+              [(is (sm? (with-sig (.info sl "Hello"))               {:level :info, :ns "my.class", :kind :slf4j, :msg_ "Hello", :inst enc/inst?}) "Legacy API: info basics")
+               (is (sm? (with-sig (.warn sl "Hello"))               {:level :warn, :ns "my.class", :kind :slf4j, :msg_ "Hello", :inst enc/inst?}) "Legacy API: warn basics")
+               (is (sm? (with-sig (-> (.atInfo sl) (.log "Hello"))) {:level :info, :ns "my.class", :kind :slf4j, :msg_ "Hello", :inst enc/inst?}) "Fluent API: info basics")
+               (is (sm? (with-sig (-> (.atWarn sl) (.log "Hello"))) {:level :warn, :ns "my.class", :kind :slf4j, :msg_ "Hello", :inst enc/inst?}) "Fluent API: warn basics")])
 
             (testing "Message formatting"
              (let [msgp "x={},y={}", expected {:msg_ "x=1,y=2", :data {:slf4j/args ["1" "2"]}}]
@@ -743,22 +739,22 @@
 ;;;; Timbre shim
 
 (deftest _timbre-shim
-  [(is (sm? (with-sig (timbre/log :warn              "x1" nil "x2")) {:kind :log, :level :warn,  :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns pstr?}))
-   (is (sm? (with-sig (timbre/info                   "x1" nil "x2")) {:kind :log, :level :info,  :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns pstr?}))
-   (is (sm? (with-sig (timbre/error                  "x1" nil "x2")) {:kind :log, :level :error, :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns pstr?}))
+  [(is (sm? (with-sig (timbre/log :warn              "x1" nil "x2")) {:kind :log, :level :warn,  :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns string?}))
+   (is (sm? (with-sig (timbre/info                   "x1" nil "x2")) {:kind :log, :level :info,  :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns string?}))
+   (is (sm? (with-sig (timbre/error                  "x1" nil "x2")) {:kind :log, :level :error, :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns string?}))
 
-   (is (sm? (with-sig (timbre/logf :warn  "%s %s %s" "x1" nil "x2")) {:kind :log, :level :warn,  :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns pstr?}))
-   (is (sm? (with-sig (timbre/infof       "%s %s %s" "x1" nil "x2")) {:kind :log, :level :info,  :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns pstr?}))
-   (is (sm? (with-sig (timbre/errorf      "%s %s %s" "x1" nil "x2")) {:kind :log, :level :error, :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns pstr?}))
+   (is (sm? (with-sig (timbre/logf :warn  "%s %s %s" "x1" nil "x2")) {:kind :log, :level :warn,  :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns string?}))
+   (is (sm? (with-sig (timbre/infof       "%s %s %s" "x1" nil "x2")) {:kind :log, :level :info,  :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns string?}))
+   (is (sm? (with-sig (timbre/errorf      "%s %s %s" "x1" nil "x2")) {:kind :log, :level :error, :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns string?}))
 
    (is (sm? (with-sig (timbre/info ex1 "x1" "x2")) {:kind :log, :level :info, :error ex1, :msg_ "x1 x2", :data {:vargs ["x1" "x2"]}}) "First-arg error")
 
-   (is (sm?                            (with-sig (timbre/spy :info "my-name" (+ 1 2))) {:kind :spy, :level :info,  :id timbre/shim-id, :msg_ "my-name => 3", :ns pstr?}))
-   (is (sm? (tel/with-min-level :debug (with-sig (timbre/spy (+ 1 2))))                {:kind :spy, :level :debug, :id timbre/shim-id, :msg_ "(+ 1 2) => 3", :ns pstr?}))
+   (is (sm?                            (with-sig (timbre/spy :info "my-name" (+ 1 2))) {:kind :spy, :level :info,  :id timbre/shim-id, :msg_ "my-name => 3", :ns string?}))
+   (is (sm? (tel/with-min-level :debug (with-sig (timbre/spy (+ 1 2))))                {:kind :spy, :level :debug, :id timbre/shim-id, :msg_ "(+ 1 2) => 3", :ns string?}))
 
    (let [{[sv1 sv2] :signals} (tel/with-min-level :debug (with-sigs (timbre/spy (ex1!))))]
-     [(is (sm? sv1 {:kind :error, :level :error, :id timbre/shim-id, :msg_ nil,  :error ex1, :ns pstr?}))
-      (is (sm? sv2 {:kind :spy,   :level :debug, :id timbre/shim-id, :msg_ pstr? :error ex1, :ns pstr?}))])
+     [(is (sm? sv1 {:kind :error, :level :error, :id timbre/shim-id, :msg_ nil,  :error ex1, :ns string?}))
+      (is (sm? sv2 {:kind :spy,   :level :debug, :id timbre/shim-id, :msg_ string? :error ex1, :ns string?}))])
 
    (let [{re :error, [sv] :signals} (with-sigs (timbre/log-errors             (ex1!)))] [(is (nil? re)) (is (sm? sv {:kind :error, :level :error, :error ex1, :id timbre/shim-id}))])
    (let [{re :error, [sv] :signals} (with-sigs (timbre/log-and-rethrow-errors (ex1!)))] [(is (ex1? re)) (is (sm? sv {:kind :error, :level :error, :error ex1, :id timbre/shim-id}))])])
@@ -857,8 +853,8 @@
                      :ns      "taoensso.telemere-tests"
                      :msg_    "a b"
                      :inst    udt1
-                     :line    pnat-int?
-                     :column  pnat-int?}))]))
+                     :line    enc/nat-int?
+                     :column  enc/nat-int?}))]))
 
            #?(:cljs
               (testing ":json pr-fn"
@@ -869,8 +865,8 @@
                        "level" "info",             "ns" "taoensso.telemere-tests"
                        "msg_"    "a b"
                        "inst"    t1s
-                       "line"    pnat-int?
-                       "column"  pnat-int?})))))
+                       "line"    enc/nat-int?
+                       "column"  enc/nat-int?})))))
 
            (testing "Custom pr-fn"
              (is (= ((tel/pr-signal-fn {:pr-fn (fn [_] "str")}) sig) (str "str" utils/newline))))]))
@@ -1065,7 +1061,7 @@
                 "exception.type"       "clojure.lang.ExceptionInfo"
                 "exception.message"    "Ex1"
                 "exception.data.k1"    "v1"
-                "exception.stacktrace" (enc/pred string?)
+                "exception.stacktrace" string?
 
                 "a1" ":A1"}))])]))
 
