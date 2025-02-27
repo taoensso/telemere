@@ -529,7 +529,11 @@
        (when level (s+spc (format-level level)))
 
        (if kind (s+spc (sigs/upper-qn kind)) (s+spc "DEFAULT"))
-       #?(:clj  (s+spc (hostname)))
+
+       #?(:clj
+          (when-let   [host     (get signal :host)]
+            (when-let [hostname (get host   :name)]
+              (s+spc   hostname))))
 
        (when ns
          (enc/sb-append sb " " ns)
