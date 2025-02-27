@@ -527,8 +527,7 @@
 
        (when inst  (when-let [ff format-inst-fn] (s+spc (ff inst))))
        (when level (s+spc (format-level level)))
-
-       (if kind (s+spc (sigs/upper-qn kind)) (s+spc "DEFAULT"))
+       (when kind  (s+spc (sigs/upper-qn kind)))
 
        #?(:clj
           (when-let   [host     (get signal :host)]
