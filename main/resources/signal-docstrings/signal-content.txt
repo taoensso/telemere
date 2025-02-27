@@ -19,12 +19,12 @@ Default signal keys:
 `:run-nsecs` --- ?int nanosecs runtime of   `:run` ?form
 `:end-inst` ---- Platform ?instant [1] when `:run` ?form completed
 
-`:ctx` --------- ?val of `*ctx*` (arb app-level state) when signal was created
 `:parent` ------ ?{:keys [id uid]} of parent signal, present in nested signals when tracing
 `:root` -------- ?{:keys [id uid]} of root   signal, present in nested signals when tracing
+`:ctx` --------- ?val of `*ctx*` (arb app-level state) when signal was created
 
-`:ns` ---------- ?str namespace of signal creator callsite
-`:coords` ------ ?[line column] of signal creator callsite
+`:ns` ---------- ?str namespace of signal callsite
+`:coords` ------ ?[line column] of signal callsite
 
 `:host` -------- (Clj only) {:keys [name ip]}       info for network host
 `:thread` ------ (Clj only) {:keys [name id group]} info for thread that created signal

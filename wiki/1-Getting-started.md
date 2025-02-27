@@ -167,16 +167,18 @@ Both have several options, see their docstrings (links above) for details.
 
 A signal will be provided to a handler iff ALL of the following are true:
 
-- 1. Signal **creation** is allowed by **signal filters**:
+- 1. Signal **call filters** pass:
 	- a. Compile time: sample rate, kind, ns, id, level, when form, rate limit
 	- b. Runtime: sample rate, kind, ns, id, level, when form, rate limit
 	  
-- 2. Signal **handling** is allowed by **handler filters**:
+- 2. Signal **handler filters** pass:
 	- a. Compile time: not applicable
 	- b. Runtime: sample rate, kind, ns, id, level, when fn, rate limit
 	  
-- 3. **Signal middleware** `(fn [signal]) => ?modified-signal` does not return nil
-- 4. **Handler middleware** `(fn [signal]) => ?modified-signal` does not return nil
+- 3. **Call middleware** `(fn [signal]) => ?modified-signal` returns non-nil
+- 4. **Handler middleware** `(fn [signal]) => ?modified-signal` returns non-nil
+
+> Middleware provides a flexible way to modify and/or filter signals by arbitrary signal data/content conditions (return nil to skip).
 
 Quick examples of some basic filtering:
 

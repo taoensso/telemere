@@ -80,9 +80,9 @@ Consider the [differences](https://www.youtube.com/watch?v=oyLBGkS5ICk) between 
   
   This way you can see all your ids in one place, and precise info on when ids were added/removed/changed.
   
-- Use **signal middleware** to your advantage.
+- Use **signal call middleware** to your advantage.
   
-  The result of signal middleware is cached and *shared between all handlers* making it an efficient place to transform signals. For this reason - prefer signal middleware to handler middleware when possible/convenient.
+  The result of call middleware is cached and *shared between all handlers* making it an efficient place to transform signals. For this reason - prefer signal middleware to handler middleware when possible/convenient.
   
 - Signal and handler **sampling is multiplicative**.
   

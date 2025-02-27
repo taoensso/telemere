@@ -1,5 +1,5 @@
 Signal options are provided as a map with COMPILE-TIME keys.
-All options are available for all signal creators:
+All options are available for all signal creator calls:
 
 `:inst` -------- Platform instant [1] when signal was created, ∈ #{nil :auto <[1]>}
 `:level` ------- Signal level ∈ #{<int> :trace :debug :info :warn :error :fatal :report ...}
@@ -21,8 +21,8 @@ All options are available for all signal creators:
 `:ctx` --------- Custom ?val to override auto (dynamic `*ctx*`) in signal, as per `with-ctx`
 `:ctx+` -------- Custom ?val to update   auto (dynamic `*ctx*`) in signal, as per `with-ctx+`
 
-`:ns` ---------- Custom ?str namespace to override auto signal creator callsite
-`:coords` ------ Custom ?[line column] to override auto signal creator callsite
+`:ns` ---------- Custom ?str namespace to override auto signal callsite info
+`:coords` ------ Custom ?[line column] to override auto signal callsite info
 
 `:elidable?` --- Should signal be subject to compile-time elision? (Default: true)
 `:sample-rate` - ?rate ∈ℝ[0,1] for signal sampling (0.75 => allow 75% of signals, nil => allow all)

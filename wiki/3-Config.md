@@ -4,16 +4,18 @@ See below for config by topic-
 
 A signal will be provided to a handler iff ALL of the following are true:
 
-- 1. Signal **creation** is allowed by **signal filters**:
+- 1. Signal **call filters** pass:
 	- a. Compile time: sample rate, kind, ns, id, level, when form, rate limit
 	- b. Runtime: sample rate, kind, ns, id, level, when form, rate limit
 	  
-- 2. Signal **handling** is allowed by **handler filters**:
+- 2. Signal **handler filters** pass:
 	- a. Compile time: not applicable
 	- b. Runtime: sample rate, kind, ns, id, level, when fn, rate limit
 	  
-- 3. **Signal middleware** `(fn [signal]) => ?modified-signal` does not return nil
-- 4. **Handler middleware** `(fn [signal]) => ?modified-signal` does not return nil
+- 3. **Call middleware** `(fn [signal]) => ?modified-signal` returns non-nil
+- 4. **Handler middleware** `(fn [signal]) => ?modified-signal` returns non-nil
+
+> Middleware provides a flexible way to modify and/or filter signals by arbitrary signal data/content conditions (return nil to skip).
 
 See [`help:filters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters) for more about filtering.
 
@@ -126,7 +128,7 @@ Telemere and Tufte work great together:
 
 ## Truss
 
-> [Truss](https://www.taoensso.com/truss) is an assertions micro-library for Clojure/Script by the author of Telemere.
+> [Truss](https://www.taoensso.com/truss) is a micro toolkit for Clojure/Script errors by the author of Telemere.
 
 Telemere can easily incorporate Truss assertion failure information in its signals, just like any other (error) data.
 
@@ -135,3 +137,5 @@ The [`catch->error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/tao
 ```clojure
 (t/catch->error! <form-with-truss-assertion/s>)
 ```
+
+Telemere also uses [Truss contextual exceptions](https://cljdoc.org/d/com.taoensso/truss/CURRENT/api/taoensso.truss#ex-info) when relevant.
