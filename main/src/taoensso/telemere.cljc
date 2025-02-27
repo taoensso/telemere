@@ -399,7 +399,7 @@
          :msg   "Back pressure on wrapped handler fn"
          :data  data})))
 
-  (add-handler! :default/console (handler:console))
+  (add-handler! :default/console (handler:console) {:async nil})
 
   #?(:clj (truss/catching (require '[taoensso.telemere.tools-logging])))  ;    TL->Telemere
   #?(:clj (truss/catching (require '[taoensso.telemere.slf4j])))          ; SLF4J->Telemere
