@@ -17,7 +17,7 @@
   {:provided
    {:dependencies
     [[org.clojure/clojure   "1.12.0"]
-     [org.slf4j/slf4j-api   "2.0.16"]
+     [org.slf4j/slf4j-api   "2.0.17"]
      [com.taoensso/telemere "1.0.0-SNAPSHOT"]]}
 
    :dev
