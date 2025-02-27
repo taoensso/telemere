@@ -22,7 +22,7 @@ See [here](../../wiki/1-Getting-started) for **full introduction** (concepts, te
 
 ## Latest release/s
 
-- `2024-12-24` `v1.0.0-RC2`: [release info](../../releases/tag/v1.0.0-RC2)
+- `2025-02-27` `v1.0.0-RC3`: [release info](../../releases/tag/v1.0.0-RC3)
 
 [![Main tests][Main tests SVG]][Main tests URL]
 [![Graal tests][Graal tests SVG]][Graal tests URL]

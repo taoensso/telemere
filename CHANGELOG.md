@@ -2,28 +2,26 @@ This project uses [**Break Versioning**](https://www.taoensso.com/break-versioni
 
 ---
 
-# `v1.0.0-RC2` (2024-12-24)
+# `v1.0.0-RC3` (2025-02-27)
 
 ## 📦 Dependencies
 
 Available on Clojars:
 
-1. [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-RC1) - main dependency.
-2. [SLF4J provider](https://clojars.org/com.taoensso/telemere-slf4j/versions/1.0.0-RC1) - additional dependency for users that want their Java logging [to go to](https://github.com/taoensso/telemere/wiki/3-Config#java-logging) Telemere.
+1. [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-RC3) - main dependency.
+2. [SLF4J provider](https://clojars.org/com.taoensso/telemere-slf4j/versions/1.0.0-RC3) - additional dependency for users that want their Java logging [to go to](https://github.com/taoensso/telemere/wiki/3-Config#java-logging) Telemere.
 
 This project uses [Break Versioning](https://www.taoensso.com/break-versioning).
 
 ## Release notes
 
-RC2 includes many usability improvements and several minor fixes.
+RC3 includes some minor fixes, minor usability improvements, and a **breaking change** to signal content and options (indicated by ➤) that should not affect most users.
 
-It also includes **3x small breaking changes** (indicated by ➤) that should not affect most users.
-
-If no more unexpected issues come up, RC2 will become **v1 stable** in Jan 2025.
+If no unexpected issues come up, RC3 will become **v1 stable** in March 2025.
 
 Big thanks to everyone that's been helping test and give feedback. And as always, please **report any unexpected problems** on [GitHub](https://github.com/taoensso/telemere/issues) or the [Slack channel](https://www.taoensso.com/telemere/slack) 🙏
 
-Happy holidays everyone! 🎄🫶
+Thanks for the patience awaiting v1 final! I hope and believe that it'll have been worth the time + effort.
 
 \- [Peter Taoussanis](https://www.taoensso.com)
 
@@ -31,24 +29,27 @@ Happy holidays everyone! 🎄🫶
 
 ### Since `v1.0.0-RC1` (2024-10-29)
 
-#### ➤ Changes to API
+#### ➤ Changes to API since `v1.0.0-RC1`
 
 Please read these carefully in case you might be affected:
 
-* ➤ **\[mod]** [#39] Discontinued separate "shell" library \[096c432] (RC2)
-* ➤ **\[mod]** Change return value of experimental [`with-signals`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#with-signals) \[cb6a5d9] (RC2)
-* ➤ **\[mod]** Remove rarely-used advanced options from [`catch->error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#catch-%3Eerror!) \[0de5c09] (RC2)
+* ➤ **\[mod]** Signal content: drop `:location`, add `:coords` \[fda22ce] (**RC3**)
+* ➤ **\[mod]** Signal options: drop `:location`, add `:coords` \[8d479ff] (**RC3**)
+* ➤ **\[mod]** OpenTelemetry: use standard attr names when possible \[bb715fb] (**RC3**)
+* \[mod] [#39] Discontinued separate "shell" library \[096c432] (RC2)
+* \[mod] Change return value of experimental [`with-signals`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#with-signals) \[cb6a5d9] (RC2)
+* \[mod] Remove rarely-used advanced options from [`catch->error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#catch-%3Eerror!) \[0de5c09] (RC2)
 
-#### Changes to default output
+#### Changes to default output since `v1.0.0-RC1`
 
-* **\[mod]** Remove "- " msg separator from default [preamble](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#signal-preamble-fn) output \[d61f6c2] (RC2)
-* **\[mod]** [Postal handler](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.postal#handler:postal) now uses default preamble fn for email subject \[706a8b6] (RC2)
-* **\[mod]** Default [`signal-content-fn`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#signal-content-fn): omit redundant parent/root id namespaces \[55323f1] (RC2)
-* **\[mod]** Default [`signal-content-fn`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#signal-content-fn): swap `ctx`, `kvs` position \[b208532] (RC2)
-* **\[mod]** Default [`signal-content-fn`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#signal-content-fn): omit `:root` if it's same as parent \[0464285] (RC2)
-* **\[mod]** Omit empty `:data`, `:ctx` from [signal content](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#signal-content-fn) output \[d78663a] (RC2)
+* \[mod] Remove "- " msg separator from default [preamble](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#signal-preamble-fn) output \[d61f6c2] (RC2)
+* \[mod] [Postal handler](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.postal#handler:postal) now uses default preamble fn for email subject \[706a8b6] (RC2)
+* \[mod] Default [`signal-content-fn`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#signal-content-fn): omit redundant parent/root id namespaces \[55323f1] (RC2)
+* \[mod] Default [`signal-content-fn`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#signal-content-fn): swap `ctx`, `kvs` position \[b208532] (RC2)
+* \[mod] Default [`signal-content-fn`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#signal-content-fn): omit `:root` if it's same as parent \[0464285] (RC2)
+* \[mod] Omit empty `:data`, `:ctx` from [signal content](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#signal-content-fn) output \[d78663a] (RC2)
 
-### Earlier
+### Earlier changes
 
 * \[mod] Update [`pr-signal-fn`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#pr-signal-fn) to use [`clean-signal-fn`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#clean-signal-fn) \[f70363091] (beta 23)
 * \[mod] Rename `taoensso.telemere.api` -> `taoensso.telemere.shell` \[a9005e7f1] (beta 23)
@@ -78,25 +79,30 @@ Please read these carefully in case you might be affected:
 
 #### Misc improvements
 
-* **\[new]** Add [`timbre->telemere`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.timbre#timbre->telemere-appender) appender and update docs \[ace6e2d] (RC2)
-* **\[new]** All signal creators can now take single opts map \[d2386d6] (RC2)
-* **\[new]** Add `& opts` support to [`signal!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#signal!), [`signal-allowed?`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#signal-allowed?) \[a04f255] (RC2)
-* **\[new]** Give [`signal!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#signal!) a default kind and level \[7532c2e] (RC2)
-* **\[new]** Better error message when [`signal!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#signal!) given non-map arg \[d563ac1] (RC2)
-* **\[new]** Improve error info on worst-case handler errors \[484b3df] (RC2)
-* **\[new]** Allow manual `:run-val` override \[9dc883d] (RC2)
-* **\[new]** [#34] Add new [`signal-preamble-fn`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#signal-preamble-fn) opts (@Knotschi) \[0822217] (RC2)
-* **\[new]** Alias low-level formatters in utils ns \[9dc9a46] (RC2)
+* **\[new]** Use [Truss](https://www.taoensso.com/truss) v2, use [contextual exceptions](https://cljdoc.org/d/com.taoensso/truss/CURRENT/api/taoensso.truss#ex-info) when relevant (**RC3**)
+* **\[new]** [#44] Open Telemetry handler: add span kind option (@farcaller) \[413cce8] (**RC3**)
+* **\[new]** Reduced Cljs build sizes in some cases (**RC3**)
+* \[new] Add [`timbre->telemere`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.timbre#timbre->telemere-appender) appender and update docs \[ace6e2d] (RC2)
+* \[new] All signal creators can now take single opts map \[d2386d6] (RC2)
+* \[new] Add `& opts` support to [`signal!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#signal!), [`signal-allowed?`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#signal-allowed?) \[a04f255] (RC2)
+* \[new] Give [`signal!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#signal!) a default kind and level \[7532c2e] (RC2)
+* \[new] Better error message when [`signal!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#signal!) given non-map arg \[d563ac1] (RC2)
+* \[new] Improve error info on worst-case handler errors \[484b3df] (RC2)
+* \[new] Allow manual `:run-val` override \[9dc883d] (RC2)
+* \[new] [#34] Add new [`signal-preamble-fn`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#signal-preamble-fn) opts (@Knotschi) \[0822217] (RC2)
+* \[new] Alias low-level formatters in utils ns \[9dc9a46] (RC2)
 
 #### Doc improvements
 
-* **\[doc]** [#33] Add community examples link to [Bling Gist](https://gist.github.com/ptaoussanis/f8a80f85d3e0f89b307a470ce6e044b5) \[8cd4ca9] (RC2)
-* **\[doc]** Better document pattern of using [`trace!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#trace!)/[`spy!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#spy!) with [`catch->error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#catch-%3Eerror!) \[5c977a3] (RC2)
-* **\[doc]** [#35] Emphasize that [signal opts](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options) must be a compile-time map \[55720ac] (RC2)
-* **\[doc]** Add [FAQ item](https://github.com/taoensso/telemere/wiki/6-FAQ#why-the-unusual-arg-order-for-event) re: [`event!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#event!) arg order \[822032d] (RC2)
-* **\[doc]** Document that `:msg` may be a delay \[13d9dbf] (RC2)
+* **\[doc]** Timbre shim: document different `spy` error handling \[1517f30] (**RC3**)
+* **\[doc]** [#43] ns filters work for SLF4J logger names (@lvh) \[db0498b] (**RC3**)
+* \[doc] [#33] Add community examples link to [Bling Gist](https://gist.github.com/ptaoussanis/f8a80f85d3e0f89b307a470ce6e044b5) \[8cd4ca9] (RC2)
+* \[doc] Better document pattern of using [`trace!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#trace!)/[`spy!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#spy!) with [`catch->error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#catch-%3Eerror!) \[5c977a3] (RC2)
+* \[doc] [#35] Emphasize that [signal opts](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options) must be a compile-time map \[55720ac] (RC2)
+* \[doc] Add [FAQ item](https://github.com/taoensso/telemere/wiki/6-FAQ#why-the-unusual-arg-order-for-event) re: [`event!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#event!) arg order \[822032d] (RC2)
+* \[doc] Document that `:msg` may be a delay \[13d9dbf] (RC2)
 
-### Earlier
+### Earlier improvements
 
 * \[new] Add `:ctx+`, `:middleware+` signal options \[5a8c407] (RC1)
 * \[new] OpenTelemetry handler: try print map vals as EDN \[c1e1c1e] (RC1)
@@ -141,12 +147,16 @@ Please read these carefully in case you might be affected:
 
 ### Since `v1.0.0-RC1` (2024-10-29)
 
-* **\[fix]** Broken signal string representation \[8c701d4] (RC2)
-* **\[fix]** Trace formatting: always include root info \[f522307] (RC2)
-* **\[fix]** Trace formatting: properly format nil ids \[68a894e] (RC2)
-* **\[fix]** [#36] Fix missing cljdoc docstrings \[b58ec73] (RC2)
+* **\[fix]** Timbre shim: rename `spy!` -> `spy` (@lvh) \[3a9ffc6] (**RC3**)
+* **\[fix]** Timbre shim: don't attach empty `:vargs` data \[0e642ba] (**RC3**)
+* **\[fix]** Fix environment val docs \[db26a5d] (**RC3**)
+* **\[fix]** `spy!` docstring typo (@rafd) \[35606d9] (**RC3**)
+* \[fix] Broken signal string representation \[8c701d4] (RC2)
+* \[fix] Trace formatting: always include root info \[f522307] (RC2)
+* \[fix] Trace formatting: properly format nil ids \[68a894e] (RC2)
+* \[fix] [#36] Fix missing cljdoc docstrings \[b58ec73] (RC2)
 
-### Earlier
+### Earlier fixes
 
 * \[fix] `signal-opts`: allow map forms as intended \[f7a5663] (RC1)
 * \[fix] `uncaught->error!` wasn't working (@benalbrecht) \[7f52cb1] (RC1)
