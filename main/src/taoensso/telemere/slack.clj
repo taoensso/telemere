@@ -23,7 +23,7 @@
     ]})
 
 (defn handler:slack
-  "Experimental, subject to change.
+  "Alpha, subject to change.
 
   Needs `clj-slack`, Ref. <https://github.com/julienXX/clj-slack>.
 

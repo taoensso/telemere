@@ -21,7 +21,7 @@
 ;;;; Unique IDs (UIDs)
 
 (defn nano-uid-fn
-  "Experimental, subject to change.
+  "Alpha, subject to change.
   Returns a (fn nano-uid [root?]) that returns a random nano-style uid string like:
     \"r76-B8LoIPs5lBG1_Uhdy\" - 126 bit (21 char)     root         uid
     \"tMEYoZH0K-\"            - 60  bit (10 char) non-root (child) uid"
@@ -52,7 +52,7 @@
 (comment ((nano-uid-fn) true))
 
 (defn hex-uid-fn
-  "Experimental, subject to change.
+  "Alpha, subject to change.
   Returns a (fn hex-uid [root?]) that returns a random hex-style uid string like:
     \"05039666eb9dc3206475f44ab9f3d843\" - 128 bit (32 char)     root         uid
     \"721fcef639a51513\"                 - 64  bit (16 char) non-root (child) uid"
@@ -161,8 +161,7 @@
 (comment (js-console-logger))
 
 (defn error-signal?
-  "Experimental, subject to change.
-  Returns true iff given signal has an `:error` value, or a `:kind` or `:level`
+  "Returns true iff given signal has an `:error` value, or a `:kind` or `:level`
   that indicates that it's an error."
   #?(:cljs {:tag 'boolean})
   [signal]
@@ -238,7 +237,7 @@
 
 #?(:clj
    (defn file-writer
-     "Experimental, subject to change.
+     "Alpha, subject to change.
      Opens the specified file and returns a stateful fn of 2 arities:
        [content] => Writes given content to file, or noops if closed.
        []        => Closes the writer.
@@ -441,7 +440,7 @@
 ;;;; Formatters
 
 (defn format-nsecs-fn
-  "Experimental, subject to change.
+  "Alpha, subject to change.
   Returns a (fn format [nanosecs]) that:
     - Takes a long nanoseconds (e.g. runtime).
     - Returns a human-readable string like:
@@ -468,7 +467,7 @@
 (comment (println (format-clj-stacktrace (:trace (truss/ex-map (truss/ex-info "Ex2" {:k2 "v2"} (truss/ex-info "Ex1" {:k1 "v1"})))))))
 
 (defn format-error-fn
-  "Experimental, subject to change.
+  "Alpha, subject to change.
   Returns a (fn format [error]) that:
     - Takes a platform error (`Throwable` or `js/Error`).
     - Returns a human-readable error string."
@@ -505,7 +504,7 @@
 ;;;;
 
 (defn signal-preamble-fn
-  "Experimental, subject to change.
+  "Alpha, subject to change.
   Returns a (fn preamble [signal]) that:
     - Takes a Telemere signal (map).
     - Returns a signal preamble ?string like:
@@ -557,7 +556,7 @@
 (comment (str (format-parent (str *ns*) {:id ::id1 :uid "uid1"})))
 
 (defn signal-content-fn
-  "Experimental, subject to change.
+  "Alpha, subject to change.
   Returns a (fn content [signal]) that:
     - Takes a Telemere signal (map).
     - Returns a human-readable signal content ?string (incl. data, ctx, etc.).
@@ -636,7 +635,7 @@
   ((signal-content-fn) (tel/with-signal (tel/event! ::ev-id {:data {:k1 "v1"}}))))
 
 (defn clean-signal-fn
-  "Experimental, subject to change.
+  "Alpha, subject to change.
   Returns a (fn clean [signal]) that:
     - Takes a Telemere  signal (map).
     - Returns a minimal signal (map) ready for printing, etc.
@@ -701,7 +700,7 @@
 (comment ((clean-signal-fn {:incl-keys #{:a}}) {:level :info, :id nil, :a "a", :b "b", :msg_ (delay "hi")}))
 
 (defn pr-signal-fn
-  "Experimental, subject to change.
+  "Alpha, subject to change.
   Returns a (fn pr [signal]) that:
     - Takes a Telemere signal (map).
     - Returns a machine-readable signal string.
@@ -766,7 +765,7 @@
    (tel/with-signal (tel/event! ::ev-id {:kvs {:k1 "v1"}}))))
 
 (defn format-signal-fn
-  "Experimental, subject to change.
+  "Alpha, subject to change.
   Returns a (fn format [signal]) that:
     - Takes a Telemere signal (map).
     - Returns a human-readable signal string.

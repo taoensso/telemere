@@ -307,8 +307,7 @@
 
 #?(:clj
    (defmacro ^:public with-signal
-     "Experimental, subject to change.
-     Executes given form, trapping errors. Returns the LAST signal created by form.
+     "Executes given form, trapping errors. Returns the LAST signal created by form.
      Useful for tests/debugging.
 
      Options:
@@ -334,8 +333,7 @@
 
 #?(:clj
    (defmacro ^:public with-signals
-     "Experimental, subject to change.
-     Like `with-signal` but returns {:keys [value error signals]}.
+     "Like `with-signal` but returns {:keys [value error signals]}.
      Useful for more advanced tests/debugging.
 
      Destructuring example:
@@ -811,8 +809,7 @@
      (defn add-interop-check! [source-id check-fn] (swap! interop-checks_ assoc source-id check-fn))
 
      (defn ^:public check-interop
-       "Experimental, subject to change.
-       Runs Telemere's registered interop checks and returns info useful
+       "Runs Telemere's registered interop checks and returns info useful
        for tests/debugging, e.g.:
 
          {:open-telemetry {:present? false}

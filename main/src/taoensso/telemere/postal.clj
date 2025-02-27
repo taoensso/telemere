@@ -23,7 +23,7 @@
     ]})
 
 (defn handler:postal
-  "Experimental, subject to change.
+  "Alpha, subject to change.
 
   Needs `postal`, Ref. <https://github.com/drewr/postal>.
 

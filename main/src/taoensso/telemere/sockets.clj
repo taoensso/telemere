@@ -49,7 +49,7 @@
           (sw output)))))))
 
 (defn handler:udp-socket
-  "Highly experimental, subject to change.
+  "Highly experimental, subject to change!
   Feedback very welcome!
 
   Returns a signal handler that:

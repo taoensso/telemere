@@ -13,7 +13,7 @@
 
 #?(:clj
    (defn ^:public handler:console
-     "Experimental, subject to change.
+     "Alpha, subject to change.
 
      Returns a signal handler that:
        - Takes a Telemere signal (map).
@@ -51,7 +51,7 @@
 
    :cljs
    (defn ^:public handler:console
-     "Experimental, subject to change.
+     "Alpha, subject to change.
 
      If `js/console` exists, returns a signal handler that:
        - Takes a Telemere signal (map).
@@ -88,7 +88,7 @@
 
 #?(:cljs
    (defn ^:public handler:console-raw
-     "Experimental, subject to change.
+     "Alpha, subject to change.
 
      If `js/console` exists, returns a signal handler that:
        - Takes a Telemere signal (map).
