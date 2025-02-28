@@ -1,6 +1,6 @@
 (defproject com.taoensso/telemere "1.0.0-RC3"
   :author "Peter Taoussanis <https://www.taoensso.com>"
-  :description "Structured telemetry library for Clojure/Script"
+  :description "Structured logs and telemetry for Clojure/Script"
   :url "https://www.taoensso.com/telemere"
 
   :license

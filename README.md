@@ -3,7 +3,7 @@
 
 # <img src="https://raw.githubusercontent.com/taoensso/telemere/master/imgs/telemere-logo.svg" alt="Telemere logo" width="360"/>
 
-### Structured telemetry library for Clojure/Script
+### Structured logs and telemetry for Clojure/Script
 
 **Telemere** is a **pure Clojure/Script library** that offers an elegant and simple **unified API** to cover:
 
@@ -211,7 +211,7 @@ It enables you to write code that is **information-verbose by default**.
 ## Comparisons
 
 - Telemere [compared](../../wiki/5-Migrating#from-timbre) to [Timbre](https://www.taoensso.com/timbre) (Telemere's predecessor)
-- Telemere [compared](../../wiki/6-FAQ#how-does-telemere-compare-to-mulog) to [Mulog](https://github.com/BrunoBonacci/mulog) (Structured micro-logging library)
+- Telemere [compared](../../wiki/6-FAQ#how-does-telemere-compare-to-mulog) to [Mulog](https://github.com/BrunoBonacci/mulog) (structured micro-logging library)
 
 ## Videos
 
@@ -332,7 +332,7 @@ You can [help support][sponsor] continued work on this project, thank you!! 🙏
 
 ## License
 
-Copyright &copy; 2023-2024 [Peter Taoussanis][].  
+Copyright &copy; 2023-2025 [Peter Taoussanis][].  
 Licensed under [EPL 1.0](LICENSE.txt) (same as Clojure).
 
 <!-- Common -->

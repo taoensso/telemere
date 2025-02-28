@@ -34,7 +34,7 @@ Thanks for the patience awaiting v1 final! I hope and believe that it'll have be
 Please read these carefully in case you might be affected:
 
 * ➤ **\[mod]** Signal content: drop `:location`, add `:coords` \[fda22ce] (**RC3**)
-* ➤ **\[mod]** Signal options: drop `:location`, add `:coords` \[8d479ff] (**RC3**)
+* ➤ **\[mod]** Signal options: drop `:location`, add `:coords` \[1f99f71] (**RC3**)
 * ➤ **\[mod]** OpenTelemetry: use standard attr names when possible \[bb715fb] (**RC3**)
 * \[mod] [#39] Discontinued separate "shell" library \[096c432] (RC2)
 * \[mod] Change return value of experimental [`with-signals`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#with-signals) \[cb6a5d9] (RC2)
@@ -79,7 +79,7 @@ Please read these carefully in case you might be affected:
 
 #### Misc improvements
 
-* **\[new]** Use [Truss](https://www.taoensso.com/truss) v2, use [contextual exceptions](https://cljdoc.org/d/com.taoensso/truss/CURRENT/api/taoensso.truss#ex-info) when relevant (**RC3**)
+* **\[new]** Use [Truss](https://www.taoensso.com/truss) v2 and [contextual exceptions](https://cljdoc.org/d/com.taoensso/truss/CURRENT/api/taoensso.truss#ex-info) when relevant (**RC3**)
 * **\[new]** [#44] Open Telemetry handler: add span kind option (@farcaller) \[413cce8] (**RC3**)
 * **\[new]** Reduced Cljs build sizes in some cases (**RC3**)
 * \[new] Add [`timbre->telemere`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.timbre#timbre->telemere-appender) appender and update docs \[ace6e2d] (RC2)
