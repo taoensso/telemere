@@ -19,7 +19,7 @@
   #?(:cljs
      (:require-macros
       [taoensso.telemere :refer
-       [with-signal with-signals
+       [with-signal with-signals signal-allowed?
         signal! event! log! trace! spy! catch->error!
 
         ;; Via `sigs/def-api`
@@ -64,8 +64,6 @@
   impl/msg-skip
   #?(:clj impl/with-signal)
   #?(:clj impl/with-signals)
-  #?(:clj impl/signal!)
-  #?(:clj impl/signal-allowed?)
 
   ;; Utils
   utils/clean-signal-fn
@@ -207,6 +205,44 @@
 ;; - error! ----------- ?id    + error  => unconditional given error
 ;; - catch->error! ---- ?id    + run    => unconditional run value or ?catch-val
 ;; - uncaught->error! - ?id             => nil
+
+#?(:clj
+   (defn- args->opts [args]
+     (case     (count args)
+       0 {}
+       1 (impl/valid-opts! (first args))
+       (apply hash-map args))))
+
+#?(:clj
+   (defmacro signal-allowed?
+     "Returns true iff signal with given opts would meet filtering conditions:
+       (when (signal-allowed? {:level :warn, <...>}) (my-custom-code))
+
+      Allows you to use Telemere's rich filtering system for conditionally
+      executing arbitrary code. Also handy for batching multiple signals
+      under a single set of conditions (incl. rate-limiting, sampling, etc.):
+
+        ;; Logs exactly 2 or 0 messages (never 1):
+        (when (signal-allowed? {:level :info, :sample-rate 0.5})
+          (log! {:allow? true} \"Message 1\")
+          (log! {:allow? true} \"Message 2\"))"
+
+     ;; Used also for interop (tools.logging, SLF4J), etc.
+     {:arglists (impl/signal-arglists :signal-allowed?)}
+     [& args] `(impl/signal-allowed? ~(args->opts args))))
+
+(comment (macroexpand '(signal-allowed? {:ns "my-ns"})))
+
+#?(:clj
+   (defmacro signal!
+     "opts => allowed? / unconditional run result (value or throw)."
+     {:doc      (impl/signal-docstring :signal!)
+      :arglists (impl/signal-arglists  :signal!)}
+     [& args]
+     (enc/keep-callsite
+       `(impl/signal! ~(args->opts args)))))
+
+(comment (with-signal (signal!)))
 
 #?(:clj
    (defn- merge-or-assoc-opts [m macro-form k v]

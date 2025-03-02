@@ -389,28 +389,28 @@
    (defn signal-arglists [macro-id]
      (case macro-id
 
-       :signal! ; opts => allowed? / unconditional run result (value or throw)
-       '(   [& opts-kvs]
-         [{:as opts-map :keys
-           [#_defaults #_elide? #_allow? #_callsite-id, ; Undocumented
-            elidable? coords inst uid middleware middleware+,
-            sample-rate kind ns id level when rate-limit rate-limit-by,
-            ctx ctx+ parent root trace?, do let data msg error run & kvs]}])
-
        :signal-allowed? ; opts => allowed?
        '(   [& opts-kvs]
          [{:as opts-map :keys
-           [#_defaults #_elide? #_allow? #_callsite-id, ; Undocumented
+           [#_elide? #_allow? #_callsite-id, ; Undocumented
             elidable? coords #_inst #_uid #_middleware #_middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             #_ctx #_ctx+ #_parent #_root #_trace?, #_do #_let #_data #_msg #_error #_run #_& #_kvs]}])
+
+       :signal! ; opts => allowed? / unconditional run result (value or throw)
+       '(   [& opts-kvs]
+         [{:as opts-map :keys
+           [#_elide? #_allow? #_callsite-id, ; Undocumented
+            elidable? coords inst uid middleware middleware+,
+            sample-rate kind ns id level when rate-limit rate-limit-by,
+            ctx ctx+ parent root trace?, do let data msg error run & kvs]}])
 
        :event! ; id + ?level => allowed?
        '([opts-or-id]
          [id   level]
          [id
           {:as opts-map :keys
-           [#_defaults #_elide? #_allow? #_callsite-id,
+           [#_elide? #_allow? #_callsite-id,
             elidable? coords inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}])
@@ -419,7 +419,7 @@
        '([opts-or-msg]
          [level   msg]
          [{:as opts-map :keys
-           [#_defaults #_elide? #_allow? #_callsite-id,
+           [#_elide? #_allow? #_callsite-id,
             elidable? coords inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}
@@ -429,7 +429,7 @@
        '([opts-or-run]
          [id      run]
          [{:as opts-map :keys
-           [#_defaults #_elide? #_allow? #_callsite-id,
+           [#_elide? #_allow? #_callsite-id,
             elidable? coords inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error run & kvs]}
@@ -439,7 +439,7 @@
        '([opts-or-run]
          [level   run]
          [{:as opts-map :keys
-           [#_defaults #_elide? #_allow? #_callsite-id,
+           [#_elide? #_allow? #_callsite-id,
             elidable? coords inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error run & kvs]}
@@ -449,7 +449,7 @@
        '([opts-or-error]
          [id      error]
          [{:as opts-map :keys
-           [#_defaults #_elide? #_allow? #_callsite-id,
+           [#_elide? #_allow? #_callsite-id,
             elidable? coords inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}
@@ -459,7 +459,7 @@
        '([opts-or-run]
          [id      run]
          [{:as opts-map :keys
-           [#_defaults #_elide? #_allow? #_callsite-id, catch-val,
+           [#_elide? #_allow? #_callsite-id, catch-val,
             elidable? coords inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}
@@ -469,7 +469,7 @@
        '([]
          [opts-or-id]
          [{:as opts-map :keys
-           [#_defaults #_elide? #_allow? #_callsite-id,
+           [#_elide? #_allow? #_callsite-id,
             elidable? coords inst uid middleware middleware+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}])
@@ -499,7 +499,7 @@
 (comment (enc/qb 1e6 (inst+nsecs (enc/now-inst) 1e9)))
 
 #?(:clj
-   (defn- valid-opts! [x]
+   (defn valid-opts! [x]
      (if (map? x)
        (do     x)
        ;; We require const map keys, but vals may require eval
@@ -508,16 +508,34 @@
 
 #?(:clj (defn- auto-> [form auto-form] (if (= form :auto) auto-form form)))
 #?(:clj
-   (defmacro ^:public signal!
-     "Generic low-level signal call, also aliased in Encore."
-     {:doc      (signal-docstring :signal!)
-      :arglists (signal-arglists  :signal!)}
-     [arg1 & more]
-     (let [opts     (valid-opts! (if more (apply hash-map arg1 more) arg1))
-           defaults (enc/merge {:kind :generic, :level :info} (get opts :defaults))
-           opts     (enc/merge defaults (dissoc opts :defaults))
-           cljs? (boolean (:ns &env))
+   (defmacro signal-allowed?
+     "Returns true iff signal with given opts would meet filtering conditions.
+     Wrapped for public API."
+     [opts]
+     (valid-opts! opts)
+     (let [opts (merge {:kind :generic, :level :info} opts)
+           {:keys [#_callsite-id elide? allow?]}
+           (sigs/filter-call
+             {:cljs? (boolean (:ns &env))
+              :sf-arity 4
+              :ct-call-filter     ct-call-filter
+              :*rt-call-filter* `*rt-call-filter*}
+             (assoc opts
+               :ns (auto-> (get opts :ns :auto) (str *ns*))))]
+
+       (if elide? false `(if ~allow? true false)))))
+
+(comment (macroexpand '(signal-allowed? {:level :info})))
+
+#?(:clj
+   (defmacro signal!
+     "Generic low-level signal creator. Wrapped for public API."
+     [opts]
+     (valid-opts! opts)
+     (let [cljs? (boolean (:ns &env))
            clj?  (not cljs?)
+
+           opts (merge {:kind :generic, :level :info} opts)
            {run-form :run} opts
 
            ns-form* (get opts :ns :auto)
@@ -759,41 +777,6 @@
     (println "---")
     (sigs/with-handler *sig-handlers* "hf1" (fn hf1 [x] (println x)) {}
       (signal! {:level :info, :run "run"}))))
-
-#?(:clj
-   (defmacro ^:public signal-allowed?
-     "Returns true iff signal with given opts would meet filtering conditions:
-       (when (signal-allowed? {:level :warn, <...>}) (my-custom-code))
-
-      Allows you to use Telemere's rich filtering system for conditionally
-      executing arbitrary code. Also handy for batching multiple signals
-      under a single set of conditions (incl. rate-limiting, sampling, etc.):
-
-        ;; Logs exactly 2 or 0 messages (never 1):
-        (when (signal-allowed? {:level :info, :sample-rate 0.5})
-          (log! {:allow? true} \"Message 1\")
-          (log! {:allow? true} \"Message 2\"))"
-
-     ;; Used also for interop (tools.logging, SLF4J), etc.
-     {:arglists (signal-arglists :signal-allowed?)}
-     [arg1 & more]
-     (let [opts (valid-opts! (if more (apply hash-map arg1 more) arg1))
-
-           defaults             (get    opts :defaults)
-           opts (merge defaults (dissoc opts :defaults))
-
-           {:keys [#_callsite-id elide? allow?]}
-           (sigs/filter-call
-             {:cljs? (boolean (:ns &env))
-              :sf-arity 4
-              :ct-call-filter     ct-call-filter
-              :*rt-call-filter* `*rt-call-filter*}
-             (assoc opts :ns
-               (get opts :ns (str *ns*))))]
-
-       (if elide? false `(if ~allow? true false)))))
-
-(comment (macroexpand '(signal-allowed? {:level :info})))
 
 ;;;; Interop
 
