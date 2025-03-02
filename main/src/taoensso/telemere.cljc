@@ -239,10 +239,10 @@
      {:doc      (impl/signal-docstring :signal!)
       :arglists (impl/signal-arglists  :signal!)}
      [& args]
-     (enc/keep-callsite
+     (truss/keep-callsite
        `(impl/signal! ~(args->opts args)))))
 
-(comment (with-signal (signal!)))
+(comment (:coords (with-signal (signal!))))
 
 #?(:clj
    (defn- merge-or-assoc-opts [m macro-form k v]
@@ -260,7 +260,7 @@
        ([   opts-or-id]    `(impl/signal!        ~(merge-or-assoc-opts base-opts &form :id    opts-or-id)))
        ([id opts-or-level] `(impl/signal! ~(assoc (merge-or-assoc-opts base-opts &form :level opts-or-level) :id id))))))
 
-(comment (with-signal (event! ::my-id :info)))
+(comment (:coords (with-signal (event! ::my-id :info))))
 
 #?(:clj
    (let [base-opts {:kind :log, :level :info}]
@@ -271,7 +271,7 @@
        ([opts-or-msg      ] `(impl/signal!        ~(merge-or-assoc-opts base-opts &form :msg   opts-or-msg)))
        ([opts-or-level msg] `(impl/signal! ~(assoc (merge-or-assoc-opts base-opts &form :level opts-or-level) :msg msg))))))
 
-(comment (with-signal (log! :info "My msg")))
+(comment (:coords (with-signal (log! :info "My msg"))))
 
 #?(:clj
    (let [base-opts {:kind :trace, :level :info, :msg `impl/default-trace-msg}]
@@ -282,7 +282,7 @@
        ([opts-or-run]    `(impl/signal!        ~(merge-or-assoc-opts base-opts &form :run opts-or-run)))
        ([opts-or-id run] `(impl/signal! ~(assoc (merge-or-assoc-opts base-opts &form :id  opts-or-id) :run run))))))
 
-(comment (with-signal (trace! ::my-id (+ 1 2))))
+(comment (:coords (with-signal (trace! ::my-id (+ 1 2)))))
 
 #?(:clj
    (let [base-opts {:kind :spy, :level :info, :msg `impl/default-trace-msg}]
@@ -303,13 +303,14 @@
         :arglists (impl/signal-arglists  :error!)}
        ([opts-or-id error] `(error! ~(assoc (merge-or-assoc-opts base-opts &form :id opts-or-id) :error error)))
        ([opts-or-error]
-        (let [opts (merge-or-assoc-opts base-opts &form :error opts-or-error)
+        (let [opts     (merge-or-assoc-opts base-opts &form :error opts-or-error)
               gs-error (gensym "error")]
-          `(let [~gs-error ~(get   opts :error)]
-             (impl/signal! ~(assoc opts :error gs-error))
-             (do                              ~gs-error)))))))
 
-(comment (with-signal (throw (error! ::my-id (truss/ex-info "MyEx" {})))))
+          `(let [~gs-error ~(get opts :error)]
+             (impl/signal! ~(assoc opts :error gs-error))
+             ~gs-error))))))
+
+(comment (:coords (with-signal (throw (error! ::my-id (truss/ex-info "MyEx" {}))))))
 
 #?(:clj
    (let [base-opts {:kind :error, :level :error}]
@@ -331,7 +332,7 @@
                (impl/signal! ~(assoc opts :error gs-caught))
                (if ~rethrow? (throw ~gs-caught) ~catch-val))))))))
 
-(comment (with-signal (catch->error! ::my-id (/ 1 0))))
+(comment (:coords (with-signal (catch->error! ::my-id (/ 1 0)))))
 
 #?(:clj
    (defn uncaught->handler!
@@ -359,7 +360,7 @@
 
        See `uncaught->handler!` and `error!` for details."
        {:arglists  (impl/signal-arglists :uncaught->error!)}
-       ([          ] (enc/keep-callsite `(uncaught->error! {})))
+       ([          ] (truss/keep-callsite `(uncaught->error! {})))
        ([opts-or-id]
         (let [opts (merge-or-assoc-opts base-opts &form :id opts-or-id)]
           `(uncaught->handler!

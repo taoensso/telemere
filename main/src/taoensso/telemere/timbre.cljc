@@ -61,7 +61,7 @@
    (defmacro ^:no-doc log!
      "Private, don't use."
      [level format-msg? vargs]
-     (enc/keep-callsite
+     (truss/keep-callsite
        `(when (impl/signal-allowed? {:kind :log, :level ~level, :id shim-id})
           (let [[error# msg# data#] (parse-vargs ~format-msg? ~vargs)]
             (tel/log!
@@ -80,23 +80,23 @@
 
 #?(:clj
    (do
-     (defmacro log     "Prefer `telemere/log!`, etc." [level & args] (enc/keep-callsite `(log! ~level  false [~@args])))
-     (defmacro trace   "Prefer `telemere/log!`, etc."       [& args] (enc/keep-callsite `(log! :trace  false [~@args])))
-     (defmacro debug   "Prefer `telemere/log!`, etc."       [& args] (enc/keep-callsite `(log! :debug  false [~@args])))
-     (defmacro info    "Prefer `telemere/log!`, etc."       [& args] (enc/keep-callsite `(log! :info   false [~@args])))
-     (defmacro warn    "Prefer `telemere/log!`, etc."       [& args] (enc/keep-callsite `(log! :warn   false [~@args])))
-     (defmacro error   "Prefer `telemere/log!`, etc."       [& args] (enc/keep-callsite `(log! :error  false [~@args])))
-     (defmacro fatal   "Prefer `telemere/log!`, etc."       [& args] (enc/keep-callsite `(log! :fatal  false [~@args])))
-     (defmacro report  "Prefer `telemere/log!`, etc."       [& args] (enc/keep-callsite `(log! :report false [~@args])))
+     (defmacro log     "Prefer `telemere/log!`, etc." [level & args] (truss/keep-callsite `(log! ~level  false [~@args])))
+     (defmacro trace   "Prefer `telemere/log!`, etc."       [& args] (truss/keep-callsite `(log! :trace  false [~@args])))
+     (defmacro debug   "Prefer `telemere/log!`, etc."       [& args] (truss/keep-callsite `(log! :debug  false [~@args])))
+     (defmacro info    "Prefer `telemere/log!`, etc."       [& args] (truss/keep-callsite `(log! :info   false [~@args])))
+     (defmacro warn    "Prefer `telemere/log!`, etc."       [& args] (truss/keep-callsite `(log! :warn   false [~@args])))
+     (defmacro error   "Prefer `telemere/log!`, etc."       [& args] (truss/keep-callsite `(log! :error  false [~@args])))
+     (defmacro fatal   "Prefer `telemere/log!`, etc."       [& args] (truss/keep-callsite `(log! :fatal  false [~@args])))
+     (defmacro report  "Prefer `telemere/log!`, etc."       [& args] (truss/keep-callsite `(log! :report false [~@args])))
 
-     (defmacro logf    "Prefer `telemere/log!`, etc." [level & args] (enc/keep-callsite `(log! ~level  true  [~@args])))
-     (defmacro tracef  "Prefer `telemere/log!`, etc."       [& args] (enc/keep-callsite `(log! :trace  true  [~@args])))
-     (defmacro debugf  "Prefer `telemere/log!`, etc."       [& args] (enc/keep-callsite `(log! :debug  true  [~@args])))
-     (defmacro infof   "Prefer `telemere/log!`, etc."       [& args] (enc/keep-callsite `(log! :info   true  [~@args])))
-     (defmacro warnf   "Prefer `telemere/log!`, etc."       [& args] (enc/keep-callsite `(log! :warn   true  [~@args])))
-     (defmacro errorf  "Prefer `telemere/log!`, etc."       [& args] (enc/keep-callsite `(log! :error  true  [~@args])))
-     (defmacro fatalf  "Prefer `telemere/log!`, etc."       [& args] (enc/keep-callsite `(log! :fatal  true  [~@args])))
-     (defmacro reportf "Prefer `telemere/log!`, etc."       [& args] (enc/keep-callsite `(log! :report true  [~@args])))))
+     (defmacro logf    "Prefer `telemere/log!`, etc." [level & args] (truss/keep-callsite `(log! ~level  true  [~@args])))
+     (defmacro tracef  "Prefer `telemere/log!`, etc."       [& args] (truss/keep-callsite `(log! :trace  true  [~@args])))
+     (defmacro debugf  "Prefer `telemere/log!`, etc."       [& args] (truss/keep-callsite `(log! :debug  true  [~@args])))
+     (defmacro infof   "Prefer `telemere/log!`, etc."       [& args] (truss/keep-callsite `(log! :info   true  [~@args])))
+     (defmacro warnf   "Prefer `telemere/log!`, etc."       [& args] (truss/keep-callsite `(log! :warn   true  [~@args])))
+     (defmacro errorf  "Prefer `telemere/log!`, etc."       [& args] (truss/keep-callsite `(log! :error  true  [~@args])))
+     (defmacro fatalf  "Prefer `telemere/log!`, etc."       [& args] (truss/keep-callsite `(log! :fatal  true  [~@args])))
+     (defmacro reportf "Prefer `telemere/log!`, etc."       [& args] (truss/keep-callsite `(log! :report true  [~@args])))))
 
 #?(:clj
    (defmacro spy
@@ -115,8 +115,8 @@
      The additional signal helps to separate the success and error cases for
      individual filtering and/or handling."
 
-     ([                form] (enc/keep-callsite `(spy :debug nil ~form)))
-     ([level           form] (enc/keep-callsite `(spy ~level nil ~form)))
+     ([                form] (truss/keep-callsite `(spy :debug nil ~form)))
+     ([level           form] (truss/keep-callsite `(spy ~level nil ~form)))
      ([level form-name form]
       (let [ns     (str *ns*)
             coords (truss/callsite-coords &form)
@@ -143,9 +143,9 @@
   (select-keys (tel/with-signal (spy :info #_"my-form-name" (+ 1 2)))                   [:level :msg_])
   (select-keys (tel/with-signal (spy :info #_"my-form-name" (throw (Exception. "Ex")))) [:level :msg_]))
 
-#?(:clj (defmacro log-errors             "Prefer `telemere/catch->error!`." [& body] (enc/keep-callsite         `(tel/catch->error! {:id shim-id, :catch-val nil} (do ~@body)))))
-#?(:clj (defmacro log-and-rethrow-errors "Prefer `telemere/catch->error!`." [& body] (enc/keep-callsite         `(tel/catch->error! {:id shim-id}                 (do ~@body)))))
-#?(:clj (defmacro logged-future          "Prefer `telemere/catch->error!`." [& body] (enc/keep-callsite `(future (tel/catch->error! {:id shim-id}                 (do ~@body))))))
+#?(:clj (defmacro log-errors             "Prefer `telemere/catch->error!`." [& body] (truss/keep-callsite         `(tel/catch->error! {:id shim-id, :catch-val nil} (do ~@body)))))
+#?(:clj (defmacro log-and-rethrow-errors "Prefer `telemere/catch->error!`." [& body] (truss/keep-callsite         `(tel/catch->error! {:id shim-id}                 (do ~@body)))))
+#?(:clj (defmacro logged-future          "Prefer `telemere/catch->error!`." [& body] (truss/keep-callsite `(future (tel/catch->error! {:id shim-id}                 (do ~@body))))))
 
 #?(:clj
    (defmacro refer-timbre
