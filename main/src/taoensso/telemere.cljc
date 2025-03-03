@@ -242,7 +242,7 @@
      (truss/keep-callsite
        `(impl/signal! ~(args->opts args)))))
 
-(comment (:coords (with-signal (signal!))))
+(comment (:coords (macroexpand '(with-signal (signal!)))))
 
 #?(:clj
    (defn- merge-or-assoc-opts [m macro-form k v]

@@ -511,9 +511,11 @@
    (defmacro signal-allowed?
      "Returns true iff signal with given opts would meet filtering conditions.
      Wrapped for public API."
-     [opts]
-     (valid-opts! opts)
-     (let [opts (merge {:kind :generic, :level :info} opts)
+     ([          opts] (truss/keep-callsite `(signal-allowed? nil ~opts)))
+     ([base-opts opts]
+      (valid-opts! (or base-opts {}))
+      (valid-opts! (or opts      {}))
+      (let [opts (merge {:kind :generic, :level :info} base-opts opts)
            {:keys [#_callsite-id elide? allow?]}
            (sigs/filter-call
              {:cljs? (boolean (:ns &env))
@@ -523,62 +525,64 @@
              (assoc opts
                :ns (auto-> (get opts :ns :auto) (str *ns*))))]
 
-       (if elide? false `(if ~allow? true false)))))
+       (if elide? false `(if ~allow? true false))))))
 
 (comment (macroexpand '(signal-allowed? {:level :info})))
 
 #?(:clj
    (defmacro signal!
      "Generic low-level signal creator. Wrapped for public API."
-     [opts]
-     (valid-opts! opts)
-     (let [cljs? (boolean (:ns &env))
-           clj?  (not cljs?)
+     ([          opts] (truss/keep-callsite `(signal!? nil ~opts)))
+     ([base-opts opts]
+      (valid-opts! (or base-opts {}))
+      (valid-opts! (or opts      {}))
+      (let [cljs? (boolean (:ns &env))
+            clj?  (not cljs?)
 
-           opts (merge {:kind :generic, :level :info} opts)
-           {run-form :run} opts
+            opts (merge {:kind :generic, :level :info} base-opts opts)
+            {run-form :run} opts
 
-           ns-form* (get opts :ns :auto)
-           ns-form  (auto-> ns-form* (str *ns*))
+            ns-form* (get opts :ns :auto)
+            ns-form  (auto-> ns-form* (str *ns*))
 
-           show-run-val (get opts :run-val '_run-val)
-           show-run-form
-           (when run-form
-             (get opts :run-form
-               (if (and
-                     (enc/list-form? run-form)
-                     (> (count       run-form)  1)
-                     (> (count (str  run-form)) 32))
-                 (list (first run-form) '...)
-                 (do          run-form))))
+            show-run-val (get opts :run-val '_run-val)
+            show-run-form
+            (when run-form
+              (get opts :run-form
+                (if (and
+                      (enc/list-form? run-form)
+                      (> (count       run-form)  1)
+                      (> (count (str  run-form)) 32))
+                  (list (first run-form) '...)
+                  (do          run-form))))
 
-           {:keys [#_callsite-id elide? allow?]}
-           (sigs/filter-call
-             {:cljs? cljs?
-              :sf-arity 4
-              :ct-call-filter     ct-call-filter
-              :*rt-call-filter* `*rt-call-filter*}
+            {:keys [#_callsite-id elide? allow?]}
+            (sigs/filter-call
+              {:cljs? cljs?
+               :sf-arity 4
+               :ct-call-filter     ct-call-filter
+               :*rt-call-filter* `*rt-call-filter*}
 
-             (assoc opts
-               :ns ns-form
-               :local-forms
-               {:kind  '__kind
-                :ns    '__ns
-                :id    '__id
-                :level '__level}))]
+              (assoc opts
+                :ns ns-form
+                :local-forms
+                {:kind  '__kind
+                 :ns    '__ns
+                 :id    '__id
+                 :level '__level}))]
 
-       (if elide?
-         run-form
-         (let [coords
-               (get opts :coords
-                 (when (= ns-form* :auto)
-                   ;; Auto coords iff auto ns
-                   (truss/callsite-coords &form)))
+        (if elide?
+          run-form
+          (let [coords
+                (get opts :coords
+                  (when (= ns-form* :auto)
+                    ;; Auto coords iff auto ns
+                    (truss/callsite-coords &form)))
 
-               {inst-form  :inst
-                level-form :level
-                kind-form  :kind
-                id-form    :id} opts
+                {inst-form  :inst
+                 level-form :level
+                 kind-form  :kind
+                 id-form    :id} opts
 
                trace? (get opts :trace? (boolean run-form))
                _
@@ -588,185 +592,185 @@
                     :context `signal!
                     :msg "Expected constant (compile-time) `:trace?` boolean"}))
 
-               thread-form (when clj? `(enc/thread-info))
+                thread-form (when clj? `(enc/thread-info))
 
-               inst-form   (get opts :inst :auto)
-               inst-form   (auto-> inst-form `(enc/now-inst*))
+                inst-form   (get opts :inst :auto)
+                inst-form   (auto-> inst-form `(enc/now-inst*))
 
-               parent-form (get opts :parent `*trace-parent*)
-               root-form0  (get opts :root   `*trace-root*)
+                parent-form (get opts :parent `*trace-parent*)
+                root-form0  (get opts :root   `*trace-root*)
 
-               uid-form    (get opts :uid (when trace? :auto))
+                uid-form    (get opts :uid (when trace? :auto))
 
-               signal-delay-form
-               (let [{do-form          :do
-                      let-form         :let
-                      msg-form         :msg
-                      data-form        :data
-                      error-form       :error
-                      sample-rate-form :sample-rate} opts
+                signal-delay-form
+                (let [{do-form          :do
+                       let-form         :let
+                       msg-form         :msg
+                       data-form        :data
+                       error-form       :error
+                       sample-rate-form :sample-rate} opts
 
-                     let-form (or let-form '[])
-                     msg-form (parse-msg-form msg-form)
+                      let-form (or let-form '[])
+                      msg-form (parse-msg-form msg-form)
 
-                     ctx-form
-                     (if-let [ctx+ (get opts :ctx+)]
-                       `(taoensso.encore.signals/update-ctx taoensso.telemere/*ctx* ~ctx+)
-                       (get opts :ctx                      `taoensso.telemere/*ctx*))
+                      ctx-form
+                      (if-let [ctx+ (get opts :ctx+)]
+                        `(taoensso.encore.signals/update-ctx taoensso.telemere/*ctx* ~ctx+)
+                        (get opts :ctx                      `taoensso.telemere/*ctx*))
 
-                     middleware-form
-                     (if-let [middleware+ (get opts :middleware+)]
-                       `(taoensso.encore/comp-middleware taoensso.telemere/*middleware* ~middleware+)
-                       (get opts :middleware            `taoensso.telemere/*middleware*))
+                      middleware-form
+                      (if-let [middleware+ (get opts :middleware+)]
+                        `(taoensso.encore/comp-middleware taoensso.telemere/*middleware* ~middleware+)
+                        (get opts :middleware            `taoensso.telemere/*middleware*))
 
-                     kvs-form
-                     (not-empty
-                       (dissoc opts
-                         :elidable? :coords :inst :uid :middleware :middleware+,
-                         :sample-rate :ns :kind :id :level :filter :when #_:rate-limit #_:rate-limit-by,
-                         :ctx :ctx+ :parent #_:trace?, :do :let :data :msg :error,
-                         :run :run-form :run-val, :elide? :allow? #_:callsite-id :otel/context))
+                      kvs-form
+                      (not-empty
+                        (dissoc opts
+                          :elidable? :coords :inst :uid :middleware :middleware+,
+                          :sample-rate :ns :kind :id :level :filter :when #_:rate-limit #_:rate-limit-by,
+                          :ctx :ctx+ :parent #_:trace?, :do :let :data :msg :error,
+                          :run :run-form :run-val, :elide? :allow? #_:callsite-id :otel/context))
 
-                     _ ; Compile-time validation
-                     (do
-                       (when (and run-form error-form) ; Ambiguous source of error
-                         (truss/ex-info! "Signals cannot have both `:run` and `:error` opts at the same time"
-                           {:run-form   run-form
-                            :error-form error-form
-                            :ns         ns-form
-                            :coords     coords
-                            :other-opts (dissoc opts :run :error)}))
+                      _ ; Compile-time validation
+                      (do
+                        (when (and run-form error-form) ; Ambiguous source of error
+                          (truss/ex-info! "Signals cannot have both `:run` and `:error` opts at the same time"
+                            {:run-form   run-form
+                             :error-form error-form
+                             :ns         ns-form
+                             :coords     coords
+                             :other-opts (dissoc opts :run :error)}))
 
-                       (when-let [e (find opts :msg_)] ; Common typo/confusion
-                         (truss/ex-info! "Signals cannot have `:msg_` opt (did you mean `:msg`?))"
-                           {:msg_ (truss/typed-val (val e))})))
+                        (when-let [e (find opts :msg_)] ; Common typo/confusion
+                          (truss/ex-info! "Signals cannot have `:msg_` opt (did you mean `:msg`?))"
+                            {:msg_ (truss/typed-val (val e))})))
 
-                     signal-form
-                     (let [record-form
-                           (let   [clause [(if run-form :run :no-run) (if clj? :clj :cljs)]]
-                             (case clause
-                               [:run    :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords (enc/host-info) ~'__thread ~'__otel-context1, ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~show-run-form ~show-run-val ~'_end-inst ~'_run-nsecs)
-                               [:run    :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords                                               ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~show-run-form ~show-run-val ~'_end-inst ~'_run-nsecs)
-                               [:no-run :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords (enc/host-info) ~'__thread ~'__otel-context1, ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil             nil           nil         nil)
-                               [:no-run :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords                                               ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil             nil           nil         nil)
-                               (truss/unexpected-arg! clause {:context :signal-constructor-args})))
+                      signal-form
+                      (let [record-form
+                            (let   [clause [(if run-form :run :no-run) (if clj? :clj :cljs)]]
+                              (case clause
+                                [:run    :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords (enc/host-info) ~'__thread ~'__otel-context1, ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~show-run-form ~show-run-val ~'_end-inst ~'_run-nsecs)
+                                [:run    :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords                                               ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~show-run-form ~show-run-val ~'_end-inst ~'_run-nsecs)
+                                [:no-run :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords (enc/host-info) ~'__thread ~'__otel-context1, ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil             nil           nil         nil)
+                                [:no-run :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords                                               ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil             nil           nil         nil)
+                                (truss/unexpected-arg! clause {:context :signal-constructor-args})))
 
-                           record-form
-                           (if-not run-form
-                             record-form
-                             `(let [~(with-meta '_run-result {:tag `RunResult}) ~'__run-result
-                                    ~'_run-nsecs (.-run-nsecs    ~'_run-result)
-                                    ~'_run-val   (.-value        ~'_run-result)
-                                    ~'_run-err   (.-error        ~'_run-result)
-                                    ~'_end-inst  (inst+nsecs ~'__inst ~'_run-nsecs)
-                                    ~'_msg_
-                                    (let [mf# ~msg-form]
-                                      (if (fn? mf#) ; Undocumented, handy for `trace!`/`spy!`, etc.
-                                        (delay (mf# '~show-run-form ~show-run-val ~'_run-err ~'_run-nsecs))
-                                        mf#))]
-                                ~record-form))]
+                            record-form
+                            (if-not run-form
+                              record-form
+                              `(let [~(with-meta '_run-result {:tag `RunResult}) ~'__run-result
+                                     ~'_run-nsecs (.-run-nsecs    ~'_run-result)
+                                     ~'_run-val   (.-value        ~'_run-result)
+                                     ~'_run-err   (.-error        ~'_run-result)
+                                     ~'_end-inst  (inst+nsecs ~'__inst ~'_run-nsecs)
+                                     ~'_msg_
+                                     (let [mf# ~msg-form]
+                                       (if (fn? mf#) ; Undocumented, handy for `trace!`/`spy!`, etc.
+                                         (delay (mf# '~show-run-form ~show-run-val ~'_run-err ~'_run-nsecs))
+                                         mf#))]
+                                 ~record-form))]
 
-                       (if-not kvs-form
-                         record-form
-                         `(let [signal# ~record-form]
-                            (reduce-kv assoc signal# (.-kvs signal#)))))]
+                        (if-not kvs-form
+                          record-form
+                          `(let [signal# ~record-form]
+                             (reduce-kv assoc signal# (.-kvs signal#)))))]
 
-                 `(enc/bound-delay
-                    ;; Delay (cache) shared by all handlers, incl. `:let` eval,
-                    ;; signal construction, middleware, etc. Throws caught by handler.
-                    ~do-form
-                    (let [~@let-form ; Allow to throw, eval BEFORE data, msg, etc.
-                          signal# ~signal-form]
+                  `(enc/bound-delay
+                     ;; Delay (cache) shared by all handlers, incl. `:let` eval,
+                     ;; signal construction, middleware, etc. Throws caught by handler.
+                     ~do-form
+                     (let [~@let-form ; Allow to throw, eval BEFORE data, msg, etc.
+                           signal# ~signal-form]
 
-                      ;; Final unwrapped signal value visible to users/handler-fns, allow to throw
-                      (if-let [sig-middleware# ~middleware-form]
-                        (sig-middleware# signal#) ; Apply signal middleware, can throw
-                        (do              signal#)))))
+                       ;; Final unwrapped signal value visible to users/handler-fns, allow to throw
+                       (if-let [sig-middleware# ~middleware-form]
+                         (sig-middleware# signal#) ; Apply signal middleware, can throw
+                         (do              signal#)))))
 
-               ;; Trade-off: avoid double `run-form` expansion
-               run-fn-form (when run-form `(fn [] ~run-form))
-               run-form*   (when run-form `(~'__run-fn-form))
+                ;; Trade-off: avoid double `run-form` expansion
+                run-fn-form (when run-form `(fn [] ~run-form))
+                run-form*   (when run-form `(~'__run-fn-form))
 
-               into-let-form
-               (enc/cond!
-                 (not trace?) ; Don't trace
-                 `[~'__otel-context1 nil
-                   ~'__uid   ~(auto-> uid-form `(taoensso.telemere/*uid-fn* (if ~'__root0 false true)))
-                   ~'__root1 ~'__root0 ; Retain, but don't establish
-                   ~'__run-result
-                   ~(when run-form
-                      `(let [t0# (enc/now-nano*)]
-                         (truss/try*
-                           (do            (RunResult. ~run-form* nil (- (enc/now-nano*) t0#)))
-                           (catch :all t# (RunResult. nil        t#  (- (enc/now-nano*) t0#))))))]
+                into-let-form
+                (enc/cond!
+                  (not trace?) ; Don't trace
+                  `[~'__otel-context1 nil
+                    ~'__uid   ~(auto-> uid-form `(taoensso.telemere/*uid-fn* (if ~'__root0 false true)))
+                    ~'__root1 ~'__root0 ; Retain, but don't establish
+                    ~'__run-result
+                    ~(when run-form
+                       `(let [t0# (enc/now-nano*)]
+                          (truss/try*
+                            (do            (RunResult. ~run-form* nil (- (enc/now-nano*) t0#)))
+                            (catch :all t# (RunResult. nil        t#  (- (enc/now-nano*) t0#))))))]
 
-                 ;; Trace without OpenTelemetry
-                 (or cljs? (not enabled:otel-tracing?))
-                 `[~'__otel-context1 nil
-                   ~'__uid  ~(auto-> uid-form `(taoensso.telemere/*uid-fn* (if ~'__root0 false true)))
-                   ~'__root1 (or ~'__root0 ~(when trace? `{:id ~'__id, :uid ~'__uid}))
-                   ~'__run-result
-                   ~(when run-form
-                      `(binding [*trace-root*   ~'__root1
-                                 *trace-parent* {:id ~'__id, :uid ~'__uid}]
-                         (let [t0# (enc/now-nano*)]
-                           (truss/try*
-                             (do            (RunResult. ~run-form* nil (- (enc/now-nano*) t0#)))
-                             (catch :all t# (RunResult. nil        t#  (- (enc/now-nano*) t0#)))))))]
+                  ;; Trace without OpenTelemetry
+                  (or cljs? (not enabled:otel-tracing?))
+                  `[~'__otel-context1 nil
+                    ~'__uid  ~(auto-> uid-form `(taoensso.telemere/*uid-fn* (if ~'__root0 false true)))
+                    ~'__root1 (or ~'__root0 ~(when trace? `{:id ~'__id, :uid ~'__uid}))
+                    ~'__run-result
+                    ~(when run-form
+                       `(binding [*trace-root*   ~'__root1
+                                  *trace-parent* {:id ~'__id, :uid ~'__uid}]
+                          (let [t0# (enc/now-nano*)]
+                            (truss/try*
+                              (do            (RunResult. ~run-form* nil (- (enc/now-nano*) t0#)))
+                              (catch :all t# (RunResult. nil        t#  (- (enc/now-nano*) t0#)))))))]
 
-                 ;; Trace with OpenTelemetry
-                 (and clj? enabled:otel-tracing?)
-                 `[~'__otel-context0  ~(get opts :otel/context `(otel-context)) ; Context
-                   ~'__otel-context1  ~(if run-form `(otel-context+span ~'__id ~'__inst ~'__otel-context0 ~(get opts :otel/span-kind)) ~'__otel-context0)
-                   ~'__uid            ~(auto-> uid-form `(or (otel-span-id ~'__otel-context1) (com.taoensso.encore.Ids/genHexId16)))
-                   ~'__root1
-                   (or ~'__root0
-                     ~(when trace?
-                        `{:id ~'__id, :uid (or (otel-trace-id ~'__otel-context1) (com.taoensso.encore.Ids/genHexId32))}))
+                  ;; Trace with OpenTelemetry
+                  (and clj? enabled:otel-tracing?)
+                  `[~'__otel-context0  ~(get opts :otel/context `(otel-context)) ; Context
+                    ~'__otel-context1  ~(if run-form `(otel-context+span ~'__id ~'__inst ~'__otel-context0 ~(get opts :otel/span-kind)) ~'__otel-context0)
+                    ~'__uid            ~(auto-> uid-form `(or (otel-span-id ~'__otel-context1) (com.taoensso.encore.Ids/genHexId16)))
+                    ~'__root1
+                    (or ~'__root0
+                      ~(when trace?
+                         `{:id ~'__id, :uid (or (otel-trace-id ~'__otel-context1) (com.taoensso.encore.Ids/genHexId32))}))
 
-                   ~'__run-result
-                   ~(when run-form
-                      `(binding [*otel-context* ~'__otel-context1
-                                 *trace-root*   ~'__root1
-                                 *trace-parent* {:id ~'__id, :uid ~'__uid}]
-                         (let [otel-scope# (.makeCurrent ~'__otel-context1)
-                               t0#         (enc/now-nano*)]
-                           (truss/try*
-                             (do            (RunResult. ~run-form* nil (- (enc/now-nano*) t0#)))
-                             (catch :all t# (RunResult. nil        t#  (- (enc/now-nano*) t0#)))
-                             (finally (.close otel-scope#))))))])
+                    ~'__run-result
+                    ~(when run-form
+                       `(binding [*otel-context* ~'__otel-context1
+                                  *trace-root*   ~'__root1
+                                  *trace-parent* {:id ~'__id, :uid ~'__uid}]
+                          (let [otel-scope# (.makeCurrent ~'__otel-context1)
+                                t0#         (enc/now-nano*)]
+                            (truss/try*
+                              (do            (RunResult. ~run-form* nil (- (enc/now-nano*) t0#)))
+                              (catch :all t# (RunResult. nil        t#  (- (enc/now-nano*) t0#)))
+                              (finally (.close otel-scope#))))))])
 
-               final-form
-               ;; Unless otherwise specified, allow errors to throw on call
-               `(let [~'__run-fn-form ~run-fn-form
-                      ~'__kind        ~kind-form
-                      ~'__ns          ~ns-form
-                      ~'__id          ~id-form
-                      ~'__level       ~level-form]
+                final-form
+                ;; Unless otherwise specified, allow errors to throw on call
+                `(let [~'__run-fn-form ~run-fn-form
+                       ~'__kind        ~kind-form
+                       ~'__ns          ~ns-form
+                       ~'__id          ~id-form
+                       ~'__level       ~level-form]
 
-                  (enc/if-not ~allow?
-                    ~run-form*
-                    (let [~'__inst   ~inst-form
-                          ~'__thread ~thread-form
-                          ~'__root0  ~root-form0 ; ?{:keys [id uid]}
+                   (enc/if-not ~allow?
+                     ~run-form*
+                     (let [~'__inst   ~inst-form
+                           ~'__thread ~thread-form
+                           ~'__root0  ~root-form0 ; ?{:keys [id uid]}
 
-                          ~@into-let-form ; Inject conditional bindings
-                          signal# ~signal-delay-form]
+                           ~@into-let-form ; Inject conditional bindings
+                           signal# ~signal-delay-form]
 
-                      (dispatch-signal!
-                        ;; Unconditionally send same wrapped signal to all handlers.
-                        ;; Each handler will use wrapper for handler filtering,
-                        ;; unwrapping (realizing) only allowed signals.
-                        (WrappedSignal. ~'__kind ~'__ns ~'__id ~'__level signal#))
+                       (dispatch-signal!
+                         ;; Unconditionally send same wrapped signal to all handlers.
+                         ;; Each handler will use wrapper for handler filtering,
+                         ;; unwrapping (realizing) only allowed signals.
+                         (WrappedSignal. ~'__kind ~'__ns ~'__id ~'__level signal#))
 
-                      (if ~'__run-result
-                        ( ~'__run-result signal#)
-                        true))))]
+                       (if ~'__run-result
+                         ( ~'__run-result signal#)
+                         true))))]
 
-           (if-let [iife-wrap? true #_cljs?]
-             ;; Small perf hit to improve compatibility within `go` and other IOC-style bodies
-             `((fn [] ~final-form))
-             (do       final-form)))))))
+            (if-let [iife-wrap? true #_cljs?]
+              ;; Small perf hit to improve compatibility within `go` and other IOC-style bodies
+              `((fn [] ~final-form))
+              (do       final-form))))))))
 
 (comment
   (with-signal  (signal! {:level :warn :let [x :x] :msg ["Test" "message" x] :data {:a :A :x x} :run (+ 1 2)}))
