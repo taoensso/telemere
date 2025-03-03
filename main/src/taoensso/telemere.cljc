@@ -58,6 +58,7 @@
   enc/newline
   enc/comp-middleware
   sigs/default-handler-dispatch-opts
+  truss/keep-callsite
 
   ;; Impl
   impl/msg-splice

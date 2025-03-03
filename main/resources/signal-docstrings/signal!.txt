@@ -12,9 +12,11 @@ dispatches it to registered handlers for processing (e.g. writing to
 console/file/queue/db, etc.).
 
 Generic signals are fairly low-level and useful mostly for library authors or
-advanced users writing their own wrapper macros. Regular users will typically
-prefer one of the higher-level signal creators optimized for ease-of-use in
-common cases [1].
+advanced users writing their own wrapper macros. NB see `keep-callsite` for
+preserving callsite coords when wrapping Telemere macros like `signal!`.
+
+Regular users will typically prefer one of the higher-level signal creators
+optimized for ease-of-use in common cases [1].
 
 Tips:
 
