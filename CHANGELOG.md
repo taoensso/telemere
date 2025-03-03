@@ -2,22 +2,22 @@ This project uses [**Break Versioning**](https://www.taoensso.com/break-versioni
 
 ---
 
-# `v1.0.0-RC3` (2025-02-27)
+# `v1.0.0-RC4` (2025-03-03)
 
 ## 📦 Dependencies
 
 Available on Clojars:
 
-1. [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-RC3) - main dependency.
-2. [SLF4J provider](https://clojars.org/com.taoensso/telemere-slf4j/versions/1.0.0-RC3) - additional dependency for users that want their Java logging [to go to](https://github.com/taoensso/telemere/wiki/3-Config#java-logging) Telemere.
+1. [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-RC4) - main dependency.
+2. [SLF4J provider](https://clojars.org/com.taoensso/telemere-slf4j/versions/1.0.0-RC4) - additional dependency for users that want their Java logging [to go to](https://github.com/taoensso/telemere/wiki/3-Config#java-logging) Telemere.
 
 This project uses [Break Versioning](https://www.taoensso.com/break-versioning).
 
 ## Release notes
 
-RC3 includes some minor fixes, minor usability improvements, and a **breaking change** to signal content and options (indicated by ➤) that should not affect most users.
+RC4 includes some minor fixes, minor usability improvements, and a few **breaking changes** (indicated by ➤) that should not affect most users.
 
-If no unexpected issues come up, RC3 will become **v1 stable** in March 2025.
+If no unexpected issues come up, RC4 will become **v1 stable** in March 2025.
 
 Big thanks to everyone that's been helping test and give feedback. And as always, please **report any unexpected problems** on [GitHub](https://github.com/taoensso/telemere/issues) or the [Slack channel](https://www.taoensso.com/telemere/slack) 🙏
 
@@ -33,6 +33,7 @@ Thanks for the patience awaiting v1 final! I hope and believe that it'll have be
 
 Please read these carefully in case you might be affected:
 
+* ➤ **\[mod]** `log!`, `event!` now always return nil \[ac5feb4] (**RC4**)
 * ➤ **\[mod]** Signal content: drop `:location`, add `:coords` \[fda22ce] (**RC3**)
 * ➤ **\[mod]** Signal options: drop `:location`, add `:coords` \[1f99f71] (**RC3**)
 * ➤ **\[mod]** OpenTelemetry: use standard attr names when possible \[bb715fb] (**RC3**)
@@ -42,6 +43,7 @@ Please read these carefully in case you might be affected:
 
 #### Changes to default output since `v1.0.0-RC1`
 
+* ➤ **\[mod]** [#52] `signal-preamble-fn` now ignores nil `:kind` (@marksto) \[634cc53] (**RC4**)
 * \[mod] Remove "- " msg separator from default [preamble](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#signal-preamble-fn) output \[d61f6c2] (RC2)
 * \[mod] [Postal handler](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.postal#handler:postal) now uses default preamble fn for email subject \[706a8b6] (RC2)
 * \[mod] Default [`signal-content-fn`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#signal-content-fn): omit redundant parent/root id namespaces \[55323f1] (RC2)
@@ -49,8 +51,9 @@ Please read these carefully in case you might be affected:
 * \[mod] Default [`signal-content-fn`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#signal-content-fn): omit `:root` if it's same as parent \[0464285] (RC2)
 * \[mod] Omit empty `:data`, `:ctx` from [signal content](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#signal-content-fn) output \[d78663a] (RC2)
 
-### Earlier changes
+### Other changes
 
+* **\[mod]** [#51] Make default console handler sync by default \[78ed4d7] (**RC4**)
 * \[mod] Update [`pr-signal-fn`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#pr-signal-fn) to use [`clean-signal-fn`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#clean-signal-fn) \[f70363091] (beta 23)
 * \[mod] Rename `taoensso.telemere.api` -> `taoensso.telemere.shell` \[a9005e7f1] (beta 23)
 * \[mod] Move dep: `com.taoensso/slf4j-telemere` -> [com.taoensso/telemere-slf4j](https://clojars.org/com.taoensso/telemere-slf4j) \[77ed27cfd] (beta 22)
@@ -79,6 +82,8 @@ Please read these carefully in case you might be affected:
 
 #### Misc improvements
 
+* **\[new]** Add `log!?`, `event!?` \[ac5feb4] (**RC4**)
+* **\[new]** Alias `keep-callsite`, mention in `signal!` docs \[bfea515] (**RC4**)
 * **\[new]** Use [Truss](https://www.taoensso.com/truss) v2 and [contextual exceptions](https://cljdoc.org/d/com.taoensso/truss/CURRENT/api/taoensso.truss#ex-info) when relevant (**RC3**)
 * **\[new]** [#44] Open Telemetry handler: add span kind option (@farcaller) \[413cce8] (**RC3**)
 * **\[new]** Reduced Cljs build sizes in some cases (**RC3**)
@@ -94,6 +99,8 @@ Please read these carefully in case you might be affected:
 
 #### Doc improvements
 
+* **\[doc]** [#50] Expand docs for `set-min-level!` (via Encore update) (**RC4**)
+* **\[doc]** Mention `:inst` monotonicity \[6b0e0b9] (**RC4**)
 * **\[doc]** Timbre shim: document different `spy` error handling \[1517f30] (**RC3**)
 * **\[doc]** [#43] ns filters work for SLF4J logger names (@lvh) \[db0498b] (**RC3**)
 * \[doc] [#33] Add community examples link to [Bling Gist](https://gist.github.com/ptaoussanis/f8a80f85d3e0f89b307a470ce6e044b5) \[8cd4ca9] (RC2)
@@ -147,6 +154,7 @@ Please read these carefully in case you might be affected:
 
 ### Since `v1.0.0-RC1` (2024-10-29)
 
+* **\[fix]** [#52] `signal-preamble-fn` should use host info in signal (@marksto) \[410ed89] (**RC4**)
 * **\[fix]** Timbre shim: rename `spy!` -> `spy` (@lvh) \[3a9ffc6] (**RC3**)
 * **\[fix]** Timbre shim: don't attach empty `:vargs` data \[0e642ba] (**RC3**)
 * **\[fix]** Fix environment val docs \[db26a5d] (**RC3**)
