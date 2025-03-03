@@ -58,7 +58,7 @@
   enc/newline
   enc/comp-middleware
   sigs/default-handler-dispatch-opts
-  truss/keep-callsite
+  #?(:clj truss/keep-callsite)
 
   ;; Impl
   impl/msg-splice
@@ -236,7 +236,7 @@
 
 #?(:clj
    (defmacro signal!
-     "opts => allowed? / unconditional run result (value or throw)."
+     "opts => allowed? / run result (value or throw)."
      {:doc      (impl/signal-docstring :signal!)
       :arglists (impl/signal-arglists  :signal!)}
      [& args]
@@ -295,7 +295,7 @@
 #?(:clj
    (let [base-opts {:kind :trace, :level :info, :msg `impl/default-trace-msg}]
      (defmacro trace!
-       "?id + run => unconditional run result (value or throw)."
+       "?id + run => run result (value or throw)."
        {:doc      (impl/signal-docstring :trace!)
         :arglists (impl/signal-arglists  :trace!)}
        ([opts-or-run]    `(impl/signal!        ~(merge-or-assoc-opts base-opts &form :run opts-or-run)))
@@ -306,7 +306,7 @@
 #?(:clj
    (let [base-opts {:kind :spy, :level :info, :msg `impl/default-trace-msg}]
      (defmacro spy!
-       "?level + run => unconditional run result (value or throw)."
+       "?level + run => run result (value or throw)."
        {:doc      (impl/signal-docstring :spy!)
         :arglists (impl/signal-arglists  :spy!)}
        ([opts-or-run]       `(impl/signal!        ~(merge-or-assoc-opts base-opts &form :run   opts-or-run)))
@@ -317,7 +317,7 @@
 #?(:clj
    (let [base-opts {:kind :error, :level :error}]
      (defmacro error!
-       "?id + error => unconditional given error."
+       "?id + error => given error."
        {:doc      (impl/signal-docstring :error!)
         :arglists (impl/signal-arglists  :error!)}
        ([opts-or-id error] `(error! ~(assoc (merge-or-assoc-opts base-opts &form :id opts-or-id) :error error)))
@@ -334,7 +334,7 @@
 #?(:clj
    (let [base-opts {:kind :error, :level :error}]
      (defmacro catch->error!
-       "?id + run => unconditional run value or ?catch-val."
+       "?id + run => run value or ?catch-val."
        {:doc      (impl/signal-docstring :catch->error!)
         :arglists (impl/signal-arglists  :catch->error!)}
        ([opts-or-id run] `(catch->error! ~(assoc (merge-or-assoc-opts base-opts &form :id opts-or-id) :run run)))

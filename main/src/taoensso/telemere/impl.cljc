@@ -397,7 +397,7 @@
             sample-rate kind ns id level when rate-limit rate-limit-by,
             #_ctx #_ctx+ #_parent #_root #_trace?, #_do #_let #_data #_msg #_error #_run #_& #_kvs]}])
 
-       :signal! ; opts => allowed? / unconditional run result (value or throw)
+       :signal! ; opts => allowed? / run result (value or throw)
        '(   [& opts-kvs]
          [{:as opts-map :keys
            [#_elide? #_allow? #_callsite-id, ; Undocumented
@@ -405,7 +405,7 @@
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error run & kvs]}])
 
-       :log! ; ?level + msg => allowed?
+       :log! ; ?level + msg => nil / allowed?
        '([opts-or-msg]
          [level   msg]
          [{:as opts-map :keys
@@ -415,7 +415,7 @@
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}
           msg])
 
-       :event! ; id + ?level => allowed?
+       :event! ; id + ?level => nil / allowed?
        '([opts-or-id]
          [id   level]
          [id
@@ -425,7 +425,7 @@
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}])
 
-       :trace! ; ?id + run => unconditional run result (value or throw)
+       :trace! ; ?id + run => run result (value or throw)
        '([opts-or-run]
          [id      run]
          [{:as opts-map :keys
@@ -435,7 +435,7 @@
             ctx ctx+ parent root trace?, do let data msg error run & kvs]}
           run])
 
-       :spy! ; ?level + run => unconditional run result (value or throw)
+       :spy! ; ?level + run => run result (value or throw)
        '([opts-or-run]
          [level   run]
          [{:as opts-map :keys
@@ -445,7 +445,7 @@
             ctx ctx+ parent root trace?, do let data msg error run & kvs]}
           run])
 
-       :error! ; ?id + error => unconditional given error
+       :error! ; ?id + error => given error
        '([opts-or-error]
          [id      error]
          [{:as opts-map :keys
@@ -455,7 +455,7 @@
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}
           error])
 
-       :catch->error! ; ?id + run => unconditional run value or ?catch-val
+       :catch->error! ; ?id + run => run value or ?catch-val
        '([opts-or-run]
          [id      run]
          [{:as opts-map :keys
