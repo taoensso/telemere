@@ -1,11 +1,12 @@
 ALWAYS (unconditionally) executes given `run` form and:
-  If `run` form succeeds: returns the form's result.
-  If `run` form throws ANYTHING:
-    Calls `error!` with the thrown error and given signal options [2], then
-    either returns given (:catch-val opts), or rethrows.
 
 Default  kind: `:error`
 Default level: `:error`
+Returns:
+  - If given `run` form succeeds: returns the form's result.
+  - If given `run` form throws ANYTHING:
+      Calls `error!` with the thrown error and given signal options [2], then
+      either returns given (:catch-val opts), or rethrows.
 
 Just a convenience util. For more flexibility use your own `try/catch`.
 See `taoensso.encore/try*` for easily catching cross-platform errors.

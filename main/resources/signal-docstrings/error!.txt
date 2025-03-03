@@ -1,9 +1,10 @@
 "Error" signal creator, emphasizing (optional id) + error (Exception, etc.).
-ALWAYS (unconditionally) returns the given error, so can conveniently be wrapped
-by `throw`: (throw (error! (ex-info ...)), etc.
 
 Default  kind: `:error`
 Default level: `:error`
+Returns:
+  ALWAYS (unconditionally) returns the given error, so can conveniently be
+  wrapped by `throw`: (throw (error! (ex-info ...)), etc.
 
 Examples:
 

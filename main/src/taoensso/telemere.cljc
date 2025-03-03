@@ -197,14 +197,14 @@
 (comment (enc/qb 1e6 (force *otel-tracer*))) ; 51.23
 
 ;;;; Signal creators
-;; - signal! ---------- opts            => allowed? / unconditional run result (value or throw)
-;; - event! ----------- id     + ?level => allowed?
-;; - log! ------------- ?level + msg    => allowed?
-;; - trace! ----------- ?id    + run    => unconditional run result (value or throw)
-;; - spy! ------------- ?level + run    => unconditional run result (value or throw)
-;; - error! ----------- ?id    + error  => unconditional given error
-;; - catch->error! ---- ?id    + run    => unconditional run value or ?catch-val
+;; - log! ------------- ?level + msg    => nil
+;; - event! ----------- id     + ?level => nil
+;; - trace! ----------- ?id    + run    => run result (value or throw)
+;; - spy! ------------- ?level + run    => run result (value or throw)
+;; - error! ----------- ?id    + error  => given error
+;; - catch->error! ---- ?id    + run    => run value or ?catch-val
 ;; - uncaught->error! - ?id             => nil
+;; - signal! ---------- opts            => allowed? / run result (value or throw)
 
 #?(:clj
    (defn- args->opts [args]
@@ -252,26 +252,44 @@
          (assoc m k v)))))
 
 #?(:clj
-   (let [base-opts {:kind :event, :level :info}]
-     (defmacro event!
-       "id + ?level => allowed? Note unique arg order: [x opts] rather than [opts x]!"
-       {:doc      (impl/signal-docstring :event!)
-        :arglists (impl/signal-arglists  :event!)}
-       ([   opts-or-id]    `(impl/signal!        ~(merge-or-assoc-opts base-opts &form :id    opts-or-id)))
-       ([id opts-or-level] `(impl/signal! ~(assoc (merge-or-assoc-opts base-opts &form :level opts-or-level) :id id))))))
-
-(comment (:coords (with-signal (event! ::my-id :info))))
-
-#?(:clj
    (let [base-opts {:kind :log, :level :info}]
-     (defmacro log!
+     (defmacro log!?
        "?level + msg => allowed?"
        {:doc      (impl/signal-docstring :log!)
         :arglists (impl/signal-arglists  :log!)}
        ([opts-or-msg      ] `(impl/signal!        ~(merge-or-assoc-opts base-opts &form :msg   opts-or-msg)))
        ([opts-or-level msg] `(impl/signal! ~(assoc (merge-or-assoc-opts base-opts &form :level opts-or-level) :msg msg))))))
 
+(comment (:coords (with-signal (log!? :info "My msg"))))
+
+#?(:clj
+   (defmacro log!
+     "Like `log!?` but always returns nil."
+     {:doc      (impl/signal-docstring :log!)
+      :arglists (impl/signal-arglists  :log!)}
+     [& args] `(do ~(truss/keep-callsite `(log!? ~@args)) nil)))
+
 (comment (:coords (with-signal (log! :info "My msg"))))
+
+#?(:clj
+   (let [base-opts {:kind :event, :level :info}]
+     (defmacro event!?
+       "id + ?level => allowed? Note unique arg order: [x opts] rather than [opts x]!"
+       {:doc      (impl/signal-docstring :event!)
+        :arglists (impl/signal-arglists  :event!)}
+       ([   opts-or-id]    `(impl/signal!        ~(merge-or-assoc-opts base-opts &form :id    opts-or-id)))
+       ([id opts-or-level] `(impl/signal! ~(assoc (merge-or-assoc-opts base-opts &form :level opts-or-level) :id id))))))
+
+(comment (:coords (with-signal (event!? ::my-id :info))))
+
+#?(:clj
+   (defmacro event!
+     "Like `event!?` but always returns nil."
+     {:doc      (impl/signal-docstring :event!)
+      :arglists (impl/signal-arglists  :event!)}
+     [& args] `(do ~(truss/keep-callsite `(event!? ~@args)) nil)))
+
+(comment (:coords (with-signal (event! ::my-id :info))))
 
 #?(:clj
    (let [base-opts {:kind :trace, :level :info, :msg `impl/default-trace-msg}]

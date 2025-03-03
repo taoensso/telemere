@@ -574,19 +574,19 @@
 ;;;;
 
 (deftest _common-signals
-  [(testing "event!" ; id + ?level => allowed?
-     [(let [{rv :value, [sv] :signals} (with-sigs (tel/event! :id1                    ))] [(is (= rv true)) (is (sm?  sv {:kind :event, :coords coords?, :level :info, :id :id1}))])
-      (let [{rv :value, [sv] :signals} (with-sigs (tel/event! :id1              :warn)) ] [(is (= rv true)) (is (sm?  sv {:kind :event, :coords coords?, :level :warn, :id :id1}))])
-      (let [{rv :value, [sv] :signals} (with-sigs (tel/event! :id1      {:level :warn}))] [(is (= rv true)) (is (sm?  sv {:kind :event, :coords coords?, :level :warn, :id :id1}))])
-      (let [{rv :value, [sv] :signals} (with-sigs (tel/event! {:id :id1, :level :warn}))] [(is (= rv true)) (is (sm?  sv {:kind :event, :coords coords?, :level :warn, :id :id1}))])
-      (let [{rv :value, [sv] :signals} (with-sigs (tel/event! :id1 {:allow? false}))    ] [(is (= rv nil))  (is (nil? sv))])])
+  [(testing "event!?" ; id + ?level => allowed?
+     [(let [{rv :value, [sv] :signals} (with-sigs (tel/event!? :id1                    ))] [(is (= rv true)) (is (sm?  sv {:kind :event, :coords coords?, :level :info, :id :id1}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/event!? :id1              :warn)) ] [(is (= rv true)) (is (sm?  sv {:kind :event, :coords coords?, :level :warn, :id :id1}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/event!? :id1      {:level :warn}))] [(is (= rv true)) (is (sm?  sv {:kind :event, :coords coords?, :level :warn, :id :id1}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/event!? {:id :id1, :level :warn}))] [(is (= rv true)) (is (sm?  sv {:kind :event, :coords coords?, :level :warn, :id :id1}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/event!? :id1 {:allow? false}))    ] [(is (= rv nil))  (is (nil? sv))])])
 
-   (testing "log!" ; ?level + msg => allowed?
-     [(let [{rv :value, [sv] :signals} (with-sigs (tel/log!                      "msg")) ] [(is (= rv true)) (is (sm?  sv {:kind :log, :coords coords?, :msg_ "msg", :level :info}))])
-      (let [{rv :value, [sv] :signals} (with-sigs (tel/log!          :warn       "msg")) ] [(is (= rv true)) (is (sm?  sv {:kind :log, :coords coords?, :msg_ "msg", :level :warn}))])
-      (let [{rv :value, [sv] :signals} (with-sigs (tel/log! {:level  :warn}      "msg")) ] [(is (= rv true)) (is (sm?  sv {:kind :log, :coords coords?, :msg_ "msg", :level :warn}))])
-      (let [{rv :value, [sv] :signals} (with-sigs (tel/log! {:level  :warn, :msg "msg"}))] [(is (= rv true)) (is (sm?  sv {:kind :log, :coords coords?, :msg_ "msg", :level :warn}))])
-      (let [{rv :value, [sv] :signals} (with-sigs (tel/log! {:allow? false}      "msg")) ] [(is (= rv nil))  (is (nil? sv))])])
+   (testing "log!?" ; ?level + msg => allowed?
+     [(let [{rv :value, [sv] :signals} (with-sigs (tel/log!?                      "msg")) ] [(is (= rv true)) (is (sm?  sv {:kind :log, :coords coords?, :msg_ "msg", :level :info}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/log!?          :warn       "msg")) ] [(is (= rv true)) (is (sm?  sv {:kind :log, :coords coords?, :msg_ "msg", :level :warn}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/log!? {:level  :warn}      "msg")) ] [(is (= rv true)) (is (sm?  sv {:kind :log, :coords coords?, :msg_ "msg", :level :warn}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/log!? {:level  :warn, :msg "msg"}))] [(is (= rv true)) (is (sm?  sv {:kind :log, :coords coords?, :msg_ "msg", :level :warn}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/log!? {:allow? false}      "msg")) ] [(is (= rv nil))  (is (nil? sv))])])
 
    (testing "trace!" ; ?id + run => unconditional run result (value or throw)
      [(let [{rv :value, [sv] :signals} (with-sigs (tel/trace!                 (+ 1 2))) ] [(is (= rv 3))  (is (sm?  sv {:kind :trace, :coords coords?, :level :info, :id  nil, :msg_ "(+ 1 2) => 3"}))])

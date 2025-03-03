@@ -14,13 +14,14 @@ various keys:
 Creators vary only in in their default options and call APIs (expected args
 and return values), making them more/less convenient for certain use cases:
 
-  `signal!` ------- opts            => allowed? / unconditional run result (value or throw)
-  `event!` -------- id     + ?level => allowed?
-  `log!` ---------- ?level + msg    => allowed?
-  `trace!` -------- ?id    + run    => unconditional run result (value or throw)
-  `spy!` ---------- ?level + run    => unconditional run result (value or throw)
-  `error!` -------- ?id    + error  => unconditional given error
-  `catch->error!` - ?id    + run    => unconditional run value or ?catch-val
+  `log!` ------------- ?level + msg    => nil
+  `event!` ----------- id     + ?level => nil
+  `trace!` ----------- ?id    + run    => run result (value or throw)
+  `spy!` ------------- ?level + run    => run result (value or throw)
+  `error!` ----------- ?id    + error  => given error
+  `catch->error!` ---- ?id    + run    => run value or ?catch-val
+  `uncaught->error!` - ?id             => nil
+  `signal!` ---------- opts            => allowed? / run result (value or throw)
 
 - `log!` and `event!` are both good default/general-purpose signal creators.
 - `log!` emphasizes messages, while `event!` emphasizes ids.

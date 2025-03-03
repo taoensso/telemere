@@ -131,13 +131,13 @@ Use whichever signal creator is most convenient for your needs:
 
 | Name                                                                                                        | Kind       | Args             | Returns                      |
 | :---------------------------------------------------------------------------------------------------------- | :--------- | :--------------- | :--------------------------- |
-| [`signal!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#signal!)               | `:generic` | `opts`           | Depends on opts              |
-| [`event!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#event!)                 | `:event`   | `id` + `?level`  | Signal allowed?              |
-| [`log!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#log!)                     | `:log`     | `?level` + `msg` | Signal allowed?              |
+| [`log!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#log!)                     | `:log`     | `?level` + `msg` | nil                          |
+| [`event!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#event!)                 | `:event`   | `id` + `?level`  | nil                          |
 | [`trace!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#trace!)                 | `:trace`   | `?id` + `run`    | Form result                  |
 | [`spy!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#spy!)                     | `:spy`     | `?level` + `run` | Form result                  |
 | [`error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#error!)                 | `:error`   | `?id` + `error`  | Given error                  |
 | [`catch->error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#catch-%3Eerror!) | `:error`   | `?id`            | Form value or given fallback |
+| [`signal!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#signal!)               | `:generic` | `opts`           | Depends on opts              |
  
 - See relevant docstrings (links above) for usage info.
 - See [`help:signal-creators`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-creators) for more about signal creators.

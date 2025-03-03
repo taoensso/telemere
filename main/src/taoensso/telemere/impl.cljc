@@ -405,16 +405,6 @@
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error run & kvs]}])
 
-       :event! ; id + ?level => allowed?
-       '([opts-or-id]
-         [id   level]
-         [id
-          {:as opts-map :keys
-           [#_elide? #_allow? #_callsite-id,
-            elidable? coords inst uid middleware middleware+,
-            sample-rate kind ns id level when rate-limit rate-limit-by,
-            ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}])
-
        :log! ; ?level + msg => allowed?
        '([opts-or-msg]
          [level   msg]
@@ -424,6 +414,16 @@
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}
           msg])
+
+       :event! ; id + ?level => allowed?
+       '([opts-or-id]
+         [id   level]
+         [id
+          {:as opts-map :keys
+           [#_elide? #_allow? #_callsite-id,
+            elidable? coords inst uid middleware middleware+,
+            sample-rate kind ns id level when rate-limit rate-limit-by,
+            ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}])
 
        :trace! ; ?id + run => unconditional run result (value or throw)
        '([opts-or-run]
@@ -532,7 +532,7 @@
 #?(:clj
    (defmacro signal!
      "Generic low-level signal creator. Wrapped for public API."
-     ([          opts] (truss/keep-callsite `(signal!? nil ~opts)))
+     ([          opts] (truss/keep-callsite `(signal! nil ~opts)))
      ([base-opts opts]
       (valid-opts! (or base-opts {}))
       (valid-opts! (or opts      {}))

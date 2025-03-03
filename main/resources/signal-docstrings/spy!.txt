@@ -1,8 +1,8 @@
 "Spy" signal creator, emphasizing (optional level) + form to run.
-ALWAYS (unconditionally) returns run value, or rethrows run error.
 
 Default kind:  `:spy`
 Default level: `:info`
+Returns: ALWAYS (unconditionally) returns run value, or rethrows run error.
 
 When filtering conditions are met [4], creates a Telemere signal [3] and
 dispatches it to registered handlers for processing (e.g. writing to

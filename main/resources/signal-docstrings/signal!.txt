@@ -1,12 +1,11 @@
 Low-level "generic" signal creator for creating signals of any "kind".
 Takes a single map of options [2] with compile-time keys.
 
-Return value depends on options:
-  - If given `:run` form: unconditionally returns run value, or rethrows run error.
-  - Otherwise: returns true iff signal was created (allowed by filtering).
-
 Default  kind: `:generic` (feel free to change!)
 Default level: `:info`
+Returns:
+  - If given `:run` form: unconditionally returns run value, or rethrows run error.
+  - Otherwise: returns true iff signal was created (allowed by filtering).
 
 When filtering conditions are met [4], creates a Telemere signal [3] and
 dispatches it to registered handlers for processing (e.g. writing to
