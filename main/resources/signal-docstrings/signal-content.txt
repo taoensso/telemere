@@ -4,7 +4,7 @@ can be modified by signal and/or handler middleware.
 Default signal keys:
 
 `:schema` ------ Int version of signal schema (current: 1)
-`:inst` -------- Platform instant [1] when signal was created
+`:inst` -------- Platform instant [1] when signal was created, monotonicity depends on system clock
 `:level` ------- Signal level ∈ #{<int> :trace :debug :info :warn :error :fatal :report ...}
 `:kind` -------- Signal ?kind ∈ #{nil :event :error :log :trace :spy :slf4j :tools-logging <app-val> ...}
 `:id` ---------- ?id of signal          (common to all  signals created at callsite,              contrast with `:uid`)
