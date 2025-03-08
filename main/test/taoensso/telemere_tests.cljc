@@ -855,7 +855,7 @@
                [(is (= sig*1 sig*2) "Default :pr-fn is :edn")
                 (is
                   (sm? sig*1
-                    {:schema 1, :kind :event, :id ::ev-id, :level :info,
+                    {:kind :event, :id ::ev-id, :level :info,
                      :ns      "taoensso.telemere-tests"
                      :msg_    "a b"
                      :inst    udt1
@@ -866,8 +866,8 @@
                 (let [sig* (enc/read-json ((tel/pr-signal-fn {:pr-fn :json}) sig))]
                   (is
                     (sm? sig*
-                      {"schema" 1, "kind" "event", "id" "taoensso.telemere-tests/ev-id",
-                       "level" "info",             "ns" "taoensso.telemere-tests"
+                      {"kind" "event", "id" "taoensso.telemere-tests/ev-id",
+                       "level" "info", "ns" "taoensso.telemere-tests"
                        "msg_"    "a b"
                        "inst"    t1s
                        "coords"  vector?})))))
