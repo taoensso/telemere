@@ -663,7 +663,7 @@
     `:incl-nils?` - Include signal's keys with nil values? (default false)
     `:incl-kvs?`  - Include signal's app-level root kvs?   (default false)
     `:incl-keys`  - Subset of signal keys to retain from those otherwise
-                    excluded by default: #{:kvs :host :thread}"
+                    excluded by default: #{:schema :kvs :host :thread}"
   ([] (clean-signal-fn nil))
   ([{:keys [incl-kvs? incl-nils? incl-keys] :as opts}]
    (let [assoc!*
@@ -671,6 +671,7 @@
            (fn [m k v] (if (nil? v) m (assoc! m k v))) ; As `remove-signal-nils`
            (do                         assoc!))
 
+         incl-schema?  (contains? incl-keys :schema)
          incl-kvs-key? (contains? incl-keys :kvs)
          incl-host?    (contains? incl-keys :host)
          incl-thread?  (contains? incl-keys :thread)]
@@ -685,7 +686,7 @@
                  (clojure.core/into ()
                    (clojure.core/disj
                      taoensso.telemere.impl/standard-signal-keys
-                     :msg_ :error :kvs :host :thread))
+                     :msg_ :error :schema :kvs :host :thread))
                  (assoc!* m k v)
 
                  ;; Main keys to include with modified val
@@ -697,6 +698,7 @@
                    taoensso.telemere.impl/impl-signal-keys) m ; noop
 
                  ;;; Other keys to exclude by default
+                 :schema (if incl-schema?  (assoc!* m k v) m)
                  :kvs    (if incl-kvs-key? (assoc!* m k v) m)
                  :thread (if incl-thread?  (assoc!* m k v) m)
                  :host   (if incl-host?    (assoc!* m k v) m)
