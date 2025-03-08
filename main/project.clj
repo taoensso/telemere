@@ -56,9 +56,9 @@
      #_[io.github.paintparty/bling  "0.4.2"]
 
      ;;; For optional handlers
-     [io.opentelemetry/opentelemetry-api                         "1.47.0"]
-     [io.opentelemetry/opentelemetry-sdk-extension-autoconfigure "1.47.0"]
-     [io.opentelemetry/opentelemetry-exporter-otlp               "1.47.0"]
+     [io.opentelemetry/opentelemetry-api                         "1.48.0"]
+     [io.opentelemetry/opentelemetry-sdk-extension-autoconfigure "1.48.0"]
+     [io.opentelemetry/opentelemetry-exporter-otlp               "1.48.0"]
      #_[io.opentelemetry/opentelemetry-exporters-jaeger           "0.9.1"]
      [metosin/jsonista       "0.3.13"]
      [com.draines/postal     "2.0.5"]
