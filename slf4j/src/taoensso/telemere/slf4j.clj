@@ -123,7 +123,7 @@
      :inst   inst
      :error  error
 
-     :ctx
+     :ctx+
      (when-let [hmap (org.slf4j.MDC/getCopyOfContextMap)]
        (clojure.lang.PersistentHashMap/create hmap))
 
