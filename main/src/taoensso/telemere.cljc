@@ -35,6 +35,23 @@
 
 ;;;; Shared signal API
 
+(declare ; Needed to avoid `clj-kondo` "Unresolved var" warnings
+  level-aliases
+  help:filters help:handler help:handler-dispatch-options
+  get-filters get-min-levels get-handlers get-handlers-stats
+
+  #?(:clj without-filters)
+  set-kind-filter! #?(:clj with-kind-filter)
+  set-ns-filter!   #?(:clj with-ns-filter)
+  set-id-filter    #?(:clj with-id-filter)
+  set-min-level!   #?(:clj with-min-level)
+
+  #?(:clj with-handler) #?(:clj with-handler+)
+  add-handler! remove-handler! stop-handlers!
+
+  ^:dynamic *ctx* set-ctx! #?(:clj with-ctx) #?(:clj with-ctx+)
+  ^:dynamic *middleware* set-middleware! #?(:clj with-middleware) #?(:clj with-middleware+))
+
 (sigs/def-api
   {:sf-arity 4
    :ct-call-filter   impl/ct-call-filter
