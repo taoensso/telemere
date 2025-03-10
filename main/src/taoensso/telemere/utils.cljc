@@ -232,12 +232,18 @@
          (truss/ex-info! "Unable to prepare writable `java.io.File`"
            {:path (.getAbsolutePath file)})))))
 
+(comment
+  (let [f (writeable-file! "__test-file.txt")]
+    (enc/qb 1e4 ; [10.27 37.69]
+      (.exists   f)
+      (.canWrite f))))
+
 #?(:clj
-   (defn ^:no-doc file-stream
+   (defn ^:no-doc writeable-file-stream!
      "Private, don't use.
-     Returns new `java.io.FileOutputStream` for given `java.io.File`."
+     Returns new writeable `java.io.FileOutputStream` or throws."
      ^java.io.FileOutputStream [file append?]
-     (java.io.FileOutputStream. (as-file file) (boolean append?))))
+     (java.io.FileOutputStream. (writeable-file! file) (boolean append?))))
 
 #?(:clj
    (defn file-writer
@@ -259,8 +265,8 @@
 
      (when-not file (truss/ex-info! "Expected `:file` value" (truss/typed-val file)))
 
-     (let [file    (writeable-file! file)
-           stream_ (volatile! (file-stream file append?))
+     (let [file    (as-file file)
+           stream_ (volatile! (writeable-file-stream! file append?))
            open?_  (enc/latom true)
 
            close!
@@ -274,7 +280,7 @@
            reset!
            (fn []
              (close!)
-             (vreset! stream_ (file-stream file append?))
+             (vreset! stream_ (writeable-file-stream! file append?))
              (reset!  open?_  true)
              true)
 
@@ -285,11 +291,11 @@
                (.flush stream)
                true))
 
-           file-exists!
+           check-file!
            (let [rl (enc/rate-limiter-once-per 100)]
              (fn []
-               (or (rl) (.exists file)
-                 (throw (java.io.IOException. "File doesn't exist")))))
+               (or (rl) #_(.exists file) (.canWrite file)
+                 (throw (java.io.IOException. "File doesn't exist or isn't writeable")))))
 
            lock (Object.)]
 
@@ -305,7 +311,7 @@
                     ba (enc/str->utf8-ba (str content))]
                 (locking lock
                   (try
-                    (file-exists!)
+                    (check-file!)
                     (write-ba! ba)
                     (catch java.io.IOException _ ; Retry once
                       (reset!)
