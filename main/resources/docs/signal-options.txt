@@ -24,10 +24,10 @@ All options are available for all signal creator calls:
 `:ns` ---------- Custom ?str namespace to override auto signal callsite info
 `:coords` ------ Custom ?[line column] to override auto signal callsite info
 
-`:elidable?` --- Should signal be subject to compile-time elision? (Default: true)
+`:elidable?` --- Should signal be subject to compile-time elision? (default true)
 `:trace?` ------ Should tracing be enabled for `:run` form?
 
-`:sample` ------ Sample ?rate ∈ℝ[0,1] for signal sampling (0.75 => allow 75% of signals, nil => allow all)
+`:sample` ------ Sample ?rate ∈ℝ[0,1] for random signal sampling (0.75 => allow 75% of signals, nil => allow all)
 `:when` -------- Arb ?form; when present, form must return truthy to allow signal
 `:limit` ------- Rate limit ?spec given to `taoensso.telemere/rate-limiter`, see its docstring for details
 `:limit-by` ---- When present, rate limits will be enforced independently for each value (any Clojure value!)

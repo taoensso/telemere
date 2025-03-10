@@ -1,14 +1,17 @@
-Signals are maps with {:keys [inst id ns level data msg_ ...]}, though they
-can be modified by call and/or handler transform (xfns).
+Telemere signals are maps with {:keys [inst id ns level data msg_ ...]},
+though they can be modified by call and/or handler transform (xfns).
 
 Default signal keys:
 
 `:schema` ------ Int version of signal schema (current: 1)
 `:inst` -------- Platform instant [1] when signal was created, monotonicity depends on system clock
-`:level` ------- Signal level ∈ #{<int> :trace :debug :info :warn :error :fatal :report ...}
+`:ns` ---------- ?str namespace of signal callsite
+`:coords` ------ ?[line column] of signal callsite
+
 `:kind` -------- Signal ?kind ∈ #{nil :event :error :log :trace :spy :slf4j :tools-logging <app-val> ...}
-`:id` ---------- ?id of signal          (common to all  signals created at callsite,              contrast with `:uid`)
-`:uid` --------- ?id of signal instance (unique to each signal  created at callsite when tracing, contrast with  `:id`)
+`:level` ------- Signal level ∈ #{<int> :trace :debug :info :warn :error :fatal :report ...}
+`:id` ---------- Signal callsite ?id (usu. keyword) (common to all  signals created at callsite,              contrast with `:uid`)
+`:uid` --------- Signal instance ?id (usu. string)  (unique to each signal  created at callsite when tracing, contrast with  `:id`)
 
 `:msg_` -------- Arb app-level message  ?str              given to signal creator - may be a delay, always use `force` to unwrap!
 `:data` -------- Arb app-level data     ?val (usu. a map) given to signal creator
@@ -22,9 +25,6 @@ Default signal keys:
 `:parent` ------ ?{:keys [id uid]} of parent signal, present in nested signals when tracing
 `:root` -------- ?{:keys [id uid]} of root   signal, present in nested signals when tracing
 `:ctx` --------- ?val of `*ctx*` (arb app-level state) when signal was created
-
-`:ns` ---------- ?str namespace of signal callsite
-`:coords` ------ ?[line column] of signal callsite
 
 `:host` -------- (Clj only) {:keys [name ip]}       info for network host
 `:thread` ------ (Clj only) {:keys [name id group]} info for thread that created signal

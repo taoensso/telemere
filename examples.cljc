@@ -1,33 +1,33 @@
 (ns examples
   "Basic Telemere usage examples that appear in the Wiki or docstrings."
-  (:require [taoensso.telemere :as t]))
+  (:require [taoensso.telemere :as tel]))
 
 (comment
 
 ;;;; README "Quick examples"
 
-(require '[taoensso.telemere :as t])
+(require '[taoensso.telemere :as tel])
 
 ;; (Just works / no config necessary for typical use cases)
 
 ;; Without structured data
-(t/log! :info "Hello world!") ; %> Basic log   signal (has message)
-(t/event! ::my-id :debug)     ; %> Basic event signal (just id)
+(tel/log! :info "Hello world!") ; %> Basic log   signal (has message)
+(tel/event! ::my-id :debug)     ; %> Basic event signal (just id)
 
 ;; With structured data
-(t/log! {:level :info, :data {}} "Hello again!")
-(t/event! ::my-id {:level :debug, :data {}})
+(tel/log! {:level :info, :data {}} "Hello again!")
+(tel/event! ::my-id {:level :debug, :data {}})
 
 ;; Trace (auto interops with OpenTelemetry)
 ;; Tracks form runtime, return value, and (nested) parent tree
-(t/trace! {:id ::my-id :data {}}
+(tel/trace! {:id ::my-id :data {}}
   (do-some-work))
 
 ;; Check resulting signal content for debug/tests
-(t/with-signal (t/event! ::my-id)) ; => {:keys [ns level id data msg_ ...]}
+(tel/with-signal (tel/event! ::my-id)) ; => {:keys [ns level id data msg_ ...]}
 
 ;; Getting fancy (all costs are conditional!)
-(t/log!
+(tel/log!
   {:level    :debug
    :sample   0.75 ; 75% sampling (noop 25% of the time)
    :when     (my-conditional)
@@ -49,40 +49,40 @@
   ["Something interesting happened!" formatted])
 
 ;; Set minimum level
-(t/set-min-level!       :warn) ; For all    signals
-(t/set-min-level! :log :debug) ; For `log!` signals only
+(tel/set-min-level!       :warn) ; For all    signals
+(tel/set-min-level! :log :debug) ; For `log!` signals only
 
 ;; Set namespace and id filters
-(t/set-ns-filter! {:disallow "taoensso.*" :allow "taoensso.sente.*"})
-(t/set-id-filter! {:allow #{::my-particular-id "my-app/*"}})
+(tel/set-ns-filter! {:disallow "taoensso.*" :allow "taoensso.sente.*"})
+(tel/set-id-filter! {:allow #{::my-particular-id "my-app/*"}})
 
 ;; Set minimum level for `event!` signals for particular ns pattern
-(t/set-min-level! :event "taoensso.sente.*" :warn)
+(tel/set-min-level! :event "taoensso.sente.*" :warn)
 
 ;; Use transforms (xfns) to filter and/or arbitrarily modify signals
-;; by signal data/content/etc.
+;; by signal data/contentel/etc.
 
-(t/set-xfn!
+(tel/set-xfn!
   (fn [signal]
     (if (-> signal :data :skip-me?)
       nil ; Filter signal (don't handle)
       (assoc signal :transformed? true))))
 
-(t/with-signal (t/event! ::my-id {:data {:skip-me? true}}))  ; => nil
-(t/with-signal (t/event! ::my-id {:data {:skip-me? false}})) ; => {...}
+(tel/with-signal (tel/event! ::my-id {:data {:skip-me? true}}))  ; => nil
+(tel/with-signal (tel/event! ::my-id {:data {:skip-me? false}})) ; => {...}
 
-;; See `t/help:filters` docstring for more filtering options
+;; See `tel/help:filters` docstring for more filtering options
 
 ;;;; README "More examples"
 
 ;; Add your own signal handler
-(t/add-handler! :my-handler
+(tel/add-handler! :my-handler
   (fn
     ([signal] (println signal))
     ([] (println "Handler has shut down"))))
 
 ;; Use `add-handler!` to set handler-level filtering and back-pressure
-(t/add-handler! :my-handler
+(tel/add-handler! :my-handler
   (fn
     ([signal] (println signal))
     ([] (println "Handler has shut down")))
@@ -93,79 +93,79 @@
    :min-level :info
    :ns-filter {:disallow "taoensso.*"}
    :limit     {"1 per sec" [1 1000]}
-   ;; See `t/help:handler-dispatch-options` for more
+   ;; See `tel/help:handler-dispatch-options` for more
    })
 
 ;; See current handlers
-(t/get-handlers) ; => {<handler-id> {:keys [handler-fn handler-stats_ dispatch-opts]}}
+(tel/get-handlers) ; => {<handler-id> {:keys [handler-fn handler-stats_ dispatch-opts]}}
 
 ;; Add console handler to print signals as human-readable text
-(t/add-handler! :my-handler
-  (t/handler:console
-    {:output-fn (t/format-signal-fn {})}))
+(tel/add-handler! :my-handler
+  (tel/handler:console
+    {:output-fn (tel/format-signal-fn {})}))
 
 ;; Add console handler to print signals as edn
-(t/add-handler! :my-handler
-  (t/handler:console
-    {:output-fn (t/pr-signal-fn {:pr-fn :edn})}))
+(tel/add-handler! :my-handler
+  (tel/handler:console
+    {:output-fn (tel/pr-signal-fn {:pr-fn :edn})}))
 
 ;; Add console handler to print signals as JSON
 ;; Ref.  <https://github.com/metosin/jsonista> (or any alt JSON lib)
 #?(:clj (require '[jsonista.core :as jsonista]))
-(t/add-handler! :my-handler
-  (t/handler:console
+(tel/add-handler! :my-handler
+  (tel/handler:console
     {:output-fn
      #?(:cljs :json ; Use js/JSON.stringify
         :clj   jsonista/write-value-as-string)}))
 
 ;;;; Docstring examples
 
-(t/with-signal (t/event! ::my-id))
-(t/with-signal (t/event! ::my-id :warn))
-(t/with-signal
-  (t/event! ::my-id
+(tel/with-signal (tel/event! ::my-id))
+(tel/with-signal (tel/event! ::my-id :warn))
+(tel/with-signal
+  (tel/event! ::my-id
     {:let  [x "x"] ; Available to `:data` and `:msg`
      :data {:x x}
      :msg  ["My msg:" x]}))
 
-(t/with-signal (t/log! "My msg"))
-(t/with-signal (t/log! :warn "My msg"))
-(t/with-signal
-  (t/log!
+(tel/with-signal (tel/log! "My msg"))
+(tel/with-signal (tel/log! :warn "My msg"))
+(tel/with-signal
+  (tel/log!
     {:let  [x "x"] ; Available to `:data` and `:msg`
      :data {:x x}}
     ["My msg:" x]))
 
-(t/with-signal (throw (t/error!         (ex-info "MyEx" {}))))
-(t/with-signal (throw (t/error! ::my-id (ex-info "MyEx" {}))))
-(t/with-signal
+(tel/with-signal (throw (tel/error!         (ex-info "MyEx" {}))))
+(tel/with-signal (throw (tel/error! ::my-id (ex-info "MyEx" {}))))
+(tel/with-signal
   (throw
-    (t/error!
+    (tel/error!
       {:let  [x "x"] ; Available to `:data` and `:msg`
        :data {:x x}
        :msg  ["My msg:" x]}
       (ex-info "MyEx" {}))))
 
-(t/with-signal (t/trace! (+ 1 2)))
-(t/with-signal (t/trace! ::my-id (+ 1 2)))
-(t/with-signal
-  (t/trace!
+(tel/with-signal (tel/trace! (+ 1 2)))
+(tel/with-signal (tel/trace! ::my-id (+ 1 2)))
+(tel/with-signal
+  (tel/trace!
     {:let  [x "x"] ; Available to `:data` and `:msg`
      :data {:x x}}
     (+ 1 2)))
 
-(t/with-signal (t/spy! (+ 1 2)))
-(t/with-signal (t/spy! :debug (+ 1 2)))
-(t/with-signal
-  (t/spy!
+(tel/with-signal (tel/spy! (+ 1 2)))
+(tel/with-signal (tel/spy! :debug (+ 1 2)))
+(tel/with-signal
+  (tel/spy!
     {:let  [x "x"] ; Available to `:data` and `:msg`
      :data {:x x}}
     (+ 1 2)))
 
-(t/with-signal (t/catch->error! (/ 1 0)))
-(t/with-signal (t/catch->error! ::my-id (/ 1 0)))
-(t/with-signal
-  (t/catch->error!
+(tel/with-signal (tel/catch->error! (/ 1 0)))
+(tel/with-signal (tel/catch->error! ::my-id (/ 1 0)))
+(tel/with-signal
+  (tel/catch->error!
     {:let  [x "x"] ; Available to `:data` and `:msg`
      :data {:x x}
      :msg  ["My msg:" x]
@@ -176,25 +176,25 @@
 
 ;;; Filter signals
 
-(t/set-min-level! :info) ; Set global minimum level
-(t/with-signal (t/event! ::my-id1 :info))  ; => {:keys [inst id ...]}
-(t/with-signal (t/event! ::my-id1 :debug)) ; => nil (signal not allowed)
+(tel/set-min-level! :info) ; Set global minimum level
+(tel/with-signal (tel/event! ::my-id1 :info))  ; => {:keys [inst id ...]}
+(tel/with-signal (tel/event! ::my-id1 :debug)) ; => nil (signal not allowed)
 
-(t/with-min-level :trace ; Override global minimum level
-  (t/with-signal (t/event! ::my-id1 :debug))) ; => {:keys [inst id ...]}
+(tel/with-min-level :trace ; Override global minimum level
+  (tel/with-signal (tel/event! ::my-id1 :debug))) ; => {:keys [inst id ...]}
 
 ;; Disallow all signals in matching namespaces
-(t/set-ns-filter! {:disallow "some.nosy.namespace.*"})
+(tel/set-ns-filter! {:disallow "some.nosy.namespace.*"})
 
 ;;; Configuring handlers
 
 ;; Create a test signal
 (def my-signal
-  (t/with-signal
-    (t/log! {:id ::my-id, :data {:x1 :x2}} "My message")))
+  (tel/with-signal
+    (tel/log! {:id ::my-id, :data {:x1 :x2}} "My message")))
 
 ;; Create console handler with default opts (writes formatted string)
-(def my-handler (t/handler:console {}))
+(def my-handler (tel/handler:console {}))
 
 ;; Test handler, remember it's just a (fn [signal])
 (my-handler my-signal) ; %>
@@ -203,8 +203,8 @@
 
 ;; Create console handler which writes signals as edn
 (def my-handler
-  (t/handler:console
-    {:output-fn (t/pr-signal-fn {:pr-fn :edn})}))
+  (tel/handler:console
+    {:output-fn (tel/pr-signal-fn {:pr-fn :edn})}))
 
 (my-handler my-signal) ; %>
 ;; {:inst #inst "2024-04-11T10:54:57.202869Z", :msg_ "My message", :ns "examples", ...}
@@ -213,9 +213,9 @@
 ;; Ref.  <https://github.com/metosin/jsonista> (or any alt JSON lib)
 #?(:clj (require '[jsonista.core :as jsonista]))
 (def my-handler
-  (t/handler:console
+  (tel/handler:console
     {:output-fn
-     (t/pr-signal-fn
+     (tel/pr-signal-fn
        {:pr-fn
         #?(:cljs :json ; Use js/JSON.stringify
            :clj  jsonista/write-value-as-string)})}))
@@ -224,19 +224,20 @@
 ;; {"inst":"2024-04-11T10:54:57.202869Z","msg_":"My message","ns":"examples", ...}
 
 ;; Deregister the default console handler
-(t/remove-handler! :default/console)
+(tel/remove-handler! :defaultel/console)
 
 ;; Register our custom console handler
-(t/add-handler! :my-handler my-handler
+(tel/add-handler! :my-handler my-handler
   ;; Lots of options here for filtering, etc.
   ;; See `help:handler-dispatch-options` docstring!
   {})
 
 ;; NB make sure to always stop handlers at the end of your
 ;; `-main` or shutdown procedure
-(t/call-on-shutdown! t/stop-handlers!)
+(tel/call-on-shutdown!
+  (fn [] (tel/stop-handlers!)))
 
-;; See `t/help:handlers` docstring for more
+;; See `tel/help:handlers` docstring for more
 
 ;;; Writing handlers
 
@@ -298,18 +299,18 @@
 ;;; Message building
 
 ;; A fixed message (string arg)
-(t/log! "A fixed message") ; %> {:msg "A fixed message"}
+(tel/log! "A fixed message") ; %> {:msg "A fixed message"}
 
 ;; A joined message (vector arg)
 (let [user-arg "Bob"]
-  (t/log! ["User" (str "`" user-arg "`") "just logged in!"]))
+  (tel/log! ["User" (str "`" user-arg "`") "just logged in!"]))
 ;; %> {:msg_ "User `Bob` just logged in!` ...}
 
 ;; With arg prep
 (let [user-arg "Bob"
       usd-balance-str "22.4821"]
 
-  (t/log!
+  (tel/log!
     {:let
      [username (clojure.string/upper-case user-arg)
       usd-balance (parse-double usd-balance-str)]
@@ -322,16 +323,16 @@
 
 ;; %> {:msg "User BOB has balance: $22" ...}
 
-(t/log! (str "This message " "was built " "by `str`"))
+(tel/log! (str "This message " "was built " "by `str`"))
 ;; %> {:msg "This message was built by `str`"}
 
-(t/log! (enc/format "This message was built by `%s`" "format"))
+(tel/log! (enc/format "This message was built by `%s`" "format"))
 ;; %> {:msg "This message was built by `format`"}
 
 ;;; App-level kvs
 
-(t/with-signal
-  (t/event! ::my-id
+(tel/with-signal
+  (tel/event! ::my-id
     {:my-data-for-xfn     "foo"
      :my-data-for-handler "bar"}))
 
@@ -346,20 +347,20 @@
 
 ;;;; Misc extra examples
 
-(t/log! {:id ::my-id, :data {:x1 :x2}} ["My 2-part" "message"]) ; %>
+(tel/log! {:id ::my-id, :data {:x1 :x2}} ["My 2-part" "message"]) ; %>
 ;; 2024-04-11T10:54:57.202869Z INFO LOG MyHost examples(56,1) ::my-id - My 2-part message
 ;;    data: {:x1 :x2}
 
 ;; `:let` bindings are available to `:data` and message, but only paid
 ;; for when allowed by minimum level and other filtering criteria
-(t/log!
+(tel/log!
   {:level :info
    :let   [expensive (reduce * (range 1 12))] ; 12 factorial
    :data  {:my-metric expensive}}
   ["Message with metric:" expensive])
 
 ;; With sampling 50% and 1/sec rate limiting
-(t/log!
+(tel/log!
   {:sample 0.5
    :limit  {"1 per sec" [1 1000]}}
   "This signal will be sampled and rate limited")
@@ -368,8 +369,8 @@
 ;; All offer the same options, but each has an API optimized
 ;; for a particular use case:
 
-(t/log! {:level :info, :id ::my-id} "Hi!")          ; [msg] or [level-or-opts msg]
-(t/event! ::my-id {:level :info, :msg "Hi!"})       ; [id]  or [id level-or-opts]
-(t/signal! {:level :info, :id ::my-id, :msg "Hi!"}) ; [opts]
+(tel/log! {:level :info, :id ::my-id} "Hi!")          ; [msg] or [level-or-opts msg]
+(tel/event! ::my-id {:level :info, :msg "Hi!"})       ; [id]  or [id level-or-opts]
+(tel/signal! {:level :info, :id ::my-id, :msg "Hi!"}) ; [opts]
 
 )

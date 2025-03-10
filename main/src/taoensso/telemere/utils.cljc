@@ -540,17 +540,10 @@
        (when kind  (s+spc (sigs/upper-qn kind)))
 
        #?(:clj
-          (when-let   [host     (get signal :host)]
-            (when-let [hostname (get host   :name)]
-              (s+spc   hostname))))
+          (when-let [hostname (enc/get-in* signal [:host :name])]
+            (s+spc   hostname)))
 
-       (when ns
-         (enc/sb-append sb " " ns)
-         (when-let [[line column] (get signal :coords)]
-           (if column
-             (enc/sb-append sb "[" line "," column "]")
-             (enc/sb-append sb "[" line            "]"))))
-
+       (when ns (s+spc (sigs/format-callsite ns (get signal :coords))))
        (when id (when-let [ff format-id-fn] (s+spc (ff ns id))))
        (enc/when-let [ff format-msg-fn
                       msg (force msg_)]
