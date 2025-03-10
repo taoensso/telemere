@@ -73,7 +73,7 @@ It enables you to write code that is **information-verbose by default**.
 ;; Getting fancy (all costs are conditional!)
 (t/log!
   {:level         :debug
-   :sample-rate   0.75 ; 75% sampling (noop 25% of the time)
+   :sample        0.75 ; 75% sampling (noop 25% of the time)
    :when          (my-conditional)
    :rate-limit    {"1 per sec" [1  1000]
                    "5 per min" [5 60000]}
@@ -146,11 +146,11 @@ It enables you to write code that is **information-verbose by default**.
     ([] (println "Handler has shut down")))
 
   {:async {:mode :dropping, :buffer-size 1024, :n-threads 1}
-   :priority    100
-   :sample-rate 0.5
-   :min-level   :info
-   :ns-filter   {:disallow "taoensso.*"}
-   :rate-limit  {"1 per sec" [1 1000]}
+   :priority   100
+   :sample     0.5
+   :min-level  :info
+   :ns-filter  {:disallow "taoensso.*"}
+   :rate-limit {"1 per sec" [1 1000]}
    ;; See `t/help:handler-dispatch-options` for more
    })
 

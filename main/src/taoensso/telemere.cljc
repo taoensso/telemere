@@ -241,7 +241,7 @@
       under a single set of conditions (incl. rate-limiting, sampling, etc.):
 
         ;; Logs exactly 2 or 0 messages (never 1):
-        (when (signal-allowed? {:level :info, :sample-rate 0.5})
+        (when (signal-allowed? {:level :info, :sample 0.5})
           (log! {:allow? true} \"Message 1\")
           (log! {:allow? true} \"Message 2\"))"
 

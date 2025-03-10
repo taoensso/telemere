@@ -90,9 +90,7 @@ Consider the [differences](https://www.youtube.com/watch?v=oyLBGkS5ICk) between 
   
   If a signal is created with *20%* sampling and a handler handles *50%* of received signals, then *10%* of possible signals will be handled (50% of 20%).
   
-  This multiplicative rate is helpfully reflected in each signal's final `:sample-rate` value, making it possible to estimate *unsampled* cardinalities in relevant cases.
-  
-  So for `n` randomly sampled signals matching some criteria, you'd have seen an estimated `Σ(1.0/sample-rate_i)` such signals _without_ sampling, etc.
+  When sampling is active, the final (combined multiplicative) rate is helpfully reflected in each signal's `:sample` rate value ∈ℝ[0,1]. This makes it possible to estimate _unsampled_ cardinalities: for `n` randomly sampled signals matching some criteria, you'd have seen an estimated `Σ(1.0/sample-rate_i)` such signals _without_ sampling, etc.
   
 - Transforms can technically return any type, but it's best to return only `nil` or a map. This ensures maximum compatibility with community transforms, handlers, and tools.
   

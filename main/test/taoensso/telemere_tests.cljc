@@ -549,11 +549,11 @@
           (let [c   (enc/counter)
                 sr_ (atom nil)]
             (tel/with-handler "h1"
-              (fn h1 [x] (c) (compare-and-set! sr_ nil (:sample-rate x)))
-              {:async nil, :sample-rate handler-sample-rate}
+              (fn h1 [x] (c) (compare-and-set! sr_ nil (:sample x)))
+              {:async nil, :sample handler-sample-rate}
               (do
                 ;; Repeat to ensure >=1 gets through sampling
-                (dotimes [_ 1000] (sig! {:level :info, :sample-rate call-sample-rate}))
+                (dotimes [_ 1000] (sig! {:level :info, :sample call-sample-rate}))
                 [@sr_ @c]))))]
 
     [(is (= (test1 nil        nil)  [nil 1000]) "[none   none] = none")
@@ -1023,10 +1023,10 @@
                   :parent {:id ::parent-id1 :uid #uuid "443154cf-b6cf-47bf-b86a-8b185afee256"}
                   :root   {:id ::root-id1   :uid #uuid "82a53b6a-b28a-4102-8025-9e735dee103c"}
 
-                  :run-form    '(+ 3 2)
-                  :run-val     5
-                  :run-nsecs   100
-                  :sample-rate 0.5
+                  :run-form  '(+ 3 2)
+                  :run-val   5
+                  :run-nsecs 100
+                  :sample    0.5
 
                   :data
                   {:key-kw :val-kw

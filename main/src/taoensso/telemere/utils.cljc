@@ -608,8 +608,8 @@
         (let [af append-fn
               vf    val-fn]
 
-          (let [{:keys [ns uid parent root data kvs ctx #?@(:clj [host thread]) sample-rate]} signal]
-            (when sample-rate                     (af " sample: " (vf sample-rate)))
+          (let [{:keys [ns uid parent root data kvs ctx #?@(:clj [host thread]) sample]} signal]
+            (when sample                          (af " sample: " (vf sample)))
             (when uid                             (af "    uid: " (vf uid)))
             (when (and parent (not= parent root)) (af " parent: " (vf (format-parent ns parent)))) ; {:keys [id uid]}
             (when root                            (af "   root: " (vf (format-parent ns root))))   ; {:keys [id uid]}

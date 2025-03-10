@@ -27,7 +27,7 @@ All options are available for all signal creator calls:
 `:elidable?` --- Should signal be subject to compile-time elision? (Default: true)
 `:trace?` ------ Should tracing be enabled for `:run` form?
 
-`:sample-rate` - ?rate ∈ℝ[0,1] for signal sampling (0.75 => allow 75% of signals, nil => allow all)
+`:sample` ------ Optional sample rate ∈ℝ[0,1] for signal sampling (0.75 => allow 75% of signals, nil => allow all)
 `:when` -------- Arb ?form; when present, form must return truthy to allow signal
 `:rate-limit` -- ?spec as given to `taoensso.telemere/rate-limiter`, see its docstring for details
 `:rate-limit-by` When present, rate limits will be enforced independently for each id (any Clojure value!)

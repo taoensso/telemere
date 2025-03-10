@@ -250,7 +250,7 @@
   ;; Telemere's main public data type, we avoid nesting and duplication
   [schema inst uid, ns coords,
    #?@(:clj [host thread _otel-context]),
-   sample-rate, kind id level, ctx parent root, data kvs msg_,
+   sample, kind id level, ctx parent root, data kvs msg_,
    error run-form run-val end-inst run-nsecs]
  
   Object (toString [sig] (str "taoensso.telemere.Signal" (into {} sig))))
@@ -394,7 +394,7 @@
          [{:as opts-map :keys
            [#_elide? #_allow? #_callsite-id, ; Undocumented
             elidable? coords #_inst #_uid #_xfn #_xfn+,
-            sample-rate kind ns id level when rate-limit rate-limit-by,
+            sample kind ns id level when rate-limit rate-limit-by,
             #_ctx #_ctx+ #_parent #_root #_trace?, #_do #_let #_data #_msg #_error #_run #_& #_kvs]}])
 
        :signal! ; opts => allowed? / run result (value or throw)
@@ -402,7 +402,7 @@
          [{:as opts-map :keys
            [#_elide? #_allow? #_callsite-id, ; Undocumented
             elidable? coords inst uid xfn xfn+,
-            sample-rate kind ns id level when rate-limit rate-limit-by,
+            sample kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error run & kvs]}])
 
        :log! ; ?level + msg => nil / allowed?
@@ -411,7 +411,7 @@
          [{:as opts-map :keys
            [#_elide? #_allow? #_callsite-id,
             elidable? coords inst uid xfn xfn+,
-            sample-rate kind ns id level when rate-limit rate-limit-by,
+            sample kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}
           msg])
 
@@ -422,7 +422,7 @@
           {:as opts-map :keys
            [#_elide? #_allow? #_callsite-id,
             elidable? coords inst uid xfn xfn+,
-            sample-rate kind ns id level when rate-limit rate-limit-by,
+            sample kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}])
 
        :trace! ; ?id + run => run result (value or throw)
@@ -431,7 +431,7 @@
          [{:as opts-map :keys
            [#_elide? #_allow? #_callsite-id,
             elidable? coords inst uid xfn xfn+,
-            sample-rate kind ns id level when rate-limit rate-limit-by,
+            sample kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error run & kvs]}
           run])
 
@@ -441,7 +441,7 @@
          [{:as opts-map :keys
            [#_elide? #_allow? #_callsite-id,
             elidable? coords inst uid xfn xfn+,
-            sample-rate kind ns id level when rate-limit rate-limit-by,
+            sample kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error run & kvs]}
           run])
 
@@ -451,7 +451,7 @@
          [{:as opts-map :keys
            [#_elide? #_allow? #_callsite-id,
             elidable? coords inst uid xfn xfn+,
-            sample-rate kind ns id level when rate-limit rate-limit-by,
+            sample kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}
           error])
 
@@ -461,7 +461,7 @@
          [{:as opts-map :keys
            [#_elide? #_allow? #_callsite-id, catch-val,
             elidable? coords inst uid xfn xfn+,
-            sample-rate kind ns id level when rate-limit rate-limit-by,
+            sample kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}
           run])
 
@@ -471,7 +471,7 @@
          [{:as opts-map :keys
            [#_elide? #_allow? #_callsite-id,
             elidable? coords inst uid xfn xfn+,
-            sample-rate kind ns id level when rate-limit rate-limit-by,
+            sample kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}])
 
        (truss/unexpected-arg! macro-id))))
@@ -603,12 +603,12 @@
                 uid-form    (get opts :uid (when trace? :auto))
 
                 signal-delay-form
-                (let [{do-form          :do
-                       let-form         :let
-                       msg-form         :msg
-                       data-form        :data
-                       error-form       :error
-                       sample-rate-form :sample-rate} opts
+                (let [{do-form     :do
+                       let-form    :let
+                       msg-form    :msg
+                       data-form   :data
+                       error-form  :error
+                       sample-form :sample} opts
 
                       let-form (or let-form '[])
                       msg-form (parse-msg-form msg-form)
@@ -627,7 +627,7 @@
                       (not-empty
                         (dissoc opts
                           :elidable? :coords :inst :uid :xfn :xfn+,
-                          :sample-rate :ns :kind :id :level :filter :when #_:rate-limit #_:rate-limit-by,
+                          :sample :ns :kind :id :level :filter :when #_:rate-limit #_:rate-limit-by,
                           :ctx :ctx+ :parent #_:trace?, :do :let :data :msg :error,
                           :run :run-form :run-val, :elide? :allow? #_:callsite-id :otel/context))
 
@@ -649,10 +649,10 @@
                       (let [record-form
                             (let   [clause [(if run-form :run :no-run) (if clj? :clj :cljs)]]
                               (case clause
-                                [:run    :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords (enc/host-info) ~'__thread ~'__otel-context1, ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~show-run-form ~show-run-val ~'_end-inst ~'_run-nsecs)
-                                [:run    :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords                                               ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~show-run-form ~show-run-val ~'_end-inst ~'_run-nsecs)
-                                [:no-run :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords (enc/host-info) ~'__thread ~'__otel-context1, ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil             nil           nil         nil)
-                                [:no-run :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords                                               ~sample-rate-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil             nil           nil         nil)
+                                [:run    :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords (enc/host-info) ~'__thread ~'__otel-context1, ~sample-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~show-run-form ~show-run-val ~'_end-inst ~'_run-nsecs)
+                                [:run    :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords                                               ~sample-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~show-run-form ~show-run-val ~'_end-inst ~'_run-nsecs)
+                                [:no-run :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords (enc/host-info) ~'__thread ~'__otel-context1, ~sample-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil             nil           nil         nil)
+                                [:no-run :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords                                               ~sample-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil             nil           nil         nil)
                                 (truss/unexpected-arg! clause {:context :signal-constructor-args})))
 
                             record-form

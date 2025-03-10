@@ -29,7 +29,7 @@ Default signal keys:
 `:host` -------- (Clj only) {:keys [name ip]}       info for network host
 `:thread` ------ (Clj only) {:keys [name id group]} info for thread that created signal
 
-`:sample-rate` - ?rate ∈ℝ[0,1] for combined signal AND handler sampling (0.75 => allow 75% of signals, nil => allow all)
+`:sample` ------ Sample ?rate ∈ℝ[0,1] for combined call AND handler sampling (0.75 => allow 75% of signals, nil => allow all)
 
 <kvs> ---------- Other arb app-level ?kvs given to signal creator. Typically NOT included
                  in handler output, so a great way to provide custom data/opts for use

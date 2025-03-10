@@ -183,7 +183,7 @@
         (put-attr! ab "run.val"                run-val)
         (put-attr! ab "run.nsecs"    run-nsecs)))
 
-    (put-attr! ab "sample" (get signal :sample-rate))
+    (put-attr! ab "sample" (get signal :sample))
 
     (when-let [{:keys [id uid]} (get signal :parent)]
       (put-attr! ab "parent.id"  id)

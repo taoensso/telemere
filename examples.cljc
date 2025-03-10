@@ -29,7 +29,7 @@
 ;; Getting fancy (all costs are conditional!)
 (t/log!
   {:level         :debug
-   :sample-rate   0.75 ; 75% sampling (noop 25% of the time)
+   :sample        0.75 ; 75% sampling (noop 25% of the time)
    :when          (my-conditional)
    :rate-limit    {"1 per sec" [1  1000]
                    "5 per min" [5 60000]}
@@ -89,7 +89,7 @@
 
   {:async {:mode :dropping, :buffer-size 1024, :n-threads 1}
    :priority    100
-   :sample-rate 0.5
+   :sample      0.5
    :min-level   :info
    :ns-filter   {:disallow "taoensso.*"}
    :rate-limit  {"1 per sec" [1 1000]}
@@ -360,8 +360,8 @@
 
 ;; With sampling 50% and 1/sec rate limiting
 (t/log!
-  {:sample-rate 0.5
-   :rate-limit  {"1 per sec" [1 1000]}}
+  {:sample     0.5
+   :rate-limit {"1 per sec" [1 1000]}}
   "This signal will be sampled and rate limited")
 
 ;; Several signal creators are available for convenience.
