@@ -394,7 +394,7 @@
          [{:as opts-map :keys
            [#_elide? #_allow? #_callsite-id, ; Undocumented
             elidable? coords #_inst #_uid #_xfn #_xfn+,
-            sample kind ns id level when rate-limit rate-limit-by,
+            sample kind ns id level when limit limit-by,
             #_ctx #_ctx+ #_parent #_root #_trace?, #_do #_let #_data #_msg #_error #_run #_& #_kvs]}])
 
        :signal! ; opts => allowed? / run result (value or throw)
@@ -402,7 +402,7 @@
          [{:as opts-map :keys
            [#_elide? #_allow? #_callsite-id, ; Undocumented
             elidable? coords inst uid xfn xfn+,
-            sample kind ns id level when rate-limit rate-limit-by,
+            sample kind ns id level when limit limit-by,
             ctx ctx+ parent root trace?, do let data msg error run & kvs]}])
 
        :log! ; ?level + msg => nil / allowed?
@@ -411,7 +411,7 @@
          [{:as opts-map :keys
            [#_elide? #_allow? #_callsite-id,
             elidable? coords inst uid xfn xfn+,
-            sample kind ns id level when rate-limit rate-limit-by,
+            sample kind ns id level when limit limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}
           msg])
 
@@ -422,7 +422,7 @@
           {:as opts-map :keys
            [#_elide? #_allow? #_callsite-id,
             elidable? coords inst uid xfn xfn+,
-            sample kind ns id level when rate-limit rate-limit-by,
+            sample kind ns id level when limit limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}])
 
        :trace! ; ?id + run => run result (value or throw)
@@ -431,7 +431,7 @@
          [{:as opts-map :keys
            [#_elide? #_allow? #_callsite-id,
             elidable? coords inst uid xfn xfn+,
-            sample kind ns id level when rate-limit rate-limit-by,
+            sample kind ns id level when limit limit-by,
             ctx ctx+ parent root trace?, do let data msg error run & kvs]}
           run])
 
@@ -441,7 +441,7 @@
          [{:as opts-map :keys
            [#_elide? #_allow? #_callsite-id,
             elidable? coords inst uid xfn xfn+,
-            sample kind ns id level when rate-limit rate-limit-by,
+            sample kind ns id level when limit limit-by,
             ctx ctx+ parent root trace?, do let data msg error run & kvs]}
           run])
 
@@ -451,7 +451,7 @@
          [{:as opts-map :keys
            [#_elide? #_allow? #_callsite-id,
             elidable? coords inst uid xfn xfn+,
-            sample kind ns id level when rate-limit rate-limit-by,
+            sample kind ns id level when limit limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}
           error])
 
@@ -461,7 +461,7 @@
          [{:as opts-map :keys
            [#_elide? #_allow? #_callsite-id, catch-val,
             elidable? coords inst uid xfn xfn+,
-            sample kind ns id level when rate-limit rate-limit-by,
+            sample kind ns id level when limit limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}
           run])
 
@@ -471,7 +471,7 @@
          [{:as opts-map :keys
            [#_elide? #_allow? #_callsite-id,
             elidable? coords inst uid xfn xfn+,
-            sample kind ns id level when rate-limit rate-limit-by,
+            sample kind ns id level when limit limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}])
 
        (truss/unexpected-arg! macro-id))))
@@ -627,7 +627,7 @@
                       (not-empty
                         (dissoc opts
                           :elidable? :coords :inst :uid :xfn :xfn+,
-                          :sample :ns :kind :id :level :filter :when #_:rate-limit #_:rate-limit-by,
+                          :sample :ns :kind :id :level :filter :when #_:limit #_:limit-by,
                           :ctx :ctx+ :parent #_:trace?, :do :let :data :msg :error,
                           :run :run-form :run-val, :elide? :allow? #_:callsite-id :otel/context))
 

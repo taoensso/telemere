@@ -238,7 +238,7 @@
 
       Allows you to use Telemere's rich filtering system for conditionally
       executing arbitrary code. Also handy for batching multiple signals
-      under a single set of conditions (incl. rate-limiting, sampling, etc.):
+      under a single set of conditions (incl. sampling, rate limiting, etc.):
 
         ;; Logs exactly 2 or 0 messages (never 1):
         (when (signal-allowed? {:level :info, :sample 0.5})

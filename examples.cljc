@@ -28,12 +28,12 @@
 
 ;; Getting fancy (all costs are conditional!)
 (t/log!
-  {:level         :debug
-   :sample        0.75 ; 75% sampling (noop 25% of the time)
-   :when          (my-conditional)
-   :rate-limit    {"1 per sec" [1  1000]
-                   "5 per min" [5 60000]}
-   :rate-limit-by my-user-ip-address ; Optional rate-limit scope
+  {:level    :debug
+   :sample   0.75 ; 75% sampling (noop 25% of the time)
+   :when     (my-conditional)
+   :limit    {"1 per sec" [1  1000]
+              "5 per min" [5 60000]} ; Rate limit
+   :limit-by my-user-ip-address      ; Rate limit scope
 
    :do (inc-my-metric!)
    :let
@@ -88,11 +88,11 @@
     ([] (println "Handler has shut down")))
 
   {:async {:mode :dropping, :buffer-size 1024, :n-threads 1}
-   :priority    100
-   :sample      0.5
-   :min-level   :info
-   :ns-filter   {:disallow "taoensso.*"}
-   :rate-limit  {"1 per sec" [1 1000]}
+   :priority  100
+   :sample    0.5
+   :min-level :info
+   :ns-filter {:disallow "taoensso.*"}
+   :limit     {"1 per sec" [1 1000]}
    ;; See `t/help:handler-dispatch-options` for more
    })
 
@@ -290,7 +290,7 @@
      (with-meta handler-fn
        {:dispatch-opts
         {:min-level  :info
-         :rate-limit
+         :limit
          [[1   1000] ; Max 1  signal  per second
           [10 60000] ; Max 10 signals per minute
           ]}}))))
@@ -360,8 +360,8 @@
 
 ;; With sampling 50% and 1/sec rate limiting
 (t/log!
-  {:sample     0.5
-   :rate-limit {"1 per sec" [1 1000]}}
+  {:sample 0.5
+   :limit  {"1 per sec" [1 1000]}}
   "This signal will be sampled and rate limited")
 
 ;; Several signal creators are available for convenience.

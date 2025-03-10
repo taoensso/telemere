@@ -72,12 +72,12 @@ It enables you to write code that is **information-verbose by default**.
 
 ;; Getting fancy (all costs are conditional!)
 (t/log!
-  {:level         :debug
-   :sample        0.75 ; 75% sampling (noop 25% of the time)
-   :when          (my-conditional)
-   :rate-limit    {"1 per sec" [1  1000]
-                   "5 per min" [5 60000]}
-   :rate-limit-by my-user-ip-address ; Optional rate-limit scope
+  {:level    :debug
+   :sample   0.75 ; 75% sampling (noop 25% of the time)
+   :when     (my-conditional)
+   :limit    {"1 per sec" [1  1000]
+              "5 per min" [5 60000]} ; Rate limit
+   :limit-by my-user-ip-address      ; Rate limit scope
 
    :do (inc-my-metric!)
    :let
@@ -146,11 +146,11 @@ It enables you to write code that is **information-verbose by default**.
     ([] (println "Handler has shut down")))
 
   {:async {:mode :dropping, :buffer-size 1024, :n-threads 1}
-   :priority   100
-   :sample     0.5
-   :min-level  :info
-   :ns-filter  {:disallow "taoensso.*"}
-   :rate-limit {"1 per sec" [1 1000]}
+   :priority  100
+   :sample    0.5
+   :min-level :info
+   :ns-filter {:disallow "taoensso.*"}
+   :limit     {"1 per sec" [1 1000]}
    ;; See `t/help:handler-dispatch-options` for more
    })
 
@@ -205,7 +205,7 @@ It enables you to write code that is **information-verbose by default**.
 - Unmatched [environmental config](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:environmental-config) support: JVM properties, environment variables, or classpath resources. Per platform, or cross-platform.
 - Unmatched [filtering](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters) support: by namespace, id pattern, level, level by namespace pattern, etc. At runtime and compile-time.
 - Fully [configurable](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) **a/sync dispatch support**: blocking, dropping, sliding, etc.
-- Turn-key **sampling**, **rate-limiting**, and **back-pressure monitoring** with sensible defaults.
+- Turn-key **sampling**, **rate limiting**, and **back-pressure monitoring** with sensible defaults.
 
 ## Comparisons
 
@@ -279,7 +279,7 @@ Telemere is optimized for *real-world* performance. This means **prioritizing fl
 
 Large applications can produce absolute *heaps* of data, not all equally valuable. Quickly processing infinite streams of unmanageable junk is an anti-pattern. As scale and complexity increase, it becomes more important to **strategically plan** what data to collect, when, in what quantities, and how to manage it.
 
-Telemere is designed to help with all that. It offers [rich data](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content) and unmatched [filtering](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters) support - including per-signal and per-handler **sampling** and **rate-limiting**, and zero cost compile-time filtering.
+Telemere is designed to help with all that. It offers [rich data](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content) and unmatched [filtering](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters) support - including per-signal and per-handler **sampling** and **rate limiting**, and zero cost compile-time filtering.
 
 Use these to ensure that you're not capturing useless/low-value/high-noise information in production! With appropriate planning, Telemere is designed to scale to systems of any size and complexity. 
 
