@@ -14,7 +14,6 @@
 #?(:clj
    (defn ^:public handler:console
      "Alpha, subject to change.
-
      Returns a signal handler that:
        - Takes a Telemere signal (map).
        - Writes the signal as a string to specified stream.
@@ -28,7 +27,7 @@
          Defaults to `*err*` if `utils/error-signal?` is true, and `*out*` otherwise."
 
      ([] (handler:console nil))
-     ([{:keys [stream output-fn ]
+     ([{:keys [stream output-fn]
         :or
         {stream    :auto
          output-fn (utils/format-signal-fn)}}]
@@ -52,7 +51,6 @@
    :cljs
    (defn ^:public handler:console
      "Alpha, subject to change.
-
      If `js/console` exists, returns a signal handler that:
        - Takes a Telemere signal (map).
        - Writes the signal as a string to JavaScript console.
@@ -89,7 +87,6 @@
 #?(:cljs
    (defn ^:public handler:console-raw
      "Alpha, subject to change.
-
      If `js/console` exists, returns a signal handler that:
        - Takes a Telemere signal (map).
        - Writes the raw signal to JavaScript console.

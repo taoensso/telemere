@@ -37,7 +37,7 @@
 
 (declare ; Needed to avoid `clj-kondo` "Unresolved var" warnings
   level-aliases
-  help:filters help:handler help:handler-dispatch-options
+  help:filters help:handlers help:handler-dispatch-options
   get-filters get-min-levels get-handlers get-handlers-stats
 
   #?(:clj without-filters)
@@ -52,15 +52,18 @@
   ^:dynamic *ctx* set-ctx! #?(:clj with-ctx) #?(:clj with-ctx+)
   ^:dynamic *xfn* set-xfn! #?(:clj with-xfn) #?(:clj with-xfn+))
 
+(def default-handler-dispatch-opts
+  "See `help:handler-dispatch-opts` for details."
+  (dissoc sigs/default-handler-dispatch-opts
+    :convey-bindings? ; We use `enc/bound-delay`
+    ))
+
 (sigs/def-api
   {:sf-arity 4
-   :ct-call-filter   impl/ct-call-filter
-   :*rt-call-filter* impl/*rt-call-filter*
-   :*sig-handlers*   impl/*sig-handlers*
-   :lib-dispatch-opts
-   (assoc sigs/default-handler-dispatch-opts
-     :convey-bindings? false ; Handled manually
-     )})
+   :ct-call-filter    impl/ct-call-filter
+   :*rt-call-filter*  impl/*rt-call-filter*
+   :*sig-handlers*    impl/*sig-handlers*
+   :lib-dispatch-opts default-handler-dispatch-opts})
 
 ;;;; Aliases
 
@@ -74,7 +77,6 @@
   enc/rate-limiter
   enc/newline
   sigs/comp-xfn
-  sigs/default-handler-dispatch-opts
   #?(:clj truss/keep-callsite)
 
   ;; Impl

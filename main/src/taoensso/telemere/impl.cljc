@@ -564,20 +564,16 @@
 
         (if elide?
           run-form
-          (let [coords
-                (get opts :coords
-                  (when (= ns-form* :auto)
-                    ;; Auto coords iff auto ns
-                    (truss/callsite-coords &form)))
+          (let [coords (get opts :coords (when (= ns-form* :auto) (truss/callsite-coords &form)))
 
                 {inst-form  :inst
-                 level-form :level
                  kind-form  :kind
-                 id-form    :id} opts
+                 id-form    :id
+                 level-form :level} opts
 
-               trace? (get opts :trace? (boolean run-form))
-               _
-               (when-not (contains? #{true false nil} trace?)
+                trace? (get opts :trace? (boolean run-form))
+                _
+                (when-not (contains? #{true false nil} trace?)
                  (truss/unexpected-arg! trace?
                    {:param             'trace?
                     :context `signal!
@@ -675,7 +671,7 @@
 
                        ;; Final unwrapped signal value visible to users/handler-fns, allow to throw
                        (if-let [xfn# ~xfn-form]
-                         (xfn# signal#) ; Apply call transform, can throw
+                         (xfn# signal#)
                          (do   signal#)))))
 
                 ;; Trade-off: avoid double `run-form` expansion
@@ -729,39 +725,34 @@
                             (truss/try*
                               (do            (RunResult. ~run-form* nil (- (enc/now-nano*) t0#)))
                               (catch :all t# (RunResult. nil        t#  (- (enc/now-nano*) t0#)))
-                              (finally (.close otel-scope#))))))])
+                              (finally (.close otel-scope#))))))])]
 
-                final-form
+            `((fn [] ; iife for better IoC compatibility
                 ;; Unless otherwise specified, allow errors to throw on call
-                `(let [~'__run-fn-form ~run-fn-form
-                       ~'__kind        ~kind-form
-                       ~'__ns          ~ns-form
-                       ~'__id          ~id-form
-                       ~'__level       ~level-form]
+                (let [~'__run-fn-form ~run-fn-form
+                      ~'__kind        ~kind-form
+                      ~'__ns          ~ns-form
+                      ~'__id          ~id-form
+                      ~'__level       ~level-form]
 
-                   (enc/if-not ~allow?
-                     ~run-form*
-                     (let [~'__inst   ~inst-form
-                           ~'__thread ~thread-form
-                           ~'__root0  ~root-form0 ; ?{:keys [id uid]}
+                  (enc/if-not ~allow?
+                    ~run-form*
+                    (let [~'__inst   ~inst-form
+                          ~'__thread ~thread-form
+                          ~'__root0  ~root-form0 ; ?{:keys [id uid]}
 
-                           ~@into-let-form ; Inject conditional bindings
-                           signal# ~signal-delay-form]
+                          ~@into-let-form ; Inject conditional bindings
+                          signal# ~signal-delay-form]
 
-                       (dispatch-signal!
-                         ;; Unconditionally send same wrapped signal to all handlers.
-                         ;; Each handler will use wrapper for handler filtering,
-                         ;; unwrapping (realizing) only allowed signals.
-                         (WrappedSignal. ~'__kind ~'__ns ~'__id ~'__level signal#))
+                      (dispatch-signal!
+                        ;; Unconditionally send same wrapped signal to all handlers.
+                        ;; Each handler will use wrapper for handler filtering,
+                        ;; unwrapping (realizing) only allowed signals.
+                        (WrappedSignal. ~'__kind ~'__ns ~'__id ~'__level signal#))
 
-                       (if ~'__run-result
-                         ( ~'__run-result signal#)
-                         true))))]
-
-            (if-let [iife-wrap? true #_cljs?]
-              ;; Small perf hit to improve compatibility within `go` and other IOC-style bodies
-              `((fn [] ~final-form))
-              (do       final-form))))))))
+                      (if ~'__run-result
+                        ( ~'__run-result signal#)
+                        true))))))))))))
 
 (comment
   (with-signal  (signal! {:level :warn :let [x :x] :msg ["Test" "message" x] :data {:a :A :x x} :run (+ 1 2)}))

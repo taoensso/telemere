@@ -382,9 +382,9 @@
 
 (comment
   (do
-    (require '[taoensso.telemere :as t])
+    (require '[taoensso.telemere :as tel])
     (def h1 (handler:open-telemetry))
-    (let [{[s1 s2] :signals} (t/with-signals (t/trace! ::id1 (t/trace! ::id2 "form2")))]
+    (let [{[s1 s2] :signals} (tel/with-signals (tel/trace! ::id1 (tel/trace! ::id2 "form2")))]
       (def s1 s1)
       (def s2 s2)))
 
