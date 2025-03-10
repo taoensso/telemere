@@ -43,7 +43,7 @@
   #?(:clj without-filters)
   set-kind-filter! #?(:clj with-kind-filter)
   set-ns-filter!   #?(:clj with-ns-filter)
-  set-id-filter    #?(:clj with-id-filter)
+  set-id-filter!   #?(:clj with-id-filter)
   set-min-level!   #?(:clj with-min-level)
 
   #?(:clj with-handler) #?(:clj with-handler+)
