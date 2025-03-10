@@ -12,10 +12,10 @@ A signal will be provided to a handler iff ALL of the following are true:
 	- a. Compile time: not applicable
 	- b. Runtime: sample rate, kind, ns, id, level, when fn, rate limit
 	  
-- 3. **Call middleware** `(fn [signal]) => ?modified-signal` returns non-nil
-- 4. **Handler middleware** `(fn [signal]) => ?modified-signal` returns non-nil
+- 3. **Call transform** `(fn [signal]) => ?modified-signal` returns non-nil
+- 4. **Handler transform** `(fn [signal]) => ?modified-signal` returns non-nil
 
-> Middleware provides a flexible way to modify and/or filter signals by arbitrary signal data/content conditions (return nil to skip).
+> Transform fns provides a flexible way to modify and/or filter signals by arbitrary signal data/content conditions (return nil to skip handling).
 
 See [`help:filters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters) for more about filtering.
 

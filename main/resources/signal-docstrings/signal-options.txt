@@ -25,17 +25,18 @@ All options are available for all signal creator calls:
 `:coords` ------ Custom ?[line column] to override auto signal callsite info
 
 `:elidable?` --- Should signal be subject to compile-time elision? (Default: true)
+`:trace?` ------ Should tracing be enabled for `:run` form?
+
 `:sample-rate` - ?rate ∈ℝ[0,1] for signal sampling (0.75 => allow 75% of signals, nil => allow all)
 `:when` -------- Arb ?form; when present, form must return truthy to allow signal
 `:rate-limit` -- ?spec as given to `taoensso.telemere/rate-limiter`, see its docstring for details
 `:rate-limit-by` When present, rate limits will be enforced independently for each id (any Clojure value!)
-`:middleware` -- Optional (fn [signal]) => ?modified-signal to apply when signal is created, as per `with-middleware`
-`:middleware+` - Optional (fn [signal]) => ?modified-signal to apply when signal is created, as per `with-middleware+`
-`:trace?` ------ Should tracing be enabled for `:run` form?
+`:xfn` --------- Optional       transform (fn [signal]) => ?modified-signal to apply when signal is created, as per `with-xfn`
+`:xfn+` -------- Optional extra transform (fn [signal]) => ?modified-signal to apply when signal is created, as per `with-xfn+`
 
 <kvs> ---------- Other arb app-level ?kvs to incl. in signal. Typically NOT included in
                  handler output, so a great way to provide custom data/opts for use
-                 (only) by custom middleware/handlers.
+                 (only) by custom transforms/handlers.
 
 If anything is unclear, please ping me (@ptaoussanis) so that I can improve these docs!
 

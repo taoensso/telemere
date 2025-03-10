@@ -1,5 +1,5 @@
 Signals are maps with {:keys [inst id ns level data msg_ ...]}, though they
-can be modified by signal and/or handler middleware.
+can be modified by call and/or handler transform (xfns).
 
 Default signal keys:
 
@@ -33,7 +33,7 @@ Default signal keys:
 
 <kvs> ---------- Other arb app-level ?kvs given to signal creator. Typically NOT included
                  in handler output, so a great way to provide custom data/opts for use
-                 (only) by custom middleware/handlers.
+                 (only) by custom transforms/handlers.
 
 If anything is unclear, please ping me (@ptaoussanis) so that I can improve these docs!
 

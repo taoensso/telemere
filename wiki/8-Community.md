@@ -1,4 +1,4 @@
-My plan for Telemere is to offer a **stable core of limited scope**, then to focus on making it as easy for the **community** to write additional stuff like handlers, middleware, and utils.
+My plan for Telemere is to offer a **stable core of limited scope**, then to focus on making it as easy for the **community** to write additional stuff like handlers, transforms, and utils.
 
 **PRs very welcome** to add links to this page!
 
@@ -20,7 +20,7 @@ Includes videos, tutorials, demo projects, etc.
 
 # Handlers and tools
 
-Includes libraries or examples for handlers (see [Writing handlers](./4-Handlers#writing-handlers)), middleware, handler utils (e.g. formatters), tools for analyzing signals, etc. [PRs](../wiki#contributions-welcome) welcome for additions!
+Includes libraries or examples for handlers (see [Writing handlers](./4-Handlers#writing-handlers)), transforms, handler utils (e.g. formatters), tools for analyzing signals, etc. [PRs](../wiki#contributions-welcome) welcome for additions!
 
 | Type | Description                                                   |
 | ---- | :------------------------------------------------------------ |

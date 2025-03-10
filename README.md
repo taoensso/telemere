@@ -113,15 +113,14 @@ It enables you to write code that is **information-verbose by default**.
 ;; Set minimum level for `event!` signals for particular ns pattern
 (t/set-min-level! :event "taoensso.sente.*" :warn)
 
-;; Use middleware to:
-;;   - Transform signals
-;;   - Filter    signals by arb conditions (incl. data/content)
+;; Use transforms (xfns) to filter and/or arbitrarily modify signals
+;; by signal data/content/etc.
 
-(t/set-middleware!
+(t/set-xfn!
   (fn [signal]
     (if (-> signal :data :skip-me?)
       nil ; Filter signal (don't handle)
-      (assoc signal :passed-through-middleware? true))))
+      (assoc signal :transformed? true))))
 
 (t/with-signal (t/event! ::my-id {:data {:skip-me? true}}))  ; => nil
 (t/with-signal (t/event! ::my-id {:data {:skip-me? false}})) ; => {...}
@@ -251,7 +250,7 @@ Detailed help is available without leaving your IDE:
 | :---------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------- |
 | [`help:signal-creators`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-creators)                   | Creating signals                                                         |
 | [`help:signal-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options)                     | Options when creating signals                                            |
-| [`help:signal-content`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content)                     | Signal content (map given to middleware/handlers)                        |
+| [`help:signal-content`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content)                     | Signal content (map given to transforms/handlers)                        |
 | [`help:filters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters)                                   | Signal filtering and transformation                                      |
 | [`help:handlers`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handlers)                                 | Signal handler management                                                |
 | [`help:handler-dispatch-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) | Signal handler dispatch options                                          |
@@ -314,7 +313,7 @@ You can also easily [write your own handlers](../../wiki/4-Handlers#writing-hand
 
 ## Community
 
-My plan for Telemere is to offer a **stable core of limited scope**, then to focus on making it as easy for the **community** to write additional stuff like handlers, middleware, and utils.
+My plan for Telemere is to offer a **stable core of limited scope**, then to focus on making it as easy for the **community** to write additional stuff like handlers, transforms, and utils.
 
 See [here](../../wiki/8-Community) for community resources.
 

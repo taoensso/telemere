@@ -16,4 +16,4 @@ This flow is visualized below:
 <img src="https://raw.githubusercontent.com/taoensso/telemere/master/imgs/signal-flow.svg" alt="Telemere signal flowchart" width="640"/>
 
 - `A/sync queue` semantics are specified via [handler dispatch options](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options).
-- The shared **call middleware cache** is super useful when doing signal transformations that are expensive and/or involve side effects (like syncing with another service/db to get a unique tx id, etc.).
+- The shared **call transform** cache is super useful when doing signal transformations that are expensive and/or involve side effects (like syncing with another service/db to get a unique tx id, etc.).

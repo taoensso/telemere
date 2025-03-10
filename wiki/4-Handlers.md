@@ -48,11 +48,11 @@ There's two kinds of config relevant to all signal handlers:
 
 ## Dispatch opts
 
-Handler dispatch opts includes dispatch priority (determines order in which handlers are called), handler filtering, handler middleware, a/sync queue semantics, back-pressure opts, etc.
+Handler dispatch opts includes dispatch priority (determines order in which handlers are called), handler filtering, handler transform, a/sync queue semantics, back-pressure opts, etc.
 
 See [`help:handler-dispatch-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) for full info, and [`default-handler-dispatch-opts`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#default-handler-dispatch-opts) for defaults.
 
-Note that handler middleware in particular is an easily overlooked but powerful feature, allowing you to arbitrarily transform and/or filter every [signal map](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content) before it is given to each handler.
+Note that the handler transform is an easily overlooked but powerful feature, allowing you to arbitrarily modify and/or filter every [signal map](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content) before it is given to each handler.
 
 ## Handler-specific opts
 
@@ -120,27 +120,27 @@ Note that when writing JSON with Clojure, you *must* provide an appropriate `pr-
 
 ### Handler-specific per-signal kvs
 
-Telemere includes a handy mechanism for including arbitrary app-level data/opts in individual signals for use by custom middleware and/or handlers.
+Telemere includes a handy mechanism for including arbitrary app-level data/opts in individual signals for use by custom transforms and/or handlers.
 
 Any *non-standard* (app-level) keys you include in your signal constructor opts will automatically be included in created signals, e.g.:
 
 ```clojure
 (t/with-signal
   (t/event! ::my-id
-    {:my-middleware-data "foo"
-     :my-handler-data    "bar"}))
+    {:my-data-for-xfn     "foo"
+     :my-data-for-handler "bar"}))
 
 ;; %>
 ;; {;; App-level kvs included inline (assoc'd to signal root)
-;;  :my-middleware-data "foo"
-;;  :my-handler-data    "bar"
+;;  :my-data-for-xfn     "foo"
+;;  :my-data-for-handler "bar"
 ;;  :kvs ; And also collected together under ":kvs" key
-;;  {:my-middleware-data "foo"
-;;   :my-handler-data    "bar"}
+;;  {:my-data-for-xfn     "foo"
+;;   :my-data-for-handler "bar"}
 ;;  ... }
 ```
 
-These app-level data/opts are typically NOT included by default in handler output, making them a great way to convey data/opts to custom middleware/handlers.
+These app-level data/opts are typically NOT included by default in handler output, making them a great way to convey data/opts to custom transforms/handlers.
 
 # Managing handlers
 

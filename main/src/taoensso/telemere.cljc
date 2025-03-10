@@ -25,7 +25,7 @@
         ;; Via `sigs/def-api`
         without-filters with-kind-filter with-ns-filter with-id-filter
         with-min-level with-handler with-handler+
-        with-ctx with-ctx+ with-middleware with-middleware+]])))
+        with-ctx with-ctx+ with-xfn with-xfn+]])))
 
 (comment
   (remove-ns (symbol (str *ns*)))
@@ -50,7 +50,7 @@
   add-handler! remove-handler! stop-handlers!
 
   ^:dynamic *ctx* set-ctx! #?(:clj with-ctx) #?(:clj with-ctx+)
-  ^:dynamic *middleware* set-middleware! #?(:clj with-middleware) #?(:clj with-middleware+))
+  ^:dynamic *xfn* set-xfn! #?(:clj with-xfn) #?(:clj with-xfn+))
 
 (sigs/def-api
   {:sf-arity 4
@@ -73,7 +73,7 @@
   enc/chance
   enc/rate-limiter
   enc/newline
-  enc/comp-middleware
+  sigs/comp-xfn
   sigs/default-handler-dispatch-opts
   #?(:clj truss/keep-callsite)
 

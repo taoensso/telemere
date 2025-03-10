@@ -1,5 +1,5 @@
 (ns taoensso.telemere.utils
-  "Misc utils useful for Telemere handlers, middleware, etc."
+  "Misc utils useful for Telemere handlers, transforms, etc."
   (:refer-clojure :exclude [newline])
   (:require
    [clojure.string          :as str]

@@ -18,7 +18,7 @@
 #?(:clj
    (enc/declare-remote
      ^:dynamic taoensso.telemere/*ctx*
-     ^:dynamic taoensso.telemere/*middleware*
+     ^:dynamic taoensso.telemere/*xfn*
      ^:dynamic taoensso.telemere/*uid-fn*
      ^:dynamic taoensso.telemere/*otel-tracer*))
 
@@ -393,7 +393,7 @@
        '(   [& opts-kvs]
          [{:as opts-map :keys
            [#_elide? #_allow? #_callsite-id, ; Undocumented
-            elidable? coords #_inst #_uid #_middleware #_middleware+,
+            elidable? coords #_inst #_uid #_xfn #_xfn+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             #_ctx #_ctx+ #_parent #_root #_trace?, #_do #_let #_data #_msg #_error #_run #_& #_kvs]}])
 
@@ -401,7 +401,7 @@
        '(   [& opts-kvs]
          [{:as opts-map :keys
            [#_elide? #_allow? #_callsite-id, ; Undocumented
-            elidable? coords inst uid middleware middleware+,
+            elidable? coords inst uid xfn xfn+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error run & kvs]}])
 
@@ -410,7 +410,7 @@
          [level   msg]
          [{:as opts-map :keys
            [#_elide? #_allow? #_callsite-id,
-            elidable? coords inst uid middleware middleware+,
+            elidable? coords inst uid xfn xfn+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}
           msg])
@@ -421,7 +421,7 @@
          [id
           {:as opts-map :keys
            [#_elide? #_allow? #_callsite-id,
-            elidable? coords inst uid middleware middleware+,
+            elidable? coords inst uid xfn xfn+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}])
 
@@ -430,7 +430,7 @@
          [id      run]
          [{:as opts-map :keys
            [#_elide? #_allow? #_callsite-id,
-            elidable? coords inst uid middleware middleware+,
+            elidable? coords inst uid xfn xfn+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error run & kvs]}
           run])
@@ -440,7 +440,7 @@
          [level   run]
          [{:as opts-map :keys
            [#_elide? #_allow? #_callsite-id,
-            elidable? coords inst uid middleware middleware+,
+            elidable? coords inst uid xfn xfn+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error run & kvs]}
           run])
@@ -450,7 +450,7 @@
          [id      error]
          [{:as opts-map :keys
            [#_elide? #_allow? #_callsite-id,
-            elidable? coords inst uid middleware middleware+,
+            elidable? coords inst uid xfn xfn+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}
           error])
@@ -460,7 +460,7 @@
          [id      run]
          [{:as opts-map :keys
            [#_elide? #_allow? #_callsite-id, catch-val,
-            elidable? coords inst uid middleware middleware+,
+            elidable? coords inst uid xfn xfn+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}
           run])
@@ -470,7 +470,7 @@
          [opts-or-id]
          [{:as opts-map :keys
            [#_elide? #_allow? #_callsite-id,
-            elidable? coords inst uid middleware middleware+,
+            elidable? coords inst uid xfn xfn+,
             sample-rate kind ns id level when rate-limit rate-limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}])
 
@@ -618,15 +618,15 @@
                         `(taoensso.encore.signals/update-ctx taoensso.telemere/*ctx* ~ctx+)
                         (get opts :ctx                      `taoensso.telemere/*ctx*))
 
-                      middleware-form
-                      (if-let [middleware+ (get opts :middleware+)]
-                        `(taoensso.encore/comp-middleware taoensso.telemere/*middleware* ~middleware+)
-                        (get opts :middleware            `taoensso.telemere/*middleware*))
+                      xfn-form
+                      (if-let [xfn+ (get opts :xfn+)]
+                        `(taoensso.encore.signals/comp-xfn taoensso.telemere/*xfn* ~xfn+)
+                        (get opts :xfn                    `taoensso.telemere/*xfn*))
 
                       kvs-form
                       (not-empty
                         (dissoc opts
-                          :elidable? :coords :inst :uid :middleware :middleware+,
+                          :elidable? :coords :inst :uid :xfn :xfn+,
                           :sample-rate :ns :kind :id :level :filter :when #_:rate-limit #_:rate-limit-by,
                           :ctx :ctx+ :parent #_:trace?, :do :let :data :msg :error,
                           :run :run-form :run-val, :elide? :allow? #_:callsite-id :otel/context))
@@ -677,15 +677,15 @@
 
                   `(enc/bound-delay
                      ;; Delay (cache) shared by all handlers, incl. `:let` eval,
-                     ;; signal construction, middleware, etc. Throws caught by handler.
+                     ;; signal construction, transform (xfn), etc. Throws caught by handler.
                      ~do-form
                      (let [~@let-form ; Allow to throw, eval BEFORE data, msg, etc.
                            signal# ~signal-form]
 
                        ;; Final unwrapped signal value visible to users/handler-fns, allow to throw
-                       (if-let [sig-middleware# ~middleware-form]
-                         (sig-middleware# signal#) ; Apply signal middleware, can throw
-                         (do              signal#)))))
+                       (if-let [xfn# ~xfn-form]
+                         (xfn# signal#) ; Apply call transform, can throw
+                         (do   signal#)))))
 
                 ;; Trade-off: avoid double `run-form` expansion
                 run-fn-form (when run-form `(fn [] ~run-form))

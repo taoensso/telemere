@@ -59,15 +59,14 @@
 ;; Set minimum level for `event!` signals for particular ns pattern
 (t/set-min-level! :event "taoensso.sente.*" :warn)
 
-;; Use middleware to:
-;;   - Transform signals
-;;   - Filter    signals by arb conditions (incl. data/content)
+;; Use transforms (xfns) to filter and/or arbitrarily modify signals
+;; by signal data/content/etc.
 
-(t/set-middleware!
+(t/set-xfn!
   (fn [signal]
     (if (-> signal :data :skip-me?)
       nil ; Filter signal (don't handle)
-      (assoc signal :passed-through-middleware? true))))
+      (assoc signal :transformed? true))))
 
 (t/with-signal (t/event! ::my-id {:data {:skip-me? true}}))  ; => nil
 (t/with-signal (t/event! ::my-id {:data {:skip-me? false}})) ; => {...}
@@ -333,16 +332,16 @@
 
 (t/with-signal
   (t/event! ::my-id
-    {:my-middleware-data "foo"
-     :my-handler-data    "bar"}))
+    {:my-data-for-xfn     "foo"
+     :my-data-for-handler "bar"}))
 
 ;; %>
 ;; {;; App-level kvs included inline (assoc'd to signal root)
-;;  :my-middleware-data "foo"
-;;  :my-handler-data    "bar"
+;;  :my-data-for-xfn     "foo"
+;;  :my-data-for-handler "bar"
 ;;  :kvs ; And also collected together under ":kvs" key
-;;  {:my-middleware-data "foo"
-;;   :my-handler-data    "bar"}
+;;  {:my-data-for-xfn     "foo"
+;;   :my-data-for-handler "bar"}
 ;;  ... }
 
 ;;;; Misc extra examples

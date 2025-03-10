@@ -80,9 +80,9 @@ Consider the [differences](https://www.youtube.com/watch?v=oyLBGkS5ICk) between 
   
   This way you can see all your ids in one place, and precise info on when ids were added/removed/changed.
   
-- Use **signal call middleware** to your advantage.
+- Use **signal call transforms** to your advantage.
   
-  The result of call middleware is cached and *shared between all handlers* making it an efficient place to transform signals. For this reason - prefer signal middleware to handler middleware when possible/convenient.
+  The result of call-side signal transforms is cached and *shared between all handlers* making it an efficient place to modify signals going to >1 handler.
   
 - Signal and handler **sampling is multiplicative**.
   
@@ -94,12 +94,12 @@ Consider the [differences](https://www.youtube.com/watch?v=oyLBGkS5ICk) between 
   
   So for `n` randomly sampled signals matching some criteria, you'd have seen an estimated `Σ(1.0/sample-rate_i)` such signals _without_ sampling, etc.
   
-- Middleware can return any type, but it's best to return only `nil` or a map. This ensures maximum compatibility with community middleware, handlers, and tools.
+- Transforms can technically return any type, but it's best to return only `nil` or a map. This ensures maximum compatibility with community transforms, handlers, and tools.
   
-- Middleware can be used to **filter signals** by returning `nil`.
-- Middleware can be used to **split signals**:
+- Transforms can be used to **filter signals** by returning `nil`.
+- Transforms can be used to **split signals**:
   
-  Your middleware can *call signal creators* like any other code. Return `nil` after to filter the source signal. Just be aware that new signals will re-enter your handler queue/s as would any other signal - and so may be subject to handling delay and normal handler queue back-pressure.
+  Your transforms can *call signal creators* like any other code. Return `nil` after to filter the source signal. Just be aware that new signals will re-enter your handler queue/s as would any other signal - and so may be subject to handling delay and normal handler queue back-pressure.
   
   See also the [`dispatch-signal!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#dispatch-signal!) util.
   
@@ -122,7 +122,7 @@ Consider the [differences](https://www.youtube.com/watch?v=oyLBGkS5ICk) between 
   
   Note that all app-level kvs will *also* be available *together* under the signal's `:kvs` key.
   
-  App-level kvs are typically *not* included in handler output, so are a great way of providing custom data/opts for use (only) by custom middleware or handlers.
+  App-level kvs are typically *not* included in handler output, so are a great way of providing custom data/opts for use (only) by custom transforms or handlers.
   
 - Signal `kind` can be useful in advanced cases.
   
