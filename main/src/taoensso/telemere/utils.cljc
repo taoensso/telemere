@@ -209,7 +209,7 @@
                chain (truss/ex-chain :as-map error)]
     (assoc signal :error chain)
     (do    signal)))
- 
+
 ;;;; Files
 
 #?(:clj (defn ^:no-doc as-file ^java.io.File [file] (jio/as-file file)))
@@ -220,8 +220,12 @@
      ^java.io.File [file]
      (let [file (as-file  file)]
        (when-not (.exists file)
-         (when-let [parent (.getParentFile (.getCanonicalFile file))] (.mkdirs parent))
-         (.createNewFile file))
+         (truss/catching
+           (let [path (.toPath file)
+                 fa (into-array java.nio.file.attribute.FileAttribute [])]
+             (when-let [parent (.getParent path)]
+               (do (java.nio.file.Files/createDirectories parent fa)))
+             (do   (java.nio.file.Files/createFile        path   fa)))))
 
        (if (.canWrite file)
          file
