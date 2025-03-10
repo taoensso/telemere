@@ -2,22 +2,20 @@ This project uses [**Break Versioning**](https://www.taoensso.com/break-versioni
 
 ---
 
-# `v1.0.0-RC4` (2025-03-03)
+# `v1.0.0-RC5` (2025-03-10)
 
 ## 📦 Dependencies
 
 Available on Clojars:
 
-1. [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-RC4) - main dependency.
-2. [SLF4J provider](https://clojars.org/com.taoensso/telemere-slf4j/versions/1.0.0-RC4) - additional dependency for users that want their Java logging [to go to](https://github.com/taoensso/telemere/wiki/3-Config#java-logging) Telemere.
+1. [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.0-RC5) - main dependency.
+2. [SLF4J provider](https://clojars.org/com.taoensso/telemere-slf4j/versions/1.0.0-RC5) - additional dependency for users that want their Java logging [to go to](https://github.com/taoensso/telemere/wiki/3-Config#java-logging) Telemere.
 
 This project uses [Break Versioning](https://www.taoensso.com/break-versioning).
 
 ## Release notes
 
-RC4 includes some minor fixes, minor usability improvements, and a few **breaking changes** (indicated by ➤) that should not affect most users.
-
-If no unexpected issues come up, RC4 will become **v1 stable** in March 2025.
+RC5 includes **breaking changes** (indicated by ➤), apologies!
 
 Big thanks to everyone that's been helping test and give feedback. And as always, please **report any unexpected problems** on [GitHub](https://github.com/taoensso/telemere/issues) or the [Slack channel](https://www.taoensso.com/telemere/slack) 🙏
 
@@ -31,8 +29,11 @@ Thanks for the patience awaiting v1 final! I hope and believe that it'll have be
 
 #### ➤ Changes to API since `v1.0.0-RC1`
 
-Please read these carefully in case you might be affected:
+Please read carefully in case you may be affected:
 
+* ➤ **\[mod]** Rename `:rate-limit` -> `:limit` \[f37f54e] (**RC5**)
+* ➤ **\[mod]** Rename `:sample-rate` -> `:sample` \[1f4b49a] (**RC5**)
+* ➤ **\[mod]** Rename `:middleware` -> `:xfn` \[7cccf67] (**RC5**)
 * ➤ **\[mod]** `log!`, `event!` now always return nil \[ac5feb4] (**RC4**)
 * ➤ **\[mod]** Signal content: drop `:location`, add `:coords` \[fda22ce] (**RC3**)
 * ➤ **\[mod]** Signal options: drop `:location`, add `:coords` \[1f99f71] (**RC3**)
@@ -43,6 +44,7 @@ Please read these carefully in case you might be affected:
 
 #### Changes to default output since `v1.0.0-RC1`
 
+* ➤ **\[mod]** [#56] `utils/clean-signal-fn` exclude `:schema` by default \[c78eb07] (**RC5**)
 * ➤ **\[mod]** [#52] `signal-preamble-fn` now ignores nil `:kind` (@marksto) \[634cc53] (**RC4**)
 * \[mod] Remove "- " msg separator from default [preamble](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.utils#signal-preamble-fn) output \[d61f6c2] (RC2)
 * \[mod] [Postal handler](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.postal#handler:postal) now uses default preamble fn for email subject \[706a8b6] (RC2)
@@ -82,6 +84,7 @@ Please read these carefully in case you might be affected:
 
 #### Misc improvements
 
+* **\[new]** [#57] File handling: make file stream more robust \[82f4c31] (**RC5**)
 * **\[new]** Add `log!?`, `event!?` \[ac5feb4] (**RC4**)
 * **\[new]** Alias `keep-callsite`, mention in `signal!` docs \[bfea515] (**RC4**)
 * **\[new]** Use [Truss](https://www.taoensso.com/truss) v2 and [contextual exceptions](https://cljdoc.org/d/com.taoensso/truss/CURRENT/api/taoensso.truss#ex-info) when relevant (**RC3**)
@@ -154,6 +157,9 @@ Please read these carefully in case you might be affected:
 
 ### Since `v1.0.0-RC1` (2024-10-29)
 
+* **\[fix]** [#57] File handling: use nio API to create missing parent dirs \[af45ffc] (**RC5**)
+* **\[fix]** [#55] SLF4J signals should include `*ctx*` \[79173a6] (**RC5**)
+* **\[fix]** [#32] Fix clj-kondo warnings \[c60f33e] (**RC5**)
 * **\[fix]** [#52] `signal-preamble-fn` should use host info in signal (@marksto) \[410ed89] (**RC4**)
 * **\[fix]** Timbre shim: rename `spy!` -> `spy` (@lvh) \[3a9ffc6] (**RC3**)
 * **\[fix]** Timbre shim: don't attach empty `:vargs` data \[0e642ba] (**RC3**)
