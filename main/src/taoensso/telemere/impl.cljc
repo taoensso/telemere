@@ -253,27 +253,18 @@
    sample, kind id level, ctx parent root, data kvs msg_,
    error run-form run-val end-inst run-nsecs]
  
-  Object (toString [sig] (str "taoensso.telemere.Signal" (into {} sig))))
+  Object (toString [sig] (str "taoensso.telemere.Signal" (enc/pr-edn* (into {} sig)))))
 
-;; NB intentionally verbose constructors for readability, to support extra keys
-(do     (enc/def-print-impl [sig Signal] (str "#taoensso.telemere.Signal"      (pr-str (into {} sig)))))
-#?(:clj (enc/def-print-dup  [sig Signal] (str "#taoensso.telemere.impl.Signal" (pr-str (into {} sig)))))
+;; Verbose constructors for readability + to support extra keys
+(do     (enc/def-print-impl [sig Signal] (str "#taoensso.telemere.Signal"      (enc/pr-edn* (into {} sig)))))
+#?(:clj (enc/def-print-dup  [sig Signal] (str "#taoensso.telemere.impl.Signal" (enc/pr-edn* (into {} sig)))))
+
+(defn signal? #?(:cljs {:tag 'boolean}) [x] (instance? Signal x))
 
 (def     impl-signal-keys #{:_otel-context})
 (def standard-signal-keys
   (set/difference (set (keys (map->Signal {:schema 0})))
     impl-signal-keys))
-
-(comment
-  (def s1 (with-signal (signal! {:level :info, :my-k1 :my-v1})))
-  (read-string (str    (assoc s1 :my-k2 :my-v2)))
-  (read-string (pr-str (assoc s1 :my-k2 :my-v2)))
-  (read-string (binding [*print-dup* true] (pr-str (assoc s1 :my-k2 :my-v2))))
-
-  (defrecord MyRec [x])
-  (read-string ; Non-verbose will fail on any extra keys
-    (binding [*print-dup* true, *verbose-defrecords* false]
-      (pr-str (assoc (MyRec. :x) :y :y)))))
 
 (deftype #_defrecord WrappedSignal
   [kind ns id level signal-value_]

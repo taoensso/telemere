@@ -281,15 +281,20 @@
                  (with-sig (sig! {:level :info, :xfn+ #(assoc % :bar true)})))]
            (is (sm? sv {:foo true, :bar true})))])])
 
-   #?(:clj
-      (testing "Printing"
-        (let [sv1 (dissoc (with-sig (sig! {:level :info, :run (+ 1 2), :my-k1 :my-v1})) :_otel-context)
-              sv1 ; Ensure instants are printable
-              (-> sv1
-                (update-in [:inst]     enc/inst->udt)
-                (update-in [:end-inst] enc/inst->udt))]
+   (testing "Printing"
+     [#?(:clj (is (impl/signal? (read-string (binding [*print-dup* true] (pr-str        (impl/map->Signal {})))))))
+      #?(:clj (is (impl/signal? (read-string (binding [*print-dup* true] (pr-str (assoc (impl/map->Signal {}) :k :v)))))))
+      (is (enc/str-starts-with?              (binding [*print-dup* true]    (str (assoc (impl/map->Signal {}) :k :v))) "taoensso.telemere.Signal{"))
+      (is (enc/str-starts-with?                                          (pr-str (assoc (impl/map->Signal {}) :k :v)) "#taoensso.telemere.Signal{"))
+      (is (enc/str-starts-with?                                             (str (assoc (impl/map->Signal {}) :k :v))  "taoensso.telemere.Signal{"))
 
-          [(is (= sv1 (read-string (pr-str sv1))))])))])
+      #?(:clj
+         (let [sv1 (dissoc (with-sig (sig! {:level :info, :run (+ 1 2), :my-k1 :my-v1})) :_otel-context)
+               sv1 ; Ensure instants are printable
+               (-> sv1
+                 (update-in [:inst]     enc/inst->udt)
+                 (update-in [:end-inst] enc/inst->udt))]
+           (is (= sv1 (read-string (pr-str sv1))) "Equality holds")))])])
 
 (deftest _handlers
   ;; Basic handler tests are in Encore
