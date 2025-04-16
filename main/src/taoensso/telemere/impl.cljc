@@ -371,13 +371,13 @@
     (sigs/call-handlers! *sig-handlers* signal)
     :dispatched))
 
-;;;; Signal API helpers
+;;;; API helpers
 
-#?(:clj (defmacro signal-docstring [    rname] (enc/slurp-resource (str "signal-docstrings/" (name rname) ".txt"))))
-#?(:clj (defmacro defhelp          [sym rname] `(enc/def* ~sym {:doc ~(eval `(signal-docstring ~rname))} "See docstring")))
+#?(:clj (defmacro docstring [    rname] (enc/slurp-resource (str "docs/"    (name rname) ".txt"))))
+#?(:clj (defmacro defhelp   [sym rname] `(enc/def* ~sym {:doc ~(eval `(docstring ~rname))} "See docstring")))
 
 #?(:clj
-   (defn signal-arglists [macro-id]
+   (defn arglists [macro-id]
      (case macro-id
 
        :signal-allowed? ; opts => allowed?
