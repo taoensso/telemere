@@ -246,7 +246,7 @@
           (log! {:allow? true} \"Message 2\"))"
 
      ;; Used also for interop (tools.logging, SLF4J), etc.
-     {:arglists (impl/signal-arglists :signal-allowed?)}
+     {:arglists (impl/arglists :signal-allowed?)}
      [& args] `(impl/signal-allowed? ~(args->opts args))))
 
 (comment (macroexpand '(signal-allowed? {:ns "my-ns"})))
@@ -254,8 +254,8 @@
 #?(:clj
    (defmacro signal!
      "opts => allowed? / run result (value or throw)."
-     {:doc      (impl/signal-docstring :signal!)
-      :arglists (impl/signal-arglists  :signal!)}
+     {:doc      (impl/docstring :signal!)
+      :arglists (impl/arglists  :signal!)}
      [& args]
      (truss/keep-callsite
        `(impl/signal! ~(args->opts args)))))
@@ -273,8 +273,8 @@
    (let [base-opts {:kind :log, :level :info}]
      (defmacro log!?
        "?level + msg => allowed?"
-       {:doc      (impl/signal-docstring :log!)
-        :arglists (impl/signal-arglists  :log!)}
+       {:doc      (impl/docstring :log!)
+        :arglists (impl/arglists  :log!)}
        ([opts-or-msg      ] `(impl/signal!        ~(merge-or-assoc-opts base-opts &form :msg   opts-or-msg)))
        ([opts-or-level msg] `(impl/signal! ~(assoc (merge-or-assoc-opts base-opts &form :level opts-or-level) :msg msg))))))
 
@@ -283,8 +283,8 @@
 #?(:clj
    (defmacro log!
      "Like `log!?` but always returns nil."
-     {:doc      (impl/signal-docstring :log!)
-      :arglists (impl/signal-arglists  :log!)}
+     {:doc      (impl/docstring :log!)
+      :arglists (impl/arglists  :log!)}
      [& args] `(do ~(truss/keep-callsite `(log!? ~@args)) nil)))
 
 (comment (:coords (with-signal (log! :info "My msg"))))
@@ -293,8 +293,8 @@
    (let [base-opts {:kind :event, :level :info}]
      (defmacro event!?
        "id + ?level => allowed? Note unique arg order: [x opts] rather than [opts x]!"
-       {:doc      (impl/signal-docstring :event!)
-        :arglists (impl/signal-arglists  :event!)}
+       {:doc      (impl/docstring :event!)
+        :arglists (impl/arglists  :event!)}
        ([   opts-or-id]    `(impl/signal!        ~(merge-or-assoc-opts base-opts &form :id    opts-or-id)))
        ([id opts-or-level] `(impl/signal! ~(assoc (merge-or-assoc-opts base-opts &form :level opts-or-level) :id id))))))
 
@@ -303,8 +303,8 @@
 #?(:clj
    (defmacro event!
      "Like `event!?` but always returns nil."
-     {:doc      (impl/signal-docstring :event!)
-      :arglists (impl/signal-arglists  :event!)}
+     {:doc      (impl/docstring :event!)
+      :arglists (impl/arglists  :event!)}
      [& args] `(do ~(truss/keep-callsite `(event!? ~@args)) nil)))
 
 (comment (:coords (with-signal (event! ::my-id :info))))
@@ -313,8 +313,8 @@
    (let [base-opts {:kind :trace, :level :info, :msg `impl/default-trace-msg}]
      (defmacro trace!
        "?id + run => run result (value or throw)."
-       {:doc      (impl/signal-docstring :trace!)
-        :arglists (impl/signal-arglists  :trace!)}
+       {:doc      (impl/docstring :trace!)
+        :arglists (impl/arglists  :trace!)}
        ([opts-or-run]    `(impl/signal!        ~(merge-or-assoc-opts base-opts &form :run opts-or-run)))
        ([opts-or-id run] `(impl/signal! ~(assoc (merge-or-assoc-opts base-opts &form :id  opts-or-id) :run run))))))
 
@@ -324,8 +324,8 @@
    (let [base-opts {:kind :spy, :level :info, :msg `impl/default-trace-msg}]
      (defmacro spy!
        "?level + run => run result (value or throw)."
-       {:doc      (impl/signal-docstring :spy!)
-        :arglists (impl/signal-arglists  :spy!)}
+       {:doc      (impl/docstring :spy!)
+        :arglists (impl/arglists  :spy!)}
        ([opts-or-run]       `(impl/signal!        ~(merge-or-assoc-opts base-opts &form :run   opts-or-run)))
        ([opts-or-level run] `(impl/signal! ~(assoc (merge-or-assoc-opts base-opts &form :level opts-or-level) :run run))))))
 
@@ -335,8 +335,8 @@
    (let [base-opts {:kind :error, :level :error}]
      (defmacro error!
        "?id + error => given error."
-       {:doc      (impl/signal-docstring :error!)
-        :arglists (impl/signal-arglists  :error!)}
+       {:doc      (impl/docstring :error!)
+        :arglists (impl/arglists  :error!)}
        ([opts-or-id error] `(error! ~(assoc (merge-or-assoc-opts base-opts &form :id opts-or-id) :error error)))
        ([opts-or-error]
         (let [opts     (merge-or-assoc-opts base-opts &form :error opts-or-error)
@@ -352,8 +352,8 @@
    (let [base-opts {:kind :error, :level :error}]
      (defmacro catch->error!
        "?id + run => run value or ?catch-val."
-       {:doc      (impl/signal-docstring :catch->error!)
-        :arglists (impl/signal-arglists  :catch->error!)}
+       {:doc      (impl/docstring :catch->error!)
+        :arglists (impl/arglists  :catch->error!)}
        ([opts-or-id run] `(catch->error! ~(assoc (merge-or-assoc-opts base-opts &form :id opts-or-id) :run run)))
        ([opts-or-run]
         (let [opts      (merge-or-assoc-opts base-opts &form :run opts-or-run)
@@ -395,7 +395,7 @@
        uncaught JVM errors.
 
        See `uncaught->handler!` and `error!` for details."
-       {:arglists  (impl/signal-arglists :uncaught->error!)}
+       {:arglists  (impl/arglists :uncaught->error!)}
        ([          ] (truss/keep-callsite `(uncaught->error! {})))
        ([opts-or-id]
         (let [opts (merge-or-assoc-opts base-opts &form :id opts-or-id)]
