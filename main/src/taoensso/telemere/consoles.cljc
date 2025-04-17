@@ -23,7 +23,7 @@
 
      Options:
        `:output-fn` - (fn [signal]) => string, see `format-signal-fn` or `pr-signal-fn`
-       `:stream`    - `java.io.writer`
+       `:stream` ---- `java.io.writer`
          Defaults to `*err*` if `utils/error-signal?` is true, and `*out*` otherwise."
 
      ([] (handler:console nil))
@@ -95,7 +95,7 @@
      Ref. <https://github.com/binaryage/cljs-devtools>.
 
      Options:
-       `:preamble-fn`     - (fn [signal])   => string, see [1].
+       `:preamble-fn` ----- (fn [signal])   => string, see [1].
        `:format-nsecs-fn` - (fn [nanosecs]) => string.
 
      [1] `taoensso.telemere.utils/signal-preamble-fn`, etc."

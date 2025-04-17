@@ -286,18 +286,18 @@
 
   Options:
     `:output-fn`- (fn [signal]) => string, see `format-signal-fn` or `pr-signal-fn`
-    `:path`     - Path string of the target output file (default `logs/telemere.log`)
+    `:path` ----- Path string of the target output file (default `logs/telemere.log`)
 
     `:interval` - ∈ #{nil :daily :weekly :monthly} (default `:monthly`)
       When non-nil, causes interval-based archives to be maintained.
 
-    `:max-file-size` ∈ #{nil <pos-int>} (default 4MB)
+    `:max-file-size` - ∈ #{nil <pos-int>} (default 4MB)
       When `path` file size > ~this many bytes, rotates old content to numbered archives.
 
-    `:max-num-parts` ∈ #{nil <pos-int>} (default 8)
+    `:max-num-parts` - ∈ #{nil <pos-int>} (default 8)
       Maximum number of numbered archives to retain for any particular interval.
 
-    `:max-num-intervals` ∈ #{nil <pos-int>} (default 6)
+    `:max-num-intervals` - ∈ #{nil <pos-int>} (default 6)
       Maximum number of intervals (days/weeks/months) to retain."
 
   ([] (handler:file nil))

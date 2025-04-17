@@ -25,11 +25,11 @@
   Can output signals as human or machine-readable (edn, JSON) strings.
 
   Options:
-    `:output-fn`   - (fn [signal]) => string, see `format-signal-fn` or `pr-signal-fn`
+    `:output-fn` --- (fn [signal]) => string, see `format-signal-fn` or `pr-signal-fn`
     `:socket-opts` - {:keys [host port ssl? connect-timeout-msecs]}
-      `:host`      - Destination TCP socket hostname string
-      `:port`      - Destination TCP socket port     int
-      `:ssl?`      - Use SSL/TLS (default false)
+      `:host` ------ Destination TCP socket hostname string
+      `:port` ------ Destination TCP socket port     int
+      `:ssl?` ------ Use SSL/TLS (default false)
       `:connect-timeout-msecs` - Connection timeout (default 3000 msecs)
 
   Limitations:
@@ -59,10 +59,10 @@
   Can output signals as human or machine-readable (edn, JSON) strings.
 
   Options:
-    `:output-fn`          - (fn [signal]) => string, see `format-signal-fn` or `pr-signal-fn`
-    `:socket-opts`        - {:keys [host port max-packet-bytes]}
-      `:host`             - Destination UDP socket hostname string
-      `:port`             - Destination UDP socket port     int
+    `:output-fn` ---------- (fn [signal]) => string, see `format-signal-fn` or `pr-signal-fn`
+    `:socket-opts` -------- {:keys [host port max-packet-bytes]}
+      `:host` ------------- Destination UDP socket hostname string
+      `:port` ------------- Destination UDP socket port     int
       `:max-packet-bytes` - Max packet size (in bytes) before truncating output (default 512)
 
     `:truncation-warning-fn`
