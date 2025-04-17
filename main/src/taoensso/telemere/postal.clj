@@ -58,7 +58,7 @@
          :cc \"engineering@example.com\"
          :X-MyHeader \"A custom header\"}
 
-    `:subject-fn`      - (fn [signal]) => email subject string
+    `:subject-fn` ------ (fn [signal]) => email subject string
     `:subject-max-len` - Truncate subjects beyond this length (default 90)
 
     `:body-fn` - (fn [signal]) => email body content string,

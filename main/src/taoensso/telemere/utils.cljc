@@ -352,10 +352,10 @@
      Useful for basic handlers that write to a TCP socket, etc.
 
      Options:
-       `:ssl?`                  - Use SSL/TLS?
+       `:ssl?` ------------------ Use SSL/TLS?
        `:connect-timeout-msecs` - Connection timeout (default 3000 msecs)
-       `:socket-fn`             - (fn [host port timeout]) => `java.net.Socket`
-       `:ssl-socket-fn`         - (fn [socket host port])  => `java.net.Socket`
+       `:socket-fn` ------------- (fn [host port timeout]) => `java.net.Socket`
+       `:ssl-socket-fn` --------- (fn [socket host port])  => `java.net.Socket`
 
      Notes:
        - Writer should be manually closed after use (with zero-arity call).
@@ -522,8 +522,8 @@
 
   Options:
     `:format-inst-fn` - (fn format [instant]) => string.
-    `:format-id-fn`   - (fn format [ns id])   => string.
-    `:format-msg-fn`  - (fn format [msg])     => string."
+    `:format-id-fn` --- (fn format [ns id])   => string.
+    `:format-msg-fn` -- (fn format [msg])     => string."
   ([] (signal-preamble-fn nil))
   ([{:keys [format-inst-fn format-id-fn format-msg-fn]
      :or   {format-inst-fn (format-inst-fn)
@@ -568,8 +568,8 @@
     - Returns a human-readable signal content ?string (incl. data, ctx, etc.).
 
   Options:
-    `:raw-error?`      - Retain unformatted error? (default false)
-    `:incl-keys`       - Subset of signal keys to retain from those
+    `:raw-error?` ------ Retain unformatted error? (default false)
+    `:incl-keys` ------- Subset of signal keys to retain from those
                          otherwise excluded by default: #{:kvs :host :thread}
     `:format-nsecs-fn` - (fn [nanosecs]) => string.
     `:format-error-fn` - (fn [error])    => string."
@@ -654,8 +654,8 @@
 
   Options:
     `:incl-nils?` - Include signal's keys with nil values? (default false)
-    `:incl-kvs?`  - Include signal's app-level root kvs?   (default false)
-    `:incl-keys`  - Subset of signal keys to retain from those otherwise
+    `:incl-kvs?` -- Include signal's app-level root kvs?   (default false)
+    `:incl-keys` -- Subset of signal keys to retain from those otherwise
                     excluded by default: #{:schema :kvs :host :thread}"
   ([] (clean-signal-fn nil))
   ([{:keys [incl-kvs? incl-nils? incl-keys] :as opts}]
@@ -714,8 +714,8 @@
     - Returns a machine-readable signal string.
 
   Options:
-    `:pr-fn`         - ∈ #{<unary-fn> :edn (default) :json (Cljs only)}
-    `:clean-fn`      - (fn [signal]) => clean signal map, see [1]
+    `:pr-fn` --------- ∈ #{<unary-fn> :edn (default) :json (Cljs only)}
+    `:clean-fn` ------ (fn [signal]) => clean signal map, see [1]
     `:incl-newline?` - Include terminating system newline? (default true)
 
   Examples:
@@ -780,8 +780,8 @@
 
   Options:
     `:incl-newline?` - Include terminating system newline? (default true)
-    `:preamble-fn`   - (fn [signal]) => signal preamble string, see [1]
-    `:content-fn`    - (fn [signal]) => signal content  string, see [2]
+    `:preamble-fn` --- (fn [signal]) => signal preamble string, see [1]
+    `:content-fn` ---- (fn [signal]) => signal content  string, see [2]
 
   [1] `taoensso.telemere.utils/signal-preamble-fn`, etc.
   [2] `taoensso.telemere.utils/signal-content-fn`,  etc.
