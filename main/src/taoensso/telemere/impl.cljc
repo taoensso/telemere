@@ -490,12 +490,12 @@
 (comment (enc/qb 1e6 (inst+nsecs (enc/now-inst) 1e9)))
 
 #?(:clj
-   (defn valid-opts! [x]
-     (if (map? x)
-       (do     x)
-       ;; We require const map keys, but vals may require eval
-       (truss/ex-info! "Telemere signal opts must be a map with const (compile-time) keys."
-         {:opts (truss/typed-val x)}))))
+   (defn- valid-opts! [macro-form macro-env caller opts]
+     (if (map? opts)
+       (do     opts)
+       (truss/ex-info!
+         (str "`" caller "` needs compile-time map opts at "
+           (sigs/format-callsite (enc/get-source macro-form macro-env)))))))
 
 #?(:clj (defn- auto-> [form auto-form] (if (= form :auto) auto-form form)))
 #?(:clj
@@ -504,8 +504,8 @@
      Wrapped for public API."
      ([          opts] (truss/keep-callsite `(signal-allowed? nil ~opts)))
      ([base-opts opts]
-      (valid-opts! (or base-opts {}))
-      (valid-opts! (or opts      {}))
+      (valid-opts! &form &env 'telemere/signal-allowed? (or base-opts {}))
+      (valid-opts! &form &env 'telemere/signal-allowed? (or opts      {}))
       (let [opts (merge {:kind :generic, :level :info} base-opts opts)
            {:keys [#_callsite-id elide? allow?]}
            (sigs/filter-call
@@ -525,8 +525,8 @@
      "Generic low-level signal creator. Wrapped for public API."
      ([          opts] (truss/keep-callsite `(signal! nil ~opts)))
      ([base-opts opts]
-      (valid-opts! (or base-opts {}))
-      (valid-opts! (or opts      {}))
+      (valid-opts! &form &env 'telemere/signal! (or base-opts {}))
+      (valid-opts! &form &env 'telemere/signal! (or opts      {}))
       (let [cljs? (boolean (:ns &env))
             clj?  (not cljs?)
 
@@ -574,10 +574,9 @@
                 trace? (get opts :trace? (boolean run-form))
                 _
                 (when-not (contains? #{true false nil} trace?)
-                 (truss/unexpected-arg! trace?
-                   {:param             'trace?
-                    :context `signal!
-                    :msg "Expected constant (compile-time) `:trace?` boolean"}))
+                  (truss/ex-info!
+                    (str "Signal needs compile-time `:trace?` value at "
+                      (sigs/format-callsite ns-form coords))))
 
                 thread-form (when clj? `(enc/thread-info))
 
@@ -621,16 +620,14 @@
                       _ ; Compile-time validation
                       (do
                         (when (and run-form error-form) ; Ambiguous source of error
-                          (truss/ex-info! "Signals cannot have both `:run` and `:error` opts at the same time"
-                            {:run-form   run-form
-                             :error-form error-form
-                             :ns         ns-form
-                             :coords     coords
-                             :other-opts (dissoc opts :run :error)}))
+                          (truss/ex-info!
+                            (str "Signal cannot have both `:run` and `:error` opts at "
+                              (sigs/format-callsite ns-form coords))))
 
                         (when-let [e (find opts :msg_)] ; Common typo/confusion
-                          (truss/ex-info! "Signals cannot have `:msg_` opt (did you mean `:msg`?))"
-                            {:msg_ (truss/typed-val (val e))})))
+                          (truss/ex-info!
+                            (str "Signal cannot have `:msg_` opt (did you mean `:msg`?) at "
+                              (sigs/format-callsite ns-form coords)))))
 
                       signal-form
                       (let [record-form
@@ -640,7 +637,9 @@
                                 [:run    :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords                                               ~sample-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~show-run-form ~show-run-val ~'_end-inst ~'_run-nsecs)
                                 [:no-run :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords (enc/host-info) ~'__thread ~'__otel-context1, ~sample-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil             nil           nil         nil)
                                 [:no-run :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords                                               ~sample-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil             nil           nil         nil)
-                                (truss/unexpected-arg! clause {:context :signal-constructor-args})))
+                                (truss/ex-info!
+                                  (str "Unexpected signal constructor args at "
+                                    (sigs/format-callsite ns-form coords)))))
 
                             record-form
                             (if-not run-form
