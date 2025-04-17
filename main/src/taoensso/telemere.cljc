@@ -228,9 +228,9 @@
 
 #?(:clj
    (defn- args->opts [args]
-     (case     (count args)
+     (case (count args)
        0 {}
-       1 (impl/valid-opts! (first args))
+       1 (first args)
        (apply hash-map args))))
 
 #?(:clj
@@ -249,7 +249,9 @@
 
      ;; Used also for interop (tools.logging, SLF4J), etc.
      {:arglists (impl/arglists :signal-allowed?)}
-     [& args] `(impl/signal-allowed? ~(args->opts args))))
+     [& args]
+     (truss/keep-callsite
+       `(impl/signal-allowed? ~(args->opts args)))))
 
 (comment (macroexpand '(signal-allowed? {:ns "my-ns"})))
 
