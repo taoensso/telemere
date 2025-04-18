@@ -298,8 +298,8 @@
                    (when-let [drained (enc/reset-in! span-buffer1_ #{})]
                      (when-not (empty? drained)
                        (span-buffer2_ (fn [old] (set/union old drained)))))))
-
-               3000 3000)))
+               3000 3000)
+             t3s))
 
          stop-tracing!
          (fn stop-tracing! []
