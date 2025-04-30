@@ -14,15 +14,21 @@
 - Basic **performance monitoring** (nested form runtimes)
 - Any combination of the above
 
-It's small, *super* fast, easy to learn, easy to use, and **absurdly flexible**.
+It's small, super fast, easy to learn, easy to use, and **absurdly flexible**.
 
-It helps enable Clojure/Script systems that are easily **observable**, **robust**, and **debuggable** - and it represents the refinement and culmination of ideas brewing over 12+ years in [Timbre](https://www.taoensso.com/timbre), [Tufte](https://www.taoensso.com/tufte) and [Truss](https://www.taoensso.com/truss).
+Use it alone, or as part of a suite of complementary **observability tools** for modern Clojure/Script applications:
+
+- [Telemere](https://www.taoensso.com/telemere) for logging, tracing, and general telemetry
+- [Tufte](https://www.taoensso.com/tufte) for performance monitoring
+- [Truss](https://www.taoensso.com/truss) for  assertions and error handling
+
+Together these help enable Clojure/Script systems that are **robust**, **fast**, and **easily debugged**.
 
 See [here](../../wiki/1-Getting-started) for **full introduction** (concepts, terminology, getting started).
 
 ## Latest release/s
 
-- `2025-03-10` `v1.0.0-RC5`: [release info](../../releases/tag/v1.0.0-RC5)
+- `2025-04-30` `v1.0.0`: [release info](../../releases/tag/v1.0.0)
 
 [![Main tests][Main tests SVG]][Main tests URL]
 [![Graal tests][Graal tests SVG]][Graal tests URL]
