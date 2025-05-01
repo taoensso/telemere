@@ -5,7 +5,6 @@
     <https://www.taoensso.com/telemere>"
 
   {:author "Peter Taoussanis (@ptaoussanis)"}
-  (:refer-clojure :exclude [newline])
   (:require
    [taoensso.truss          :as truss]
    [taoensso.encore         :as enc]
@@ -69,13 +68,11 @@
 
 (enc/defaliases
   ;; Encore
-  #?(:clj enc/set-var-root!)
-  #?(:clj enc/update-var-root!)
+  #?(:clj ^:no-doc enc/set-var-root!)
+  #?(:clj ^:no-doc enc/update-var-root!)
   #?(:clj enc/get-env)
   #?(:clj enc/call-on-shutdown!)
-  enc/chance
   enc/rate-limiter
-  enc/newline
   sigs/comp-xfn
   #?(:clj truss/keep-callsite)
 

@@ -134,7 +134,7 @@
 ;;;; Misc
 
 (enc/defaliases
-  enc/newline enc/pr-edn #?(:clj enc/uuid) enc/uuid-str
+  enc/newline enc/pr-edn #?(:clj enc/uuid) enc/uuid-str enc/chance
   #?@(:cljs [enc/pr-json])
   #?@(:clj  [enc/thread-info enc/thread-id enc/thread-name
              enc/host-info   enc/host-ip   enc/hostname]))
