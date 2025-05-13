@@ -556,8 +556,12 @@
 
 (defn- format-parent [ns {:keys [id uid]}]
   (if id
-    {:id (symbol (format-id ns id)), :uid uid}
-    {:id (symbol (format-id ns id))}))
+    (if uid
+      {:id (symbol (format-id ns id)), :uid uid}
+      {:id (symbol (format-id ns id))})
+    (if uid
+      {:uid uid}
+      nil)))
 
 (comment (str (format-parent (str *ns*) {:id ::id1 :uid "uid1"})))
 
