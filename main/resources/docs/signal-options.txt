@@ -25,6 +25,7 @@ All options are available for all signal creator calls:
 `:coords` ------ Custom ?[line column] to override auto signal callsite info
 
 `:elidable?` --- Should signal be subject to compile-time elision? (default true)
+`:allow?` ------ Custom override for usual runtime filtering (true => ALWAYS create signal)
 `:trace?` ------ Should tracing be enabled for `:run` form?
 
 `:sample` ------ Sample ?rate ∈ℝ[0,1] for random signal sampling (0.75 => allow 75% of signals, nil => allow all)

@@ -2,7 +2,7 @@ See below for config by topic-
 
 # Filtering
 
-A signal will be provided to a handler iff ALL of the following are true:
+A signal will be provided to a handler iff **ALL** of the following are true:
 
 - 1. Signal **call filters** pass:
 	- a. Compile time: sample rate, kind, ns, id, level, when form, rate limit
@@ -15,9 +15,23 @@ A signal will be provided to a handler iff ALL of the following are true:
 - 3. **Call transform** `(fn [signal]) => ?modified-signal` returns non-nil
 - 4. **Handler transform** `(fn [signal]) => ?modified-signal` returns non-nil
 
-> Transform fns provides a flexible way to modify and/or filter signals by arbitrary signal data/content conditions (return nil to skip handling).
+> 👉 Transform fns provides a flexible way to modify and/or filter signals by arbitrary signal data/content conditions (return nil to skip handling).
+
+> 👉 Call and handler filters are **additive** - so handlers can be *more* but not *less* restrictive than call filters allow. This makes sense: call filters decide if a signal can be created. Handler filters decide if a particular handler is allowed to handle a created signal.
 
 See [`help:filters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters) for more about filtering.
+
+## Debugging filters
+
+Telemere offers a *lot* of filtering control, so real systems can get quite complex. There's a lot of tools to help debug, including:
+
+| Util                                                                                                                |                                            |
+| ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| [`with-signal`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#with-signal)               | To see *last* signal created in body       |
+| [`with-signals`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#with-signals)             | To see *all* signals created in body       |
+| [`get-filters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-filters)               | To see all call filters in current context |
+| [`without-filters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#without-filters)       | To disable filters in body                 |
+| [`get-handlers-stats`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-handlers-stats) | To see handler call stats                  |
 
 # Signal handlers
 

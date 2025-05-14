@@ -165,7 +165,7 @@ Both have several options, see their docstrings (links above) for details.
 
 ## Filtering
 
-A signal will be provided to a handler iff ALL of the following are true:
+A signal will be provided to a handler iff **ALL** of the following are true:
 
 - 1. Signal **call filters** pass:
 	- a. Compile time: sample rate, kind, ns, id, level, when form, rate limit
@@ -178,7 +178,9 @@ A signal will be provided to a handler iff ALL of the following are true:
 - 3. **Call transform** `(fn [signal]) => ?modified-signal` returns non-nil
 - 4. **Handler transform** `(fn [signal]) => ?modified-signal` returns non-nil
 
-> Transform fns provides a flexible way to modify and/or filter signals by arbitrary signal data/content conditions (return nil to skip handling).
+> 👉 Transform fns provides a flexible way to modify and/or filter signals by arbitrary signal data/content conditions (return nil to skip handling).
+
+> 👉 Call and handler filters are **additive** - so handlers can be *more* but not *less* restrictive than call filters allow. This makes sense: call filters decide if a signal can be created. Handler filters decide if a particular handler is allowed to handle a created signal.
 
 Quick examples of some basic filtering:
 
