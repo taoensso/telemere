@@ -2,6 +2,31 @@ This project uses [**Break Versioning**](https://www.taoensso.com/break-versioni
 
 ---
 
+# `v1.0.1` (2025-05-27)
+
+## 📦 Dependencies
+
+Available on Clojars:
+
+1. [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.0.1) - main dependency.
+2. [SLF4J provider](https://clojars.org/com.taoensso/telemere-slf4j/versions/1.0.1) - additional dependency for users that want their Java logging [to go to](https://github.com/taoensso/telemere/wiki/3-Config#java-logging) Telemere.
+
+This project uses [Break Versioning](https://www.taoensso.com/break-versioning).
+
+## Release notes
+
+This is a **hotfix release** that fixes a few issues, and improves some documentation. It should be a safe upgrade for all users of v1.0.0.
+
+##  Since `v1` (2025-04-30)
+
+* \[fix] [#65] Fix broken callsite `:limit` option \[f08b60b]
+* \[fix] Fix bad `signal-content-fn` parent formatting \[3746de8]
+* \[doc] Add extra docs re: debugging filtering \[1bdb667]
+* \[doc] [#64] Hide some unimportant vars from API docs (@marksto) \[2e0a293]
+* \[doc] [#63] Add link to community Axiom handler (@marksto) \[9d040d7]
+
+---
+
 # `v1.0.0` (2025-04-30)
 
 ## 📦 Dependencies
