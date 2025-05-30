@@ -836,8 +836,8 @@
       (testing "format-error-fn"
         (let [ex2-str ((utils/format-error-fn) ex2)]
           [(is (enc/str-starts-with? ex2-str
-                 #?(:clj  "  Root: clojure.lang.ExceptionInfo - Ex1\n  data: {:k1 \"v1\"}\n\nCaused: clojure.lang.ExceptionInfo - Ex2\n  data: {:k2 \"v2\"}\n\nRoot stack trace:\n"
-                    :cljs "  Root: cljs.core/ExceptionInfo - Ex1\n  data: {:k1 \"v1\"}\n\nCaused: cljs.core/ExceptionInfo - Ex2\n  data: {:k2 \"v2\"}\n\nRoot stack trace:\n")))
+                 #?(:clj  "Root: clojure.lang.ExceptionInfo - Ex1\ndata: {:k1 \"v1\"}\n\nCaused: clojure.lang.ExceptionInfo - Ex2\ndata: {:k2 \"v2\"}\n\nRoot stack trace:\n"
+                    :cljs "Root: cljs.core/ExceptionInfo - Ex1\ndata: {:k1 \"v1\"}\n\nCaused: cljs.core/ExceptionInfo - Ex2\ndata: {:k2 \"v2\"}\n\nRoot stack trace:\n")))
 
            (is (enc/str-contains? ex2-str           "Root stack trace:"))
            (is (enc/str-contains? ex2-str "invoke") "Root stack trace includes content")]))
