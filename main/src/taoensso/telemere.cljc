@@ -49,6 +49,8 @@
   #?(:clj with-handler) #?(:clj with-handler+)
   add-handler! remove-handler! stop-handlers!
 
+  with-signal with-signals
+
   ^:dynamic *ctx* set-ctx! #?(:clj with-ctx) #?(:clj with-ctx+)
   ^:dynamic *xfn* set-xfn! #?(:clj with-xfn) #?(:clj with-xfn+))
 
