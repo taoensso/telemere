@@ -24,7 +24,7 @@ Use it alone, or as part of a suite of complementary **observability tools** for
 
 Together these help enable Clojure/Script systems that are **robust**, **fast**, and **easily debugged**.
 
-See [here](../../wiki/1-Getting-started) for **full introduction** (concepts, terminology, getting started).
+See [quick examples](#quick-examples) or the [wiki](../../wiki/1-Getting-started) for a detailed intro.
 
 ## Latest release/s
 
@@ -58,7 +58,8 @@ It enables you to write code that is **information-verbose by default**.
 ```clojure
 (require '[taoensso.telemere :as t])
 
-;; (Just works / no config necessary for typical use cases)
+;; No config needed for typical use cases!!
+;; Signals print to console by default for both Clj and Cljs
 
 ;; Without structured data
 (t/log! :info "Hello world!") ; %> Basic log   signal (has message)
