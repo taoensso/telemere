@@ -391,7 +391,7 @@
        :signal! ; opts => allowed? / run result (value or throw)
        '(   [& opts-kvs]
          [{:as opts-map :keys
-           [elidable? coords inst uid xfn xfn+,
+           [elidable? coords inst uid xfn xfn+ #_kvs+,
             sample kind ns id level when limit limit-by,
             ctx ctx+ parent root trace?, do let data msg error run & kvs]}])
 
@@ -399,7 +399,7 @@
        '([opts-or-msg]
          [level   msg]
          [{:as opts-map :keys
-           [elidable? coords inst uid xfn xfn+,
+           [elidable? coords inst uid xfn xfn+ #_kvs+,
             sample kind ns id level when limit limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}
           msg])
@@ -409,7 +409,7 @@
          [id   level]
          [id
           {:as opts-map :keys
-           [elidable? coords inst uid xfn xfn+,
+           [elidable? coords inst uid xfn xfn+ #_kvs+,
             sample kind ns id level when limit limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}])
 
@@ -417,7 +417,7 @@
        '([opts-or-run]
          [id      run]
          [{:as opts-map :keys
-           [elidable? coords inst uid xfn xfn+,
+           [elidable? coords inst uid xfn xfn+ #_kvs+,
             sample kind ns id level when limit limit-by,
             ctx ctx+ parent root trace?, do let data msg error run & kvs]}
           run])
@@ -426,7 +426,7 @@
        '([opts-or-run]
          [level   run]
          [{:as opts-map :keys
-           [elidable? coords inst uid xfn xfn+,
+           [elidable? coords inst uid xfn xfn+ #_kvs+,
             sample kind ns id level when limit limit-by,
             ctx ctx+ parent root trace?, do let data msg error run & kvs]}
           run])
@@ -435,7 +435,7 @@
        '([opts-or-error]
          [id      error]
          [{:as opts-map :keys
-           [elidable? coords inst uid xfn xfn+,
+           [elidable? coords inst uid xfn xfn+ #_kvs+,
             sample kind ns id level when limit limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}
           error])
@@ -445,7 +445,7 @@
          [id      run]
          [{:as opts-map :keys
            [catch-val,
-            elidable? coords inst uid xfn xfn+,
+            elidable? coords inst uid xfn xfn+ #_kvs+,
             sample kind ns id level when limit limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}
           run])
@@ -454,7 +454,7 @@
        '([]
          [opts-or-id]
          [{:as opts-map :keys
-           [elidable? coords inst uid xfn xfn+,
+           [elidable? coords inst uid xfn xfn+ #_kvs+,
             sample kind ns id level when limit limit-by,
             ctx ctx+ parent root trace?, do let data msg error #_run & kvs]}])
 
@@ -602,13 +602,20 @@
                         (get opts :xfn                    `taoensso.telemere/*xfn*))
 
                       kvs-form
-                      (not-empty
-                        (dissoc opts
-                          :elidable? :coords :inst :uid :xfn :xfn+,
-                          :sample :ns :kind :id :level :filter :when #_:limit #_:limit-by,
-                          :ctx :ctx+ :parent #_:trace?, :do :let :data :msg :error,
-                          :run :run-form :run-val, :elide? :allow? #_:callsite-id,
-                          :host :thread :otel/context))
+                      (let [base
+                            (not-empty
+                              (dissoc opts
+                                :elidable? :coords :inst :uid :xfn :xfn+ :kvs+,
+                                :sample :ns :kind :id :level :filter :when #_:limit #_:limit-by,
+                                :ctx :ctx+ :parent #_:trace?, :do :let :data :msg :error,
+                                :run :run-form :run-val, :elide? :allow? #_:callsite-id,
+                                :host :thread :otel/context))]
+
+                        (if-let [kvs+ (get opts :kvs+)] ; Undocumented
+                          (if base
+                            `(not-empty (conj ~base ~kvs+))
+                            `(not-empty             ~kvs+))
+                          base))
 
                       _ ; Compile-time validation
                       (do
