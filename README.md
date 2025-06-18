@@ -217,7 +217,7 @@ It enables you to write code that is **information-verbose by default**.
 ## Comparisons
 
 - Telemere [compared](../../wiki/5-Migrating#from-timbre) to [Timbre](https://www.taoensso.com/timbre) (Telemere's predecessor)
-- Telemere [compared](../../wiki/6-FAQ#how-does-telemere-compare-to-mulog) to [Mulog](https://github.com/BrunoBonacci/mulog) (structured micro-logging library)
+- Telemere [compared](../../wiki/6-FAQ#how-does-telemere-compare-to-mulog) to [μ/log](https://github.com/BrunoBonacci/mulog) (structured micro-logging library)
 
 ## Videos
 

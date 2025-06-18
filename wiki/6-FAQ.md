@@ -115,11 +115,11 @@ See also [`msg-skip`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/tao
 
 See section [9-Authors](./9-Authors.md).
 
-# How does Telemere compare to Mulog?
+# How does Telemere compare to μ/log?
 
-> [Mulog](https://github.com/BrunoBonacci/mulog) is an excellent "micro-logging library" for Clojure that shares many of the same capabilities and objectives as Telemere.
+> [μ/log](https://github.com/BrunoBonacci/mulog) is an excellent "micro-logging library" for Clojure that shares many of the same capabilities and objectives as Telemere.
 
-Some **similarities** between Telemere and Mulog:
+Some **similarities** between Telemere and μ/log:
 
 - Both emphasize **structured data** rather than string messages
 - Both offer **tracing** to understand (nested) program flow
@@ -127,7 +127,7 @@ Some **similarities** between Telemere and Mulog:
 - Both are **fast** and offer **async handling**
 - Both offer a variety of **handlers** and are designed for ease of use
 
-Some particular **strengths of Mulog** that I'm aware of:
+Some particular **strengths of μ/log** that I'm aware of:
 
 - More **established/mature**
 - Wider **range of handlers** (incl. Kafka, Kinesis, Prometheus, Zipkin, etc.)
@@ -137,7 +137,7 @@ Some particular **strengths of Mulog** that I'm aware of:
 
 Some particular **strengths of Telemere**:
 
-- Both **Clj and Cljs support** (Mulog is Clj only)
+- Both **Clj and Cljs support** (μ/log is Clj only)
 - Rich **filtering capabilities** (see [`help:filters`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters)) incl. compile-time elision
 - Rich **dispatch control** (see [`help:handler-dispatch-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options))
 - Rich **environmental config** (see [`help:environmental-config`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:environmental-config)) for all platforms
@@ -148,7 +148,7 @@ Some particular **strengths of Telemere**:
 
 **My subjective thoughts**:
 
-Mulog is an awesome, well-designed library with quality documentation and a solid API. It's **absolutely worth checking out** - you may well prefer it to Telemere!
+μ/log is an awesome, well-designed library with quality documentation and a solid API. It's **absolutely worth checking out** - you may well prefer it to Telemere!
 
 The two libraries have many shared capabilities and objectives.
 
