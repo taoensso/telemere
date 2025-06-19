@@ -8,23 +8,25 @@
 
 (require '[taoensso.telemere :as tel])
 
-;; (Just works / no config necessary for typical use cases)
+;; No config needed for typical use cases!!
+;; Signals print to console by default for both Clj and Cljs
 
-;; Without structured data
-(tel/log! :info "Hello world!") ; %> Basic log   signal (has message)
-(tel/event! ::my-id :debug)     ; %> Basic event signal (just id)
+;; Traditional style logging (data formatted into message string):
+(tel/log! {:level :info, :msg (str "User " 1234 " logged in!")})
 
-;; With structured data
-(tel/log! {:level :info, :data {}} "Hello again!")
-(tel/event! ::my-id {:level :debug, :data {}})
+;; Modern/structured style logging (explicit id and data)
+(tel/log! {:level :info, :id :auth/login, :data {:user-id 1234}})
 
-;; Trace (auto interops with OpenTelemetry)
+;; Mixed style (explicit id and data, with message string)
+(tel/log! {:level :info, :id :auth/login, :data {:user-id 1234}, :msg "User logged in!"})
+
+;; Trace (can interop with OpenTelemetry)
 ;; Tracks form runtime, return value, and (nested) parent tree
-(tel/trace! {:id ::my-id :data {}}
+(tel/trace! {:id ::my-id :data {...}}
   (do-some-work))
 
 ;; Check resulting signal content for debug/tests
-(tel/with-signal (tel/event! ::my-id)) ; => {:keys [ns level id data msg_ ...]}
+(tel/with-signal (tel/log! {...})) ; => {:keys [ns level id data msg_ ...]}
 
 ;; Getting fancy (all costs are conditional!)
 (tel/log!
@@ -47,20 +49,25 @@
 
   ;; Message string or vector to join as string
   ["Something interesting happened!" formatted])
+)
 
 ;; Set minimum level
 (tel/set-min-level!       :warn) ; For all    signals
-(tel/set-min-level! :log :debug) ; For `log!` signals only
+(tel/set-min-level! :log :debug) ; For `log!` signals specifically
 
-;; Set namespace and id filters
-(tel/set-ns-filter! {:disallow "taoensso.*" :allow "taoensso.sente.*"})
+;; Set id and namespace filters
 (tel/set-id-filter! {:allow #{::my-particular-id "my-app/*"}})
+(tel/set-ns-filter! {:disallow "taoensso.*" :allow "taoensso.sente.*"})
 
-;; Set minimum level for `event!` signals for particular ns pattern
-(tel/set-min-level! :event "taoensso.sente.*" :warn)
+;; SLF4J signals will have their `:ns` key set to the logger's name
+;; (typically a source class)
+(tel/set-ns-filter! {:disallow "com.noisy.java.package.*"})
+
+;; Set minimum level for `log!` signals for particular ns pattern
+(tel/set-min-level! :log "taoensso.sente.*" :warn)
 
 ;; Use transforms (xfns) to filter and/or arbitrarily modify signals
-;; by signal data/contentel/etc.
+;; by signal data/content/etc.
 
 (tel/set-xfn!
   (fn [signal]
@@ -68,12 +75,10 @@
       nil ; Filter signal (don't handle)
       (assoc signal :transformed? true))))
 
-(tel/with-signal (tel/event! ::my-id {:data {:skip-me? true}}))  ; => nil
-(tel/with-signal (tel/event! ::my-id {:data {:skip-me? false}})) ; => {...}
+(tel/with-signal (tel/log! {... :data {:skip-me? true}}))  ; => nil
+(tel/with-signal (tel/log! {... :data {:skip-me? false}})) ; => {...}
 
 ;; See `tel/help:filters` docstring for more filtering options
-
-;;;; README "More examples"
 
 ;; Add your own signal handler
 (tel/add-handler! :my-handler

@@ -16,11 +16,18 @@
 
 It's small, super fast, easy to learn, easy to use, and **absurdly flexible**.
 
+An example call:
+
+```clojure
+(tel/log! {:level :info, :id :auth/login, :data {:user-id 1234}, :msg "User logged in!"})
+```
+
 Use it alone, or as part of a suite of complementary **observability tools** for modern Clojure/Script applications:
 
 - [Telemere](https://www.taoensso.com/telemere) for logging, tracing, and general telemetry
 - [Tufte](https://www.taoensso.com/tufte) for performance monitoring
 - [Truss](https://www.taoensso.com/truss) for  assertions and error handling
+- [Trove](https://www.taoensso.com/trove) for library authors that want to do structured logging
 
 Together these help enable Clojure/Script systems that are **robust**, **fast**, and **easily debugged**.
 
@@ -56,29 +63,30 @@ It enables you to write code that is **information-verbose by default**.
 <details open><summary>Create signals</summary><br/>
 
 ```clojure
-(require '[taoensso.telemere :as t])
+(require '[taoensso.telemere :as tel])
 
 ;; No config needed for typical use cases!!
 ;; Signals print to console by default for both Clj and Cljs
 
-;; Without structured data
-(t/log! :info "Hello world!") ; %> Basic log   signal (has message)
-(t/event! ::my-id :debug)     ; %> Basic event signal (just id)
+;; Traditional style logging (data formatted into message string):
+(tel/log! {:level :info, :msg (str "User " 1234 " logged in!")})
 
-;; With structured data
-(t/log! {:level :info, :data {...}} "Hello again!")
-(t/event! ::my-id {:level :debug, :data {...}})
+;; Modern/structured style logging (explicit id and data)
+(tel/log! {:level :info, :id :auth/login, :data {:user-id 1234}})
+
+;; Mixed style (explicit id and data, with message string)
+(tel/log! {:level :info, :id :auth/login, :data {:user-id 1234}, :msg "User logged in!"})
 
 ;; Trace (can interop with OpenTelemetry)
 ;; Tracks form runtime, return value, and (nested) parent tree
-(t/trace! {:id ::my-id :data {...}}
+(tel/trace! {:id ::my-id :data {...}}
   (do-some-work))
 
 ;; Check resulting signal content for debug/tests
-(t/with-signal (t/event! ::my-id)) ; => {:keys [ns level id data msg_ ...]}
+(tel/with-signal (tel/log! {...})) ; => {:keys [ns level id data msg_ ...]}
 
 ;; Getting fancy (all costs are conditional!)
-(t/log!
+(tel/log!
   {:level    :debug
    :sample   0.75 ; 75% sampling (noop 25% of the time)
    :when     (my-conditional)
@@ -106,33 +114,33 @@ It enables you to write code that is **information-verbose by default**.
 
 ```clojure
 ;; Set minimum level
-(t/set-min-level!       :warn) ; For all    signals
-(t/set-min-level! :log :debug) ; For `log!` signals only
+(tel/set-min-level!       :warn) ; For all    signals
+(tel/set-min-level! :log :debug) ; For `log!` signals specifically
 
 ;; Set id and namespace filters
-(t/set-id-filter! {:allow #{::my-particular-id "my-app/*"}})
-(t/set-ns-filter! {:disallow "taoensso.*" :allow "taoensso.sente.*"})
+(tel/set-id-filter! {:allow #{::my-particular-id "my-app/*"}})
+(tel/set-ns-filter! {:disallow "taoensso.*" :allow "taoensso.sente.*"})
 
 ;; SLF4J signals will have their `:ns` key set to the logger's name
 ;; (typically a source class)
-(t/set-ns-filter! {:disallow "com.noisy.java.package.*"})
+(tel/set-ns-filter! {:disallow "com.noisy.java.package.*"})
 
-;; Set minimum level for `event!` signals for particular ns pattern
-(t/set-min-level! :event "taoensso.sente.*" :warn)
+;; Set minimum level for `log!` signals for particular ns pattern
+(tel/set-min-level! :log "taoensso.sente.*" :warn)
 
 ;; Use transforms (xfns) to filter and/or arbitrarily modify signals
 ;; by signal data/content/etc.
 
-(t/set-xfn!
+(tel/set-xfn!
   (fn [signal]
     (if (-> signal :data :skip-me?)
       nil ; Filter signal (don't handle)
       (assoc signal :transformed? true))))
 
-(t/with-signal (t/event! ::my-id {:data {:skip-me? true}}))  ; => nil
-(t/with-signal (t/event! ::my-id {:data {:skip-me? false}})) ; => {...}
+(tel/with-signal (tel/log! {... :data {:skip-me? true}}))  ; => nil
+(tel/with-signal (tel/log! {... :data {:skip-me? false}})) ; => {...}
 
-;; See `t/help:filters` docstring for more filtering options
+;; See `tel/help:filters` docstring for more filtering options
 ```
 
 </details>
@@ -141,13 +149,13 @@ It enables you to write code that is **information-verbose by default**.
 
 ```clojure
 ;; Add your own signal handler
-(t/add-handler! :my-handler
+(tel/add-handler! :my-handler
   (fn
     ([signal] (println signal))
     ([] (println "Handler has shut down"))))
 
 ;; Use `add-handler!` to set handler-level filtering and back-pressure
-(t/add-handler! :my-handler
+(tel/add-handler! :my-handler
   (fn
     ([signal] (println signal))
     ([] (println "Handler has shut down")))
@@ -158,27 +166,27 @@ It enables you to write code that is **information-verbose by default**.
    :min-level :info
    :ns-filter {:disallow "taoensso.*"}
    :limit     {"1 per sec" [1 1000]}
-   ;; See `t/help:handler-dispatch-options` for more
+   ;; See `tel/help:handler-dispatch-options` for more
    })
 
 ;; See current handlers
-(t/get-handlers) ; => {<handler-id> {:keys [handler-fn handler-stats_ dispatch-opts]}}
+(tel/get-handlers) ; => {<handler-id> {:keys [handler-fn handler-stats_ dispatch-opts]}}
 
 ;; Add console handler to print signals as human-readable text
-(t/add-handler! :my-handler
-  (t/handler:console
-    {:output-fn (t/format-signal-fn {})}))
+(tel/add-handler! :my-handler
+  (tel/handler:console
+    {:output-fn (tel/format-signal-fn {})}))
 
 ;; Add console handler to print signals as edn
-(t/add-handler! :my-handler
-  (t/handler:console
-    {:output-fn (t/pr-signal-fn {:pr-fn :edn})}))
+(tel/add-handler! :my-handler
+  (tel/handler:console
+    {:output-fn (tel/pr-signal-fn {:pr-fn :edn})}))
 
 ;; Add console handler to print signals as JSON
 ;; Ref.  <https://github.com/metosin/jsonista> (or any alt JSON lib)
 #?(:clj (require '[jsonista.core :as jsonista]))
-(t/add-handler! :my-handler
-  (t/handler:console
+(tel/add-handler! :my-handler
+  (tel/handler:console
     {:output-fn
      #?(:cljs :json ; Use js/JSON.stringify
         :clj   jsonista/write-value-as-string)}))
@@ -235,19 +243,29 @@ It enables you to write code that is **information-verbose by default**.
 
 ## API overview
 
-See relevant docstrings (links below) for usage info-
-
 ### Creating signals
 
-| Name                                                                                                        | Kind       | Args             | Returns                      |
-| :---------------------------------------------------------------------------------------------------------- | :--------- | :--------------- | :--------------------------- |
-| [`log!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#log!)                     | `:log`     | `?level` + `msg` | nil                          |
-| [`event!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#event!)                 | `:event`   | `id` + `?level`  | nil                          |
-| [`trace!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#trace!)                 | `:trace`   | `?id` + `run`    | Form result                  |
-| [`spy!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#spy!)                     | `:spy`     | `?level` + `run` | Form result                  |
-| [`error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#error!)                 | `:error`   | `?id` + `error`  | Given error                  |
-| [`catch->error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#catch-%3Eerror!) | `:error`   | `?id`            | Form value or given fallback |
-| [`signal!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#signal!)               | `:generic` | `opts`           | Depends on opts              |
+Telemere's signals are all created using the low-level `signal!` macro. You can use that directly, or one of the wrapper macros like `log!`.
+
+Several different wrapper macros are provided. The only difference between them:
+
+  1. They create signals with a different `:kind` value (which can be handy for filtering, etc.).
+  2. They have different positional arguments and/or return values optimised for concise calling in different use cases.
+
+**NB:** ALL wrapper macros can also just be called with a single [opts](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options) map!
+
+See the linked docstrings below for more info:
+
+
+| Name                                                                                                        | Args                       | Returns                      |
+| :---------------------------------------------------------------------------------------------------------- | :------------------------- | :--------------------------- |
+| [`log!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#log!)                     | `[opts]` or `[?level msg]` | nil                          |
+| [`event!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#event!)                 | `[opts]` or `[id ?level]`  | nil                          |
+| [`trace!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#trace!)                 | `[opts]` or `[?id run]`    | Form result                  |
+| [`spy!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#spy!)                     | `[opts]` or `[?level run]` | Form result                  |
+| [`error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#error!)                 | `[opts]` or `[?id error]`  | Given error                  |
+| [`catch->error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#catch-%3Eerror!) | `[opts]` or `[?id error]`  | Form value or given fallback |
+| [`signal!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#signal!)               | `[opts]`                   | Depends on opts              |
 
 ### Internal help
 

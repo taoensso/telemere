@@ -132,7 +132,7 @@ Telemere can easily incorporate Tufte performance data in its signals, just like
 
 ```clojure
 (let [[_ perf-data] (tufte/profiled <opts> <form>)]
-  (t/log! {:perf-data perf-data} "Performance data"))
+  (tel/log! {:perf-data perf-data} "Performance data"))
 ```
 
 Telemere and Tufte work great together:
@@ -149,7 +149,7 @@ Telemere can easily incorporate Truss assertion failure information in its signa
 The [`catch->error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#catch-%3Eerror!) signal creator can be particularly convenient for this:
 
 ```clojure
-(t/catch->error! <form-with-truss-assertion/s>)
+(tel/catch->error! <form-with-truss-assertion/s>)
 ```
 
 Telemere also uses [Truss contextual exceptions](https://cljdoc.org/d/com.taoensso/truss/CURRENT/api/taoensso.truss#ex-info) when relevant.

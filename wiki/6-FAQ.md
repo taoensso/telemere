@@ -76,18 +76,18 @@ Examples:
 
 ```clojure
 ;; A fixed message (string arg)
-(t/log! "A fixed message") ; %> {:msg "A fixed message"}
+(tel/log! "A fixed message") ; %> {:msg "A fixed message"}
 
 ;; A joined message (vector arg)
 (let [user-arg "Bob"]
-  (t/log! ["User" (str "`" user-arg "`") "just logged in!"]))
+  (tel/log! ["User" (str "`" user-arg "`") "just logged in!"]))
 ;; %> {:msg_ "User `Bob` just logged in!` ...}
 
 ;; With arg prep
 (let [user-arg "Bob"
       usd-balance-str "22.4821"]
 
-  (t/log!
+  (tel/log!
     {:let
      [username (clojure.string/upper-case user-arg)
       usd-balance (parse-double usd-balance-str)]
@@ -100,10 +100,10 @@ Examples:
 
 ;; %> {:msg "User BOB has balance: $22" ...}
 
-(t/log! (str "This message " "was built " "by `str`"))
+(tel/log! (str "This message " "was built " "by `str`"))
 ;; %> {:msg "This message was built by `str`"}
 
-(t/log! (format "This message was built by `%s`" "format"))
+(tel/log! (format "This message was built by `%s`" "format"))
 ;; %> {:msg "This message was built by `format`"}
 ```
 

@@ -71,11 +71,11 @@ By default it writes formatted strings intended for human consumption:
 ```clojure
 ;; Create a test signal
 (def my-signal
-  (t/with-signal
-    (t/log! {:id ::my-id, :data {:x1 :x2}} "My message")))
+  (tel/with-signal
+    (tel/log! {:id ::my-id, :data {:x1 :x2}} "My message")))
 
 ;; Create console handler with default opts (writes formatted string)
-(def my-handler (t/handler:console {}))
+(def my-handler (tel/handler:console {}))
 
 ;; Test handler, remember it's just a (fn [signal])
 (my-handler my-signal) ; %>
@@ -90,8 +90,8 @@ To instead writes signals as [edn](https://github.com/edn-format/edn):
 ```clojure
 ;; Create console handler which writes signals as edn
 (def my-handler
-  (t/handler:console
-    {:output-fn (t/pr-signal-fn {:pr-fn :edn})}))
+  (tel/handler:console
+    {:output-fn (tel/pr-signal-fn {:pr-fn :edn})}))
 
 (my-handler my-signal) ; %>
 ;; {:inst #inst "2024-04-11T10:54:57.202869Z", :msg_ "My message", :ns "examples", ...}
@@ -105,9 +105,9 @@ To instead writes signals as JSON:
 ;; Ref.  <https://github.com/metosin/jsonista> (or any alt JSON lib)
 #?(:clj (require '[jsonista.core :as jsonista]))
 (def my-handler
-  (t/handler:console
+  (tel/handler:console
     {:output-fn
-     (t/pr-signal-fn
+     (tel/pr-signal-fn
        {:pr-fn
         #?(:cljs :json ; Use js/JSON.stringify
            :clj  jsonista/write-value-as-string)})}))
@@ -125,9 +125,10 @@ Telemere includes a handy mechanism for including arbitrary app-level data/opts 
 Any *non-standard* (app-level) keys you include in your signal constructor opts will automatically be included in created signals, e.g.:
 
 ```clojure
-(t/with-signal
-  (t/event! ::my-id
-    {:my-data-for-xfn     "foo"
+(tel/with-signal
+  (tel/log!
+    {...
+     :my-data-for-xfn     "foo"
      :my-data-for-handler "bar"}))
 
 ;; %>
@@ -250,7 +251,7 @@ If you're making a customizable handler for use by others, it's often handy to d
 # Example output
 
 ```clojure
-(t/log! {:id ::my-id, :data {:x1 :x2}} "My message") =>
+(tel/log! {:id ::my-id, :data {:x1 :x2}} "My message") =>
 ```
 
 ## Clj console handler

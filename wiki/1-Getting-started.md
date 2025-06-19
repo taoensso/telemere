@@ -83,7 +83,7 @@ deps.edn:   com.taoensso/telemere {:mvn/version "x-y-z"}
 And setup your namespace imports:
 
 ```clojure
-(ns my-app (:require [taoensso.telemere :as t]))
+(ns my-app (:require [taoensso.telemere :as tel]))
 ```
 
 # Default config
@@ -127,30 +127,34 @@ Interop can be tough to get configured correctly so the [`check-interop`](https:
 
 ## Creating signals
 
-Use whichever signal creator is most convenient for your needs:
+Telemere's signals are all created using the low-level `signal!` macro. You can use that directly, or one of the wrapper macros like `log!`.
 
-| Name                                                                                                        | Kind       | Args             | Returns                      |
-| :---------------------------------------------------------------------------------------------------------- | :--------- | :--------------- | :--------------------------- |
-| [`log!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#log!)                     | `:log`     | `?level` + `msg` | nil                          |
-| [`event!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#event!)                 | `:event`   | `id` + `?level`  | nil                          |
-| [`trace!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#trace!)                 | `:trace`   | `?id` + `run`    | Form result                  |
-| [`spy!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#spy!)                     | `:spy`     | `?level` + `run` | Form result                  |
-| [`error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#error!)                 | `:error`   | `?id` + `error`  | Given error                  |
-| [`catch->error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#catch-%3Eerror!) | `:error`   | `?id`            | Form value or given fallback |
-| [`signal!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#signal!)               | `:generic` | `opts`           | Depends on opts              |
- 
-- See relevant docstrings (links above) for usage info.
-- See [`help:signal-creators`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-creators) for more about signal creators.
-- See [`help:signal-options`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options) for options shared by all signal creators.
-- See [examples.cljc](https://github.com/taoensso/telemere/blob/master/examples.cljc) for REPL-ready examples.
+Several different wrapper macros are provided. The only difference between them:
+
+  1. They create signals with a different `:kind` value (which can be handy for filtering, etc.).
+  2. They have different positional arguments and/or return values optimised for concise calling in different use cases.
+
+**NB:** ALL wrapper macros can also just be called with a single [opts](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options) map!
+
+See the linked docstrings below for more info:
+
+| Name                                                                                                        | Args                       | Returns                      |
+| :---------------------------------------------------------------------------------------------------------- | :------------------------- | :--------------------------- |
+| [`log!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#log!)                     | `[opts]` or `[?level msg]` | nil                          |
+| [`event!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#event!)                 | `[opts]` or `[id ?level]`  | nil                          |
+| [`trace!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#trace!)                 | `[opts]` or `[?id run]`    | Form result                  |
+| [`spy!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#spy!)                     | `[opts]` or `[?level run]` | Form result                  |
+| [`error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#error!)                 | `[opts]` or `[?id error]`  | Given error                  |
+| [`catch->error!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#catch-%3Eerror!) | `[opts]` or `[?id error]`  | Form value or given fallback |
+| [`signal!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#signal!)               | `[opts]`                   | Depends on opts              |
 
 ## Checking signals
 
 Use the [`with-signal`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#with-signal) or (advanced) [`with-signals`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#with-signals) utils to help test/debug the signals that you're creating:
 
 ```clojure
-(t/with-signal
-  (t/log!
+(tel/with-signal
+  (tel/log!
     {:let  [x "x"]
      :data {:x x}}
     ["My msg:" x]))
@@ -185,15 +189,15 @@ A signal will be provided to a handler iff **ALL** of the following are true:
 Quick examples of some basic filtering:
 
 ```clojure
-(t/set-min-level! :info) ; Set global minimum level
-(t/with-signal (t/event! ::my-id1 :info))  ; => {:keys [inst id ...]}
-(t/with-signal (t/event! ::my-id1 :debug)) ; => nil (signal not allowed)
+(tel/set-min-level! :info) ; Set global minimum level
+(tel/with-signal (tel/log! {:level :info  ...}))  ; => {:keys [inst id ...]}
+(tel/with-signal (tel/log! {:level :debug ...})) ; => nil (signal not allowed)
 
-(t/with-min-level :trace ; Override global minimum level
-  (t/with-signal (t/event! ::my-id1 :debug))) ; => {:keys [inst id ...]}
+(tel/with-min-level :trace ; Override global minimum level
+  (tel/with-signal (tel/log! {:level :debug ...})) ; => {:keys [inst id ...]}
 
 ;; Disallow all signals in matching namespaces
-(t/set-ns-filter! {:disallow "some.nosy.namespace.*"})
+(tel/set-ns-filter! {:disallow "some.nosy.namespace.*"})
 ```
 
 - Filtering is always O(1), except for rate limits which are O(n_windows).

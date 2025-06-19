@@ -11,8 +11,8 @@ various keys:
   - All signal creators offer the same options [2], and
   - All signal kinds can contain the same content [3]
 
-Creators vary only in in their default options and call APIs (expected args
-and return values), making them more/less convenient for certain use cases:
+Creators vary only in in their default `:kind` value and call APIs (expected
+args and return values), making them more/less convenient for certain use cases:
 
   `log!` ------------- ?level + msg    => nil
   `event!` ----------- id     + ?level => nil

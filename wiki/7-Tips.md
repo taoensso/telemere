@@ -114,7 +114,7 @@ Consider the [differences](https://www.youtube.com/watch?v=oyLBGkS5ICk) between 
   Any non-standard [options](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options) you give to a signal creator call will be added to the signal it creates:
   
   ```clojure
-  (t/with-signal (t/log! {:my-key "foo"} "My message")))
+  (tel/with-signal (tel/log! {:my-key "foo"} "My message")))
   ;; => {:my-key "foo", :kvs {:my-key "foo", ...}, ...}
   ```
   
