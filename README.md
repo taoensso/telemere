@@ -334,7 +334,7 @@ See [here](../../wiki/8-Community) for community resources.
 
 ## Funding
 
-You can [help support][sponsor] continued work on this project, thank you!! 🙏
+You can [help support][sponsor] continued work on this project and [others][my work], thank you!! 🙏
 
 ## License
 
@@ -346,10 +346,11 @@ Licensed under [EPL 1.0](LICENSE.txt) (same as Clojure).
 [GitHub releases]: ../../releases
 [GitHub issues]:   ../../issues
 [GitHub wiki]:     ../../wiki
-[Slack channel]: https://www.taoensso.com/telemere/slack
+[Slack channel]:   https://www.taoensso.com/telemere/slack
 
 [Peter Taoussanis]: https://www.taoensso.com
 [sponsor]:          https://www.taoensso.com/sponsor
+[my work]:          https://www.taoensso.com/clojure-libraries
 
 <!-- Project -->
 
