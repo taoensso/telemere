@@ -1,6 +1,6 @@
 (ns taoensso.telemere.slack
-  "Slack handler using `clj-slack`,
-    Ref. <https://github.com/julienXX/clj-slack>"
+  "Telemere -> Slack handler using `clj-slack`,
+  Ref. <https://github.com/julienXX/clj-slack>"
   (:require
    [taoensso.truss  :as truss]
    [taoensso.encore :as enc]

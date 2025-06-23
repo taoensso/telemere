@@ -1,5 +1,5 @@
 (ns taoensso.telemere.tools-logging
-  "Interop support for tools.logging -> Telemere.
+  "tools.logging -> Telemere interop.
   Telemere will attempt to load this ns automatically when possible.
 
   Naming conventions:

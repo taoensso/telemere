@@ -1,7 +1,9 @@
 (ns taoensso.telemere.open-telemetry
-  "OpenTelemetry handler using `opentelemetry-java`,
-    Ref. <https://github.com/open-telemetry/opentelemetry-java>,
-         <https://javadoc.io/doc/io.opentelemetry/opentelemetry-api/latest/index.html>"
+  "Telemere -> OpenTelemetry handler using `opentelemetry-java`,
+  Ref. <https://github.com/open-telemetry/opentelemetry-java>,
+       <https://javadoc.io/doc/io.opentelemetry/opentelemetry-api/latest/index.html>
+
+  Telemere will attempt to load this ns automatically when possible."
   (:require
    [clojure.string  :as str]
    [clojure.set     :as set]

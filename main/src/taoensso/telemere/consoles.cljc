@@ -1,6 +1,5 @@
 (ns ^:no-doc taoensso.telemere.consoles
-  "Private ns, implementation detail.
-  Core console handlers, aliased in main Telemere ns."
+  "Telemere -> console handlers."
   (:require
    [taoensso.truss          :as truss]
    [taoensso.encore         :as enc]

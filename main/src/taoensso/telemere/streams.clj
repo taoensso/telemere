@@ -1,5 +1,5 @@
 (ns taoensso.telemere.streams
-  "Interop support for standard stream/s -> Telemere."
+  "Standard streams -> Telemere interop."
   (:require
    [taoensso.encore        :as truss]
    [taoensso.encore        :as enc]

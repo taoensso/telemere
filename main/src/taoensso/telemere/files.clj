@@ -1,6 +1,5 @@
 (ns ^:no-doc taoensso.telemere.files
-  "Private ns, implementation detail.
-  Core file handler, aliased in main Telemere ns."
+  "Telemere -> file handler."
   (:require
    [taoensso.truss  :as truss]
    [taoensso.encore :as enc]

@@ -1,6 +1,6 @@
 (ns taoensso.telemere.postal
-  "Email handler using `postal`,
-    Ref. <https://github.com/drewr/postal>."
+  "Telemere -> email handler using `postal`,
+  Ref. <https://github.com/drewr/postal>."
   (:require
    [taoensso.truss          :as truss]
    [taoensso.encore         :as enc]

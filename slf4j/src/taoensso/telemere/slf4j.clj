@@ -1,5 +1,5 @@
 (ns taoensso.telemere.slf4j
-  "Interop support for SLF4Jv2 -> Telemere.
+  "SLF4Jv2 -> Telemere interop.
   Telemere will attempt to load this ns automatically when possible.
 
   To use Telemere as your SLF4J backend/provider, just include the

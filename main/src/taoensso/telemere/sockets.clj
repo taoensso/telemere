@@ -1,5 +1,5 @@
 (ns taoensso.telemere.sockets
-  "Basic TCP/UDP socket handlers."
+  "Telemere -> TCP/UDP socket handlers."
   (:require
    [taoensso.truss  :as truss]
    [taoensso.encore :as enc]
