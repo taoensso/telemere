@@ -142,14 +142,14 @@
 #?(:cljs
    (defn js-console-logger
      "Returns JavaScript console logger to match given signal level:
-       `:trace` -> `js/console.trace`,
+       `:debug` -> `js/console.debug`,
        `:error` -> `js/console.error`, etc.
 
      Defaults to `js.console.log` for unmatched signal levels.
      NB: assumes that `js/console` exists, handler constructors should check first!"
      [level]
      (case level
-       :trace  js/console.trace
+       :trace  js/console.debug
        :debug  js/console.debug
        :info   js/console.info
        :warn   js/console.warn
