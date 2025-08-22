@@ -1,67 +1,47 @@
 <a href="https://www.taoensso.com/clojure" title="More stuff by @ptaoussanis at www.taoensso.com"><img src="https://www.taoensso.com/open-source.png" alt="Taoensso open source" width="340"/></a>  
-[**API**][cljdoc] | [**Wiki**][GitHub wiki] | [Latest releases](#latest-releases) | [Slack channel][]
-
-# <img src="https://raw.githubusercontent.com/taoensso/telemere/master/imgs/telemere-logo.svg" alt="Telemere logo" width="360"/>
-
-### Structured logs and telemetry for Clojure/Script
-
-**Telemere** is a **pure Clojure/Script library** that offers an elegant and simple **unified API** to cover:
-
-- **Traditional logging** (string messages)
-- **Structured logging** (rich Clojure data types and structures)
-- **Events** (named thing happened, with optional data)
-- **Tracing** (nested flow tracking, with optional data)
-- Basic **performance monitoring** (nested form runtimes)
-- Any combination of the above
-
-It's small, super fast, easy to learn, easy to use, and **absurdly flexible**.
-
-An example call:
-
-```clojure
-(tel/log! {:level :info, :id :auth/login, :data {:user-id 1234}, :msg "User logged in!"})
-```
-
-Use it alone, or as part of a suite of complementary **observability tools** for modern Clojure/Script applications:
-
-- [Telemere](https://www.taoensso.com/telemere) for logging, tracing, and general telemetry
-- [Tufte](https://www.taoensso.com/tufte) for performance monitoring
-- [Truss](https://www.taoensso.com/truss) for  assertions and error handling
-- [Trove](https://www.taoensso.com/trove) for library authors that want to do structured logging
-
-Together these help enable Clojure/Script systems that are **robust**, **fast**, and **easily debugged**.
-
-See [quick examples](#quick-examples) or the [wiki](../../wiki/1-Getting-started) for a detailed intro.
-
-## Latest release/s
-
-- `2025-05-27` `v1.0.1`: [release info](../../releases/tag/v1.0.1)
+[**API**][cljdoc] | [**Wiki**][GitHub wiki] | [Slack channel][] | Latest release: [v1.0.0](../../releases/tag/v1.0.1) (2025-05-27)
 
 [![Clj tests][Clj tests SVG]][Clj tests URL]
 [![Cljs tests][Cljs tests SVG]][Cljs tests URL]
 [![Graal tests][Graal tests SVG]][Graal tests URL]
 
-<!--See [here][GitHub releases] for earlier releases.-->
+# <img src="https://raw.githubusercontent.com/taoensso/telemere/master/imgs/telemere-logo.svg" alt="Telemere logo" width="360"/>
 
-## Next-gen observability
+### Structured logs and telemetry for Clojure/Script
 
-A key hurdle in building **observable systems** is that it's often inconvenient and costly to get out the kind of **detailed info** that we need when debugging.
+**Telemere** is the next-gen version of [Timbre](https://www.taoensso.com/timbre). It offers **one API** to cover:
 
-Telemere's strategy to address this is to:
+- **Traditional logging** (string messages)
+- **Structured logging** (rich Clojure data types and structures)
+- **Tracing** (nested flow tracking, with optional data)
+- Basic **performance monitoring** (nested form runtimes)
 
-1. Provide **lean, low-fuss syntax** to let you conveniently convey program state.
-2. Use the unique power of **Lisp macros** to let you **dynamically filter costs as you filter signals** (pay only for what you need, when you need it).
-3. For those signals that *do* pass filtering: move costs from the callsite to a/sync handlers with explicit [threading and back-pressure semantics](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) and  [performance monitoring](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-handlers-stats).
+It's pure Clj/s, small, **easy to use**, super fast, and **seriously flexible**:
 
-The effect is more than impressive micro-benchmarks. This approach enables a fundamental (qualitative) change in one's approach to observability.
+```clojure
+(tel/log! {:level :info, :id ::login, :data {:user-id 1234}, :msg "User logged in!"})
+```
 
-It enables you to write code that is **information-verbose by default**.
+Works great with:
 
-## Quick examples
+- [Trove](https://www.taoensso.com/trove) for logging by **library authors**
+- [Tufte](https://www.taoensso.com/tufte) for rich **performance monitoring**
+- [Truss](https://www.taoensso.com/truss) for **assertions** and error handling
 
-> (Or see [examples.cljc](https://github.com/taoensso/telemere/blob/master/examples.cljc) for REPL-ready snippets)
+## Why structured logging?
 
-<details open><summary>Create signals</summary><br/>
+- Traditional logging outputs **strings** (messages).
+- Structured logging in contrast outputs **data**. It retains **rich data types and (nested) structures** throughout the logging pipeline from logging callsite → filters → middleware → handlers.
+
+A data-oriented pipeline can make a huge difference - supporting **easier filtering**, **transformation**, and **analysis**. It’s also usually **faster**, since you only pay for serialization if/when you need it. In a lot of cases you can avoid serialization altogether if your final target (DB, etc.) supports the relevant types.
+
+The structured (data-oriented) approach is inherently more flexible, faster, and well suited to the tools and idioms offered by Clojure and ClojureScript.
+
+## Examples
+
+See [examples.cljc](https://github.com/taoensso/telemere/blob/master/examples.cljc) for REPL-ready snippets, or expand below:
+
+<details><summary>Create signals</summary><br/>
 
 ```clojure
 (require '[taoensso.telemere :as tel])
@@ -199,29 +179,23 @@ It enables you to write code that is **information-verbose by default**.
 
 ### Ergonomics
 
-- Elegant, lightweight API that's **easy to use**, **easy to configure**, and **deeply flexible**.
-- **Sensible defaults** to make getting started **fast and easy**.
-- Extensive **beginner-oriented** [documentation][GitHub wiki], [docstrings](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere), and error messages.
+- Elegant unified API that's **easy to use** and **deeply flexible**.
+- Pure **Clojure vals and fns** for easy config, composition, and REPL debugging.
+- **Sensible defaults** to get started fast.
+- **Beginner-oriented** [documentation][GitHub wiki], [docstrings](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere), and error messages.
 
 ### Interop
 
-- 1st-class **out-the-box interop** with [tools.logging](../../wiki/3-Config#toolslogging), [Java logging via SLF4J v2](../../wiki/3-Config#java-logging), [OpenTelemetry](../../wiki/3-Config#opentelemetry), and [Tufte](../../wiki/3-Config#tufte).
-- Included [shim](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.timbre) for easy/gradual [migration from Timbre](../../wiki/5-Migrating).
+- **Interop ready** with [tools.logging](../../wiki/3-Config#toolslogging), [Java logging via SLF4J v2](../../wiki/3-Config#java-logging), [OpenTelemetry](../../wiki/3-Config#opentelemetry), and [Tufte](../../wiki/3-Config#tufte).
+- [Timbre shim](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere.timbre) for easy/gradual [migration from Timbre](../../wiki/5-Migrating).
 - Extensive set of [handlers](../../wiki/4-Handlers#included-handlers) included out-the-box.
 
 ### Scaling
 
-- Hyper-optimized and **blazing fast**, see [performance](#performance).
-- An API that **scales comfortably** from the smallest disposable code, to the most massive and complex real-world production environments.
-- Auto [handler stats](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-handlers-stats) for debugging performance and other issues at scale.
-
-### Flexibility
-
-- Config via plain **Clojure vals and fns** for easy customization, composition, and REPL debugging.
-- Unmatched [environmental config](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:environmental-config) support: JVM properties, environment variables, or classpath resources. Per platform, or cross-platform.
-- Unmatched [filtering](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters) support: by namespace, id pattern, level, level by namespace pattern, etc. At runtime and compile-time.
-- Fully [configurable](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) **a/sync dispatch support**: blocking, dropping, sliding, etc.
-- Turn-key **sampling**, **rate limiting**, and **back-pressure monitoring** with sensible defaults.
+- Rich [filtering](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:filters) by namespace, id pattern, level, level by namespace pattern, etc.
+- Fully [configurable](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:handler-dispatch-options) **a/sync dispatch support** with per-handler [performance monitoring](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#get-handlers-stats).
+- Turn-key **sampling**, **rate limiting**, and **back-pressure monitoring**.
+- Highly optimized and [blazing fast](#performance)!
 
 ## Comparisons
 
@@ -246,17 +220,9 @@ It enables you to write code that is **information-verbose by default**.
 
 ### Creating signals
 
-Telemere's signals are all created using the low-level `signal!` macro. You can use that directly, or one of the wrapper macros like `log!`.
+80% of Telemere's functionality is available through one macro: [`signal!`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#signal!) and a rich set of [opts](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options).
 
-Several different wrapper macros are provided. The only difference between them:
-
-  1. They create signals with a different `:kind` value (which can be handy for filtering, etc.).
-  2. They have different positional arguments and/or return values optimised for concise calling in different use cases.
-
-**NB:** ALL wrapper macros can also just be called with a single [opts](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-options) map!
-
-See the linked docstrings below for more info:
-
+Use that directly, or any of the wrapper macros that you find most convenient. They're **semantically equivalent** but have ergonomics slightly tweaked for different common use cases:
 
 | Name                                                                                                        | Args                       | Returns                      |
 | :---------------------------------------------------------------------------------------------------------- | :------------------------- | :--------------------------- |
