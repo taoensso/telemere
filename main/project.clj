@@ -10,15 +10,15 @@
   :scm {:name "git" :url "https://github.com/taoensso/telemere"}
 
   :dependencies
-  [[com.taoensso/encore "3.146.1"]]
+  [[com.taoensso/encore "3.153.1"]]
 
   :test-paths ["test" #_"src"]
 
   :profiles
   {;; :default [:base :system :user :provided :dev]
-   :provided {:dependencies [[org.clojure/clojurescript "1.12.35"] ; v1.12.42+ needs JVM 21+
+   :provided {:dependencies [[org.clojure/clojurescript "1.12.42"]
                              [org.clojure/clojure       "1.11.4"]]}
-   :c1.12    {:dependencies [[org.clojure/clojure       "1.12.0"]]}
+   :c1.12    {:dependencies [[org.clojure/clojure       "1.12.1"]]}
    :c1.11    {:dependencies [[org.clojure/clojure       "1.11.4"]]}
    :c1.10    {:dependencies [[org.clojure/clojure       "1.10.3"]]}
 
@@ -56,9 +56,9 @@
      #_[io.github.paintparty/bling  "0.4.2"]
 
      ;;; For optional handlers
-     [io.opentelemetry/opentelemetry-api                         "1.50.0"]
-     [io.opentelemetry/opentelemetry-sdk-extension-autoconfigure "1.50.0"]
-     [io.opentelemetry/opentelemetry-exporter-otlp               "1.50.0"]
+     [io.opentelemetry/opentelemetry-api                         "1.53.0"]
+     [io.opentelemetry/opentelemetry-sdk-extension-autoconfigure "1.53.0"]
+     [io.opentelemetry/opentelemetry-exporter-otlp               "1.53.0"]
      #_[io.opentelemetry/opentelemetry-exporters-jaeger           "0.9.1"]
      [metosin/jsonista       "0.3.13"]
      [com.draines/postal     "2.0.5"]
