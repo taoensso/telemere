@@ -1,6 +1,28 @@
 This project uses [**Break Versioning**](https://www.taoensso.com/break-versioning).
 
 ---
+# `v1.1.0` (2025-08-22)
+
+## 📦 Dependencies
+
+Available on Clojars:
+
+1. [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.1.0) - main dep
+2. [SLF4J provider](https://clojars.org/com.taoensso/telemere-slf4j/versions/1.0.1) - extra dep to [send Java logging](https://github.com/taoensso/telemere/wiki/3-Config#java-logging) to Telemere
+
+This project uses [Break Versioning](https://www.taoensso.com/break-versioning).
+
+This is a **maintenance release** that fixes a few minor issues, improves docs, and adds some extra API flexibility. It should be a safe upgrade for all users of v1.x.
+
+Please **report any unexpected problems** on [GitHub](https://github.com/taoensso/telemere/issues) or the [Slack channel](https://www.taoensso.com/telemere/slack) 🙏 - [Peter Taoussanis](https://www.taoensso.com)
+
+## Since v1.0.01 (2025-05-27)
+
+- \[fix] `:trace` level JS console logging \[b2a8b66]
+- \[fix] Clj-kondo warnings for `with-signal/s` \[269c58d]
+- \[new] `with-ctx/+` now takes `& body` instead of a single form (via Encore update)
+
+---
 
 # `v1.0.1` (2025-05-27)
 
