@@ -1,6 +1,7 @@
 This project uses [**Break Versioning**](https://www.taoensso.com/break-versioning).
 
 ---
+
 # `v1.1.0` (2025-08-22)
 
 ## 📦 Dependencies
@@ -11,6 +12,8 @@ Available on Clojars:
 2. [SLF4J provider](https://clojars.org/com.taoensso/telemere-slf4j/versions/1.0.1) - extra dep to [send Java logging](https://github.com/taoensso/telemere/wiki/3-Config#java-logging) to Telemere
 
 This project uses [Break Versioning](https://www.taoensso.com/break-versioning).
+
+## Release notes
 
 This is a **maintenance release** that fixes a few minor issues, improves docs, and adds some extra API flexibility. It should be a safe upgrade for all users of v1.x.
 
