@@ -33,9 +33,9 @@
   (do (def t2s "2024-02-02T02:02:02.120Z") (def t2 (enc/as-inst t2s)) (def udt2 (enc/as-udt t2)))
   (do (def t3s "2024-03-03T03:03:03.130Z") (def t3 (enc/as-inst t3s)) (def udt3 (enc/as-udt t3)))
 
-  (def  ex-info-type (truss/ex-type (truss/ex-info "" {})))
-  (def  ex1          (truss/ex-info "Ex1" {}))
-  (def  ex2          (truss/ex-info "Ex2" {:k2 "v2"} (truss/ex-info "Ex1" {:k1 "v1"})))
+  (def  ex-info-type (truss/ex-type (ex-info "" {})))
+  (def  ex1          (ex-info "Ex1" {}))
+  (def  ex2          (ex-info "Ex2" {:k2 "v2"} (ex-info "Ex1" {:k1 "v1"})))
   (def  ex2-chain    (truss/ex-chain :as-map ex2))
   (defn ex1! [] (throw ex1))
   (defn ex1? [x] (= (truss/ex-root x) ex1)))
