@@ -170,8 +170,8 @@
 (defn default-trace-msg
   [form value error nsecs]
   (if error
-    (str form " !> " (truss/ex-type error))
-    (str form " => " value)))
+    (str (if (nil? form) "nil" form) " !> " (truss/ex-type error))
+    (str (if (nil? form) "nil" form) " => " (if (nil? value) "nil" value))))
 
 (comment
   (default-trace-msg "(+ 1 2)" 3   nil               12345)
@@ -524,14 +524,16 @@
             clj?  (not cljs?)
 
             opts (merge {:kind :generic, :level :info} base-opts opts)
-            {run-form :run} opts
+
+            run-form? (contains? opts :run)
+            run-form  (get       opts :run)
 
             ns-form* (get opts :ns :auto)
             ns-form  (auto-> ns-form* (str *ns*))
 
             show-run-val (get opts :run-val '_run-val)
             show-run-form
-            (when run-form
+            (when run-form?
               (get opts :run-form
                 (if (and
                       (enc/list-form? run-form)
@@ -564,7 +566,7 @@
                  id-form    :id
                  level-form :level} opts
 
-                trace? (get opts :trace? (boolean run-form))
+                trace? (get opts :trace? run-form?)
                 _
                 (when-not (contains? #{true false nil} trace?)
                   (truss/ex-info!
@@ -619,7 +621,7 @@
 
                       _ ; Compile-time validation
                       (do
-                        (when (and run-form error-form) ; Ambiguous source of error
+                        (when (and run-form? error-form) ; Ambiguous source of error
                           (truss/ex-info!
                             (str "Signal cannot have both `:run` and `:error` opts at "
                               (sigs/format-callsite ns-form coords))))
@@ -631,7 +633,7 @@
 
                       signal-form
                       (let [record-form
-                            (let   [clause [(if run-form :run :no-run) (if clj? :clj :cljs)]]
+                            (let   [clause [(if run-form? :run :no-run) (if clj? :clj :cljs)]]
                               (case clause
                                 [:run    :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords ~host-form ~'__thread ~'__otel-context1, ~sample-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~show-run-form ~show-run-val ~'_end-inst ~'_run-nsecs)
                                 [:run    :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords                                          ~sample-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~show-run-form ~show-run-val ~'_end-inst ~'_run-nsecs)
@@ -642,7 +644,7 @@
                                     (sigs/format-callsite ns-form coords)))))
 
                             record-form
-                            (if-not run-form
+                            (if-not run-form?
                               record-form
                               `(let [~(with-meta '_run-result {:tag `RunResult}) ~'__run-result
                                      ~'_run-nsecs (.-run-nsecs    ~'_run-result)
@@ -674,8 +676,8 @@
                          (do   signal#)))))
 
                 ;; Trade-off: avoid double `run-form` expansion
-                run-fn-form (when run-form `(fn [] ~run-form))
-                run-form*   (when run-form `(~'__run-fn-form))
+                run-fn-form (when run-form? `(fn [] ~run-form))
+                run-form*   (when run-form? `(~'__run-fn-form))
 
                 into-let-form
                 (enc/cond!
@@ -684,7 +686,7 @@
                     ~'__uid   ~(auto-> uid-form `(taoensso.telemere/*uid-fn* (if ~'__root0 false true)))
                     ~'__root1 ~'__root0 ; Retain, but don't establish
                     ~'__run-result
-                    ~(when run-form
+                    ~(when run-form?
                        `(let [t0# (enc/now-nano*)]
                           (truss/try*
                             (do            (RunResult. ~run-form* nil (- (enc/now-nano*) t0#)))
@@ -696,7 +698,7 @@
                     ~'__uid  ~(auto-> uid-form `(taoensso.telemere/*uid-fn* (if ~'__root0 false true)))
                     ~'__root1 (or ~'__root0 ~(when trace? `{:id ~'__id, :uid ~'__uid}))
                     ~'__run-result
-                    ~(when run-form
+                    ~(when run-form?
                        `(binding [*trace-root*   ~'__root1
                                   *trace-parent* {:id ~'__id, :uid ~'__uid}]
                           (let [t0# (enc/now-nano*)]
@@ -707,7 +709,7 @@
                   ;; Trace with OpenTelemetry
                   (and clj? enabled:otel-tracing?)
                   `[~'__otel-context0  ~(get opts :otel/context `(otel-context)) ; Context
-                    ~'__otel-context1  ~(if run-form `(otel-context+span ~'__id ~'__inst ~'__otel-context0 ~(get opts :otel/span-kind)) ~'__otel-context0)
+                    ~'__otel-context1  ~(if run-form? `(otel-context+span ~'__id ~'__inst ~'__otel-context0 ~(get opts :otel/span-kind)) ~'__otel-context0)
                     ~'__uid            ~(auto-> uid-form `(or (otel-span-id ~'__otel-context1) (com.taoensso.encore.Ids/genHexId16)))
                     ~'__root1
                     (or ~'__root0
@@ -715,7 +717,7 @@
                          `{:id ~'__id, :uid (or (otel-trace-id ~'__otel-context1) (com.taoensso.encore.Ids/genHexId32))}))
 
                     ~'__run-result
-                    ~(when run-form
+                    ~(when run-form?
                        `(binding [*otel-context* ~'__otel-context1
                                   *trace-root*   ~'__root1
                                   *trace-parent* {:id ~'__id, :uid ~'__uid}]

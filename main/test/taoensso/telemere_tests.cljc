@@ -594,12 +594,13 @@
       (let [{rv :value, [sv] :signals} (with-sigs (tel/log!? {:allow? false}      "msg")) ] [(is (= rv nil))  (is (nil? sv))])])
 
    (testing "trace!" ; ?id + run => unconditional run result (value or throw)
-     [(let [{rv :value, [sv] :signals} (with-sigs (tel/trace!                 (+ 1 2))) ] [(is (= rv 3))  (is (sm?  sv {:kind :trace, :coords coords?, :level :info, :id  nil, :msg_ "(+ 1 2) => 3"}))])
-      (let [{rv :value, [sv] :signals} (with-sigs (tel/trace! {:msg nil}      (+ 1 2))) ] [(is (= rv 3))  (is (sm?  sv {:kind :trace, :coords coords?, :level :info, :id  nil, :msg_ nil}))])
-      (let [{rv :value, [sv] :signals} (with-sigs (tel/trace!      :id1       (+ 1 2))) ] [(is (= rv 3))  (is (sm?  sv {:kind :trace, :coords coords?, :level :info, :id :id1}))])
-      (let [{rv :value, [sv] :signals} (with-sigs (tel/trace! {:id :id1}      (+ 1 2))) ] [(is (= rv 3))  (is (sm?  sv {:kind :trace, :coords coords?, :level :info, :id :id1}))])
-      (let [{rv :value, [sv] :signals} (with-sigs (tel/trace! {:id :id1, :run (+ 1 2)}))] [(is (= rv 3))  (is (sm?  sv {:kind :trace, :coords coords?, :level :info, :id :id1}))])
-      (let [{re :error, [sv] :signals} (with-sigs (tel/trace!      :id1        (ex1!))) ] [(is (ex1? re)) (is (sm?  sv {:kind :trace, :coords coords?, :level :info, :id :id1, :error ex1,
+     [(let [{rv :value, [sv] :signals} (with-sigs (tel/trace!                     nil)) ] [(is (= rv nil)) (is (sm?  sv {:kind :trace, :coords coords?, :level :info, :id  nil, :msg_ "nil => nil"}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/trace!                 (+ 1 2))) ] [(is (= rv 3))   (is (sm?  sv {:kind :trace, :coords coords?, :level :info, :id  nil, :msg_ "(+ 1 2) => 3"}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/trace! {:msg nil}      (+ 1 2))) ] [(is (= rv 3))   (is (sm?  sv {:kind :trace, :coords coords?, :level :info, :id  nil, :msg_ nil}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/trace!      :id1       (+ 1 2))) ] [(is (= rv 3))   (is (sm?  sv {:kind :trace, :coords coords?, :level :info, :id :id1}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/trace! {:id :id1}      (+ 1 2))) ] [(is (= rv 3))   (is (sm?  sv {:kind :trace, :coords coords?, :level :info, :id :id1}))])
+      (let [{rv :value, [sv] :signals} (with-sigs (tel/trace! {:id :id1, :run (+ 1 2)}))] [(is (= rv 3))   (is (sm?  sv {:kind :trace, :coords coords?, :level :info, :id :id1}))])
+      (let [{re :error, [sv] :signals} (with-sigs (tel/trace!      :id1        (ex1!))) ] [(is (ex1? re))  (is (sm?  sv {:kind :trace, :coords coords?, :level :info, :id :id1, :error ex1,
                                                                                                            :msg_ #?(:clj  "(ex1!) !> clojure.lang.ExceptionInfo"
                                                                                                                     :cljs "(ex1!) !> cljs.core/ExceptionInfo")}))])
       (let [{rv :value, [sv] :signals} (with-sigs (tel/trace! {:allow? false} (+ 1 2)))] [(is (= rv 3)) (is (nil? sv))])
