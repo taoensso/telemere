@@ -38,11 +38,11 @@
           [error msg {:vargs vargs}])
 
         (let [md      (if (and (map? v0) (get (meta v0) :meta)) v0 nil)
-              error   (get md :err)
+              error   (get    md :err)
               md      (dissoc md :err)
-              vargs   (if md (enc/vrest vargs) vargs)
-              pattern (if format-msg? (let [[v0] vargs] v0) nil)
-              vargs   (if format-msg? (enc/vrest vargs) vargs)
+              vargs   (if     md (enc/vrest vargs) vargs)
+              pattern (if format-msg? (let [[v0]   vargs] v0) nil)
+              vargs   (if format-msg? (enc/vrest   vargs) vargs)
               msg
               (delay
                 (if format-msg?
