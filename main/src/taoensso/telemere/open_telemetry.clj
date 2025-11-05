@@ -219,15 +219,15 @@
 
       (if (or common-attrs trace-attrs)
         (let [ab (Attributes/builder)]
-          (when-let [ns   (get signal :ns)]    (.put ab "ns"   (str  ns)))
-          (when-let [line (get signal :line)]  (.put ab "line" (long line)))
+          (when-let [ns   (get         signal :ns)]         (.put ab "ns"   (str  ns)))
+          (when-let [line (enc/get-in* signal [:coords 0])] (.put ab "line" (long line)))
           (when-let [attrs common-attrs] (put-attrs! ab attrs))
           (when-let [attrs  trace-attrs] (put-attrs! ab attrs))
           (.build ab))
 
         ;; Common case
-        (when-let [ns   (get signal :ns)]
-          (if-let [line (get signal :line)]
+        (when-let [ns   (get         signal :ns)]
+          (if-let [line (enc/get-in* signal [:coords 0])]
             (Attributes/of ak-ns ns, ak-line (long line))
             (Attributes/of ak-ns ns)))))))
 
