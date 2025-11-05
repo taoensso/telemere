@@ -200,9 +200,8 @@
           :ctx+  context
 
           :ns     ?ns-str
-          :file   ?file
-          :line   ?line
-          :column ?column
+          :coords (when ?line [?line ?column])
+          :file   ?file ; Non-standard, goes to kvs
 
           :error  ?err
           :msg    (force output_)})))})
