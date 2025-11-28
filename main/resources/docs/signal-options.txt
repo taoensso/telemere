@@ -9,12 +9,12 @@ All options are available for all signal creator calls:
                  Defaults to `:auto` for tracing signals, and nil otherwise
 
 `:msg` --------- Arb app-level ?message to incl. in signal: str or vec of strs to join (with `\space`), may be a delay
-`:data` -------- Arb app-level ?data    to incl. in signal: usu. a map
+`:data` -------- Arb app-level ?data    to incl. in signal: usu. a map, LAZY! [3]
 `:error` ------- Arb app-level ?error   to incl. in signal: platform error [2]
 
 `:run` --------- ?form     to execute UNCONDITIONALLY; will incl. `:run-val` in signal
-`:do` ---------- ?form     to execute   conditionally (iff signal allowed), before establishing `:let` ?binding
-`:let` --------- ?bindings to establish conditionally (iff signal allowed), BEFORE evaluating `:data` and `:msg` (useful!)
+`:do` ---------- ?form     to execute   conditionally (iff signal allowed) and LAZILY [3], before establishing `:let` ?binding
+`:let` --------- ?bindings to establish conditionally (iff signal allowed) and LAZILY [3], BEFORE evaluating `:data` and `:msg` (useful!)
 
 `:parent` ------ Custom ?{:keys [id uid]} to override auto (dynamic) parent signal tracing info
 `:root` -------- Custom ?{:keys [id uid]} to override auto (dynamic) root   signal tracing info
@@ -37,9 +37,13 @@ All options are available for all signal creator calls:
 
 <kvs> ---------- Other arb app-level ?kvs to incl. in signal. Typically NOT included in
                  handler output, so a great way to provide custom data/opts for use
-                 (only) by custom transforms/handlers.
+                 (only) by custom transforms/handlers. LAZY! [3]
 
 If anything is unclear, please ping me (@ptaoussanis) so that I can improve these docs!
 
 [1] `java.time.Instant`   or `js/Date`
 [2] `java.lang.Throwable` or `js/Error`
+[3] Most Telemere signal content is evaluated CONDITIONALLY (iff signal allowed),
+    LAZILY (when signal is created), and on the HANDLING THREAD (not logging thread).
+    This allows efficient filtering, better control+monitoring of back pressure,
+    conditional effects, etc. Ref. <https://www.taoensso.com/telemere/flow> for visual!
