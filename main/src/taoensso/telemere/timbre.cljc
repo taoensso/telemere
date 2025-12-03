@@ -190,8 +190,11 @@
    :min-level nil
    :fn
    (fn [data]
-     (let [{:keys [instant level context ?err output_
-                   ?ns-str ?file ?line ?column]} data]
+     (let [{:keys [instant level context msg-type vargs
+                   ?ns-str ?file ?line ?column]} data
+
+           format-msg? (enc/identical-kw? msg-type :f)
+           [error msg vargs] (parse-vargs format-msg? vargs)]
 
        (taoensso.telemere/signal!
          {:kind :timbre
@@ -203,5 +206,6 @@
           :coords (when ?line [?line ?column])
           :file   ?file ; Non-standard, goes to kvs
 
-          :error  ?err
-          :msg    (force output_)})))})
+          :error  error
+          :msg    (when msg-type msg)
+          :timbre/vargs vargs})))})
