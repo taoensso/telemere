@@ -35,7 +35,7 @@
                   (enc/format* pattern            vargs)
                   (enc/str-join " " (map arg-str) vargs)))]
 
-          [error msg {:vargs vargs}])
+          [error msg vargs])
 
         (let [md      (if (and (map? v0) (get (meta v0) :meta)) v0 nil)
               error   (get    md :err)
@@ -49,7 +49,7 @@
                   (enc/format* pattern            vargs)
                   (enc/str-join " " (map arg-str) vargs)))]
 
-          [error msg (when-not (empty? vargs) {:vargs vargs})])))))
+          [error msg (when-not (empty? vargs) vargs)])))))
 
 (comment
   (parse-vargs true [                   "hello %s" "stu"])
@@ -63,13 +63,13 @@
      [level format-msg? vargs]
      (truss/keep-callsite
        `(when (impl/signal-allowed? {:kind :log, :level ~level, :id shim-id})
-          (let [[error# msg# data#] (parse-vargs ~format-msg? ~vargs)]
+          (let [[error# msg# vargs#] (parse-vargs ~format-msg? ~vargs)]
             (tel/log!
-              {:allow? true
-               :level  ~level
-               :id     shim-id
-               :error  error#
-               :data   data#}
+              {:allow?       true
+               :level        ~level
+               :id           shim-id
+               :error        error#
+               :timbre/vargs vargs#}
               msg#)
             nil)))))
 
@@ -208,4 +208,5 @@
 
           :error  error
           :msg    (when msg-type msg)
+
           :timbre/vargs vargs})))})

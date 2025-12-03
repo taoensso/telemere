@@ -754,15 +754,15 @@
 ;;;; Timbre shim
 
 (deftest _timbre-shim
-  [(is (sm? (with-sig (timbre/log :warn              "x1" nil "x2")) {:kind :log, :level :warn,  :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns string?}))
-   (is (sm? (with-sig (timbre/info                   "x1" nil "x2")) {:kind :log, :level :info,  :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns string?}))
-   (is (sm? (with-sig (timbre/error                  "x1" nil "x2")) {:kind :log, :level :error, :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns string?}))
+  [(is (sm? (with-sig (timbre/log :warn              "x1" nil "x2")) {:kind :log, :level :warn,  :id timbre/shim-id, :msg_ "x1 nil x2", :timbre/vargs ["x1" nil "x2"], :ns string?}))
+   (is (sm? (with-sig (timbre/info                   "x1" nil "x2")) {:kind :log, :level :info,  :id timbre/shim-id, :msg_ "x1 nil x2", :timbre/vargs ["x1" nil "x2"], :ns string?}))
+   (is (sm? (with-sig (timbre/error                  "x1" nil "x2")) {:kind :log, :level :error, :id timbre/shim-id, :msg_ "x1 nil x2", :timbre/vargs ["x1" nil "x2"], :ns string?}))
 
-   (is (sm? (with-sig (timbre/logf :warn  "%s %s %s" "x1" nil "x2")) {:kind :log, :level :warn,  :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns string?}))
-   (is (sm? (with-sig (timbre/infof       "%s %s %s" "x1" nil "x2")) {:kind :log, :level :info,  :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns string?}))
-   (is (sm? (with-sig (timbre/errorf      "%s %s %s" "x1" nil "x2")) {:kind :log, :level :error, :id timbre/shim-id, :msg_ "x1 nil x2", :data {:vargs ["x1" nil "x2"]}, :ns string?}))
+   (is (sm? (with-sig (timbre/logf :warn  "%s %s %s" "x1" nil "x2")) {:kind :log, :level :warn,  :id timbre/shim-id, :msg_ "x1 nil x2", :timbre/vargs ["x1" nil "x2"], :ns string?}))
+   (is (sm? (with-sig (timbre/infof       "%s %s %s" "x1" nil "x2")) {:kind :log, :level :info,  :id timbre/shim-id, :msg_ "x1 nil x2", :timbre/vargs ["x1" nil "x2"], :ns string?}))
+   (is (sm? (with-sig (timbre/errorf      "%s %s %s" "x1" nil "x2")) {:kind :log, :level :error, :id timbre/shim-id, :msg_ "x1 nil x2", :timbre/vargs ["x1" nil "x2"], :ns string?}))
 
-   (is (sm? (with-sig (timbre/info ex1 "x1" "x2")) {:kind :log, :level :info, :error ex1, :msg_ "x1 x2", :data {:vargs ["x1" "x2"]}}) "First-arg error")
+   (is (sm? (with-sig (timbre/info ex1 "x1" "x2")) {:kind :log, :level :info, :error ex1, :msg_ "x1 x2", :timbre/vargs ["x1" "x2"]}) "First-arg error")
 
    (is (sm?                            (with-sig (timbre/spy :info "my-name" (+ 1 2))) {:kind :spy, :level :info,  :id timbre/shim-id, :msg_ "my-name => 3", :ns string?}))
    (is (sm? (tel/with-min-level :debug (with-sig (timbre/spy (+ 1 2))))                {:kind :spy, :level :debug, :id timbre/shim-id, :msg_ "(+ 1 2) => 3", :ns string?}))
