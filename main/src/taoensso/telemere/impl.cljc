@@ -38,7 +38,10 @@
      (def enabled:otel-tracing?
        "Documented at `taoensso.telemere/otel-tracing?`."
        (enc/get-env {:as :bool, :default present:otel?}
-         :taoensso.telemere/otel-tracing<.platform>))))
+         :taoensso.telemere/otel-tracing<.platform>))
+
+     (def enabled:incl-host-info?   "Include `:host` info in signals by default?"   (enc/get-env {:as :bool, :default true} :taoensso.telemere/incl-host-info))
+     (def enabled:incl-thread-info? "Include `:thread` info in signals by default?" (enc/get-env {:as :bool, :default true} :taoensso.telemere/incl-thread-info))))
 
 (def uid-kind
   "Documented at `taoensso.telemere/*uid-fn*`."
@@ -573,9 +576,9 @@
                     (str "Signal needs compile-time `:trace?` value at "
                       (sigs/format-callsite ns-form coords))))
 
-                host-form   (auto-> (get opts :host   :auto) (when clj? `(enc/host-info)))
-                thread-form (auto-> (get opts :thread :auto) (when clj? `(enc/thread-info)))
-                inst-form   (auto-> (get opts :inst   :auto)            `(enc/now-inst*))
+                host-form   (auto-> (get opts :host   :auto) (when (and clj? enabled:incl-host-info?)   `(enc/host-info)))
+                thread-form (auto-> (get opts :thread :auto) (when (and clj? enabled:incl-thread-info?) `(enc/thread-info)))
+                inst-form   (auto-> (get opts :inst   :auto) `(enc/now-inst*))
 
                 parent-form (get opts :parent `*trace-parent*)
                 root-form0  (get opts :root   `*trace-root*)
