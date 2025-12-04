@@ -1,4 +1,4 @@
-(defproject com.taoensso/telemere-slf4j "1.1.0"
+(defproject com.taoensso/telemere-slf4j "1.2.0-SNAPSHOT"
   :author "Peter Taoussanis <https://www.taoensso.com>"
   :description "Telemere backend/provider for SLF4J API v2"
   :url "https://www.taoensso.com/telemere"
@@ -18,7 +18,7 @@
    {:dependencies
     [[org.clojure/clojure   "1.12.1"]
      [org.slf4j/slf4j-api   "2.0.17"]
-     [com.taoensso/telemere "1.1.0"]]}
+     [com.taoensso/telemere "1.2.0-SNAPSHOT"]]}
 
    :dev
    {:plugins
