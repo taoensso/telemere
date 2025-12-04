@@ -612,7 +612,7 @@
                               (dissoc opts
                                 :elidable? :coords :inst :uid :xfn :xfn+ :kvs+,
                                 :sample :ns :kind :id :level :filter :when #_:limit #_:limit-by,
-                                :ctx :ctx+ :parent #_:trace?, :do :let :data :msg :error,
+                                :ctx :ctx+ :parent :trace?, :do :let :data :msg :error,
                                 :run :run-form :run-val, :elide? :allow? #_:callsite-id,
                                 :host :thread :otel/context))]
 
@@ -638,10 +638,10 @@
                       (let [record-form
                             (let   [clause [(if run-form? :run :no-run) (if clj? :clj :cljs)]]
                               (case clause
-                                [:run    :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords ~host-form ~'__thread ~'__otel-context1, ~sample-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~show-run-form ~show-run-val ~'_end-inst ~'_run-nsecs)
-                                [:run    :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords                                          ~sample-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~show-run-form ~show-run-val ~'_end-inst ~'_run-nsecs)
-                                [:no-run :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords ~host-form ~'__thread ~'__otel-context1, ~sample-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil             nil           nil         nil)
-                                [:no-run :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords                                          ~sample-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil             nil           nil         nil)
+                                [:run    :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords ~host-form ~'__thread ~'__otel-context, ~sample-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~show-run-form ~show-run-val ~'_end-inst ~'_run-nsecs)
+                                [:run    :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords                                         ~sample-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~show-run-form ~show-run-val ~'_end-inst ~'_run-nsecs)
+                                [:no-run :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords ~host-form ~'__thread ~'__otel-context, ~sample-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil             nil           nil         nil)
+                                [:no-run :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords                                         ~sample-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil             nil           nil         nil)
                                 (truss/ex-info!
                                   (str "Unexpected signal constructor args at "
                                     (sigs/format-callsite ns-form coords)))))
@@ -682,12 +682,26 @@
                 run-fn-form (when run-form? `(fn [] ~run-form))
                 run-form*   (when run-form? `(~'__run-fn-form))
 
-                into-let-form
+                binds-form-base
+                `[~'__inst   ~inst-form
+                  ~'__thread ~thread-form
+                  ~'__root0  ~root-form0 ; ?{:keys [id uid]}
+
+                  ~'__otel-context
+                  ~(when (and clj? enabled:otel-tracing?)
+                     (if run-form?
+                       `(otel-context+span ~'__id ~'__inst ~(get opts :otel/context `(otel-context)) ~(get opts :otel/span-kind))
+                       (do                                  (get opts :otel/context `(otel-context)))))
+
+                  ~'__uid
+                  ~(if (and clj? enabled:otel-tracing? trace?)
+                     (auto-> uid-form `(or (otel-span-id ~'__otel-context) (com.taoensso.encore.Ids/genHexId16)))
+                     (auto-> uid-form `(taoensso.telemere/*uid-fn* (if ~'__root0 false true))))]
+
+                binds-form-more
                 (enc/cond!
-                  (not trace?) ; Don't trace
-                  `[~'__otel-context1 nil
-                    ~'__uid   ~(auto-> uid-form `(taoensso.telemere/*uid-fn* (if ~'__root0 false true)))
-                    ~'__root1 ~'__root0 ; Retain, but don't establish
+                  (not trace?) ; Non-tracing signal
+                  `[~'__root1 ~'__root0 ; Retain, but don't establish
                     ~'__run-result
                     ~(when run-form?
                        `(let [t0# (enc/now-nano*)]
@@ -697,9 +711,7 @@
 
                   ;; Trace without OpenTelemetry
                   (or cljs? (not enabled:otel-tracing?))
-                  `[~'__otel-context1 nil
-                    ~'__uid  ~(auto-> uid-form `(taoensso.telemere/*uid-fn* (if ~'__root0 false true)))
-                    ~'__root1 (or ~'__root0 ~(when trace? `{:id ~'__id, :uid ~'__uid}))
+                  `[~'__root1 (or ~'__root0 ~(when trace? `{:id ~'__id, :uid ~'__uid}))
                     ~'__run-result
                     ~(when run-form?
                        `(binding [*trace-root*   ~'__root1
@@ -711,20 +723,17 @@
 
                   ;; Trace with OpenTelemetry
                   (and clj? enabled:otel-tracing?)
-                  `[~'__otel-context0  ~(get opts :otel/context `(otel-context)) ; Context
-                    ~'__otel-context1  ~(if run-form? `(otel-context+span ~'__id ~'__inst ~'__otel-context0 ~(get opts :otel/span-kind)) ~'__otel-context0)
-                    ~'__uid            ~(auto-> uid-form `(or (otel-span-id ~'__otel-context1) (com.taoensso.encore.Ids/genHexId16)))
-                    ~'__root1
+                  `[~'__root1
                     (or ~'__root0
                       ~(when trace?
-                         `{:id ~'__id, :uid (or (otel-trace-id ~'__otel-context1) (com.taoensso.encore.Ids/genHexId32))}))
+                         `{:id ~'__id, :uid (or (otel-trace-id ~'__otel-context) (com.taoensso.encore.Ids/genHexId32))}))
 
                     ~'__run-result
                     ~(when run-form?
-                       `(binding [*otel-context* ~'__otel-context1
+                       `(binding [*otel-context* ~'__otel-context
                                   *trace-root*   ~'__root1
                                   *trace-parent* {:id ~'__id, :uid ~'__uid}]
-                          (let [otel-scope# (.makeCurrent ~'__otel-context1)
+                          (let [otel-scope# (.makeCurrent ~'__otel-context)
                                 t0#         (enc/now-nano*)]
                             (truss/try*
                               (do            (RunResult. ~run-form* nil (- (enc/now-nano*) t0#)))
@@ -741,11 +750,8 @@
 
                   (enc/if-not ~allow?
                     ~run-form*
-                    (let [~'__inst   ~inst-form
-                          ~'__thread ~thread-form
-                          ~'__root0  ~root-form0 ; ?{:keys [id uid]}
-
-                          ~@into-let-form ; Inject conditional bindings
+                    (let [~@binds-form-base
+                          ~@binds-form-more
                           signal# ~signal-delay-form]
 
                       (dispatch-signal!
