@@ -727,7 +727,7 @@
                (is (sm? (with-sig (-> (.atWarn sl) (.log "Hello"))) {:level :warn, :ns "my.class", :kind :slf4j, :msg_ "Hello", :inst enc/inst?}) "Fluent API: warn basics")])
 
             (testing "Message formatting"
-             (let [msgp "x={},y={}", expected {:msg_ "x=1,y=2", :data {:slf4j/args ["1" "2"]}}]
+             (let [msgp "x={},y={}", expected {:msg_ "x=1,y=2", :slf4j/args (fn [objs] (= (vec objs) ["1" "2"]))}]
                [(is (sm? (with-sig (.info sl msgp "1" "2"))                                                           expected) "Legacy API: formatted message, raw args")
                 (is (sm? (with-sig (-> (.atInfo sl) (.setMessage msgp) (.addArgument "1") (.addArgument "2") (.log))) expected) "Fluent API: formatted message, raw args")]))
 
@@ -738,8 +738,8 @@
                     m2 (#'slf4j/est-marker! "M2")
                     cm (#'slf4j/est-marker! "Compound" "M1" "M2")]
 
-                [(is (sm? (with-sig (.info sl cm "Hello"))                                    {:data {:slf4j/marker-names #{"Compound" "M1" "M2"}}}) "Legacy API: markers")
-                 (is (sm? (with-sig (-> (.atInfo sl) (.addMarker m1) (.addMarker cm) (.log))) {:data {:slf4j/marker-names #{"Compound" "M1" "M2"}}}) "Fluent API: markers")]))
+                [(is (sm? (with-sig (.info sl cm "Hello"))                                    {:slf4j/markers #{"Compound" "M1" "M2"}}) "Legacy API: markers")
+                 (is (sm? (with-sig (-> (.atInfo sl) (.addMarker m1) (.addMarker cm) (.log))) {:slf4j/markers #{"Compound" "M1" "M2"}}) "Fluent API: markers")]))
 
             (testing "Errors"
               [(is (sm? (with-sig (.warn sl "An error" ^Throwable ex1))     {:level :warn, :error ex1}) "Legacy API: errors")

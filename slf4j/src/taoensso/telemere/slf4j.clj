@@ -63,13 +63,13 @@
 
 (comment [(est-marker! "a1" "a2") (get-marker  "a1") (= (get-marker "a1") (get-marker "a1"))])
 
-(def ^:private marker-names
+(def ^:private get-marker-names
   "Returns #{<MarkerName>}. Cached => assumes markers NOT modified after creation."
   ;; We use `BasicMarkerFactory` so:
   ;;   1. Our markers are just labels (no other content besides their name).
   ;;   2. Markers with the same name are identical (enabling caching).
   (enc/fmemoize
-    (fn marker-names [marker-or-markers]
+    (fn get-marker-names             [marker-or-markers]
       (if (instance? org.slf4j.Marker marker-or-markers)
 
         ;; Single marker
@@ -79,15 +79,15 @@
           (if-not (.hasReferences m)
             acc
             (enc/reduce-iterator!
-              (fn [acc  ^org.slf4j.Marker in]
-                (if-not   (.hasReferences in)
-                  (conj acc (.getName     in))
-                  (into acc (marker-names in))))
+              (fn [acc      ^org.slf4j.Marker in]
+                (if-not   (.hasReferences     in)
+                  (conj acc (.getName         in))
+                  (into acc (get-marker-names in))))
               acc (.iterator m))))
 
         ;; Vector of markers
         (reduce
-          (fn [acc in] (into acc (marker-names in)))
+          (fn [acc in] (into acc (get-marker-names in)))
           #{} (truss/have vector? marker-or-markers))))))
 
 (comment
@@ -97,9 +97,9 @@
         ms [m1 m2]]
 
     (enc/qb 1e6 ; [45.52 47.48 44.85]
-      (marker-names m1)
-      (marker-names cm)
-      (marker-names ms))))
+      (get-marker-names m1)
+      (get-marker-names cm)
+      (get-marker-names ms))))
 
 ;;;; Interop fns (called by `TelemereLogger`)
 
@@ -132,11 +132,10 @@
        (org.slf4j.helpers.MessageFormatter/basicArrayFormat
          msg-pattern args))
 
-     :data
-     (enc/assoc-some nil
-       :slf4j/marker-names marker-names
-       :slf4j/args (when args (vec args))
-       :slf4j/kvs  kvs)})
+     :slf4j/args    args ; Object[]
+     :slf4j/markers marker-names ; Usu. used for routing, filtering, xfns, etc.
+     :data (when kvs {:slf4j/kvs kvs})})
+
   nil)
 
 (defn- log!
@@ -144,24 +143,24 @@
 
   ;; Modern "fluent" API calls
   ([logger-name ^org.slf4j.event.LoggingEvent event]
-   (let [inst        (or (when-let [ts (.getTimeStamp event)] (java.time.Instant/ofEpochMilli ts)) (enc/now-inst*))
-         level       (.getLevel     event)
-         error       (.getThrowable event)
-         msg-pattern (.getMessage   event)
-         args        (when-let [args    (.getArgumentArray event)] args)
-         markers     (when-let [markers (.getMarkers       event)] (marker-names (vec markers)))
-         kvs         (when-let [kvps    (.getKeyValuePairs event)]
-                       (reduce
-                         (fn [acc ^org.slf4j.event.KeyValuePair kvp]
-                           (assoc acc (.-key kvp) (.-value kvp)))
-                         nil kvps))]
+   (let [inst         (or (when-let [ts (.getTimeStamp event)] (java.time.Instant/ofEpochMilli ts)) (enc/now-inst*))
+         level        (.getLevel     event)
+         error        (.getThrowable event)
+         msg-pattern  (.getMessage   event)
+         args         (when-let [args    (.getArgumentArray event)] args)
+         marker-names (when-let [markers (.getMarkers       event)] (get-marker-names (vec markers)))
+         kvs          (when-let [kvps    (.getKeyValuePairs event)]
+                        (reduce
+                          (fn [acc ^org.slf4j.event.KeyValuePair kvp]
+                            (assoc acc (.-key kvp) (.-value kvp)))
+                          nil kvps))]
 
      (when-debug (println [:slf4j/fluent-log-call (sig-level level) logger-name]))
-     (normalized-log! logger-name level inst error msg-pattern args markers kvs)))
+     (normalized-log! logger-name level inst error msg-pattern args marker-names kvs)))
 
   ;; Legacy API calls
   ([logger-name ^org.slf4j.event.Level level error msg-pattern args marker]
-   (let [marker-names (when marker (marker-names marker))]
+   (let [marker-names (when marker (get-marker-names marker))]
      (when-debug (println [:slf4j/legacy-log-call (sig-level level) logger-name]))
      (normalized-log! logger-name level (enc/now-inst*) error msg-pattern args marker-names nil))))
 
