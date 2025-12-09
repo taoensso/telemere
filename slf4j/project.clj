@@ -16,7 +16,7 @@
   :profiles
   {:provided
    {:dependencies
-    [[org.clojure/clojure   "1.12.1"]
+    [[org.clojure/clojure   "1.12.3"]
      [org.slf4j/slf4j-api   "2.0.17"]
      [com.taoensso/telemere "1.2.0-SNAPSHOT"]]}
 
