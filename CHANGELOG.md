@@ -2,6 +2,35 @@ This project uses [**Break Versioning**](https://www.taoensso.com/break-versioni
 
 ---
 
+# `v1.2.0` (2025-12-09)
+
+## 📦 Dependencies
+
+Available on Clojars:
+
+1. [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.2.0) - main dep
+2. [SLF4J provider](https://clojars.org/com.taoensso/telemere-slf4j/versions/1.2.0) - extra dep to [send Java logging](https://github.com/taoensso/telemere/wiki/3-Config#java-logging) to Telemere
+
+This project uses [Break Versioning](https://www.taoensso.com/break-versioning).
+
+## Release notes
+
+This is a **maintenance and feature release** that should be a safe upgrade for users of v1.1.x. Please **report any unexpected problems** on [GitHub](https://github.com/taoensso/telemere/issues) or the [Slack channel](https://www.taoensso.com/telemere/slack) 🙏 - [Peter Taoussanis](https://www.taoensso.com)
+
+## Since `v1.1.0` (2025-08-22)
+
+- \[mod] SLF4J->Telemere backend: move noisy stuff out of signal data \[e6ce33d]
+- \[mod] Timbre shim API: move noisy `:vargs` out of signal data \[cc680b0
+- \[mod] [fix] Timbre->Telemere appender: de-duplicate output formatting \[47af803]
+- \[mod] [fix] Timbre->Telemere appender: fix callsite coords \[b56e1c4]
+- \[fix] OpenTelemetry handler: add missing line info to output \[6155713]
+- \[fix] Correctly handle nil `:run` opt \[8a3ae14]
+- \[new] OpenTelemetry handler: support spans created outside Telemere \[a6fc4ad]
+- \[new] [#68] Add config to skip host and/or thread info \[a883df3]
+- \[doc] Clarify that signal content is lazy \[917b1b4]
+
+---
+
 # `v1.1.0` (2025-08-22)
 
 ## 📦 Dependencies
@@ -9,7 +38,7 @@ This project uses [**Break Versioning**](https://www.taoensso.com/break-versioni
 Available on Clojars:
 
 1. [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.1.0) - main dep
-2. [SLF4J provider](https://clojars.org/com.taoensso/telemere-slf4j/versions/1.0.1) - extra dep to [send Java logging](https://github.com/taoensso/telemere/wiki/3-Config#java-logging) to Telemere
+2. [SLF4J provider](https://clojars.org/com.taoensso/telemere-slf4j/versions/1.1.0) - extra dep to [send Java logging](https://github.com/taoensso/telemere/wiki/3-Config#java-logging) to Telemere
 
 This project uses [Break Versioning](https://www.taoensso.com/break-versioning).
 
@@ -19,7 +48,7 @@ This is a **maintenance release** that fixes a few minor issues, improves docs, 
 
 Please **report any unexpected problems** on [GitHub](https://github.com/taoensso/telemere/issues) or the [Slack channel](https://www.taoensso.com/telemere/slack) 🙏 - [Peter Taoussanis](https://www.taoensso.com)
 
-## Since v1.0.01 (2025-05-27)
+## Since v1.0.1 (2025-05-27)
 
 - \[fix] `:trace` level JS console logging \[b2a8b66]
 - \[fix] Clj-kondo warnings for `with-signal/s` \[269c58d]
