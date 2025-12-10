@@ -15,12 +15,14 @@ This project uses [Break Versioning](https://www.taoensso.com/break-versioning).
 
 ## Release notes
 
-This is a **maintenance and feature release** that should be a safe upgrade for users of v1.1.x. Please **report any unexpected problems** on [GitHub](https://github.com/taoensso/telemere/issues) or the [Slack channel](https://www.taoensso.com/telemere/slack) 🙏 - [Peter Taoussanis](https://www.taoensso.com)
+This is a **maintenance and feature release** that should be a safe upgrade for users of v1.1.x, though there have been a few small **changes to signal content** relevant to a very small number of users (see the ➤ items below).
+
+Please **report any unexpected problems** on [GitHub](https://github.com/taoensso/telemere/issues) or the [Slack channel](https://www.taoensso.com/telemere/slack) 🙏 - [Peter Taoussanis](https://www.taoensso.com)
 
 ## Since `v1.1.0` (2025-08-22)
 
-- \[mod] SLF4J->Telemere backend: move noisy stuff out of signal data \[e6ce33d]
-- \[mod] Timbre shim API: move noisy `:vargs` out of signal data \[cc680b0
+- ➤ **\[mod]** SLF4J->Telemere backend: move noisy stuff out of signal data \[e6ce33d]
+- ➤ **\[mod]** Timbre shim API: move noisy `:vargs` out of signal data \[cc680b0
 - \[mod] [fix] Timbre->Telemere appender: de-duplicate output formatting \[47af803]
 - \[mod] [fix] Timbre->Telemere appender: fix callsite coords \[b56e1c4]
 - \[fix] OpenTelemetry handler: add missing line info to output \[6155713]
