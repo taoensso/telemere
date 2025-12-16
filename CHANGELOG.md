@@ -2,6 +2,25 @@ This project uses [**Break Versioning**](https://www.taoensso.com/break-versioni
 
 ---
 
+# `v1.2.1` (2025-12-16)
+
+## 📦 Dependencies
+
+Available on Clojars:
+
+1. [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.2.1) - main dep
+2. [SLF4J provider](https://clojars.org/com.taoensso/telemere-slf4j/versions/1.2.1) - extra dep to [send Java logging](https://github.com/taoensso/telemere/wiki/3-Config#java-logging) to Telemere
+
+This project uses [Break Versioning](https://www.taoensso.com/break-versioning).
+
+## Release notes
+
+This is a **hotfix release** to fix a regression in v1.2.0 that prevented errors from correctly appearing via the Timbre->Telemere appender.
+
+This should be a safe upgrade for users of v1.2.0, apologies for the trouble! - Peter Taoussanis
+
+---
+
 # `v1.2.0` (2025-12-09)
 
 ## 📦 Dependencies
