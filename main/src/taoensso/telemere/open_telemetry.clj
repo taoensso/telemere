@@ -44,8 +44,8 @@
 (comment (enc/qb 1e6 (attr-name :a.b/c-d) (attr-name :x.y/z :a.b/c-d))) ; [44.13 63.19]
 
 ;; AttributeTypes: String, Long, Double, Boolean, and arrays
-(defprotocol     ^:private IAttributesBuilder (^:private -put-attr! ^AttributesBuilder [attr-val attr-name attrs-builder]))
-(extend-protocol           IAttributesBuilder
+(defprotocol     IAttributesBuilder (-put-attr! ^AttributesBuilder [attr-val attr-name attrs-builder]))
+(extend-protocol IAttributesBuilder
   ;; nil             (-put-attr! [v ^String k ^AttributesBuilder ab] (.put ab k     "nil"))  ; As pr-edn*
   nil                (-put-attr! [v ^String k ^AttributesBuilder ab]       ab             )  ; Noop
   Boolean            (-put-attr! [v ^String k ^AttributesBuilder ab] (.put ab k         v))
@@ -87,7 +87,7 @@
 (defmacro ^:private put-attr! [attrs-builder attr-name attr-val]
   `(-put-attr! ~attr-val ~attr-name ~attrs-builder)) ; Fix arg order
 
-(defn- put-attrs!
+(defn put-attrs!
   [^AttributesBuilder attrs-builder attrs]
   (cond
     (map?                 attrs) (enc/run-kv! (fn [k v] (put-attr! attrs-builder (attr-name k) v)) attrs) ; Unprefixed
