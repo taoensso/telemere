@@ -143,7 +143,7 @@
 
   ;; Modern "fluent" API calls
   ([logger-name ^org.slf4j.event.LoggingEvent event]
-   (let [inst         (or (when-let [ts (.getTimeStamp event)] (java.time.Instant/ofEpochMilli ts)) (enc/now-inst*))
+   (let [inst         (let [ts (.getTimeStamp event)] (if (pos? ts) (java.time.Instant/ofEpochMilli ts) (enc/now-inst*)))
          level        (.getLevel     event)
          error        (.getThrowable event)
          msg-pattern  (.getMessage   event)
