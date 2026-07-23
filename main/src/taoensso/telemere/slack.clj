@@ -67,8 +67,10 @@
            ([      ]) ; Stop => noop
            ([signal]
             (when-let [output (output-fn signal)]
-              (slack.chat/post-message conn-opts channel-id
-                output post-opts))))]
+              (let [response (slack.chat/post-message conn-opts channel-id output post-opts)]
+                (when-not (true? (:ok response))
+                  (throw (ex-info "Slack API request failed" {:response response})))
+                response))))]
 
      (with-meta handler-fn
        {:dispatch-opts default-dispatch-opts}))))

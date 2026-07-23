@@ -19,6 +19,7 @@
         [taoensso.telemere.open-telemetry :as otel]
         [taoensso.telemere.files          :as files]
         [taoensso.telemere.sockets        :as sockets]
+        [taoensso.telemere.slack          :as slack]
         [clojure.tools.logging            :as ctl]])))
 
 (comment
@@ -1393,6 +1394,26 @@
          (finally
            (handler)
            (.close receiver))))))
+
+#?(:clj
+   (deftest _slack-handler
+     (let [handler
+           (slack/handler:slack
+             {:conn-opts {:token "token"}
+              :post-opts {:channel-id "channel"}
+              :output-fn (constantly "message")})
+           failure {:ok false, :error "channel_not_found"}]
+
+       (with-redefs [clj-slack.chat/post-message (fn [& _] failure)]
+         (is
+           (try
+             (handler {})
+             false
+             (catch clojure.lang.ExceptionInfo e
+               (= failure (:response (ex-data e)))))))
+
+       (with-redefs [clj-slack.chat/post-message (fn [& _] {:ok true})]
+         (is (= {:ok true} (handler {})))))))
 
 (comment (def attrs-map otel/signal->attrs-map))
 
