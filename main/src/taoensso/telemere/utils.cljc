@@ -399,21 +399,26 @@
                  (truss/ex-info! "Failed to create connection" opts ex))))
 
            conn_  (volatile! (new-conn!))
-           open?_ (enc/latom true)
+           state_ (enc/latom :open) ; ∈ #{:open :retry :closed}
 
            close!
            (fn []
-             (when (compare-and-set! open?_ true false)
+             (when-not (identical? (state_) :closed)
+               (reset! state_ :closed)
                (when-let [[^java.net.Socket socket] (.deref conn_)]
-                 (.close  socket)
                  (vreset! conn_ nil)
-                 true)))
+                 (.close socket))
+               true))
 
            reset!
            (fn []
-             (close!)
-             (vreset! conn_ (new-conn!))
-             (reset!  open?_ true)
+             (reset! state_ :retry)
+             (when-let [[^java.net.Socket socket] (.deref conn_)]
+               (vreset! conn_ nil)
+               (.close socket))
+             (let [conn (new-conn!)]
+               (vreset! conn_ conn)
+               (reset! state_ :open))
              true)
 
            write-ba!
@@ -437,17 +442,19 @@
            lock (Object.)]
 
        (fn a-tcp-socket-writer
-         ([] (when (open?_) (locking lock (close!))))
+         ([] (locking lock (close!)))
          ([content-or-action]
           (case content-or-action ; Undocumented, for dev/testing
-            :writer/open?  (open?_)
+            :writer/open?  (identical? (state_) :open)
             :writer/reset! (locking lock (reset!))
             :writer/state  {:conn (.deref conn_)}
-            (when (open?_)
-              (let [content content-or-action
-                    ba (enc/str->utf8-ba (str content))]
-                (locking lock
+            (let [content content-or-action
+                  ba (enc/str->utf8-ba (str content))]
+              (locking lock
+                (when-not (identical? (state_) :closed)
                   (try
+                    (when (identical? (state_) :retry)
+                      (reset!))
                     (conn-okay!)
                     (write-ba! ba)
                     (catch Exception _ ; Retry once
