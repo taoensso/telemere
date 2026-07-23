@@ -851,6 +851,47 @@
            (is (= (slurp f) "4"))
            (is (true? (.delete f)))])))
 
+   #?(:clj
+      (testing "TCP socket writer"
+        (let [attempts_ (atom 0)
+              good-out  (java.io.ByteArrayOutputStream.)
+              bad-out
+              (proxy [java.io.OutputStream] []
+                (write [_]
+                  (throw (java.io.IOException. "Write failed"))))
+
+              socket
+              (fn [out]
+                (proxy [java.net.Socket] []
+                  (getOutputStream [] out)
+                  (isClosed        [] false)
+                  (isConnected     [] true)
+                  (close           [] nil)))
+
+              socket-fn
+              (fn [& _]
+                (case (swap! attempts_ inc)
+                  1 (socket bad-out)
+                  2 (throw (java.io.IOException. "Reconnect failed"))
+                  (socket good-out)))
+
+              sw
+              (utils/tcp-socket-writer
+                {:host "test", :port 1, :socket-fn socket-fn})]
+
+          [(is
+             (try
+               (sw "first")
+               false
+               (catch Exception _
+                 true)))
+
+           (is (false? (sw :writer/open?)))
+           (is (true?  (sw "second")))
+           (is (= 3 @attempts_))
+           (is (= "second" (.toString good-out "UTF-8")))
+           (is (true? (sw)))])))
+
    (testing "Formatters, etc."
      [(is (= ((utils/format-nsecs-fn) 1.5e9) "1.50s")) ; More tests in Encore
       (is (= ((utils/format-inst-fn)     t1) "2024-01-01T01:01:01.110Z"))
