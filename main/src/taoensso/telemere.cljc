@@ -125,8 +125,8 @@
       `:uuid-str`      - UUID string       (36/36 chars)
       `:nano/secure`   - nano-style string (21/10 chars) w/ strong RNG
       `:nano/insecure` - nano-style string (21/10 chars) w/ fast   RNG (default)
-      `:hex/insecure`  - hex-style  string (32/16 chars) w/ strong RNG
-      `:hex/secure`    - hex-style  string (32/16 chars) w/ fast   RNG"
+      `:hex/insecure`  - hex-style  string (32/16 chars) w/ fast   RNG
+      `:hex/secure`    - hex-style  string (32/16 chars) w/ strong RNG"
 
   (utils/parse-uid-fn impl/uid-kind))
 
