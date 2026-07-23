@@ -41,11 +41,14 @@ public class TelemereLogger extends LegacyAbstractLogger implements LoggingEvent
 
     private static final long serialVersionUID = -1999356203037132557L;
 
-    private static boolean INITIALIZED = false;
+    private static volatile boolean INITIALIZED = false;
     static void lazyInit() {
         if (INITIALIZED) { return; }
-        INITIALIZED = true;
-        init();
+        synchronized (TelemereLogger.class) {
+            if (INITIALIZED) { return; }
+            init();
+            INITIALIZED = true;
+        }
     }
 
     private static IFn logFn;
