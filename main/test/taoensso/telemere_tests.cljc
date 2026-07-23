@@ -18,6 +18,7 @@
        [[taoensso.telemere.slf4j          :as slf4j]
         [taoensso.telemere.open-telemetry :as otel]
         [taoensso.telemere.files          :as files]
+        [taoensso.telemere.sockets        :as sockets]
         [clojure.tools.logging            :as ctl]])))
 
 (comment
@@ -1232,6 +1233,31 @@
    #?(:cljs    (is (fn? (tel/handler:console-raw))))
    #?(:clj     (is (fn? (tel/handler:file))))
    #?(:clj     (is (fn? (otel/handler:open-telemetry))))])
+
+#?(:clj
+   (deftest _udp-handler
+     (let [receiver (java.net.DatagramSocket. 0)
+           handler
+           (sockets/handler:udp-socket
+             {:socket-opts
+              {:host "127.0.0.1"
+               :port (.getLocalPort receiver)
+               :max-packet-bytes 1024}
+              :output-fn (constantly "udp-test")})]
+
+       (try
+         (.setSoTimeout receiver 2000)
+         (handler {})
+         (let [ba     (byte-array 1024)
+               packet (java.net.DatagramPacket. ba (alength ba))]
+           (.receive receiver packet)
+           (is (= "udp-test"
+                 (String. ba 0 (.getLength packet)
+                   java.nio.charset.StandardCharsets/UTF_8))))
+
+         (finally
+           (handler)
+           (.close receiver))))))
 
 (comment (def attrs-map otel/signal->attrs-map))
 

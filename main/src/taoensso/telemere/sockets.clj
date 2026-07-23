@@ -110,7 +110,7 @@
 
             (locking lock
               (try
-                (.send (DatagramSocket.) packet)
+                (.send socket packet)
                 (catch Exception _ ; Retry once
                   (Thread/sleep 250)
-                  (.send (DatagramSocket.) packet)))))))))))
+                  (.send socket packet)))))))))))
