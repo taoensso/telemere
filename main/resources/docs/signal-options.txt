@@ -18,8 +18,8 @@ All options are available for all signal creator calls:
 
 `:parent` ------ Custom ?{:keys [id uid]} to override auto (dynamic) parent signal tracing info
 `:root` -------- Custom ?{:keys [id uid]} to override auto (dynamic) root   signal tracing info
-`:ctx` --------- Custom ?val to override auto (dynamic `*ctx*`) in signal, like `with-ctx`  but WITHOUT actually affecting `*ctx*`
-`:ctx+` -------- Custom ?val to update   auto (dynamic `*ctx*`) in signal, like `with-ctx+` but WITHOUT actually affecting `*ctx*`
+`:ctx` --------- Custom ?map to override auto (dynamic `*ctx*`) in signal, like `with-ctx`  but WITHOUT actually affecting `*ctx*`
+`:ctx+` -------- Custom ?map to update   auto (dynamic `*ctx*`) in signal, like `with-ctx+` but WITHOUT actually affecting `*ctx*`
 
 `:ns` ---------- Custom ?str namespace to override auto signal callsite info
 `:coords` ------ Custom ?[line column] to override auto signal callsite info

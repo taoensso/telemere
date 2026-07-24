@@ -24,7 +24,7 @@ Default signal keys:
 
 `:parent` ------ ?{:keys [id uid]} of parent signal, present in nested signals when tracing
 `:root` -------- ?{:keys [id uid]} of root   signal, present in nested signals when tracing
-`:ctx` --------- ?val of `*ctx*` (arb app-level state) when signal was created
+`:ctx` --------- ?map of app-level state from `*ctx*` when signal was created
 
 `:host` -------- (Clj only) {:keys [name ip]}       info for network host
 `:thread` ------ (Clj only) {:keys [name id group]} info for thread that created signal

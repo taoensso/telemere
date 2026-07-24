@@ -123,7 +123,7 @@ Some **similarities** between Telemere and μ/log:
 
 - Both emphasize **structured data** rather than string messages
 - Both offer **tracing** to understand (nested) program flow
-- Both offer a (nested) **context** mechanism for arb application state
+- Both offer a (nested) **context** mechanism for application state maps
 - Both are **fast** and offer **async handling**
 - Both offer a variety of **handlers** and are designed for ease of use
 
