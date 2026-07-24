@@ -68,7 +68,7 @@
 ;; Use transforms (xfns) to filter and/or arbitrarily modify signals
 ;; by signal data/content/etc.
 
-(tel/set-xfn!
+(tel/set-root-xfn!
   (fn [signal]
     (if (-> signal :data :skip-me?)
       nil ; Filter signal (don't handle)
