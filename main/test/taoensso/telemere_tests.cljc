@@ -1074,12 +1074,34 @@
               (.end parent-span)))))])
 
       (when impl/enabled:otel-tracing?
+        (testing "producer span completion"
+          (with-redefs [impl/*otel-span-end-delay-msecs* 1]
+            (let [signal (with-sig (sig! {:level :info, :id :unhandled :run :done}))
+                  span   (io.opentelemetry.api.trace.Span/fromContext (:_otel-context signal))]
+
+              [(is (true? (:_otel-span-owned? signal)))
+               (dotimes [_ 100] (when (.isRecording span) (Thread/sleep 10)))
+               (is (false? (.isRecording span)))]))))
+
+      (when impl/enabled:otel-tracing?
+        (testing "noop spans need no fallback completion"
+          (let [tracer (.getTracer (io.opentelemetry.api.OpenTelemetry/noop) "noop-test")
+                signal
+                (binding [tel/*otel-tracer* tracer]
+                  (with-sig (sig! {:level :info, :id :noop :run :done})))]
+
+            [(is (true?  (:_otel-span-owned? signal)))
+             (is (false? (impl/otel-span-end-pending? (:_otel-context signal))))])))
+
+      (when impl/enabled:otel-tracing?
         (testing "handler shutdown drains spans"
           (let [signal  (with-sig (sig! {:level :info, :id :shutdown :run :done}))
                 span    (io.opentelemetry.api.trace.Span/fromContext (:_otel-context signal))
                 handler (otel/handler:open-telemetry {:logger-provider nil})]
 
-            [(handler signal)
+            [(is (true?  (impl/otel-span-end-pending? (:_otel-context signal))))
+             (handler signal)
+             (is (false? (impl/otel-span-end-pending? (:_otel-context signal))))
              (let [t0 (System/nanoTime)]
                (handler)
                (is (< (/ (- (System/nanoTime) t0) 1e6) 1000.0)))

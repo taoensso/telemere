@@ -246,7 +246,53 @@
          "Returns new `Context` that includes minimal `Span` in given parent `Context`."
          ^io.opentelemetry.context.Context
          [id inst ?parent-context ?span-kind]
-         (first (otel-context+span-info id inst ?parent-context ?span-kind))))))
+         (first (otel-context+span-info id inst ?parent-context ?span-kind)))
+
+       (def ^:dynamic ^:no-doc *otel-span-end-delay-msecs* 60000)
+
+       (defonce ^:private
+         ^java.util.concurrent.ConcurrentHashMap otel-span-end-tasks_
+         (java.util.concurrent.ConcurrentHashMap.))
+
+       (defonce ^:private otel-span-end-timer_
+         (delay
+           (let [timer (java.util.Timer. "autoTelemereOpenTelemetrySpanEndTimer" (boolean :daemon))]
+
+             ;; Canceled tasks otherwise remain queued until their deadline.
+             (.schedule timer
+               (proxy [java.util.TimerTask] [] (run [] (.purge timer)))
+               1000 1000)
+
+             timer)))
+
+       (defn ^:no-doc otel-span-end-pending? [^io.opentelemetry.context.Context context] (.containsKey otel-span-end-tasks_ context))
+       (defn ^:no-doc otel-span-end-cancel!  [^io.opentelemetry.context.Context context]
+         (when-let [^java.util.TimerTask task (.remove otel-span-end-tasks_ context)]
+           (.cancel task)))
+
+       (defn ^:no-doc otel-span-end-later!
+         [^io.opentelemetry.context.Context context ^java.time.Instant end-inst]
+         (when (.isRecording (io.opentelemetry.api.trace.Span/fromContext context))
+           (let [^java.util.Timer timer @otel-span-end-timer_
+                 ^java.util.TimerTask task
+                 (proxy [java.util.TimerTask] []
+                   (run []
+                     (let [^java.util.TimerTask this this]
+                       (.remove otel-span-end-tasks_ context this))
+                     (try
+                       (.end (io.opentelemetry.api.trace.Span/fromContext context)
+                         end-inst)
+                       (catch Throwable _))))]
+
+             (when-let [^java.util.TimerTask old-task (.put otel-span-end-tasks_ context task)]
+               (.cancel old-task))
+
+             (try
+               (.schedule timer task (long *otel-span-end-delay-msecs*))
+               (do              task)
+               (catch Throwable t
+                 (.remove otel-span-end-tasks_ context task)
+                 (throw t)))))))))
 
 (comment
   (enc/qb 1e6 (otel-context) (otel-context+span ::id1 (enc/now-inst) nil nil)) ; [46.42 186.89]
@@ -780,6 +826,16 @@
                     (let [~@binds-form-base
                           ~@binds-form-more
                           signal# ~signal-delay-form]
+
+                      ~@(when (and clj? enabled:otel-tracing? run-form?)
+                          [`(when ~'__otel-span-owned?
+                              (otel-span-end-later!
+                                ~'__otel-context
+                                (inst+nsecs
+                                  ~'__inst
+                                  (.-run-nsecs
+                                    ~(with-meta '__run-result
+                                       {:tag 'taoensso.telemere.impl.RunResult})))))])
 
                       (dispatch-signal!
                         ;; Unconditionally send same wrapped signal to all handlers.

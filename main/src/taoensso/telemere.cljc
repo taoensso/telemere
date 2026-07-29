@@ -150,8 +150,10 @@
        2. Telemere and OpenTelemetry will NOT recognize each other's spans.
 
      If `true`:
-       1. Telemere's   OpenTelemetry handler WILL emit to `SpanExporter`s.
-       2. Telemere and OpenTelemetry WILL recognize each other's spans.
+       1. Telemere's tracing signals create OpenTelemetry spans using
+          `*otel-tracer*`. Owned spans are always ended, and may be exported.
+       2. Telemere's OpenTelemetry handler enriches these spans when handled.
+       3. Telemere and OpenTelemetry will recognize each other's spans.
 
      Override default by setting one of the following to \"true\" or \"false\":
        1.       JVM property: `taoensso.telemere.otel-tracing`

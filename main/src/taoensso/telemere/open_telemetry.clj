@@ -252,6 +252,10 @@
       iff `telemere/otel-tracing?` is true.
 
   Options:
+    `:emit-tracing?` - Enrich tracing spans/events? (default true). This does
+      not disable span creation or export; for that, disable `otel-tracing?`
+      or bind `telemere/*otel-tracer*` to nil.
+
     `:logger-provider` - nil or `io.opentelemetry.api.logs.LoggerProvider`,
       (see `telemere/otel-default-providers_` for default).
 
@@ -268,6 +272,7 @@
   ;; Notes:
   ;; - Multi-threaded handlers may see signals ~out of order
   ;; - Sampling means that root/parent/child signals might not be handled
+  ;; - Telemere-owned spans are always ended, within 60 secs when not handled
   ;; - `:otel/attrs`, `:otel/context` currently undocumented
 
   ([] (handler:open-telemetry nil))
@@ -367,6 +372,9 @@
                           (locking span-buffer-lock
                             (span-buffer1_ (fn [old] (conj old [span end-inst])))
                             (.deref timer_)) ; Ensure timer is running
+
+                          ;; Handler now guarantees completion.
+                          (impl/otel-span-end-cancel! context)
                           ))
 
                       context))))]
