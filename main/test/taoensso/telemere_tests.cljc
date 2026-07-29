@@ -728,7 +728,24 @@
 
          (is (sm? (with-sig (tel/with-out->telemere (println "สวัสดี café 😀")))
                {:level :info, :coords nil, :ns nil, :kind :system/out,
-                :msg_ "สวัสดี café 😀"}))])
+                :msg_ "สวัสดี café 😀"}))
+
+         (is (sm? (with-sig (tel/with-out->telemere (print "Partial out"))) {:level :info, :kind :system/out, :msg_ "Partial out"}))
+         (is
+           (sm?
+             (with-sig (tel/with-err->telemere (.write ^java.io.Writer *err* "Partial err")))
+             {:level :error, :kind :system/err, :msg_ "Partial err"}))
+
+         (let [{:keys [signals]}
+               (with-sigs
+                 (tel/with-streams->telemere
+                   (do
+                     (print "Both out")
+                     (.write ^java.io.Writer *err* "Both err"))))]
+
+           (is (sm? signals
+                 [{:kind :system/out, :msg_ "Both out"}
+                  {:kind :system/err, :msg_ "Both err"}])))])
 
       (testing "SLF4J -> Telemere"
         [(is (sm? (tel/check-interop) {:slf4j {:present? true, :sending->telemere? true, :telemere-receiving? true}}))
