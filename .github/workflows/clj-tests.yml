@@ -48,6 +48,6 @@ jobs:
         if: matrix.java != '8'
         run: lein test-clj
         working-directory: main
-      - name: Check SLF4J module
-        run: lein check
+      - name: Test SLF4J module
+        run: lein test
         working-directory: slf4j
