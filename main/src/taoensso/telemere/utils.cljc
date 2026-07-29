@@ -335,11 +335,15 @@
      (let [addr   (java.net.InetSocketAddress. ^String host (int port))
            socket (java.net.Socket.)]
 
-       (if connect-timeout-msecs
-         (.connect socket addr (int connect-timeout-msecs))
-         (.connect socket addr))
+       (try
+         (if connect-timeout-msecs
+           (.connect socket addr (int connect-timeout-msecs))
+           (.connect socket addr))
 
-       socket)))
+         socket
+         (catch Throwable t
+           (try (.close socket) (catch Throwable _))
+           (throw t))))))
 
 #?(:clj
    (let [factory_ (delay (javax.net.ssl.SSLSocketFactory/getDefault))]
@@ -384,19 +388,35 @@
      (when-not (string? host) (truss/ex-info! "Expected `:host` string" (truss/typed-val host)))
      (when-not (int?    port) (truss/ex-info! "Expected `:port` int"    (truss/typed-val port)))
 
-     (let [new-conn! ; => [<java.net.Socket> <java.io.OutputStream>], or throws
+     (let [close-socket!
+           (fn [^java.net.Socket socket]
+             (when socket
+               (try (.close socket) (catch Throwable _))))
+
+           new-conn! ; => [<java.net.Socket> <java.io.OutputStream>], or throws
            (fn []
-             (try
-               (let [^java.net.Socket socket
-                     (let [socket (socket-fn host port connect-timeout-msecs)]
+             (let [plain-socket_ (volatile! nil)
+                   conn-socket_  (volatile! nil)]
+               (try
+                 (let [plain-socket
+                       (socket-fn host port connect-timeout-msecs)
+                       _ (vreset! plain-socket_ plain-socket)
+
+                       socket
                        (if ssl?
-                         (ssl-socket-fn socket host port)
-                         (do            socket)))]
+                         (ssl-socket-fn plain-socket host port)
+                         (do            plain-socket))
+                       _ (vreset! conn-socket_ socket)]
 
-                 [socket (.getOutputStream socket)])
+                   [socket (.getOutputStream ^java.net.Socket socket)])
 
-               (catch Exception ex
-                 (truss/ex-info! "Failed to create connection" opts ex))))
+                 (catch Exception ex
+                   (let [plain-socket (.deref plain-socket_)
+                         conn-socket  (.deref conn-socket_)]
+                     (close-socket! conn-socket)
+                     (when-not (identical? plain-socket conn-socket)
+                       (do  (close-socket! plain-socket))))
+                   (truss/ex-info! "Failed to create connection" opts ex)))))
 
            conn_  (volatile! (new-conn!))
            state_ (enc/latom :open) ; ∈ #{:open :retry :closed}
