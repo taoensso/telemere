@@ -1036,6 +1036,21 @@
                    signal)))
             (is (false? @called?_)))))
 
+      (testing "explicit parent context"
+        (let [tracer (force tel/*otel-tracer*)
+              parent-span    (.startSpan (.spanBuilder ^io.opentelemetry.api.trace.Tracer tracer "parent"))
+              parent-context (.with (io.opentelemetry.context.Context/root) parent-span)
+              child-context  (impl/otel-context+span :child java.time.Instant/EPOCH parent-context nil)
+              child-span     (io.opentelemetry.api.trace.Span/fromContext child-context)]
+
+          (try
+            (is (=    (impl/otel-trace-id parent-context) (impl/otel-trace-id child-context)))
+            (is (not= (impl/otel-span-id  parent-context) (impl/otel-span-id  child-context)))
+
+            (finally
+              (.end child-span)
+              (.end parent-span)))))
+
       (testing "attr-name"
         [(is (= (#'otel/attr-name :foo)          "foo"))
          (is (= (#'otel/attr-name :foo-bar-baz)  "foo_bar_baz"))
