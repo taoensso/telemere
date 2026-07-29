@@ -50,7 +50,7 @@
          :X-MyHeader \"A custom header\"}
 
     `:subject-fn` ------ (fn [signal]) => email subject string
-    `:subject-max-len` - Truncate subjects beyond this length (default 90)
+    `:subject-max-len` - Truncate subjects beyond this length (default 128)
 
     `:body-fn` - (fn [signal]) => email body content string,
                    see `format-signal-fn` or `pr-signal-fn`
@@ -74,7 +74,8 @@
          (if-let [n subject-max-len]
            (comp
              (fn [s] (when s (enc/substr (str s) 0 n)))
-             subject-fn))
+             subject-fn)
+           subject-fn)
 
          handler-fn
          (fn a-handler:postal

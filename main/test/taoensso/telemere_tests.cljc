@@ -19,7 +19,9 @@
         [taoensso.telemere.open-telemetry :as otel]
         [taoensso.telemere.files          :as files]
         [taoensso.telemere.sockets        :as sockets]
+        [taoensso.telemere.postal         :as postal]
         [taoensso.telemere.slack          :as slack]
+        [postal.core                      :as postal-core]
         [clojure.tools.logging            :as ctl]])))
 
 (comment
@@ -1394,6 +1396,22 @@
          (finally
            (handler)
            (.close receiver))))))
+
+#?(:clj
+   (deftest _postal-subject
+     (let [message_ (atom nil)
+           handler
+           (fn [subject-max-len]
+             (postal/handler:postal
+               {:conn-opts {}
+                :msg-opts  {}
+                :subject-max-len subject-max-len
+                :subject-fn (constantly "subject")
+                :body-fn    (constantly "body")}))]
+
+       (with-redefs [postal-core/send-message (fn [_ message] (reset! message_ message) {:code 0})]
+         ((handler nil) {})
+         (is (= "subject" (:subject @message_)))))))
 
 #?(:clj
    (deftest _slack-handler
