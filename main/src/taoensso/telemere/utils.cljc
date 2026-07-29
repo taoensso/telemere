@@ -267,21 +267,26 @@
 
      (let [file    (as-file file)
            stream_ (volatile! (writeable-file-stream! file append?))
-           open?_  (enc/latom true)
+           state_  (enc/latom :open) ; ∈ #{:open :retry :closed}
 
            close!
            (fn []
-             (when (compare-and-set! open?_ true false)
+             (when-not (identical? (state_) :closed)
+               (reset! state_ :closed)
                (when-let [^java.io.FileOutputStream stream (.deref stream_)]
-                 (.close  stream)
                  (vreset! stream_ nil)
-                 true)))
+                 (.close stream))
+               true))
 
            reset!
            (fn []
-             (close!)
-             (vreset! stream_ (writeable-file-stream! file append?))
-             (reset!  open?_  true)
+             (reset! state_ :retry)
+             (when-let [^java.io.FileOutputStream stream (.deref stream_)]
+               (vreset! stream_ nil)
+               (.close  stream))
+             (let [stream (writeable-file-stream! file append?)]
+               (vreset! stream_ stream)
+               (reset!  state_ :open))
              true)
 
            write-ba!
@@ -300,17 +305,19 @@
            lock (Object.)]
 
        (fn a-file-writer
-         ([] (when (open?_) (locking lock (close!))))
+         ([] (locking lock (close!)))
          ([content-or-action]
           (case content-or-action ; Undocumented, for dev/testing
-            :writer/open?  (open?_)
+            :writer/open?  (identical? (state_) :open)
             :writer/reset! (locking lock (reset!))
             :writer/state  {:file file, :stream (.deref stream_)}
-            (when (open?_)
-              (let [content content-or-action
-                    ba (enc/str->utf8-ba (str content))]
-                (locking lock
+            (let [content content-or-action
+                  ba (enc/str->utf8-ba (str content))]
+              (locking lock
+                (when-not (identical? (state_) :closed)
                   (try
+                    (when (identical? (state_) :retry)
+                      (reset!))
                     (check-file!)
                     (write-ba! ba)
                     (catch java.io.IOException _ ; Retry once
