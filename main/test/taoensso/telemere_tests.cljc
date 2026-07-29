@@ -1092,6 +1092,113 @@
            (java.nio.file.Files/deleteIfExists missing-path)
            (java.nio.file.Files/deleteIfExists dir))))))
 
+#?(:clj
+   (deftest _file-rotation-retries
+     (let [dir
+           (java.nio.file.Files/createTempDirectory "telemere-file-retry-test"
+             (make-array java.nio.file.attribute.FileAttribute 0))
+           main-path (.resolve dir "app.log")
+           main-file (.toFile main-path)]
+
+       (try
+         (spit (str main-path) "old")
+         (.setLastModified main-file 1577836800000)
+
+         (testing "Archive failure"
+           (let [calls_ (atom 0)
+                 handler
+                 (files/handler:file
+                   {:path (str main-path)
+                    :interval :daily
+                    :max-file-size nil
+                    :max-num-intervals nil
+                    :gzip-archives? false
+                    :output-fn :output})]
+
+             (try
+               (binding [files/*file-maintenance-retry-msecs* 0]
+                 (with-redefs [files/archive-main-file!
+                               (fn [& _]
+                                 (when (= 1 (swap! calls_ inc))
+                                   (throw (java.io.IOException. "Archive failed"))))]
+                   (is (thrown? java.io.IOException (handler {:output "first"})))
+                   (is (true?                       (handler {:output "second"})))))
+
+               (is (= 2 @calls_))
+               (is (= "oldfirstsecond" (slurp (str main-path))))
+
+               (finally
+                 (handler)))))
+
+         (spit (str main-path) "old")
+         (.setLastModified main-file 1577836800000)
+
+         (testing "Prune failure"
+           (let [archive-calls_ (atom 0)
+                 prune-calls_   (atom 0)
+                 handler
+                 (files/handler:file
+                   {:path (str main-path)
+                    :interval :daily
+                    :max-file-size nil
+                    :max-num-intervals 2
+                    :gzip-archives? false
+                    :output-fn :output})]
+
+             (try
+               (binding [files/*file-maintenance-retry-msecs* 0]
+                 (with-redefs [files/archive-main-file! (fn [& _] (swap! archive-calls_ inc))
+                               files/prune-archive-files!
+                               (fn [& _]
+                                 (when (= 1 (swap! prune-calls_ inc))
+                                   (throw (java.io.IOException. "Prune failed"))))]
+
+                   (is (thrown? java.io.IOException (handler {:output "first"})))
+                   (is (true?                       (handler {:output "second"})))))
+
+               (is (= 1 @archive-calls_))
+               (is (= 2 @prune-calls_))
+               (is (= "oldfirstsecond" (slurp (str main-path))))
+
+               (finally
+                 (handler)))))
+
+         (spit (str main-path) "old")
+         (.setLastModified main-file 1577836800000)
+
+         (testing "Persistent prune failure"
+           (let [prune-calls_ (atom 0)
+                 handler
+                 (files/handler:file
+                   {:path (str main-path)
+                    :interval :daily
+                    :max-file-size nil
+                    :max-num-intervals 2
+                    :gzip-archives? false
+                    :output-fn :output})]
+
+             (try
+               (with-redefs [files/archive-main-file! (fn [& _])
+                             files/prune-archive-files!
+                             (fn [& _]
+                               (swap! prune-calls_ inc)
+                               (throw
+                                 (java.io.IOException.
+                                   "Prune failed")))]
+                 (is (thrown? java.io.IOException
+                       (handler {:output "first"})))
+                 (is (true? (handler {:output "second"}))))
+
+               (is (= 1 @prune-calls_))
+               (is (= "oldfirstsecond" (slurp (str main-path))))
+
+               (finally
+                 (handler)))))
+
+         (finally
+           (java.nio.file.Files/deleteIfExists main-path)
+           (java.nio.file.Files/deleteIfExists dir))))))
+
 ;;;; Other handlers
 
 (deftest _handler-constructors
