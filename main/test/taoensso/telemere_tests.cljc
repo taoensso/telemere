@@ -877,6 +877,9 @@
             :b        "b"}]
 
        [(is (= ((utils/clean-signal-fn)                      sig) {:level :info, :msg_ "msg", :error ex2-chain}))
+        (is (= ((utils/clean-signal-fn {:error-fn #(vector :custom %)}) sig) {:level :info, :msg_ "msg", :error [:custom ex2]}))
+        (is (= ((utils/clean-signal-fn {:error-fn nil})       sig) {:level :info, :msg_ "msg"}))
+        (is (= ((utils/clean-signal-fn {:error-fn (fn [_])})  sig) {:level :info, :msg_ "msg"}))
         (is (= ((utils/clean-signal-fn {:incl-kvs?  true})   sig) {:level :info, :msg_ "msg", :error ex2-chain, :a "a", :b "b"}))
         (is (= ((utils/clean-signal-fn {:incl-nils? true})   sig) {:level :info, :msg_ "msg", :error ex2-chain, :id nil}))
         (is (= ((utils/clean-signal-fn {:incl-keys #{:kvs}}) sig) {:level :info, :msg_ "msg", :error ex2-chain, :kvs "kvs"}))

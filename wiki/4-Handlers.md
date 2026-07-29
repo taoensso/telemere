@@ -118,6 +118,23 @@ To instead writes signals as JSON:
 
 Note that when writing JSON with Clojure, you *must* provide an appropriate `pr-fn`. This lets you plug in the JSON serializer of your choice ([jsonista](https://github.com/metosin/jsonista) is my default recommendation).
 
+#### Errors in edn/JSON output
+
+Signal `:error` values are platform errors (`Throwable` or `js/Error`) which generally aren't portable or useful when serialized directly. By default `pr-signal-fn` replaces each signal's `:error` with its cause chain: `[{:keys [type msg data]} ...]` (outermost error first, non-error values removed). Note that **stack traces are omitted**.
+
+To include stack traces or otherwise customize error output, provide an `:error-fn` to `clean-signal-fn`, e.g.:
+
+```clojure
+;; Clj example using `Throwable->map` (incl. stack trace) for `:error` vals
+(def my-handler
+  (tel/handler:console
+    {:output-fn
+     (tel/pr-signal-fn
+       {:pr-fn :edn
+        :clean-fn
+        (tel/clean-signal-fn {:error-fn Throwable->map})})}))
+```
+
 ### Handler-specific per-signal kvs
 
 Telemere includes a handy mechanism for including arbitrary app-level data/opts in individual signals for use by custom transforms and/or handlers.
