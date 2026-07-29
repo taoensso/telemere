@@ -13,9 +13,9 @@
    [taoensso.telemere.utils           :as utils]
    [taoensso.telemere.timbre          :as timbre]
    #_[taoensso.telemere.tools-logging :as tools-logging]
-   #_[taoensso.telemere.streams       :as streams]
    #?@(:clj
-       [[taoensso.telemere.slf4j          :as slf4j]
+       [[taoensso.telemere.streams        :as streams]
+        [taoensso.telemere.slf4j          :as slf4j]
         [taoensso.telemere.open-telemetry :as otel]
         [taoensso.telemere.files          :as files]
         [taoensso.telemere.sockets        :as sockets]
@@ -780,6 +780,49 @@
                 (with-open [_ (org.slf4j.MDC/putCloseable "k2" "v2")]
                   [(is (sm? (with-sig (->          sl  (.info "Hello"))) {:level :info, :ctx {"k1" "v1", "k2" "v2"}}) "Legacy API: MDC")
                    (is (sm? (with-sig (-> (.atInfo sl) (.log  "Hello"))) {:level :info, :ctx {"k1" "v1", "k2" "v2"}}) "Fluent API: MDC")])))])])]))
+
+#?(:clj
+   (deftest _stream-lifecycle-race
+     (let [original-out       System/out
+           out-atom           @#'streams/orig-out_
+           reset-vals!        clojure.core/reset-vals!
+           reset-paused?_     (atom false)
+           reset-paused       (promise)
+           resume-reset       (promise)
+           enable-started     (promise)]
+
+       (tel/streams->reset!)
+       (try
+         (tel/streams->telemere! {:out {}, :err nil})
+
+         (with-redefs [clojure.core/reset-vals!
+                       (fn [a v]
+                         (let [result (reset-vals! a v)]
+                           (when (and (identical? a out-atom) (compare-and-set! reset-paused?_ false true))
+                             (deliver reset-paused true)
+                             @resume-reset)
+                           result))]
+
+           (let [reset-f (future (tel/streams->reset!))
+                 _ @reset-paused
+
+                 enable-f
+                 (future
+                   (deliver enable-started true)
+                   (tel/streams->telemere! {:out {}, :err nil}))]
+
+             @enable-started
+             (Thread/sleep 50)
+             (deliver resume-reset true)
+             @reset-f
+             @enable-f))
+
+         (is (true? (tel/streams->reset!)))
+         (is (identical? System/out original-out))
+
+         (finally
+           (tel/streams->reset!)
+           (System/setOut original-out))))))
 
 ;;;; Timbre shim
 
