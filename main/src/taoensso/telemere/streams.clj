@@ -50,17 +50,21 @@
   "Executes form with `*out*` bound to flush to Telemere signals with given opts."
   ([     form] `(with-out->telemere nil ~form))
   ([opts form]
-   `(binding [prev-*out* (or prev-*out* *out*)
-              *out* (osw (telemere-print-stream ~(conj default-out-opts opts)))]
-      ~form)))
+   `(let [writer# (osw (telemere-print-stream ~(conj default-out-opts opts)))]
+      (binding [prev-*out* (or prev-*out* *out*), *out* writer#]
+        (try
+          ~form
+          (finally (.flush ^java.io.OutputStreamWriter writer#)))))))
 
 (defmacro ^:public with-err->telemere
   "Executes form with `*err*` bound to flush to Telemere signals with given opts."
   ([     form] `(with-err->telemere nil ~form))
   ([opts form]
-   `(binding [prev-*err* (or prev-*err* *err*)
-              *err* (osw (telemere-print-stream ~(conj default-err-opts opts)))]
-      ~form)))
+   `(let [writer# (osw (telemere-print-stream ~(conj default-err-opts opts)))]
+      (binding [prev-*err* (or prev-*err* *err*), *err* writer#]
+        (try
+          ~form
+          (finally (.flush ^java.io.OutputStreamWriter writer#)))))))
 
 (defmacro ^:public with-streams->telemere
   "Executes form with `*out*` and/or `*err*` bound to flush to Telemere signals
@@ -70,11 +74,19 @@
      :or   {out default-out-opts
             err default-err-opts}} form]
 
-   `(binding [prev-*out* (or prev-*out* *out*)
-              prev-*err* (or prev-*err* *err*)
-              *out* (if-let [out# ~out] (osw (telemere-print-stream out#)) *out*)
-              *err* (if-let [err# ~err] (osw (telemere-print-stream err#)) *err*)]
-      ~form)))
+   `(let [out-writer# (when-let [out# ~out] (osw (telemere-print-stream out#)))
+          err-writer# (when-let [err# ~err] (osw (telemere-print-stream err#)))]
+
+      (binding [prev-*out* (or prev-*out*  *out*)
+                prev-*err* (or prev-*err*  *err*)
+                *out*      (or out-writer# *out*)
+                *err*      (or err-writer# *err*)]
+        (try
+          ~form
+          (finally
+            (try
+              (do      (when out-writer# (.flush ^java.io.OutputStreamWriter out-writer#)))
+              (finally (when err-writer# (.flush ^java.io.OutputStreamWriter err-writer#))))))))))
 
 (comment (impl/with-signal (with-out->telemere (println "hello"))))
 
