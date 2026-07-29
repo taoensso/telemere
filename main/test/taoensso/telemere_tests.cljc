@@ -988,7 +988,11 @@
                     :cljs "Root: cljs.core/ExceptionInfo - Ex1\ndata: {:k1 \"v1\"}\n\nCaused: cljs.core/ExceptionInfo - Ex2\ndata: {:k2 \"v2\"}\n\nRoot stack trace:\n")))
 
            (is (enc/str-contains? ex2-str           "Root stack trace:"))
-           (is (enc/str-contains? ex2-str "invoke") "Root stack trace includes content")]))
+           (is (enc/str-contains? ex2-str "invoke") "Root stack trace includes content")
+
+           #?(:clj
+              (is (not (enc/str-contains? ((utils/format-error-fn) (Exception.)) " - "))
+                "Message-less errors get no `type - msg` delimiter"))]))
 
       (testing "signal-preamble-fn"
         (let [sig      (with-sig :raw :trap (tel/event! ::ev-id {:inst t1, :msg ["a" "b"]}))
