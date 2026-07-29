@@ -69,7 +69,7 @@
             (when-let [output (output-fn signal)]
               (let [response (slack.chat/post-message conn-opts channel-id output post-opts)]
                 (when-not (true? (:ok response))
-                  (throw (ex-info "Slack API request failed" {:response response})))
+                  (truss/ex-info! "Slack API request failed" {:response response}))
                 response))))]
 
      (with-meta handler-fn

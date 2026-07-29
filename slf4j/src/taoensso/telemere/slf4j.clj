@@ -42,9 +42,8 @@
     org.slf4j.event.EventConstants/INFO_INT  :info
     org.slf4j.event.EventConstants/WARN_INT  :warn
     org.slf4j.event.EventConstants/ERROR_INT :error
-    (throw
-      (ex-info "Unexpected `org.slf4j.event.Level`"
-        {:level (enc/typed-val level)}))))
+    (truss/ex-info! "Unexpected `org.slf4j.event.Level`"
+      {:level (enc/typed-val level)})))
 
 (comment (enc/qb 1e6 (sig-level org.slf4j.event.Level/INFO))) ; 36.47
 
