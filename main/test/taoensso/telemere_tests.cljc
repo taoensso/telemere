@@ -724,7 +724,11 @@
                                          :system/err {:sending->telemere? false, :telemere-receiving? false}}))
 
          (is (sm? (with-sig (tel/with-out->telemere (println "Hello" "x" "y")))
-               {:level :info, :coords nil, :ns nil, :kind :system/out, :msg_ "Hello x y"}))])
+               {:level :info, :coords nil, :ns nil, :kind :system/out, :msg_ "Hello x y"}))
+
+         (is (sm? (with-sig (tel/with-out->telemere (println "สวัสดี café 😀")))
+               {:level :info, :coords nil, :ns nil, :kind :system/out,
+                :msg_ "สวัสดี café 😀"}))])
 
       (testing "SLF4J -> Telemere"
         [(is (sm? (tel/check-interop) {:slf4j {:present? true, :sending->telemere? true, :telemere-receiving? true}}))
