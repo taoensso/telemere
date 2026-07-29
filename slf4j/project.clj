@@ -10,20 +10,20 @@
   :scm {:name "git" :url "https://github.com/taoensso/telemere"}
 
   :java-source-paths ["src/java"]
-  :javac-options     ["--release" "8" "-g"] ; Support Java >= v8
+  :javac-options ["-source" "8" "-target" "8" "-g"] ; Support Java >= v8
   :dependencies      []
 
   :profiles
   {:provided
    {:dependencies
-    [[org.clojure/clojure   "1.12.3"]
-     [org.slf4j/slf4j-api   "2.0.17"]
+    [[org.clojure/clojure   "1.12.5"]
+     [org.slf4j/slf4j-api   "2.0.18"]
      [com.taoensso/telemere "1.2.1"]]}
 
    :dev
    {:plugins
     [[lein-pprint  "1.3.2"]
-     [lein-ancient "0.7.0"]]}}
+     [lein-ancient "1.0.0"]]}}
 
   :aliases
   {"deploy-lib" ["do" #_["build-once"] ["deploy" "clojars"] ["install"]]})

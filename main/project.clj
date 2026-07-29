@@ -10,15 +10,16 @@
   :scm {:name "git" :url "https://github.com/taoensso/telemere"}
 
   :dependencies
-  [[com.taoensso/encore "3.159.0"]]
+  [[com.taoensso/encore "3.171.1"]]
 
   :test-paths ["test" #_"src"]
 
   :profiles
   {;; :default [:base :system :user :provided :dev]
-   :provided {:dependencies [[org.clojure/clojurescript "1.12.134"]
-                             [org.clojure/clojure       "1.11.4"]]}
-   :c1.12    {:dependencies [[org.clojure/clojure       "1.12.3"]]}
+   :provided {:dependencies [[org.clojure/clojurescript "1.12.145"]
+                             [org.clojure/clojure       "1.12.5"]]}
+   :c1.13    {:dependencies [[org.clojure/clojure       "1.13.0-alpha6"]]}
+   :c1.12    {:dependencies [[org.clojure/clojure       "1.12.5"]]}
    :c1.11    {:dependencies [[org.clojure/clojure       "1.11.4"]]}
    :c1.10    {:dependencies [[org.clojure/clojure       "1.10.3"]]}
 
@@ -29,7 +30,7 @@
     :uberjar-name "graal-tests.jar"
     :dependencies
     [[org.clojure/clojure                  "1.11.4"]
-     [com.github.clj-easy/graal-build-time "1.0.5"]]}
+     [com.github.clj-easy/graal-build-time "1.0.6"]]}
 
    :test    {:aot [] #_[taoensso.telemere-tests]}
    :ott-on  {:jvm-opts ["-Dtaoensso.telemere.otel-tracing=true"]}
@@ -46,19 +47,19 @@
      *unchecked-math*     false #_:warn-on-boxed}
 
     :dependencies
-    [[org.clojure/core.async        "1.8.741"]
-     [org.clojure/test.check        "1.1.2"]
-     [org.clojure/tools.logging     "1.3.0"]
-     [org.slf4j/slf4j-api           "2.0.17"]
+    [[org.clojure/core.async        "1.9.865"]
+     [org.clojure/test.check        "1.1.3"]
+     [org.clojure/tools.logging     "1.3.1"]
+     [org.slf4j/slf4j-api           "2.0.18"]
      [com.taoensso/telemere-slf4j   "1.2.1"]
-     #_[org.slf4j/slf4j-simple      "2.0.16"]
-     #_[org.slf4j/slf4j-nop         "2.0.16"]
+     #_[org.slf4j/slf4j-simple      "2.0.18"]
+     #_[org.slf4j/slf4j-nop         "2.0.18"]
      #_[io.github.paintparty/bling  "0.4.2"]
 
      ;;; For optional handlers
-     [io.opentelemetry/opentelemetry-api                         "1.57.0"]
-     [io.opentelemetry/opentelemetry-sdk-extension-autoconfigure "1.57.0"]
-     [io.opentelemetry/opentelemetry-exporter-otlp               "1.57.0"]
+     [io.opentelemetry/opentelemetry-api                         "1.64.0"]
+     [io.opentelemetry/opentelemetry-sdk-extension-autoconfigure "1.64.0"]
+     [io.opentelemetry/opentelemetry-exporter-otlp               "1.64.0"]
      #_[io.opentelemetry/opentelemetry-exporters-jaeger           "0.9.1"]
      [metosin/jsonista       "0.3.13"]
      [com.draines/postal     "2.0.5"]
@@ -66,7 +67,7 @@
 
     :plugins
     [[lein-pprint    "1.3.2"]
-     [lein-ancient   "0.7.0"]
+     [lein-ancient   "1.0.0"]
      [lein-cljsbuild "1.1.8"]]}}
 
   :cljsbuild
@@ -90,7 +91,8 @@
    "build-once" ["do" ["clean"] ["cljsbuild" "once"]]
    "deploy-lib" ["do" ["build-once"] ["deploy" "clojars"] ["install"]]
 
-   "test-clj"  ["with-profile" "+c1.12:+c1.11:+c1.10" "test"]
+   "test-clj"       ["with-profile" "+c1.13:+c1.12:+c1.11:+c1.10" "test"]
+   "test-clj-java8" ["with-profile" "+c1.12:+c1.11:+c1.10" "test"]
    "test-cljs" ["with-profile" "+c1.12" "cljsbuild"   "test"]
 
    "test-clj-ott-off" ["with-profile" "+ott-off" "test-clj"]
