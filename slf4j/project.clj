@@ -10,7 +10,10 @@
   :scm {:name "git" :url "https://github.com/taoensso/telemere"}
 
   :java-source-paths ["src/java"]
-  :javac-options ["-source" "8" "-target" "8" "-g"] ; Support Java >= v8
+  :javac-options
+  ~(if (= "1.8" (System/getProperty "java.specification.version"))
+     ["-source" "8" "-target" "8" "-Xlint:-options" "-g"]
+     ["--release" "8" "-Xlint:-options" "-g"]) ; Support Java >= v8
   :dependencies      []
 
   :profiles
