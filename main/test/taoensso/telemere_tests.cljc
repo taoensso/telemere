@@ -1012,7 +1012,31 @@
 
 #?(:clj
    (deftest _open-telemetry
-     [(testing "attr-name"
+     [(testing "default logger provider"
+        (let [called?_ (atom false)
+              provider
+              (reify io.opentelemetry.api.logs.LoggerProvider
+                (loggerBuilder [_ _]
+                  (reset! called?_ true)
+                  (throw (ex-info "Default provider used" {}))))
+
+              signal
+              {:inst java.time.Instant/EPOCH
+               :msg_ (delay nil)}]
+
+          (with-redefs [tel/otel-default-providers_ (delay {:logger-provider provider})]
+            (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Default provider used"
+                  ((otel/handler:open-telemetry {:emit-tracing? false}) signal)))
+            (is @called?_)
+
+            (reset! called?_ false)
+            (is (nil?
+                  ((otel/handler:open-telemetry
+                     {:emit-tracing? false, :logger-provider nil})
+                   signal)))
+            (is (false? @called?_)))))
+
+      (testing "attr-name"
         [(is (= (#'otel/attr-name :foo)          "foo"))
          (is (= (#'otel/attr-name :foo-bar-baz)  "foo_bar_baz"))
          (is (= (#'otel/attr-name :foo/bar-baz)  "foo.bar_baz"))

@@ -272,7 +272,7 @@
 
   ([] (handler:open-telemetry nil))
   ([{:keys [emit-tracing? logger-provider]
-     :or   {emit-tracing? true}}]
+     :or   {emit-tracing? true, logger-provider :default}}]
 
    (let [?logger-provider
          (if (not= logger-provider :default)
