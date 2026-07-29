@@ -212,10 +212,11 @@
          "Returns viable `Tracer`, or nil."
          [tracer]
          (when-let [tracer ^io.opentelemetry.api.trace.Tracer tracer]
-           (let [sb   (.spanBuilder tracer "test-span")
+           (let [sb   (.spanBuilder tracer "telemere/interop-probe")
                  span (.startSpan sb)]
-             (when (.isValid (.getSpanContext span))
-               tracer))))
+             (try
+               (when (.isValid (.getSpanContext span)) tracer)
+               (finally (.end span))))))
 
        (def ^String otel-name (enc/fmemoize (fn [id] (if id (enc/as-qname id) "telemere/no-id"))))
        (defn otel-context+span-info
