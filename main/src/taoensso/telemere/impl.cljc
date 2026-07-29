@@ -228,6 +228,7 @@
            (enc/if-not [tracer (force taoensso.telemere/*otel-tracer*)]
              parent-context ; Can't add Span without Tracer
              (let [sb (.spanBuilder ^io.opentelemetry.api.trace.Tracer tracer (otel-name id))]
+               (.setParent         sb parent-context)
                (.setStartTimestamp sb ^java.time.Instant inst)
                (.setSpanKind       sb
                  (case ?span-kind
