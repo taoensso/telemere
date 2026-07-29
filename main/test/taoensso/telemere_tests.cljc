@@ -1235,6 +1235,12 @@
    #?(:clj     (is (fn? (otel/handler:open-telemetry))))])
 
 #?(:clj
+   (deftest _udp-truncation
+     (let [ba (enc/str->utf8-ba "a😀x")
+           n  (int (#'sockets/utf8-prefix-len ba 4))]
+       (is (= "a" (String. ba 0 n java.nio.charset.StandardCharsets/UTF_8))))))
+
+#?(:clj
    (deftest _udp-handler
      (let [receiver (java.net.DatagramSocket. 0)
            handler

@@ -15,6 +15,18 @@
   (remove-ns (symbol (str *ns*)))
   (:api (enc/interns-overview)))
 
+(defn- utf8-prefix-len
+  "Returns largest valid UTF-8 prefix length <= `max-len`."
+  ^long [^bytes ba ^long max-len]
+  (let [ba-len (alength ba)
+        n      (min ba-len max-len)]
+    (if (== n ba-len)
+      n
+      (loop [idx n]
+        (if (or (zero? idx) (not= (bit-and (aget ba idx) 0xc0) 0x80))
+          (do          idx)
+          (recur  (dec idx)))))))
+
 (defn handler:tcp-socket
   "Experimental, subject to change.
 
@@ -100,9 +112,10 @@
        ([      ] (locking lock (.close socket))) ; Stop => close socket
        ([signal]
         (when-let [output (output-fn signal)]
-          (let [ba     (enc/str->utf8-ba (str output))
-                ba-len (alength ba)
-                packet (DatagramPacket. ba (min ba-len max-packet-bytes))]
+          (let [ba         (enc/str->utf8-ba (str output))
+                ba-len     (alength ba)
+                packet-len (utf8-prefix-len ba max-packet-bytes)
+                packet     (DatagramPacket. ba packet-len)]
 
             (when (and truncation-warning-fn (> ba-len max-packet-bytes))
               ;; Fn should be appropriately rate-limited
