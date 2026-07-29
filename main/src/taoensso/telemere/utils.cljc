@@ -529,9 +529,9 @@
            (let [s+cause (enc/sb-appender sb (str nls "Caused: "))]
              (s+ "Root: ")
              (doseq [{:keys [type msg data]} (rseq chain)]
-               (s+cause type " - " msg)
-               (when data
-                 (s+ nl "data: " (enc/pr-edn* data)))))
+               (s+cause type)
+               (when msg  (s+ " - " msg))
+               (when data (s+ nl "data: " (enc/pr-edn* data)))))
 
            (when trace
              (s+ nl nl "Root stack trace:" nl)
