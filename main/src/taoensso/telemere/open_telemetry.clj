@@ -281,34 +281,48 @@
 
          ;; Mechanism to end spans 3-6 secs *after* signal handling. The delay
          ;; helps support out-of-order signals due to >1 handler threads, etc.
+         span-buffer-lock (Object.)
          span-buffer1_ (enc/latom #{}) ; #{[<Span> <end-inst>]}
          span-buffer2_ (enc/latom #{})
+
+         end-spans!
+         (fn [spans]
+           (doseq [[span end-inst] spans]
+             (try
+               (.end
+                 ^io.opentelemetry.api.trace.Span span
+                 ^java.time.Instant end-inst)
+               (catch Throwable _))))
+
          timer_
          (delay
            (let [t3s (java.util.Timer. "autoTelemereOpenTelemetryHandlerTimer3s" (boolean :daemon))]
              (.schedule t3s
                (proxy [java.util.TimerTask] []
                  (run []
-                   ;; span2->end!
-                   (when-let [drained (enc/reset-in! span-buffer2_ #{})]
-                     (doseq [[span end-inst] drained]
-                       (.end
-                         ^io.opentelemetry.api.trace.Span span
-                         ^java.time.Instant end-inst)))
+                   (locking span-buffer-lock
+                     ;; span2->end!
+                     (when-let [drained (enc/reset-in! span-buffer2_ #{})]
+                       (end-spans! drained))
 
-                   ;; span1->span2
-                   (when-let [drained (enc/reset-in! span-buffer1_ #{})]
-                     (when-not (empty? drained)
-                       (span-buffer2_ (fn [old] (set/union old drained)))))))
+                     ;; span1->span2
+                     (when-let [drained (enc/reset-in! span-buffer1_ #{})]
+                       (when-not (empty? drained)
+                         (span-buffer2_ (fn [old] (set/union old drained))))))))
                3000 3000)
              t3s))
 
          stop-tracing!
          (fn stop-tracing! []
-           (when (realized? timer_)
-             (loop [] (when-not (empty? (span-buffer1_)) (recur))) ; Block to drain `span1`
-             (loop [] (when-not (empty? (span-buffer2_)) (recur))) ; Block to drain `span2`
-             (.cancel ^java.util.Timer @timer_)))]
+           (locking span-buffer-lock
+             (when (realized? timer_)
+               (.cancel ^java.util.Timer @timer_))
+
+             (let [drained
+                   (set/union
+                     (enc/reset-in! span-buffer1_ #{})
+                     (enc/reset-in! span-buffer2_ #{}))]
+               (end-spans! drained))))]
 
      (fn a-handler:open-telemetry
        ([      ] (stop-tracing!))
@@ -350,8 +364,9 @@
 
                           ;; (.end span end-inst) ; Emit to `SpanExporter` now
                           ;; Emit to `SpanExporter` after delay:
-                          (span-buffer1_ (fn [old] (conj old [span end-inst])))
-                          (.deref timer_) ; Ensure timer is running
+                          (locking span-buffer-lock
+                            (span-buffer1_ (fn [old] (conj old [span end-inst])))
+                            (.deref timer_)) ; Ensure timer is running
                           ))
 
                       context))))]
