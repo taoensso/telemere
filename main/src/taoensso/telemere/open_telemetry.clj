@@ -318,7 +318,9 @@
                 (when-let [context (enc/get* signal :otel/context :_otel-context nil)]
                   (let    [span (io.opentelemetry.api.trace.Span/fromContext context)]
                     (when (.isRecording span)
-                      (enc/if-not [end-inst (get signal :end-inst)]
+                      (enc/if-not [end-inst
+                                   (when (get signal :_otel-span-owned?)
+                                     (do (get signal :end-inst)))]
                         ;; No end-inst => no run-form => add `Event` to span (parent)
                         (let [{:keys [id ^java.time.Instant inst]} signal]
                           (if-let [^Attributes attrs (span-attrs signal)]

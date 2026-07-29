@@ -1036,7 +1036,8 @@
                    signal)))
             (is (false? @called?_)))))
 
-      (testing "explicit parent context"
+      (when impl/enabled:otel-tracing?
+       [(testing "explicit parent context"
         (let [tracer (force tel/*otel-tracer*)
               parent-span    (.startSpan (.spanBuilder ^io.opentelemetry.api.trace.Tracer tracer "parent"))
               parent-context (.with (io.opentelemetry.context.Context/root) parent-span)
@@ -1050,6 +1051,27 @@
             (finally
               (.end child-span)
               (.end parent-span)))))
+
+      (testing "external span ownership"
+        (let [tracer (force tel/*otel-tracer*)
+              parent-span    (.startSpan (.spanBuilder ^io.opentelemetry.api.trace.Tracer tracer "external"))
+              parent-context (.with (io.opentelemetry.context.Context/root) parent-span)
+              signal
+              (binding [tel/*otel-tracer* nil
+                        impl/*otel-context* parent-context]
+                (with-sig (sig! {:level :info, :id :run, :run :done})))
+
+              handler (otel/handler:open-telemetry {:logger-provider nil})]
+
+          (try
+            (is (false? (:_otel-span-owned? signal)))
+            (is (not= (impl/otel-span-id parent-context) (:uid signal)))
+            (handler signal)
+            (handler)
+            (is (.isRecording parent-span))
+
+            (finally
+              (.end parent-span)))))])
 
       (testing "attr-name"
         [(is (= (#'otel/attr-name :foo)          "foo"))
