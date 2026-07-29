@@ -1030,6 +1030,68 @@
 
       (is (boolean (files/manage-test-files! :delete)))]))
 
+#?(:clj
+   (deftest _file-rotation
+     (let [dir
+           (java.nio.file.Files/createTempDirectory "telemere-file-test"
+             (make-array java.nio.file.attribute.FileAttribute 0))
+
+           main-path    (.resolve dir "app.log")
+           arch-path    (.resolve dir "app.log.1")
+           gzip-path    (.resolve dir "app.log.1.gz")
+           missing-path (.resolve dir "missing.log")]
+
+       (try
+         (let [handler
+               (files/handler:file
+                 {:path (str main-path)
+                  :interval nil
+                  :max-file-size 1
+                  :max-num-parts 2
+                  :max-num-intervals nil
+                  :gzip-archives? false
+                  :output-fn :output})]
+
+           (try
+             (handler {:output "first"})
+             (Thread/sleep 300)
+             (handler {:output "second"})
+
+             (finally
+               (handler))))
+
+         (is (= "first"  (slurp (str arch-path))))
+         (is (= "second" (slurp (str main-path))))
+         (is
+           (try
+             (files/archive-main-file! (str missing-path) nil nil 2 false nil)
+             false
+             (catch java.nio.file.NoSuchFileException _
+               true)))
+
+         (java.nio.file.Files/deleteIfExists arch-path)
+         (spit (str main-path) "gzip-content")
+         (is
+           (with-redefs [files/gzip-file
+                         (fn  [_ file-out]
+                           (spit file-out "partial")
+                           (throw (java.io.IOException. "Gzip failed")))]
+             (try
+               (files/archive-main-file! (str main-path) nil nil 2 true nil)
+               false
+               (catch java.io.IOException _
+                 true))))
+
+         (is (false? (java.nio.file.Files/exists gzip-path (make-array java.nio.file.LinkOption 0))))
+         (is (= "gzip-content" (slurp (str arch-path))))
+
+         (finally
+           (java.nio.file.Files/deleteIfExists gzip-path)
+           (java.nio.file.Files/deleteIfExists arch-path)
+           (java.nio.file.Files/deleteIfExists main-path)
+           (java.nio.file.Files/deleteIfExists missing-path)
+           (java.nio.file.Files/deleteIfExists dir))))))
+
 ;;;; Other handlers
 
 (deftest _handler-constructors
