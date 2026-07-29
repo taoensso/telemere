@@ -33,8 +33,7 @@
   {:level    :debug
    :sample   0.75 ; 75% sampling (noop 25% of the time)
    :when     (my-conditional)
-   :limit    {"1 per sec" [1  1000]
-              "5 per min" [5 60000]} ; Rate limit
+   :limit    #{"1/1s" "5/1m"}        ; Rate limit
    :limit-by my-user-ip-address      ; Rate limit scope
 
    :do (inc-my-metric!)
@@ -97,7 +96,7 @@
    :sample    0.5
    :min-level :info
    :ns-filter {:disallow "taoensso.*"}
-   :limit     {"1 per sec" [1 1000]}
+   :limit     #{"1/1s"}
    ;; See `tel/help:handler-dispatch-options` for more
    })
 
@@ -295,11 +294,8 @@
 
      (with-meta handler-fn
        {:dispatch-opts
-        {:min-level  :info
-         :limit
-         [[1   1000] ; Max 1  signal  per second
-          [10 60000] ; Max 10 signals per minute
-          ]}}))))
+        {:min-level :info
+         :limit #{"1/1s" "10/1m"}}}))))
 
 ;;; Message building
 
@@ -367,7 +363,7 @@
 ;; With sampling 50% and 1/sec rate limiting
 (tel/log!
   {:sample 0.5
-   :limit  {"1 per sec" [1 1000]}}
+   :limit  #{"1/1s"}}
   "This signal will be sampled and rate limited")
 
 ;; Several signal creators are available for convenience.

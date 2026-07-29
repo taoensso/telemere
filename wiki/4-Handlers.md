@@ -236,10 +236,7 @@ If you're making a customizable handler for use by others, it's often handy to d
      (with-meta handler-fn
        {:dispatch-opts
         {:min-level :info
-         :limit
-         [[1   1000] ; Max 1  signal  per second
-          [10 60000] ; Max 10 signals per minute
-          ]}}))))
+         :limit #{"1/1s" "10/1m"}}}))))
 ```
 
 - See [`help:signal-content`](https://cljdoc.org/d/com.taoensso/telemere/CURRENT/api/taoensso.telemere#help:signal-content) for signal map content.

@@ -71,8 +71,7 @@ See [examples.cljc](https://github.com/taoensso/telemere/blob/master/examples.cl
   {:level    :debug
    :sample   0.75 ; 75% sampling (noop 25% of the time)
    :when     (my-conditional)
-   :limit    {"1 per sec" [1  1000]
-              "5 per min" [5 60000]} ; Rate limit
+   :limit    #{"1/1s" "5/1m"}        ; Rate limit
    :limit-by my-user-ip-address      ; Rate limit scope
 
    :do (inc-my-metric!)
@@ -146,7 +145,7 @@ See [examples.cljc](https://github.com/taoensso/telemere/blob/master/examples.cl
    :sample    0.5
    :min-level :info
    :ns-filter {:disallow "taoensso.*"}
-   :limit     {"1 per sec" [1 1000]}
+   :limit     #{"1/1s"}
    ;; See `tel/help:handler-dispatch-options` for more
    })
 
