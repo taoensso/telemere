@@ -1036,6 +1036,32 @@
                    signal)))
             (is (false? @called?_)))))
 
+      (testing "tracer viability probe"
+        (let [exported_ (atom [])
+              success   (fn [] (io.opentelemetry.sdk.common.CompletableResultCode/ofSuccess))
+              exporter
+              (reify io.opentelemetry.sdk.trace.export.SpanExporter
+                (export   [_ spans] (swap! exported_ into spans) (success))
+                (flush    [_] (success))
+                (shutdown [_] (success)))
+
+              processor (io.opentelemetry.sdk.trace.export.SimpleSpanProcessor/create exporter)
+              provider
+              (-> (io.opentelemetry.sdk.trace.SdkTracerProvider/builder)
+                (.addSpanProcessor processor)
+                (.build))
+
+              tracer (.get provider "viability-test")]
+
+          (try
+            [(is (identical? tracer (impl/viable-tracer tracer)))
+             (is (= ["telemere/interop-probe"]
+                   (mapv #(.getName ^io.opentelemetry.sdk.trace.data.SpanData %)
+                     @exported_)))]
+
+            (finally
+              (.close provider)))))
+
       (when impl/enabled:otel-tracing?
        [(testing "explicit parent context"
         (let [tracer (force tel/*otel-tracer*)
