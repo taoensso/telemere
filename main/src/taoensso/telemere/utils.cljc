@@ -618,7 +618,7 @@
             (when         (enc/and? kvs incl-kvs?)       (af "    kvs: " (vf kvs))))
 
           (let [{:keys [run-form error]} signal]
-            (when run-form
+            (when (some? (get signal :run-nsecs))
               (let [{:keys [run-val run-nsecs]} signal
                     run-time (when run-nsecs (when-let [ff format-nsecs-fn] (ff run-nsecs)))
                     run-info

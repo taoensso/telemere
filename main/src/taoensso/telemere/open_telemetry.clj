@@ -176,8 +176,8 @@
       (put-attr! ab "id"    id)
       (put-attr! ab "uid"  uid))
 
-    (when-let [run-form (get signal :run-form)]
-      (let [{:keys [run-val run-nsecs]} signal]
+    (when (some? (get signal :run-nsecs))
+      (let [{:keys [run-form run-val run-nsecs]} signal]
         (put-attr! ab "run.form"     (if (nil? run-form) "nil" (str run-form)))
         (put-attr! ab "run.val_type" (if (nil? run-val)  "nil" (.getName (class run-val))))
         (put-attr! ab "run.val"                run-val)
