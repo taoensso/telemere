@@ -890,7 +890,21 @@
            (is (true?  (sw "second")))
            (is (= 3 @attempts_))
            (is (= "second" (.toString good-out "UTF-8")))
-           (is (true? (sw)))])))
+           (is (true? (sw)))
+
+           (let [closed?_ (atom false)
+                 socket-fn
+                 (fn [& _]
+                   (proxy [java.net.Socket] []
+                     (getOutputStream [] (throw (java.io.IOException. "No stream")))
+                     (close           [] (reset! closed?_ true))))]
+
+             (is
+               (try
+                 (utils/tcp-socket-writer {:host "test", :port 1, :socket-fn socket-fn})
+                 false
+                 (catch Exception _ true)))
+             (is (true? @closed?_)))])))
 
    (testing "Formatters, etc."
      [(is (= ((utils/format-nsecs-fn) 1.5e9) "1.50s")) ; More tests in Encore
@@ -1279,7 +1293,17 @@
    (deftest _udp-truncation
      (let [ba (enc/str->utf8-ba "a😀x")
            n  (int (#'sockets/utf8-prefix-len ba 4))]
-       (is (= "a" (String. ba 0 n java.nio.charset.StandardCharsets/UTF_8))))))
+       (is (= "a"
+             (String. ba 0 n
+               java.nio.charset.StandardCharsets/UTF_8)))
+
+       (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Expected `:host` string"
+             (sockets/handler:udp-socket {:socket-opts {:host nil, :port 1}})))
+
+       (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Expected positive `:max-packet-bytes`"
+             (sockets/handler:udp-socket
+               {:socket-opts
+                {:host "127.0.0.1", :port 1, :max-packet-bytes 0}}))))))
 
 #?(:clj
    (deftest _udp-handler

@@ -98,32 +98,39 @@
    (let [{:keys [host port max-packet-bytes]
           :or   {max-packet-bytes 512}} socket-opts
 
-         max-packet-bytes (int max-packet-bytes)
-
-         socket (DatagramSocket.) ; No need to change socket once created
-         lock   (Object.)]
+         max-packet-bytes (int max-packet-bytes)]
 
      (when-not (string? host) (truss/ex-info! "Expected `:host` string" (truss/typed-val host)))
      (when-not (int?    port) (truss/ex-info! "Expected `:port` int"    (truss/typed-val port)))
+     (when-not (pos? max-packet-bytes)
+       (truss/ex-info! "Expected positive `:max-packet-bytes`"
+         (truss/typed-val max-packet-bytes)))
 
-     (.connect socket (InetSocketAddress. (str host) (int port)))
+     (let [socket (DatagramSocket.) ; No need to change socket once created
+           lock   (Object.)]
 
-     (fn a-handler:udp-socket
-       ([      ] (locking lock (.close socket))) ; Stop => close socket
-       ([signal]
-        (when-let [output (output-fn signal)]
-          (let [ba         (enc/str->utf8-ba (str output))
-                ba-len     (alength ba)
-                packet-len (utf8-prefix-len ba max-packet-bytes)
-                packet     (DatagramPacket. ba packet-len)]
+       (try
+         (.connect socket (InetSocketAddress. (str host) (int port)))
+         (catch Throwable t
+           (.close socket)
+           (throw t)))
 
-            (when (and truncation-warning-fn (> ba-len max-packet-bytes))
-              ;; Fn should be appropriately rate-limited
-              (truncation-warning-fn {:max max-packet-bytes, :actual ba-len, :signal signal}))
+       (fn a-handler:udp-socket
+         ([      ] (locking lock (.close socket))) ; Stop => close socket
+         ([signal]
+          (when-let [output (output-fn signal)]
+            (let [ba         (enc/str->utf8-ba (str output))
+                  ba-len     (alength ba)
+                  packet-len (utf8-prefix-len ba max-packet-bytes)
+                  packet     (DatagramPacket. ba packet-len)]
 
-            (locking lock
-              (try
-                (.send socket packet)
-                (catch Exception _ ; Retry once
-                  (Thread/sleep 250)
-                  (.send socket packet)))))))))))
+              (when (and truncation-warning-fn (> ba-len max-packet-bytes))
+                ;; Fn should be appropriately rate-limited
+                (truncation-warning-fn {:max max-packet-bytes, :actual ba-len, :signal signal}))
+
+              (locking lock
+                (try
+                  (.send socket packet)
+                  (catch Exception _ ; Retry once
+                    (Thread/sleep 250)
+                    (.send socket packet))))))))))))
