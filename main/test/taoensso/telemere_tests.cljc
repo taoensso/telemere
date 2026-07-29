@@ -46,7 +46,7 @@
   (def  ex2          (ex-info "Ex2" {:k2 "v2"} (ex-info "Ex1" {:k1 "v1"})))
   (def  ex2-chain    (truss/ex-chain :as-map ex2))
   (defn ex1! [] (throw ex1))
-  (defn ex1? [x] (= (truss/ex-root x) ex1)))
+  (defn ex1? [x] (identical? x ex1))) ; Errors always propagate as-is (unwrapped)
 
 (let [rt-call-filter_ (atom nil)
       sig-handlers_   (atom nil)]
@@ -92,8 +92,10 @@
    (is (= (with-sigs (sig! {:level :info, :allow? false              })) {:value nil}) "With runtime suppression")
    (is (= (with-sigs (sig! {:level :info, :allow? false, :run (+ 1 2)})) {:value   3}) "With runtime suppression, run-form")
 
-   (is (->> (sig! {:level :info, :elide? true,  :run (ex1!)}) (throws? :ex-info "Ex1")) "With compile-time elision, throwing run-form")
-   (is (->> (sig! {:level :info, :allow? false, :run (ex1!)}) (throws? :ex-info "Ex1")) "With runtime suppression,  throwing run-form")
+   ;; Run errors must always propagate as-is (unwrapped), regardless of filtering
+   (is (ex1? (:error (with-sigs (sig! {:level :info, :elide? true,  :run (ex1!)})))) "With compile-time elision, throwing run-form")
+   (is (ex1? (:error (with-sigs (sig! {:level :info, :allow? false, :run (ex1!)})))) "With runtime suppression,  throwing run-form")
+   (is (ex1? (:error (with-sigs (sig! {:level :info,                :run (ex1!)})))) "Without filtering,         throwing run-form")
 
    (let [{rv1 :value, [sv1] :signals} (with-sigs (sig! {:level :info              }))
          {rv2 :value, [sv2] :signals} (with-sigs (sig! {:level :info, :run (+ 1 2)}))]

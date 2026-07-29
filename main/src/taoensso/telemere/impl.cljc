@@ -519,16 +519,10 @@
 ;;;; Signal macro
 
 (deftype RunResult [value error ^long run-nsecs]
+  ;; Note that we always rethrow `:run` errors as-is (unwrapped) so that
+  ;; signals stay transparent to callers, regardless of filtering
   #?(:clj clojure.lang.IFn :cljs IFn)
-  (#?(:clj invoke :cljs -invoke) [_] (if error (throw error) value))
-  (#?(:clj invoke :cljs -invoke) [_ signal_]
-    (if error
-      (truss/ex-info! "Signal `:run` form error"
-        (truss/try*
-          (do           {:taoensso.telemere/signal (force signal_)})
-          (catch :all t {:taoensso.telemere/signal-error t}))
-        error)
-      value)))
+  (#?(:clj invoke :cljs -invoke) [_] (if error (throw error) value)))
 
 (defn inst+nsecs
   "Returns given platform instant plus given number of nanosecs."
@@ -845,7 +839,7 @@
                         (WrappedSignal. ~'__kind ~'__ns ~'__id ~'__level signal#))
 
                       (if ~'__run-result
-                        ( ~'__run-result signal#)
+                        ( ~'__run-result)
                         true))))))))))))
 
 (comment
