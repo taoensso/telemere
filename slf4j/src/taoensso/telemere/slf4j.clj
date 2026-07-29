@@ -63,32 +63,31 @@
 
 (comment [(est-marker! "a1" "a2") (get-marker  "a1") (= (get-marker "a1") (get-marker "a1"))])
 
-(def ^:private get-marker-names
-  "Returns #{<MarkerName>}. Cached => assumes markers NOT modified after creation."
+(defn- get-marker-names
+  "Returns #{<MarkerName>}."
   ;; We use `BasicMarkerFactory` so:
   ;;   1. Our markers are just labels (no other content besides their name).
-  ;;   2. Markers with the same name are identical (enabling caching).
-  (enc/fmemoize
-    (fn get-marker-names             [marker-or-markers]
-      (if (instance? org.slf4j.Marker marker-or-markers)
+  ;;   2. Markers with the same name are identical.
+  [marker-or-markers]
+  (if (instance? org.slf4j.Marker marker-or-markers)
 
-        ;; Single marker
-        (let [^org.slf4j.Marker m marker-or-markers
-              acc #{(.getName m)}]
+    ;; Single marker
+    (let [^org.slf4j.Marker m marker-or-markers
+          acc #{(.getName m)}]
 
-          (if-not (.hasReferences m)
-            acc
-            (enc/reduce-iterator!
-              (fn [acc      ^org.slf4j.Marker in]
-                (if-not   (.hasReferences     in)
-                  (conj acc (.getName         in))
-                  (into acc (get-marker-names in))))
-              acc (.iterator m))))
+      (if-not (.hasReferences m)
+        acc
+        (enc/reduce-iterator!
+          (fn [acc      ^org.slf4j.Marker in]
+            (if-not   (.hasReferences     in)
+              (conj acc (.getName         in))
+              (into acc (get-marker-names in))))
+          acc (.iterator m))))
 
-        ;; Vector of markers
-        (reduce
-          (fn [acc in] (into acc (get-marker-names in)))
-          #{} (truss/have vector? marker-or-markers))))))
+    ;; Vector of markers
+    (reduce
+      (fn [acc in] (into acc (get-marker-names in)))
+      #{} (truss/have vector? marker-or-markers))))
 
 (comment
   (let [m1 (est-marker! "M1")
