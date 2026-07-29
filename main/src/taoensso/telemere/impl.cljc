@@ -218,15 +218,14 @@
                tracer))))
 
        (def ^String otel-name (enc/fmemoize (fn [id] (if id (enc/as-qname id) "telemere/no-id"))))
-       (defn otel-context+span
-         "Returns new `Context` that includes minimal `Span` in given parent `Context`.
+       (defn otel-context+span-info
+         "Returns [Context owned-span?], adding a minimal `Span` when possible.
          We leave the (expensive) population of attributes, etc. for signal handler.
          Interop needs only the basics (t0, traceId, spanId, spanName) right away."
-         ^io.opentelemetry.context.Context
          [id inst ?parent-context ?span-kind]
          (let [parent-context (or ?parent-context (otel-context))]
            (enc/if-not [tracer (force taoensso.telemere/*otel-tracer*)]
-             parent-context ; Can't add Span without Tracer
+             [parent-context false] ; Can't add Span without Tracer
              (let [sb (.spanBuilder ^io.opentelemetry.api.trace.Tracer tracer (otel-name id))]
                (.setParent         sb parent-context)
                (.setStartTimestamp sb ^java.time.Instant inst)
@@ -240,8 +239,14 @@
                    (truss/unexpected-arg! ?span-kind
                      {:expected #{nil :internal :client :server :consumer :producer}})))
 
-               (.with ^io.opentelemetry.context.Context parent-context
-                 (.startSpan sb)))))))))
+               [(.with ^io.opentelemetry.context.Context parent-context (.startSpan sb))
+                true]))))
+
+       (defn otel-context+span
+         "Returns new `Context` that includes minimal `Span` in given parent `Context`."
+         ^io.opentelemetry.context.Context
+         [id inst ?parent-context ?span-kind]
+         (first (otel-context+span-info id inst ?parent-context ?span-kind))))))
 
 (comment
   (enc/qb 1e6 (otel-context) (otel-context+span ::id1 (enc/now-inst) nil nil)) ; [46.42 186.89]
@@ -253,7 +258,7 @@
 (defrecord Signal
   ;; Telemere's main public data type, we avoid nesting and duplication
   [schema inst uid, ns coords,
-   #?@(:clj [host thread _otel-context]),
+   #?@(:clj [host thread _otel-context _otel-span-owned?]),
    sample, kind id level, ctx parent root, data kvs msg_,
    error run-form run-val end-inst run-nsecs]
  
@@ -265,7 +270,7 @@
 
 (defn signal? #?(:cljs {:tag 'boolean}) [x] (instance? Signal x))
 
-(def     impl-signal-keys #{:_otel-context})
+(def     impl-signal-keys #{:_otel-context :_otel-span-owned?})
 (def standard-signal-keys
   (set/difference (set (keys (map->Signal {:schema 0})))
     impl-signal-keys))
@@ -650,9 +655,9 @@
                       (let [record-form
                             (let   [clause [(if run-form? :run :no-run) (if clj? :clj :cljs)]]
                               (case clause
-                                [:run    :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords ~host-form ~'__thread ~'__otel-context, ~sample-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~show-run-form ~show-run-val ~'_end-inst ~'_run-nsecs)
+                                [:run    :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords ~host-form ~'__thread ~'__otel-context ~'__otel-span-owned?, ~sample-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~show-run-form ~show-run-val ~'_end-inst ~'_run-nsecs)
                                 [:run    :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords                                         ~sample-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~'_msg_,   ~'_run-err  '~show-run-form ~show-run-val ~'_end-inst ~'_run-nsecs)
-                                [:no-run :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords ~host-form ~'__thread ~'__otel-context, ~sample-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil             nil           nil         nil)
+                                [:no-run :clj ]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords ~host-form ~'__thread ~'__otel-context ~'__otel-span-owned?, ~sample-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil             nil           nil         nil)
                                 [:no-run :cljs]  `(Signal. 1 ~'__inst ~'__uid, ~'__ns ~coords                                         ~sample-form, ~'__kind ~'__id ~'__level, ~ctx-form ~parent-form ~'__root1, ~data-form ~kvs-form ~msg-form, ~error-form nil             nil           nil         nil)
                                 (truss/ex-info!
                                   (str "Unexpected signal constructor args at "
@@ -699,15 +704,24 @@
                   ~'__thread ~thread-form
                   ~'__root0  ~root-form0 ; ?{:keys [id uid]}
 
-                  ~'__otel-context
+                  ~'__otel-context-info
                   ~(when (and clj? enabled:otel-tracing?)
                      (if run-form?
-                       `(otel-context+span ~'__id ~'__inst ~(get opts :otel/context `(otel-context)) ~(get opts :otel/span-kind))
-                       (do                                  (get opts :otel/context `(otel-context)))))
+                       `(otel-context+span-info ~'__id ~'__inst ~(get opts :otel/context `(otel-context)) ~(get opts :otel/span-kind))
+                       `[(do ~(get opts :otel/context `(otel-context))) false]))
+
+                  ~(if (and clj? enabled:otel-tracing?)
+                     (with-meta '__otel-context {:tag 'io.opentelemetry.context.Context})
+                     '__otel-context)     (first  ~'__otel-context-info)
+                  ~'__otel-span-owned?    (second ~'__otel-context-info)
 
                   ~'__uid
                   ~(if (and clj? enabled:otel-tracing? trace?)
-                     (auto-> uid-form `(or (otel-span-id ~'__otel-context) (com.taoensso.encore.Ids/genHexId16)))
+                     (auto-> uid-form
+                       `(or
+                          (when ~'__otel-span-owned?
+                            (otel-span-id ~'__otel-context))
+                          (com.taoensso.encore.Ids/genHexId16)))
                      (auto-> uid-form `(taoensso.telemere/*uid-fn* (if ~'__root0 false true))))]
 
                 binds-form-more
