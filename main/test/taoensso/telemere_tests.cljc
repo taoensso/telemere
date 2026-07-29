@@ -1073,6 +1073,18 @@
             (finally
               (.end parent-span)))))])
 
+      (when impl/enabled:otel-tracing?
+        (testing "handler shutdown drains spans"
+          (let [signal  (with-sig (sig! {:level :info, :id :shutdown :run :done}))
+                span    (io.opentelemetry.api.trace.Span/fromContext (:_otel-context signal))
+                handler (otel/handler:open-telemetry {:logger-provider nil})]
+
+            [(handler signal)
+             (let [t0 (System/nanoTime)]
+               (handler)
+               (is (< (/ (- (System/nanoTime) t0) 1e6) 1000.0)))
+             (is (false? (.isRecording span)))])))
+
       (testing "attr-name"
         [(is (= (#'otel/attr-name :foo)          "foo"))
          (is (= (#'otel/attr-name :foo-bar-baz)  "foo_bar_baz"))
