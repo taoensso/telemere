@@ -22,7 +22,11 @@
         [taoensso.telemere.postal         :as postal]
         [taoensso.telemere.slack          :as slack]
         [postal.core                      :as postal-core]
-        [clojure.tools.logging            :as ctl]])))
+        [clojure.tools.logging            :as ctl]]))
+
+  #?(:cljs
+     (:require-macros
+      [taoensso.telemere.timbre :as timbre])))
 
 (comment
   (remove-ns      'taoensso.telemere-tests)
@@ -769,7 +773,7 @@
             (testing "Markers"
               (let [m1 (#'slf4j/est-marker! "M1")
                     m2 (#'slf4j/est-marker! "M2")
-                    cm (#'slf4j/est-marker! "Compound" "M1" "M2")]
+                    ^org.slf4j.Marker cm (#'slf4j/est-marker! "Compound" "M1" "M2")]
 
                 [(is (sm? (with-sig (.info sl cm "Hello"))                                    {:slf4j/markers #{"Compound" "M1" "M2"}}) "Legacy API: markers")
                  (is (sm? (with-sig (-> (.atInfo sl) (.addMarker m1) (.addMarker cm) (.log))) {:slf4j/markers #{"Compound" "M1" "M2"}}) "Fluent API: markers")]))
@@ -937,7 +941,7 @@
 
               socket-fn
               (fn [& _]
-                (case (swap! attempts_ inc)
+                (case (long (swap! attempts_ inc))
                   1 (socket bad-out)
                   2 (throw (java.io.IOException. "Reconnect failed"))
                   (socket good-out)))
