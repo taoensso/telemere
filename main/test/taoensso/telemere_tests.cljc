@@ -928,6 +928,29 @@
       (is (= (files/format-file-timestamp :weekly  (files/udt->edy udt1)) "2024-01-01w"))
       (is (= (files/format-file-timestamp :monthly (files/udt->edy udt1)) "2024-01-01m"))]))
 
+#?(:clj
+   (deftest _gzip-file
+     (let [dir
+           (java.nio.file.Files/createTempDirectory "telemere-gzip-test"
+             (make-array java.nio.file.attribute.FileAttribute 0))
+
+           input-path  (.resolve dir "input.txt")
+           output-path (.resolve dir "output.txt.gz")
+           content (apply str (repeat 20000 "abcdef"))]
+
+       (try
+         [(spit (str input-path) content)
+          (is (true? (files/gzip-file (str input-path) (str output-path))))
+          (with-open [stream
+                      (java.util.zip.GZIPInputStream.
+                        (java.io.FileInputStream. (.toFile output-path)))]
+            (is (= content (slurp stream :encoding "UTF-8"))))]
+
+         (finally
+           (java.nio.file.Files/deleteIfExists output-path)
+           (java.nio.file.Files/deleteIfExists input-path)
+           (java.nio.file.Files/deleteIfExists dir))))))
+
 (comment (files/manage-test-files! :create))
 
 #?(:clj

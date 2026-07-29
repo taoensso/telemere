@@ -23,11 +23,12 @@
        stream-out (java.io.FileOutputStream.       file-out)
        gz-out     (java.util.zip.GZIPOutputStream. stream-out 2048 false)]
 
-      (let [read-buffer (byte-array (.length file-in))]
+      (let [read-buffer (byte-array 8192)]
         (loop []
           (let [bytes-read (.read stream-in read-buffer)]
             (when-not (== -1 bytes-read)
-              (.write gz-out read-buffer 0 bytes-read))))))
+              (.write gz-out read-buffer 0 bytes-read)
+              (recur))))))
 
     true))
 
