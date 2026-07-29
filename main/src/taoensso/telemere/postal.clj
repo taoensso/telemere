@@ -15,11 +15,7 @@
 
 (def default-dispatch-opts
   {:min-level :info
-   :limit
-   [[5  (enc/msecs :mins  1)]
-    [10 (enc/msecs :mins 15)]
-    [15 (enc/msecs :hours 1)]
-    [30 (enc/msecs :hours 6)]]})
+   :limit #{"5/1m" "10/15m" "15/1h" "30/6h"}})
 
 (defn handler:postal
   "Alpha, subject to change.
@@ -34,12 +30,7 @@
 
   Default handler dispatch options (override when calling `add-handler!`):
     `:min-level` - `:info`
-    `:limit` -
-      [[5  (enc/msecs :mins  1)] ; Max 5  emails in 1  min
-       [10 (enc/msecs :mins 15)] ; Max 10 emails in 15 mins
-       [15 (enc/msecs :hours 1)] ; Max 15 emails in 1  hour
-       [30 (enc/msecs :hours 6)] ; Max 30 emails in 6  hours
-       ]
+    `:limit` - `#{\"5/1m\" \"10/15m\" \"15/1h\" \"30/6h\"}`
 
   Options:
     `:conn-opts` - Map of connection opts given to `postal/send-message`

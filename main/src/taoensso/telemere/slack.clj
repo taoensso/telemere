@@ -15,11 +15,7 @@
 
 (def default-dispatch-opts
   {:min-level :info
-   :limit
-   [[5  (enc/msecs :mins  1)]
-    [10 (enc/msecs :mins 15)]
-    [15 (enc/msecs :hours 1)]
-    [30 (enc/msecs :hours 6)]]})
+   :limit #{"5/1m" "10/15m" "15/1h" "30/6h"}})
 
 (defn handler:slack
   "Alpha, subject to change.
@@ -34,12 +30,7 @@
 
   Default handler dispatch options (override when calling `add-handler!`):
     `:min-level` - `:info`
-    `:limit` -
-      [[5  (enc/msecs :mins  1)] ; Max 5  posts in 1  min
-       [10 (enc/msecs :mins 15)] ; Max 10 posts in 15 mins
-       [15 (enc/msecs :hours 1)] ; Max 15 posts in 1  hour
-       [30 (enc/msecs :hours 6)] ; Max 30 posts in 6  hours
-       ]
+    `:limit` - `#{\"5/1m\" \"10/15m\" \"15/1h\" \"30/6h\"}`
 
   Options:
      `:output-fn` - (fn [signal]) => string, see `format-signal-fn` or `pr-signal-fn`

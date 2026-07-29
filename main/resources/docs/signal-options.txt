@@ -30,7 +30,7 @@ All options are available for all signal creator calls:
 
 `:sample` ------ Sample ?rate ∈ℝ[0,1] for random signal sampling (0.75 => allow 75% of signals, nil => allow all)
 `:when` -------- Arb ?form; when present, form must return truthy to allow signal
-`:limit` ------- Rate limit ?spec given to `taoensso.telemere/rate-limiter`, see its docstring for details
+`:limit` ------- Rate limit ?spec (e.g. `#{"4/1h" "2/1d"}`) given to `taoensso.telemere/rate-limiter`
 `:limit-by` ---- When present, rate limits will be enforced independently for each value (any Clojure value!)
 `:xfn` --------- Optional       transform (fn [signal]) => ?modified-signal to apply when signal is created, as per `with-xfn`
 `:xfn+` -------- Optional extra transform (fn [signal]) => ?modified-signal to apply when signal is created, as per `with-xfn+`
