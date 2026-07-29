@@ -283,6 +283,8 @@
 
 ;;;; Handler
 
+(def ^:dynamic ^:no-doc *file-maintenance-retry-msecs* 30000)
+
 (defn ^:public handler:file
   "Experimental, subject to change.
 
@@ -346,36 +348,41 @@
                  rl (enc/rate-limiter-once-per 250)]
              (fn [] (and (not (rl)) (> (.length main-file) max-file-size)))))
 
-         prev-timestamp_ (enc/latom nil) ; Initially nil
          curr-timestamp_ (enc/latom nil) ; Will be bootstrapped based on main file
+         prune-pending?_ (enc/latom false)
+         maintenance-retry-after_ (enc/latom 0)
 
-         ;; Called on every write attempt,
-         ;; maintains `timestamp_`s and returns true iff timestamp changed.
-         new-interval!?
+         maintenance-ready? (fn [] (>= (System/currentTimeMillis) (long (maintenance-retry-after_))))
+         maintenance-failed!
+         (fn []
+           (reset! maintenance-retry-after_
+             (+ (System/currentTimeMillis)
+               (long *file-maintenance-retry-msecs*))))
+
+         ;; Called on every write attempt, returns a pending interval transition.
+         [next-interval commit-interval!]
          (when interval
            (let [init-edy  (let [n (file-last-modified->edy main-file)] (when (pos? n) n))
-                 curr-edy_ (enc/latom init-edy)
-                 updated!? ; Returns ?[old new] on change
-                 (fn [latom_ new]
-                   (let [old (latom_)]
-                     (when
-                         (and
-                           (not=                    old new)
-                           (compare-and-set! latom_ old new))
-                       [old new])))]
+                 curr-edy_ (enc/latom init-edy)]
 
              (when init-edy ; Don't bootstrap "1970-01-01d", etc.
                (reset! curr-timestamp_
                  (format-file-timestamp interval init-edy)))
 
-             (fn new-interval!? []
-               (let [curr-edy (udt->edy (System/currentTimeMillis))]
-                 (when (updated!? curr-edy_ curr-edy) ; Day changed
-                   (let [curr-timestamp (format-file-timestamp interval curr-edy)]
-                     (when-let [[prev-timestamp _] (updated!? curr-timestamp_ curr-timestamp)]
-                       ;; Timestamp changed (recall: interval may not be daily)
-                       (reset! prev-timestamp_ prev-timestamp)
-                       true)))))))
+             [(fn next-interval []
+                (let [curr-edy (udt->edy (System/currentTimeMillis))]
+                  (when-not (= (curr-edy_) curr-edy) ; Day changed
+                    (let [curr-timestamp (format-file-timestamp interval curr-edy)]
+                      (if (= (curr-timestamp_) curr-timestamp)
+                        ;; Day changed, but week/month did not.
+                        (do (reset! curr-edy_ curr-edy) nil)
+                        {:curr-edy       curr-edy
+                         :curr-timestamp curr-timestamp
+                         :prev-timestamp (curr-timestamp_)})))))
+
+              (fn commit-interval! [{:keys [curr-edy curr-timestamp]}]
+                (reset! curr-edy_       curr-edy)
+                (reset! curr-timestamp_ curr-timestamp))]))
 
          lock (Object.)]
 
@@ -384,32 +391,54 @@
        ([signal]
         (when-let [output (output-fn signal)]
           (locking lock
-            (let [new-interval?   (when interval      (new-interval!?))
-                  >max-file-size? (when max-file-size (>max-file-size?))
-                  reset-stream?   (or   new-interval?  >max-file-size?)]
-
-              (when reset-stream?
-                (fw) ; Close before moving the main file
+            (let [maintenance-error_ (volatile! nil)]
+              (when (and (prune-pending?_) (maintenance-ready?))
                 (try
-                  (if new-interval?
-                    (do
-                      ;; Rename main -> <prev-timestamp>.1.gz, etc.
-                      (when-let [prev-timestamp (prev-timestamp_)]
-                        (archive-main-file! main-path interval prev-timestamp
-                          max-num-parts gzip-archives? nil))
+                  (prune-archive-files! main-path interval max-num-intervals nil)
+                  (reset! prune-pending?_ false)
+                  (catch Exception e
+                    (maintenance-failed!)
+                    (vreset! maintenance-error_ e))))
 
-                      (when max-num-intervals
-                        (prune-archive-files! main-path interval
-                          max-num-intervals nil)))
+              (let [interval-change (when interval      (next-interval))
+                    new-interval?   (boolean interval-change)
+                    >max-file-size? (when max-file-size (>max-file-size?))
+                    reset-stream?   (or   new-interval?  >max-file-size?)]
 
-                    ;; Rename main -> <curr-timestamp>.1.gz, etc.
-                    (archive-main-file! main-path interval (curr-timestamp_)
-                      max-num-parts gzip-archives? nil))
+                (when (and reset-stream?
+                        (maintenance-ready?)
+                        (nil? @maintenance-error_))
+                  (fw) ; Close before moving the main file
+                  (try
+                    (if new-interval?
+                      (do
+                        ;; Rename main -> <prev-timestamp>.1.gz, etc.
+                        (when-let [prev-timestamp (:prev-timestamp interval-change)]
+                          (archive-main-file! main-path interval prev-timestamp
+                            max-num-parts gzip-archives? nil))
 
-                  (finally
-                    (fw :writer/reset!))))
+                        (commit-interval! interval-change)
 
-              (fw output)))))))))
+                        (when max-num-intervals
+                          (reset! prune-pending?_ true)
+                          (prune-archive-files! main-path interval max-num-intervals nil)
+                          (reset! prune-pending?_ false)))
+
+                      ;; Rename main -> <curr-timestamp>.1.gz, etc.
+                      (archive-main-file! main-path interval (curr-timestamp_)
+                        max-num-parts gzip-archives? nil))
+
+                    (catch Exception e
+                      (maintenance-failed!)
+                      (vreset! maintenance-error_ e))
+
+                    (finally
+                      (fw :writer/reset!))))
+
+                (let [result (fw output)]
+                  (if-let [e @maintenance-error_]
+                    (throw e)
+                    result)))))))))))
 
 (comment
   (manage-test-files! :create)
