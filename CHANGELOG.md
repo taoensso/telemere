@@ -2,6 +2,58 @@ This project uses [**Break Versioning**](https://www.taoensso.com/break-versioni
 
 ---
 
+# `v1.4.0` (2026-07-29)
+
+## 📦 Dependencies
+
+Available on Clojars:
+
+1. [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.4.0) - main dep
+2. [SLF4J provider](https://clojars.org/com.taoensso/telemere-slf4j/versions/1.4.0) - extra dep to [send Java logging](https://github.com/taoensso/telemere/wiki/3-Config#java-logging) to Telemere
+
+This project uses [Break Versioning](https://www.taoensso.com/break-versioning).
+
+## Release notes
+
+This is a significant **maintenance release** with plenty of small fixes, esp. for OpenTelemetry and I/O integrations.
+
+It includes one small **breaking change** relevant to a very small number of users.
+
+As usual, please test carefully and **report any unexpected problems** on [GitHub](https://github.com/taoensso/telemere/issues) or the [Slack channel](https://www.taoensso.com/telemere/slack) 🙏
+
+\- [Peter Taoussanis](https://www.taoensso.com)
+
+## Since `v1.2.1` (2025-12-16)
+
+### New
+
+- \[new] OpenTelemetry handler: expose `IAttributesBuilder` protocol \[bd649a0]
+- \[new] `clean-signal-fn`: customize errors \[a16f963]
+
+### Fixes
+
+#### With user-facing changes
+
+- **\[BREAKING]** [fix] Don't wrap `:run` errors \[c5d32f7] \[#72]
+- \[fix] OpenTelemetry spans: fix parentage, ownership, draining, and completion \[e708ca1] \[e403635] \[78aed4e] \[fcca810]
+- \[fix] OpenTelemetry logs: restore the default provider (`nil` remains opt-out) \[52fa52d]
+- \[fix] OpenTelemetry: close viability probes and remove unbounded name caches \[dae6319] \[a80b008]
+- \[fix] Outbound handlers: surface Slack failures and safely truncate Postal subjects \[c6b072f] \[77c1d22]
+- \[fix] File handlers: improve failure recovery, rotation, gzip, and archive scanning \[426b289] \[d531645] \[9ce9ebd] \[c17751b] \[4e15b82]
+
+#### Without user-facing changes
+
+- \[fix] Use Truss exceptions \[a4b603b]
+- \[fix] Socket handlers: preserve UTF-8; improve cleanup and reconnects \[2647629] \[dac4849] \[51bb337] \[98477b3]
+- \[fix] Stream interop: support Java 8; preserve UTF-8 and partial output; serialize lifecycle \[d7011e7] \[abf3adf] \[cd232f3] \[b2bfaaa]
+- \[fix] Signal sampling: evaluate dynamic samples once \[0869e68]
+- \[fix] SLF4J bridge: handle unset timestamps, initialize safely, and refresh marker graphs \[0e8e4ee] \[f3831f1] \[e12bcf4]
+- \[fix] Trace/error output: preserve falsey run metadata; tidy message-less errors \[c359b83] \[75f335d]
+- \[doc] Documentation: correct UID/context docs and improve configuration guidance \[6d5fdb0] \[14cdcc5] \[f512367] \[2f591e8] \[c1af6c7]
+- \[fix] Use Truss exceptions \[a4b603b]
+
+---
+
 # `v1.3.0` (2026-07-29)
 
 ## 📦 Dependencies
