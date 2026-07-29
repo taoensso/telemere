@@ -836,6 +836,18 @@
            (is (true? (fw "3")))
            (is (= (slurp f) "3"))
            (is (true? (fw "3")))
+
+           (is
+             (with-redefs [utils/writeable-file-stream! (fn [& _] (throw (java.io.IOException. "Reopen failed")))]
+               (try
+                 (fw :writer/reset!)
+                 false
+                 (catch java.io.IOException _
+                   true))))
+
+           (is (false? (fw :writer/open?)))
+           (is (true?  (fw "4")))
+           (is (= (slurp f) "4"))
            (is (true? (.delete f)))])))
 
    (testing "Formatters, etc."
