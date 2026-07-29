@@ -42,7 +42,7 @@
                        :msg   msg})))))))]
 
     (java.io.PrintStream. baos true ; Auto flush
-      java.nio.charset.StandardCharsets/UTF_8)))
+      "UTF-8")))
 
 ;;;;
 
