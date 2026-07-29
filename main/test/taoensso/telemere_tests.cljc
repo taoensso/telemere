@@ -574,7 +574,15 @@
      (is (= (test1 nil (fn [] 0.0)) [nil    0]) "[none   =>0%] = 0%")
 
      (let [[sr n] (test1 0.5        0.5) ] (is (and (= sr 0.25) (<= 150 n 350)) "[50%   50%] = 25%"))
-     (let [[sr n] (test1 0.5 (fn [] 0.5))] (is (and (= sr 0.25) (<= 150 n 350)) "[50% =>50%] = 25%"))]))
+     (let [[sr n] (test1 0.5 (fn [] 0.5))] (is (and (= sr 0.25) (<= 150 n 350)) "[50% =>50%] = 25%"))
+
+     (let [calls_ (atom 0)
+           signal
+           (with-sig
+             (sig! {:level :info
+                    :sample (do (swap! calls_ inc) 1.0)}))]
+       [(is (= 1 @calls_))
+        (is (= 1.0 (:sample signal)))])]))
 
 ;;;;
 
