@@ -100,8 +100,14 @@
     Resets `System/out` and `System/err` to their original value (prior to any
     `streams->telemere!` call)."
     []
-    (let [[orig-out _] (reset-vals! orig-out_ nil)
-          [orig-err _] (reset-vals! orig-err_ nil)]
+    (let [[orig-out orig-err]
+          (locking monitor
+            (let [[orig-out _] (reset-vals! orig-out_ nil)
+                  [orig-err _] (reset-vals! orig-err_ nil)]
+
+              (when orig-out (System/setOut orig-out))
+              (when orig-err (System/setErr orig-err))
+              [orig-out orig-err]))]
 
       (impl/signal!
         {:kind  :event
@@ -110,10 +116,6 @@
          :msg   "Disabling interop: standard stream/s -> Telemere"
          :data  {:system/out? (boolean orig-out)
                  :system/err? (boolean orig-err)}})
-
-      (locking monitor
-        (when orig-out (System/setOut orig-out))
-        (when orig-err (System/setErr orig-err)))
 
       (boolean (or orig-out orig-err))))
 
