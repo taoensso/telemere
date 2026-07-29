@@ -2,6 +2,42 @@ This project uses [**Break Versioning**](https://www.taoensso.com/break-versioni
 
 ---
 
+# `v1.3.0` (2026-07-29)
+
+## 📦 Dependencies
+
+Available on Clojars:
+
+1. [Telemere](https://clojars.org/com.taoensso/telemere/versions/1.3.0) - main dep
+2. [SLF4J provider](https://clojars.org/com.taoensso/telemere-slf4j/versions/1.3.0) - extra dep to [send Java logging](https://github.com/taoensso/telemere/wiki/3-Config#java-logging) to Telemere
+
+This project uses [Break Versioning](https://www.taoensso.com/break-versioning).
+
+## Release notes
+
+This is a significant **maintenance release** with plenty of small fixes, esp. for OpenTelemetry and I/O integrations. It should be a safe, non-breaking upgrade for users of v1.x.
+
+As usual please test carefully **report any unexpected problems** on [GitHub](https://github.com/taoensso/telemere/issues) or the [Slack channel](https://www.taoensso.com/telemere/slack) 🙏
+
+\- [Peter Taoussanis](https://www.taoensso.com)
+
+## Since `v1.2.1` (2025-12-16)
+
+> (Items marked with ➤ include user-facing changes)
+
+- ➤ **\[fix]** OpenTelemetry spans: honor explicit parents, track ownership, and bound completion \[061797e] \[cf075e5]
+- ➤ **\[fix]** OpenTelemetry logs: restore documented default logger provider (explicit `nil` remains the opt-out) \[0930b7a]
+- ➤ **\[fix]** File handlers: retry failed maintenance and improve reopen, rotation, gzip, and archive scanning \[df16589]
+- ➤ **\[fix]** Outbound handlers: surface Slack API failures and truncate Postal subjects safely by Unicode code point \[85c5841]
+- ➤ **\[new]** `clean-signal-fn`: customize errors \[5b71171]
+- \[fix] Signal sampling: evaluate dynamic samples once \[9d181fa]
+- \[fix] Socket handlers: preserve UTF-8 and improve UDP resource use and TCP reconnect recovery \[9cdb374]
+- \[fix] Stream interop: preserve UTF-8 and partial output, and serialize system-stream lifecycle \[cbe0802]
+- \[fix] SLF4J bridge: safely publish bridge functions and refresh mutable marker graphs \[56be78c]
+- \[fix] Trace/error output: include falsey run metadata and tidy message-less errors
+
+---
+
 # `v1.2.1` (2025-12-16)
 
 ## 📦 Dependencies
