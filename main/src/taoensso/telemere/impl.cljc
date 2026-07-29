@@ -218,7 +218,7 @@
                (when (.isValid (.getSpanContext span)) tracer)
                (finally (.end span))))))
 
-       (def ^String otel-name (enc/fmemoize (fn [id] (if id (enc/as-qname id) "telemere/no-id"))))
+       (defn ^String otel-name [id] (if id (enc/as-qname id) "telemere/no-id"))
        (defn otel-context+span-info
          "Returns [Context owned-span?], adding a minimal `Span` when possible.
          We leave the (expensive) population of attributes, etc. for signal handler.

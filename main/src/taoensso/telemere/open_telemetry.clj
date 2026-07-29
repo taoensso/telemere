@@ -28,18 +28,16 @@
 
 ;;;; Attributes
 
-(def ^:private ^String attr-name
-  "Returns cached OpenTelemetry-style name: `:a.b/c-d` -> \"a.b.c_d\", etc.
+(defn- ^String attr-name
+  "Returns OpenTelemetry-style name: `:a.b/c-d` -> \"a.b.c_d\", etc.
   Ref. <https://opentelemetry.io/docs/specs/semconv/general/attribute-naming/>."
-  (enc/fmemoize
-    (fn self
-      ([prefix x] (str (self prefix) "." (self x)))
-      ([       x]
-       (if-not (enc/named? x)
-         (str/replace (str/lower-case (str x)) #"[-\s]" "_")
-         (if-let [ns (namespace x)]
-           (str/replace (str/lower-case (str ns "." (name x))) "-" "_")
-           (str/replace (str/lower-case             (name x))  "-" "_")))))))
+  ([prefix x] (str (attr-name prefix) "." (attr-name x)))
+  ([       x]
+   (if-not (enc/named? x)
+     (str/replace (str/lower-case (str x)) #"[-\s]" "_")
+     (if-let [ns (namespace x)]
+       (str/replace (str/lower-case (str ns "." (name x))) "-" "_")
+       (str/replace (str/lower-case             (name x))  "-" "_")))))
 
 (comment (enc/qb 1e6 (attr-name :a.b/c-d) (attr-name :x.y/z :a.b/c-d))) ; [44.13 63.19]
 
