@@ -528,6 +528,17 @@
 
             opts (merge {:kind :generic, :level :info} base-opts opts)
 
+            sample-form0 (get opts :sample)
+            dynamic-sample?
+            (and
+              (contains? opts :sample)
+              (not (or (nil? sample-form0) (number? sample-form0))))
+
+            opts
+            (if dynamic-sample?
+              (assoc opts :sample `(force ~'__sample_))
+              (do    opts))
+
             run-form? (contains? opts :run)
             run-form  (get       opts :run)
 
@@ -742,7 +753,8 @@
 
             `((fn [] ; iife for better IoC compatibility
                 ;; Unless otherwise specified, allow errors to throw on call
-                (let [~'__run-fn-form ~run-fn-form
+                (let [~@(when dynamic-sample? ['__sample_ `(delay ~sample-form0)])
+                      ~'__run-fn-form ~run-fn-form
                       ~'__kind        ~kind-form
                       ~'__ns          ~ns-form
                       ~'__id          ~id-form
