@@ -690,13 +690,23 @@
   This util efficiently cleans signals of such noise, helping reduce
   storage/transmission size, and making key info easier to see.
 
+  Cleaning also transforms some vals for readability and portability:
+    `:msg_` --- forced (realized when a delay).
+    `:error` -- replaced by (error-fn error), defaults to cause chain:
+                [{:keys [type msg data]} ...], outermost error first.
+
   Options:
     `:incl-nils?` - Include signal's keys with nil values? (default false)
     `:incl-kvs?` -- Include signal's app-level root kvs?   (default false)
     `:incl-keys` -- Subset of signal keys to retain from those otherwise
-                    excluded by default: #{:schema :kvs :host :thread}"
+                    excluded by default: #{:schema :kvs :host :thread}
+    `:error-fn` --- (fn [error]) => ?error"
+
   ([] (clean-signal-fn nil))
-  ([{:keys [incl-kvs? incl-nils? incl-keys] :as opts}]
+  ([{:keys [error-fn incl-kvs? incl-nils? incl-keys] :as opts
+     :or
+     {error-fn (fn [error] (truss/ex-chain :as-map error))}}]
+
    (let [assoc!*
          (if-not incl-nils?
            (fn [m k v] (if (nil? v) m (assoc! m k v))) ; As `remove-signal-nils`
@@ -721,8 +731,14 @@
                  (assoc!* m k v)
 
                  ;; Main keys to include with modified val
-                 :error (if-let [chain (truss/ex-chain :as-map v)] (assoc!  m k chain) m)  ; As `expand-signal-error`
-                 :msg_                                             (assoc!* m k (force v)) ; As  `force-signal-msg`
+                 :error
+                 (if-not error-fn
+                   m
+                   (if-let [v* (error-fn v)] ; As `expand-signal-error`
+                     (assoc! m k v*)
+                     (do     m)))
+
+                 :msg_ (assoc!* m k (force v)) ; As `force-signal-msg`
 
                  ;; Implementation keys to always exclude
                  (clojure.core/into ()
@@ -755,6 +771,9 @@
     `:pr-fn` --------- ∈ #{<unary-fn> :edn (default) :json (Cljs only)}
     `:clean-fn` ------ (fn [signal]) => clean signal map, see [1]
     `:incl-newline?` - Include terminating system newline? (default true)
+
+  NB the default `:clean-fn` replaces each signal's `:error` (a platform
+  error) with a data cause chain that omits stack traces, see [1].
 
   Examples:
 
