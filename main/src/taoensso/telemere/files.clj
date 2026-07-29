@@ -166,9 +166,9 @@
                                  file-name (get-file-name main-path timestamp part gz?)]
 
                              ;; Verify that scanned file name matches our template
-                             (let [actual (.getAbsolutePath file-in)
-                                   expected file-name]
-                               (when-not (.endsWith actual expected)
+                             (let [actual   (.normalize (.toAbsolutePath (.toPath file-in)))
+                                   expected (.normalize (.toAbsolutePath (.toPath (utils/as-file file-name))))]
+                               (when-not (= actual expected)
                                  (truss/ex-info! "Unexpected file name"
                                    {:actual actual, :expected expected})))
 
@@ -194,6 +194,17 @@
 ;; Debugger used to test/debug file ops
 (defn debugger [] (let [log_ (volatile! [])] (fn ([ ] @log_) ([x] (vswap! log_ conj x)))))
 
+(defn- delete-file!           [^java.io.File file] (java.nio.file.Files/delete         (.toPath file)))
+(defn- delete-file-if-exists! [^java.io.File file] (java.nio.file.Files/deleteIfExists (.toPath file)))
+(defn- move-file!             [^java.io.File from ^java.io.File to]
+  (java.nio.file.Files/move
+    (.toPath from) (.toPath to)
+    (make-array java.nio.file.CopyOption 0)))
+
+(defn- create-file! [^java.io.File file]
+  (java.nio.file.Files/createFile (.toPath file)
+    (make-array java.nio.file.attribute.FileAttribute 0)))
+
 (defn archive-main-file!
   "Renames main -> <timestamp>.1.gz archive. Makes room by first rotating
   pre-existing parts (n->n+1) and maintaining `max-num-parts` limit.
@@ -215,12 +226,12 @@
                 (if-let [drop? (and max-num-parts (> part+ (long max-num-parts)))]
                   (if-let [df ?debugger]
                     (df [:delete file-name])
-                    (.delete file))
+                    (delete-file! file))
 
                   (let [file-name+ (get-file-name main-path timestamp part+ gz?)]
                     (if-let [df ?debugger]
                       (df [:rename file-name file-name+])
-                      (.renameTo file (utils/as-file file-name+)))))))))
+                      (move-file! file (utils/as-file file-name+)))))))))
         file-maps-by-edy)))
 
   ;; Rename main -> <timestamp>.1.gz archive
@@ -235,12 +246,19 @@
             ]
 
         (truss/have? false? (.exists arch-file+gz)) ; No pre-existing `.1.gz`
-        (.renameTo      main-file    arch-file-gz)
-        (.createNewFile main-file)
+        (move-file!   main-file arch-file-gz)
+        (create-file! main-file)
 
         (when gz?
-          (gzip-file arch-file-gz arch-file+gz)
-          (.delete   arch-file-gz))))))
+          (try
+            (gzip-file    arch-file-gz arch-file+gz)
+            (delete-file! arch-file-gz)
+            (catch Throwable t
+              (try
+                (delete-file-if-exists! arch-file+gz)
+                (catch Throwable    cleanup-error
+                  (.addSuppressed t cleanup-error)))
+              (throw t))))))))
 
 (defn prune-archive-files!
   "Scans files in same dir as `main-path`, and maintains `max-num-intervals` limit
@@ -261,7 +279,7 @@
 
               (if-let [df ?debugger]
                 (df [:delete file-name])
-                (.delete file)))))))))
+                (delete-file! file)))))))))
 
 ;;;; Handler
 
@@ -365,30 +383,33 @@
        ([      ] (locking lock (fw))) ; Stop => close writer
        ([signal]
         (when-let [output (output-fn signal)]
-          (let [new-interval?   (when interval      (new-interval!?))
-                >max-file-size? (when max-file-size (>max-file-size?))
-                reset-stream?   (or   new-interval?  >max-file-size?)]
+          (locking lock
+            (let [new-interval?   (when interval      (new-interval!?))
+                  >max-file-size? (when max-file-size (>max-file-size?))
+                  reset-stream?   (or   new-interval?  >max-file-size?)]
 
-            (locking lock
+              (when reset-stream?
+                (fw) ; Close before moving the main file
+                (try
+                  (if new-interval?
+                    (do
+                      ;; Rename main -> <prev-timestamp>.1.gz, etc.
+                      (when-let [prev-timestamp (prev-timestamp_)]
+                        (archive-main-file! main-path interval prev-timestamp
+                          max-num-parts gzip-archives? nil))
 
-              (if new-interval?
-                (do
-                  ;; Rename main -> <prev-timestamp>.1.gz, etc.
-                  (when-let [prev-timestamp (prev-timestamp_)]
-                    (archive-main-file! main-path interval prev-timestamp
+                      (when max-num-intervals
+                        (prune-archive-files! main-path interval
+                          max-num-intervals nil)))
+
+                    ;; Rename main -> <curr-timestamp>.1.gz, etc.
+                    (archive-main-file! main-path interval (curr-timestamp_)
                       max-num-parts gzip-archives? nil))
 
-                  (when max-num-intervals
-                    (prune-archive-files! main-path interval
-                      max-num-intervals nil)))
+                  (finally
+                    (fw :writer/reset!))))
 
-                (when >max-file-size?
-                  ;; Rename main -> <curr-timestamp>.1.gz, etc.
-                  (archive-main-file! main-path interval (curr-timestamp_)
-                    max-num-parts gzip-archives? nil)))
-
-              (when reset-stream? (fw :writer/reset!))
-              (do                 (fw output))))))))))
+              (fw output)))))))))
 
 (comment
   (manage-test-files! :create)
