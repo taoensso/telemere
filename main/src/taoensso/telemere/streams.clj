@@ -15,8 +15,8 @@
 
 (defn ^:no-doc osw
   "Private, don't use."
-  ^java.io.OutputStreamWriter [x]
-  (java.io.OutputStreamWriter. x))
+  ^java.io.OutputStreamWriter [^java.io.OutputStream x]
+  (java.io.OutputStreamWriter. x java.nio.charset.StandardCharsets/UTF_8))
 
 (defn ^:no-doc telemere-print-stream
   "Private, don't use.
@@ -27,7 +27,7 @@
           (flush []
             (let [^java.io.ByteArrayOutputStream this this]
               (proxy-super flush)
-              (let [msg (.trim (.toString this))]
+              (let [msg (.trim (.toString this "UTF-8"))]
                 (proxy-super reset)
 
                 (when-not (.isEmpty msg)
