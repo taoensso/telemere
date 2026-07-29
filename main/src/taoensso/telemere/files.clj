@@ -160,25 +160,31 @@
                      (or
                        (when-let [[_ timestamp part gz] (re-matches file-pattern (.getName file-in))]
                          (when (or any-timestamp? (= timestamp ref-timestamp))
-                           (let [edy       (when timestamp (file-timestamp->edy timestamp))
+                           (let [edy
+                                 (when timestamp
+                                   (try
+                                     (file-timestamp->edy timestamp)
+                                     (catch java.time.format.DateTimeParseException _)))
+
                                  part      (when part (enc/as-pos-int (subs part 1)))
                                  gz?       (boolean gz)
                                  file-name (get-file-name main-path timestamp part gz?)]
 
-                             ;; Verify that scanned file name matches our template
-                             (let [actual   (.normalize (.toAbsolutePath (.toPath file-in)))
-                                   expected (.normalize (.toAbsolutePath (.toPath (utils/as-file file-name))))]
-                               (when-not (= actual expected)
-                                 (truss/ex-info! "Unexpected file name"
-                                   {:actual actual, :expected expected})))
+                             (when (or (nil? timestamp) (some? edy))
+                               ;; Verify that scanned file name matches our template
+                               (let [actual   (.normalize (.toAbsolutePath (.toPath file-in)))
+                                     expected (.normalize (.toAbsolutePath (.toPath (utils/as-file file-name))))]
+                                 (when-not (= actual expected)
+                                   (truss/ex-info! "Unexpected file name"
+                                     {:actual actual, :expected expected})))
 
-                             (conj acc
-                               {:file      file-in
-                                :file-name file-name
-                                :timestamp timestamp
-                                :edy       edy
-                                :part      part
-                                :gz?       gz?}))))
+                               (conj acc
+                                 {:file      file-in
+                                  :file-name file-name
+                                  :timestamp timestamp
+                                  :edy       edy
+                                  :part      part
+                                  :gz?       gz?})))))
                        acc))
                    [] (.listFiles main-dir)))]
 
