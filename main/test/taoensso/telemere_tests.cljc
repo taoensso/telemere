@@ -929,6 +929,32 @@
       (is (= (files/format-file-timestamp :monthly (files/udt->edy udt1)) "2024-01-01m"))]))
 
 #?(:clj
+   (deftest _file-scan-malformed-timestamps
+     (let [dir
+           (java.nio.file.Files/createTempDirectory "telemere-file-scan-test"
+             (make-array java.nio.file.attribute.FileAttribute 0))
+
+           main-path    (.resolve dir "app.log")
+           valid-path   (.resolve dir "app.log-2024-01-01d.1")
+           invalid-path (.resolve dir "app.log-2024-99-99d.1")]
+
+       (try
+         (spit (str    main-path) "main")
+         (spit (str   valid-path) "valid")
+         (spit (str invalid-path) "invalid")
+
+         (is (= ["2024-01-01d"]
+               (mapv :timestamp
+                 (files/scan-files
+                   (str main-path) :daily nil true))))
+
+         (finally
+           (java.nio.file.Files/deleteIfExists invalid-path)
+           (java.nio.file.Files/deleteIfExists valid-path)
+           (java.nio.file.Files/deleteIfExists main-path)
+           (java.nio.file.Files/deleteIfExists dir))))))
+
+#?(:clj
    (deftest _gzip-file
      (let [dir
            (java.nio.file.Files/createTempDirectory "telemere-gzip-test"
