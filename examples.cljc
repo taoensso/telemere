@@ -118,9 +118,9 @@
 #?(:clj (require '[jsonista.core :as jsonista]))
 (tel/add-handler! :my-handler
   (tel/handler:console
-    {:output-fn
-     #?(:cljs :json ; Use js/JSON.stringify
-        :clj   jsonista/write-value-as-string)}))
+    {:output-fn (tel/pr-signal-fn
+                  {:pr-fn #?(:cljs :json ; Use js/JSON.stringify
+                             :clj   jsonista/write-value-as-string)})}))
 
 ;;;; Docstring examples
 
